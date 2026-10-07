@@ -1,0 +1,14 @@
+{
+    "name": "NevrianGlowFarm.Logic",
+    "rootNamespace": "NevrianGlowFarm.Logic",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

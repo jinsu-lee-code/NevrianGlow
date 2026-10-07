@@ -70,7 +70,7 @@
   - `Core`(GameManager 자리 · 카메라 · UI 캔버스 · AudioManager 자리 · ZoneTransition 자리), `Farm`, `Shop`
   - Core에서 Farm · Shop을 `LoadSceneAsync(Additive)`로 동시 로드 → 둘 다 끝나면 시작 가능 플래그
   - 완료 조건: Core만 열고 플레이하면 Farm · Shop이 같이 올라온다
-- [ ] **0-4. 문서 3종 + 테스트 어셈블리**
+- [x] **0-4. 문서 3종 + 테스트 어셈블리** — 플레이 확인 대기
   - 저장소 루트에 CLAUDE.md · GDD.md · TASKS.md · BALANCE.md 커밋
   - `Tests/EditMode` 어셈블리 + 샘플 테스트 1개 (`Logic` 어셈블리 참조)
   - 완료 조건: Test Runner에서 1개 통과
@@ -250,6 +250,13 @@
   - 제거: 임시 씬 `_Empty01`, `Assets/Scenes` 폴더
   - 테스트: Core만 열고 Play → Core · Farm · Shop 모두 loaded, `IsReady = true`, 콘솔 0건 (오류 0 · 경고 0)
   - 참고: Farm이나 Shop만 열고 Play하면 Core가 없어 아무것도 시작되지 않는다 → 필요해지면 "항상 Core에서 플레이" 에디터 옵션을 별도 항목으로. 플레이어 · 카메라 이동은 1-1, 스폰 지점은 2-3
+- [x] **0-4. 문서 3종 + 테스트 어셈블리** (2026-10-07) — 플레이 확인 대기
+  - 문서: CLAUDE.md · GDD.md · TASKS.md · BALANCE.md 저장소 루트에 커밋되어 있음 (0-0 · 0-2)
+  - 구현: `NevrianGlowFarm.Logic` asmdef(`Scripts/Logic/`, `noEngineReferences: true` — 엔진 참조 자체를 막음), 식별용 `LogicAssembly`
+  - 구현: `NevrianGlowFarm.Tests.EditMode` asmdef(`Tests/EditMode/`, Editor 전용, `UNITY_INCLUDE_TESTS`, Logic 참조)
+  - 테스트 1개(`LogicAssembly_DoesNotReferenceUnityEngine` — Logic 어셈블리가 UnityEngine/UnityEditor를 참조하지 않음) — 전체 1개 통과
+  - 참고: 런타임 스크립트(`Scripts/Core` 등)는 아직 Assembly-CSharp. 테스트 어셈블리는 Assembly-CSharp를 참조할 수 없으므로 MonoBehaviour 쪽 테스트가 필요해지면 Runtime asmdef를 추가한다. 규칙 테스트는 전부 Logic으로
+  - 참고: 콘솔 경고 1건 "Account API did not become accessible" — `com.unity.ai.assistant` 패키지(에디터 전용, MCP 연결용)에서 발생, 프로젝트 코드와 무관
 
 ## 트러블슈팅
 | 문제 | 원인 | 해결 |
