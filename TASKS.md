@@ -63,7 +63,7 @@
   - URP 템플릿, 샘플 씬 · 샘플 에셋 제거, Input System 활성화(구 입력 끄기), Bloom 볼륨 1개
   - Player Settings: 회사명 · 제품명(저장 경로에 영향 → 여기서 확정), 버전 0.1.0
   - 완료 조건: 빈 씬 플레이 시 콘솔 경고 0
-- [ ] **0-2. 폴더 구조 · Git**
+- [x] **0-2. 폴더 구조 · Git** — 플레이 확인 대기
   - CLAUDE.md의 폴더 트리 생성, `.gitignore`(루트 기준 경로), `main`/`dev` 브랜치, 원격 저장소
   - 완료 조건: 다른 PC에서 clone → 열기 → 플레이 시 동일
 - [ ] **0-3. 씬 3개 + Additive 로드**
@@ -231,7 +231,15 @@
   - 구현: Unity 6000.3.25f1, Player Settings(회사 · 제품 · 0.1.0 · `com.FarmingDiary.NevrianGlowFarm`), Input System 단독(`activeInputHandler: 1`), 기본 볼륨 Bloom(임계 1 · 강도 0.25 · 산란 0.5 · 고품질) + Tonemapping Neutral + Vignette 0.2 — 임시값 사용(교체 대기: 5-1 조명 · 후처리)
   - 제거: TutorialInfo, Readme, SampleScene, SampleSceneProfile, Mobile_RPAsset, Mobile_Renderer, 빌드 씬 목록 비움
   - 테스트: 임시 씬 `Assets/Scenes/_Empty01.unity`(카메라 · 조명 · 큐브) 플레이 → 콘솔 0건(오류 0 · 경고 0)
-  - 참고: `_Empty01`은 확인용 임시 씬 → 0-3에서 Core/Farm/Shop 생성 시 삭제. 카메라 Post Processing 체크는 0-3 Core 카메라에서 켠다. 이 PC에 git이 PATH에 없음 → 0-2 전에 설치/PATH 확인 필요
+  - 참고: `_Empty01`은 확인용 임시 씬 → 0-3에서 Core/Farm/Shop 생성 시 삭제. 카메라 Post Processing 체크는 0-3 Core 카메라에서 켠다. Git은 GitHub Desktop으로 관리한다 (결정 2026-10-07, 사용자 요청) — 명령줄 작업은 GitHub Desktop 내장 git(`%LOCALAPPDATA%\GitHubDesktop\app-*\resources\app\git\cmd\git.exe`) 사용
+- [x] **0-2. 폴더 구조 · Git** (2026-10-07) — 플레이 확인 대기
+  - 결정 (2026-10-07): 항목 커밋은 `dev`에 바로 쌓고, 금요일 빌드 · 마일스톤에서 `dev → main` 병합. feature 브랜치는 위험한 작업(저장 등)에만 — 개발 1인이라 브랜치 전환 비용을 줄임
+  - 결정 (2026-10-07): 항목 구현이 끝나면 확인 없이 자동 커밋, push는 사용자가 GitHub Desktop에서 (CLAUDE.md Git 섹션에 반영)
+  - 구현: `Assets/_Project/` 폴더 트리(CLAUDE.md 기준, `Systems/` 하위 폴더는 해당 항목에서 생성), 빈 폴더마다 `.gitkeep` — clone 시 폴더 .meta만 남아 Unity가 경고를 내는 문제 방지
+  - `.gitignore`: 전부 루트 기준 경로(`/Nevrian Glow/Library/`, `/Build/` 등)로 재작성, `*.slnx` 추가 → 이미 추적 중이던 `Nevrian Glow.slnx` 추적 해제
+  - 원격: `origin` = https://github.com/jinsu-lee-code/NevrianGlow.git (기존), `dev` 브랜치는 로컬 생성 → GitHub Desktop에서 Publish 필요
+  - 테스트: 커밋 후 임시 폴더로 clone → 추적 파일에 Library · Temp · csproj 없음, 짝 없는 .meta 0개
+  - 참고: 다른 PC에서 열어 플레이하는 실제 확인은 사용자 몫
 
 ## 트러블슈팅
 | 문제 | 원인 | 해결 |

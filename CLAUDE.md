@@ -84,4 +84,5 @@ Assets/_Project/
 ## Git
 - 브랜치 `main`(안정) / `dev`(통합) / `feature/이름-작업명`. 한 항목 = 한 커밋.
 - 커밋 메시지: `MM.DD/Phase-항목/PascalCase요약` (예: `10.08/0-3/SetupScenes`). 수정은 `…Fix`.
+- 항목 구현이 끝나면 확인 없이 자동 커밋한다. Git은 GitHub Desktop 내장 git(`%LOCALAPPDATA%\GitHubDesktop\app-*\resources\app\git\cmd\git.exe`)을 쓰고, push는 사용자가 GitHub Desktop에서 한다 (결정 2026-10-07).
 - `.gitignore`의 출력 폴더는 루트 기준 경로로만 (`/Build/`, `/Temp/`). `**/Build/` 같은 넓은 패턴 금지.
