@@ -59,7 +59,7 @@
 ## Phase 0. 세팅 (10/7 ~ 10/10)
 목표: 엔진 · 구조 · 문서 · Git. 완료 기준: 빈 Core/Farm/Shop 씬이 함께 로드되고 문서 3종 + 테스트 어셈블리가 있다.
 
-- [ ] **0-1. Unity 프로젝트 생성 · 기본 설정** (Claude Code 진행 중)
+- [x] **0-1. Unity 프로젝트 생성 · 기본 설정** — 플레이 확인 대기
   - URP 템플릿, 샘플 씬 · 샘플 에셋 제거, Input System 활성화(구 입력 끄기), Bloom 볼륨 1개
   - Player Settings: 회사명 · 제품명(저장 경로에 영향 → 여기서 확정), 버전 0.1.0
   - 완료 조건: 빈 씬 플레이 시 콘솔 경고 0
@@ -224,7 +224,17 @@
   - 참고: 알려진 한계 / 다음 할 일
 ```
 
+- [x] **0-1. Unity 프로젝트 생성 · 기본 설정** (2026-10-07) — 플레이 확인 대기
+  - 결정 (2026-10-07): 회사명 `FarmingDiary`(임시, 차후 확정) · 제품명 `Nevrian Glow Farm` — 저장 경로 `LocalLow/FarmingDiary/Nevrian Glow Farm`. 회사명 변경 시 저장 경로가 바뀌므로 6-1 저장 구현 전에 확정
+  - 결정 (2026-10-07): Mobile 품질 단계 · 렌더러 제거, PC 단일 품질 — 플랫폼 PC 전용, 설정 하나로 Bloom · 광원 확인 단순화
+  - 결정 (2026-10-07): Bloom은 URP 프로젝트 기본 볼륨 프로필(`Assets/Settings/DefaultVolumeProfile.asset`)에 둔다 — 모든 씬(Core/Farm/Shop)에 별도 오브젝트 없이 적용. 구역별 차이는 2-3 ZoneProfile에서 덮어쓴다
+  - 구현: Unity 6000.3.25f1, Player Settings(회사 · 제품 · 0.1.0 · `com.FarmingDiary.NevrianGlowFarm`), Input System 단독(`activeInputHandler: 1`), 기본 볼륨 Bloom(임계 1 · 강도 0.25 · 산란 0.5 · 고품질) + Tonemapping Neutral + Vignette 0.2 — 임시값 사용(교체 대기: 5-1 조명 · 후처리)
+  - 제거: TutorialInfo, Readme, SampleScene, SampleSceneProfile, Mobile_RPAsset, Mobile_Renderer, 빌드 씬 목록 비움
+  - 테스트: 임시 씬 `Assets/Scenes/_Empty01.unity`(카메라 · 조명 · 큐브) 플레이 → 콘솔 0건(오류 0 · 경고 0)
+  - 참고: `_Empty01`은 확인용 임시 씬 → 0-3에서 Core/Farm/Shop 생성 시 삭제. 카메라 Post Processing 체크는 0-3 Core 카메라에서 켠다. 이 PC에 git이 PATH에 없음 → 0-2 전에 설치/PATH 확인 필요
+
 ## 트러블슈팅
 | 문제 | 원인 | 해결 |
 |---|---|---|
+| Unity MCP `RunCommand`에서 `AssetDatabase.DeleteAsset` · `NewScene` 호출 시 "User interactions are not supported" | 사용자 확인이 필요한 API로 분류됨 | 삭제는 `Unity_ManageAsset(Delete)`, 씬 생성은 `Unity_ManageScene(Create)` 사용 |
 | (작업 중 겪을 때마다 추가) | | |
