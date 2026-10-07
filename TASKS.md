@@ -74,7 +74,7 @@
   - 저장소 루트에 CLAUDE.md · GDD.md · TASKS.md · BALANCE.md 커밋
   - `Tests/EditMode` 어셈블리 + 샘플 테스트 1개 (`Logic` 어셈블리 참조)
   - 완료 조건: Test Runner에서 1개 통과
-- [ ] **0-5. LogCollector** (노션 버그 트래킹 2번) — 10/10 금요일 빌드 전에 필수
+- [x] **0-5. LogCollector** (노션 버그 트래킹 2번) — 10/10 금요일 빌드 전에 필수 — 플레이 확인 대기
   - `Application.logMessageReceivedThreaded` → Error · Exception · Assert · Warning
   - 한 줄: 시각 · 유형 · 일차 · 단계 · 구역 · 빌드 버전 · 메시지 · 스택. 같은 메시지+스택은 묶고 횟수 증가
   - 저장: `persistentDataPath/Logs/session_날짜_시간.log`, 빌드에서도 동작, 디버그 창에 "로그 폴더 열기"
@@ -257,6 +257,16 @@
   - 테스트 1개(`LogicAssembly_DoesNotReferenceUnityEngine` — Logic 어셈블리가 UnityEngine/UnityEditor를 참조하지 않음) — 전체 1개 통과
   - 참고: 런타임 스크립트(`Scripts/Core` 등)는 아직 Assembly-CSharp. 테스트 어셈블리는 Assembly-CSharp를 참조할 수 없으므로 MonoBehaviour 쪽 테스트가 필요해지면 Runtime asmdef를 추가한다. 규칙 테스트는 전부 Logic으로
   - 참고: 콘솔 경고 1건 "Account API did not become accessible" — `com.unity.ai.assistant` 패키지(에디터 전용, MCP 연결용)에서 발생, 프로젝트 코드와 무관
+- [x] **0-5. LogCollector** (2026-10-07) — 플레이 확인 대기
+  - 결정 (2026-10-07): 새 로그는 받는 즉시 파일에 쓰고(직후 크래시 대비), 횟수만 늘면 1초 간격으로 모아 쓴다 — 매 프레임 오류가 매 프레임 파일 쓰기가 되지 않게. 파일은 임시 파일에 쓴 뒤 교체(원자적 쓰기), 첫 로그가 들어올 때 생성(빈 파일 없음)
+  - 구현: Logic `LogAggregator`(메시지+스택 묶기 · 횟수 · 최대 개수 초과분 집계), `LogLineFormatter`(한 줄 형식 · 줄바꿈 → ` ↵ `), `LogSeverity` · `LogContext`
+  - 구현: Core `LogCollector`(`logMessageReceivedThreaded`, 실행 순서 -1000, 잠금으로 스레드 안전, 자기 로그 재귀 방지) → Core 씬 첫 오브젝트로 배치
+  - 구현: 에디터 메뉴 `Glow Farm/디버그 창` — 로그 폴더 경로 · "로그 폴더 열기" · 플레이 중 이번 세션 파일 · "테스트 예외 발생"
+  - 형식: `시각 | 유형 | Day N | 단계 | 구역 | v버전 | xN (last 시각) | 메시지 | 스택`, 첫 줄은 `# 제품 세션 로그 · 시작 시각 · 버전 · Unity 버전 · 플랫폼`
+  - 저장: `persistentDataPath/Logs/session_yyyyMMdd_HHmmss.log` = `%USERPROFILE%\AppData\LocalLow\FarmingDiary\Nevrian Glow Farm\Logs\`
+  - 테스트 6개(묶기 · 스택 다르면 분리 · 최대 개수 · 줄 형식 · 빈 상황 `-` · 파일 형식) — 전체 7개 통과
+  - 확인: 플레이 중 같은 예외 2회 → 세션 파일에 1줄 `x2`, 임시 파일 남지 않음
+  - 참고: 일차 · 단계 · 구역은 아직 `Day 0 | - | -` — `SetDayAndPhase`는 1-3 GameManager, `SetZone`은 2-3 ZoneTransition에서 연결. 빌드(플레이어)에서의 동작 확인은 1-5 빌드 때
 
 ## 트러블슈팅
 | 문제 | 원인 | 해결 |
