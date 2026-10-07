@@ -4,7 +4,16 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/_Project/Scenes/Core.unity
+    guid: 4965957cf3ac2ca4db23993bead59423
+  - enabled: 1
+    path: Assets/_Project/Scenes/Farm.unity
+    guid: 6a66e7c7207cb274381c8e1e6f21a27c
+  - enabled: 1
+    path: Assets/_Project/Scenes/Shop.unity
+    guid: d28d0593998efee48ba5ab7d7d342bb2
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

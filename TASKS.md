@@ -66,7 +66,7 @@
 - [x] **0-2. 폴더 구조 · Git** — 플레이 확인 대기
   - CLAUDE.md의 폴더 트리 생성, `.gitignore`(루트 기준 경로), `main`/`dev` 브랜치, 원격 저장소
   - 완료 조건: 다른 PC에서 clone → 열기 → 플레이 시 동일
-- [ ] **0-3. 씬 3개 + Additive 로드**
+- [x] **0-3. 씬 3개 + Additive 로드** — 플레이 확인 대기
   - `Core`(GameManager 자리 · 카메라 · UI 캔버스 · AudioManager 자리 · ZoneTransition 자리), `Farm`, `Shop`
   - Core에서 Farm · Shop을 `LoadSceneAsync(Additive)`로 동시 로드 → 둘 다 끝나면 시작 가능 플래그
   - 완료 조건: Core만 열고 플레이하면 Farm · Shop이 같이 올라온다
@@ -240,9 +240,20 @@
   - 원격: `origin` = https://github.com/jinsu-lee-code/NevrianGlow.git (기존), `dev` 브랜치는 로컬 생성 → GitHub Desktop에서 Publish 필요
   - 테스트: 커밋 후 임시 폴더로 clone → 추적 파일에 Library · Temp · csproj 없음, 짝 없는 .meta 0개
   - 참고: 다른 PC에서 열어 플레이하는 실제 확인은 사용자 몫
+- [x] **0-3. 씬 3개 + Additive 로드** (2026-10-07) — 플레이 확인 대기 — 임시값 사용(교체 대기: 레벨 배치도 10/9)
+  - 결정 (2026-10-07): Shop 씬 전체를 `ShopRoot` (500, 0, 0) 아래에 둔다 — Farm · Shop이 동시에 로드되므로 공간이 겹치면 안 됨. BALANCE 9-1의 Shop 좌표는 `ShopRoot` 기준 로컬 좌표로 읽는다. Farm은 -X로 확장되므로 +X 쪽으로 분리. 오프셋은 루트 위치만 바꾸면 됨
+  - 구현: `SceneBootstrapper`(Core, 구역 씬 이름 목록을 인스펙터로 받아 `LoadSceneAsync(Additive)`, 이미 열려 있으면 건너뜀, 모두 끝나면 `IsReady` + `Ready` 이벤트, 실패 시 Error 로그 후 Ready 안 함)
+  - 씬 `Assets/_Project/Scenes/` Core · Farm · Shop, Build Settings 0 Core / 1 Farm / 2 Shop
+    - Core: SceneBootstrapper, GameManager · AudioManager · ZoneTransition(빈 자리), Main Camera(Post Processing 켬, 임시로 FarmSpawn 위치), Directional Light(청보라 임시), UICanvas(1920×1080 기준, 0.5 매칭), EventSystem(`InputSystemUIInputModule`)
+    - Farm: `FarmRoot` / Ground 40×20 m (`mat_greybox_ground_farm` #0E2640)
+    - Shop: `ShopRoot` (500,0,0) / Floor 12×10 m (`mat_greybox_floor_shop` #2A2440)
+  - 제거: 임시 씬 `_Empty01`, `Assets/Scenes` 폴더
+  - 테스트: Core만 열고 Play → Core · Farm · Shop 모두 loaded, `IsReady = true`, 콘솔 0건 (오류 0 · 경고 0)
+  - 참고: Farm이나 Shop만 열고 Play하면 Core가 없어 아무것도 시작되지 않는다 → 필요해지면 "항상 Core에서 플레이" 에디터 옵션을 별도 항목으로. 플레이어 · 카메라 이동은 1-1, 스폰 지점은 2-3
 
 ## 트러블슈팅
 | 문제 | 원인 | 해결 |
 |---|---|---|
 | Unity MCP `RunCommand`에서 `AssetDatabase.DeleteAsset` · `NewScene` 호출 시 "User interactions are not supported" | 사용자 확인이 필요한 API로 분류됨 | 삭제는 `Unity_ManageAsset(Delete)`, 씬 생성은 `Unity_ManageScene(Create)` 사용 |
+| MCP로 플레이 중 상태를 확인하면 프레임이 2에서 멈춤 | 에디터 창이 포커스를 잃으면 플레이 모드 프레임이 진행되지 않음 | `EditorApplication.isPaused = true` + `Step()`으로 프레임을 넘겨 확인, 끝나면 `isPaused = false`로 복구 |
 | (작업 중 겪을 때마다 추가) | | |
