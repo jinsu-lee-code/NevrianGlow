@@ -93,10 +93,10 @@
 ## Phase 1. 핵심 조작 그레이박스 (10/8 ~ 10/11)
 목표: 플레이어가 "하는 일" 하나 — 1인칭으로 밭에 심고 물 주고 다음 날 수확. 색만 다른 기본 도형.
 
-- [x] **1-1. PlayerController (1인칭 카메라 전용)** — 노션 GDD 12.3 — 플레이 확인 대기
+- [x] **1-1. PlayerController (1인칭 카메라 전용)** — 노션 GDD 12.3 — 플레이 확인 완료 (2026-10-08)
   - CharacterController 이동 · 시점 · 중력 · 질주(Shift) · 헤드밥. 수치는 PlayerSettings 에셋(BALANCE 2-1)
   - 완료 조건: 걷기 · 질주 · 시점 제한(83°) 정상, 경고 0
-- [ ] **1-2. InteractionRaycaster + IInteractable** — 노션 GDD 12.3
+- [x] **1-2. InteractionRaycaster + IInteractable** — 노션 GDD 12.3 — 플레이 확인 대기
   - 화면 중앙 Raycast(5m, Interactable 레이어), `GetPrompt(tool)` / `Interact(tool)`, 대상이 바뀔 때만 UI 갱신
   - 핫바 도구 선택 1~5 (그레이박스 UI)
   - 기즈모: 플레이 중 시안 직선 + 맞은 점
@@ -277,7 +277,7 @@
   - 에셋: `Data/Crops/crop_moonroot · crop_mushroomflower · crop_lanternfruit`, `Data/Stats/PlayerSettings · GameStartSettings · InventorySettings · CleaningSettings · SalesSettings · Progression`
   - 확인: 1회차 생성 9 → 값 BALANCE 2-1 ~ 2-7과 일치, 값 하나 바꾸고 2회차 → 유지 9 · 바꾼 값 그대로, 초기화 → 초기화 9 · 원래 값 복원. 콘솔 오류 · 경고 0 (AI Assistant 경고 제외)
   - 참고: 필드 이름이 2-1 CSV 임포터의 열 이름 기준이 된다. 김봉준 작물 CSV가 오면 열 이름을 이 필드에 맞추거나 임포터에서 대응표를 둔다
-- [x] **1-1. PlayerController (1인칭 카메라 전용)** (2026-10-08) — 플레이 확인 대기 — 임시값 사용(교체 대기: 레벨 배치도 10/9 — 시작 위치)
+- [x] **1-1. PlayerController (1인칭 카메라 전용)** (2026-10-08) — 플레이 확인 완료 (2026-10-08) — 임시값 사용(교체 대기: 레벨 배치도 10/9 — 시작 위치)
   - 결정 (2026-10-08): 입력은 템플릿의 프로젝트 전체 입력 에셋(`Assets/InputSystem_Actions.inputactions`)의 `Player/Move · Look · Sprint`를 `InputActionReference`로 받는다 — 키 배치가 BALANCE 9-4와 같음. 핫바 · 상점 키 등 액션 정리와 에셋 위치 이동은 1-2에서 필요할 때
   - 결정 (2026-10-08): 플레이어는 Core 씬에 둔다(구역을 오가며 유지). 몸(`Player`)이 yaw, 자식 카메라가 pitch · 눈높이 · 헤드밥. 구역 씬 로드 완료(`SceneBootstrapper.IsReady`) 전에는 움직이지 않음 — 땅이 올라오기 전 낙하 방지
   - 구현: Logic `FirstPersonMath`(시점 yaw · pitch 제한, 헤드밥 위상 · 높이), `Systems/Player/PlayerController`(CharacterController 이동 · 중력 · 질주 · 헤드밥 · 커서 잠금, 수치는 `PlayerSettings` 에셋)
@@ -286,6 +286,18 @@
   - 확인(자동): 플레이 30프레임 뒤 땅 위(y = 0, grounded), 카메라 높이 1.7, 콘솔 오류 · 경고 0 (AI Assistant 경고 제외)
   - 미확인: 걷기 · 질주 · 시점 · 헤드밥의 실제 조작 — MCP에서 키 입력을 넣을 수 없어 사용자 플레이 확인으로 대신
   - 참고: 농장 바닥(40×20 m) 끝에는 벽이 없어 밖으로 걸어 나가면 떨어진다 — 그레이박스 경계는 레벨 배치도(10/9) 반영 때
+- [x] **1-2. InteractionRaycaster + IInteractable** (2026-10-08) — 플레이 확인 대기 — 임시값 사용(교체 대기: UI 흐름도 10/14 · UI 아트 10/23)
+  - 결정 (2026-10-08): 도구는 enum이 아니라 `ToolData` 에셋(`Data/Tools/tool_*`, 0-6 Setup 메뉴에 추가) — 콘텐츠는 에셋 참조로 구분 규칙. 핫바 순서는 Player의 `Hotbar` 인스펙터 목록, 칸 수 = 목록 길이(숫자 키 1~9)
+  - 결정 (2026-10-08): 그레이박스 한글 폰트는 사용자가 넣은 NEXON Maplestory Bold(`Art/Fonts/NEXON_Maplestory`) → TMP 동적 폰트 에셋 `font_maplestory_bold_sdf`를 TMP 기본 폰트로 지정. 배포 라이선스 확인과 최종 폰트는 5-4
+  - 구현: `IInteractable`(`GetPrompt(tool)` · `Interact(tool)`), `InteractionRaycaster`(카메라 중앙 Raycast, 사거리 = PlayerSettings 5 m, Interactable 레이어만, 콜라이더가 바뀔 때만 컴포넌트 탐색, 대상 · 도구 변경과 상호작용 직후에만 프롬프트 갱신 → `PromptChanged`, E · 좌클릭에 `Interact`, 기즈모 시안 직선 + 맞은 점), `Hotbar`(숫자 키, `SelectionChanged`), Logic `HotbarSelection`, 공용 `GizmoKit`(색 규칙 6종)
+  - 구현: UI `InteractionPromptView`(화면 중앙 아래, 비면 숨김) · `HotbarView` + `HotbarSlotView`(도구 수만큼 칸 생성, 선택 칸 시안) · 조준점 — 단색 패널 + 글자
+  - 설정: 레이어 `Interactable`(8), 입력 에셋 `Player/Hotbar`(키 1~9) 추가. 좌클릭은 템플릿의 `Player/Attack`(좌클릭 · Enter)을 그대로 사용
+  - 확인용: Farm `FarmRoot/InteractionProbe`(1, 1, 0) 기둥 0.6×2×0.6 m — `InteractionProbe`가 도구 이름으로 프롬프트를 만들고 상호작용마다 색을 바꿈. **실제 대상(1-4 밭 칸)이 생기면 씬에서 지운다**
+  - 테스트 4개(키 번호 → 칸, 같은 칸 무시, 없는 칸 무시, 칸 수 고정 안 됨) — 전체 16개 통과
+  - 확인(자동): 정면 기둥에 맞음 → 프롬프트 `[E / 클릭] 손(으)로 확인 (0회)`, 변화 없을 때 갱신 0회 · 도구 변경 시 1회, 핫바 5칸(손 · 씨앗 주머니 · 물뿌리개 · 대걸레 · 비료) 생성 · 4번 선택 시 강조 이동, 한글 글리프 누락 0, 콘솔 오류 · 경고 0
+  - 미확인: 실제 키(1~5 · E · 좌클릭) 입력 — MCP 입력 제한(트러블슈팅 참고)으로 사용자 플레이 확인
+  - 참고: 상호작용 강조 효과(외곽선 등)는 그레이박스에서 생략 — 프롬프트만. Raycast는 Interactable 레이어만 보므로 벽 너머 대상도 잡힌다 → 벽이 생기는 2-3에서 가림 레이어 추가 검토
+  - 참고: TMP 동적 폰트 에셋은 플레이 중 새 글자가 아틀라스에 추가되며 파일이 바뀔 수 있다(빌드 시 동적 데이터 정리 켬)
 
 ## 트러블슈팅
 | 문제 | 원인 | 해결 |

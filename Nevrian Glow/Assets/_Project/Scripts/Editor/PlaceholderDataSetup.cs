@@ -18,6 +18,7 @@ namespace NevrianGlowFarm.Editor
         private const string DataRoot = "Assets/_Project/Data";
         private const string StatsFolder = DataRoot + "/Stats";
         private const string CropsFolder = DataRoot + "/Crops";
+        private const string ToolsFolder = DataRoot + "/Tools";
 
         private readonly struct CropRow
         {
@@ -40,6 +41,16 @@ namespace NevrianGlowFarm.Editor
             new CropRow("crop_moonroot",       "월광 뿌리", 10, 15, 1, 1, 1, 0, 1, 0.02f, 2.5f, 2.2f),
             new CropRow("crop_mushroomflower", "버섯꽃",    20, 40, 4, 2, 2, 0, 1, 0.02f, 2.5f, 2.2f),
             new CropRow("crop_lanternfruit",   "등불 열매", 70, 80, 8, 1, 2, 4, 3, 0f,    1f,   1f),
+        };
+
+        // BALANCE 9-4 핫바 1~5 순서. 핫바에 놓는 순서는 씬의 Hotbar 인스펙터가 정한다.
+        private static readonly (string Id, string Name)[] Tools =
+        {
+            ("tool_hand", "손"),
+            ("tool_seedbag", "씨앗 주머니"),
+            ("tool_wateringcan", "물뿌리개"),
+            ("tool_mop", "대걸레"),
+            ("tool_fertilizer", "비료"),
         };
 
         private const string StartingCropId = "crop_moonroot"; // BALANCE 2-3 시작 작물
@@ -90,6 +101,15 @@ namespace NevrianGlowFarm.Editor
                     so.FindProperty("giantChance").floatValue = row.GiantChance;
                     so.FindProperty("giantYieldMultiplier").floatValue = row.GiantYield;
                     so.FindProperty("giantScale").floatValue = row.GiantScale;
+                });
+            }
+
+            foreach (var tool in Tools)
+            {
+                Ensure<ToolData>($"{ToolsFolder}/{tool.Id}.asset", resetExisting, report, so =>
+                {
+                    so.FindProperty("id").stringValue = tool.Id;
+                    so.FindProperty("displayName").stringValue = tool.Name;
                 });
             }
 
