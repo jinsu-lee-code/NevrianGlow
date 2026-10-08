@@ -59,28 +59,28 @@
 ## Phase 0. 세팅 (10/7 ~ 10/10)
 목표: 엔진 · 구조 · 문서 · Git. 완료 기준: 빈 Core/Farm/Shop 씬이 함께 로드되고 문서 3종 + 테스트 어셈블리가 있다.
 
-- [x] **0-1. Unity 프로젝트 생성 · 기본 설정** — 플레이 확인 대기
+- [x] **0-1. Unity 프로젝트 생성 · 기본 설정** — 플레이 확인 완료 (2026-10-08)
   - URP 템플릿, 샘플 씬 · 샘플 에셋 제거, Input System 활성화(구 입력 끄기), Bloom 볼륨 1개
   - Player Settings: 회사명 · 제품명(저장 경로에 영향 → 여기서 확정), 버전 0.1.0
   - 완료 조건: 빈 씬 플레이 시 콘솔 경고 0
-- [x] **0-2. 폴더 구조 · Git** — 플레이 확인 대기
+- [x] **0-2. 폴더 구조 · Git** — 플레이 확인 완료 (2026-10-08)
   - CLAUDE.md의 폴더 트리 생성, `.gitignore`(루트 기준 경로), `main`/`dev` 브랜치, 원격 저장소
   - 완료 조건: 다른 PC에서 clone → 열기 → 플레이 시 동일
-- [x] **0-3. 씬 3개 + Additive 로드** — 플레이 확인 대기
+- [x] **0-3. 씬 3개 + Additive 로드** — 플레이 확인 완료 (2026-10-08)
   - `Core`(GameManager 자리 · 카메라 · UI 캔버스 · AudioManager 자리 · ZoneTransition 자리), `Farm`, `Shop`
   - Core에서 Farm · Shop을 `LoadSceneAsync(Additive)`로 동시 로드 → 둘 다 끝나면 시작 가능 플래그
   - 완료 조건: Core만 열고 플레이하면 Farm · Shop이 같이 올라온다
-- [x] **0-4. 문서 3종 + 테스트 어셈블리** — 플레이 확인 대기
+- [x] **0-4. 문서 3종 + 테스트 어셈블리** — 플레이 확인 완료 (2026-10-08)
   - 저장소 루트에 CLAUDE.md · GDD.md · TASKS.md · BALANCE.md 커밋
   - `Tests/EditMode` 어셈블리 + 샘플 테스트 1개 (`Logic` 어셈블리 참조)
   - 완료 조건: Test Runner에서 1개 통과
-- [x] **0-5. LogCollector** (노션 버그 트래킹 2번) — 10/10 금요일 빌드 전에 필수 — 플레이 확인 대기
+- [x] **0-5. LogCollector** (노션 버그 트래킹 2번) — 10/10 금요일 빌드 전에 필수 — 플레이 확인 완료 (2026-10-08)
   - `Application.logMessageReceivedThreaded` → Error · Exception · Assert · Warning
   - 한 줄: 시각 · 유형 · 일차 · 단계 · 구역 · 빌드 버전 · 메시지 · 스택. 같은 메시지+스택은 묶고 횟수 증가
   - 저장: `persistentDataPath/Logs/session_날짜_시간.log`, 빌드에서도 동작, 디버그 창에 "로그 폴더 열기"
   - 테스트: 중복 묶기 · 형식 (순수 로직 부분)
   - 완료 조건: 일부러 Exception을 내면 세션 파일에 1줄 + 횟수 증가
-- [x] **0-6. 임시 데이터 세트 Setup 메뉴** — 이후 모든 항목이 기획 입력 없이 돌아가게 하는 기반 — 플레이 확인 대기 — 임시값 사용(교체 대기: 작물 CSV 10/11)
+- [x] **0-6. 임시 데이터 세트 Setup 메뉴** — 이후 모든 항목이 기획 입력 없이 돌아가게 하는 기반 — 플레이 확인 완료 (2026-10-08) — 임시값 사용(교체 대기: 작물 CSV 10/11)
   - 메뉴 `Glow Farm/Setup/Create Placeholder Data`: BALANCE 2장 · 9장의 값으로 Settings 에셋 · CropData 3종 · 임시 상품 · 임시 스킬 에셋을 만든다
   - **멱등**: 여러 번 실행해도 결과가 같고, 이미 있는 에셋은 덮어쓰지 않는다(옵션으로 "초기값으로 되돌리기")
   - 나중에 들어올 CSV 임포터(2-1)와 **같은 id · 같은 필드**를 쓴다 → CSV가 오면 같은 에셋이 값만 갱신된다
@@ -93,7 +93,7 @@
 ## Phase 1. 핵심 조작 그레이박스 (10/8 ~ 10/11)
 목표: 플레이어가 "하는 일" 하나 — 1인칭으로 밭에 심고 물 주고 다음 날 수확. 색만 다른 기본 도형.
 
-- [ ] **1-1. PlayerController (1인칭 카메라 전용)** — 노션 GDD 12.3
+- [x] **1-1. PlayerController (1인칭 카메라 전용)** — 노션 GDD 12.3 — 플레이 확인 대기
   - CharacterController 이동 · 시점 · 중력 · 질주(Shift) · 헤드밥. 수치는 PlayerSettings 에셋(BALANCE 2-1)
   - 완료 조건: 걷기 · 질주 · 시점 제한(83°) 정상, 경고 0
 - [ ] **1-2. InteractionRaycaster + IInteractable** — 노션 GDD 12.3
@@ -224,7 +224,7 @@
   - 참고: 알려진 한계 / 다음 할 일
 ```
 
-- [x] **0-1. Unity 프로젝트 생성 · 기본 설정** (2026-10-07) — 플레이 확인 대기
+- [x] **0-1. Unity 프로젝트 생성 · 기본 설정** (2026-10-07) — 플레이 확인 완료 (2026-10-08)
   - 결정 (2026-10-07): 회사명 `FarmingDiary`(임시, 차후 확정) · 제품명 `Nevrian Glow Farm` — 저장 경로 `LocalLow/FarmingDiary/Nevrian Glow Farm`. 회사명 변경 시 저장 경로가 바뀌므로 6-1 저장 구현 전에 확정
   - 결정 (2026-10-07): Mobile 품질 단계 · 렌더러 제거, PC 단일 품질 — 플랫폼 PC 전용, 설정 하나로 Bloom · 광원 확인 단순화
   - 결정 (2026-10-07): Bloom은 URP 프로젝트 기본 볼륨 프로필(`Assets/Settings/DefaultVolumeProfile.asset`)에 둔다 — 모든 씬(Core/Farm/Shop)에 별도 오브젝트 없이 적용. 구역별 차이는 2-3 ZoneProfile에서 덮어쓴다
@@ -232,7 +232,7 @@
   - 제거: TutorialInfo, Readme, SampleScene, SampleSceneProfile, Mobile_RPAsset, Mobile_Renderer, 빌드 씬 목록 비움
   - 테스트: 임시 씬 `Assets/Scenes/_Empty01.unity`(카메라 · 조명 · 큐브) 플레이 → 콘솔 0건(오류 0 · 경고 0)
   - 참고: `_Empty01`은 확인용 임시 씬 → 0-3에서 Core/Farm/Shop 생성 시 삭제. 카메라 Post Processing 체크는 0-3 Core 카메라에서 켠다. Git은 GitHub Desktop으로 관리한다 (결정 2026-10-07, 사용자 요청) — 명령줄 작업은 GitHub Desktop 내장 git(`%LOCALAPPDATA%\GitHubDesktop\app-*\resources\app\git\cmd\git.exe`) 사용
-- [x] **0-2. 폴더 구조 · Git** (2026-10-07) — 플레이 확인 대기
+- [x] **0-2. 폴더 구조 · Git** (2026-10-07) — 플레이 확인 완료 (2026-10-08)
   - 결정 (2026-10-07): 항목 커밋은 `dev`에 바로 쌓고, 금요일 빌드 · 마일스톤에서 `dev → main` 병합. feature 브랜치는 위험한 작업(저장 등)에만 — 개발 1인이라 브랜치 전환 비용을 줄임
   - 결정 (2026-10-07): 항목 구현이 끝나면 확인 없이 자동 커밋, push는 사용자가 GitHub Desktop에서 (CLAUDE.md Git 섹션에 반영)
   - 구현: `Assets/_Project/` 폴더 트리(CLAUDE.md 기준, `Systems/` 하위 폴더는 해당 항목에서 생성), 빈 폴더마다 `.gitkeep` — clone 시 폴더 .meta만 남아 Unity가 경고를 내는 문제 방지
@@ -240,7 +240,7 @@
   - 원격: `origin` = https://github.com/jinsu-lee-code/NevrianGlow.git (기존), `dev` 브랜치는 로컬 생성 → GitHub Desktop에서 Publish 필요
   - 테스트: 커밋 후 임시 폴더로 clone → 추적 파일에 Library · Temp · csproj 없음, 짝 없는 .meta 0개
   - 참고: 다른 PC에서 열어 플레이하는 실제 확인은 사용자 몫
-- [x] **0-3. 씬 3개 + Additive 로드** (2026-10-07) — 플레이 확인 대기 — 임시값 사용(교체 대기: 레벨 배치도 10/9)
+- [x] **0-3. 씬 3개 + Additive 로드** (2026-10-07) — 플레이 확인 완료 (2026-10-08) — 임시값 사용(교체 대기: 레벨 배치도 10/9)
   - 결정 (2026-10-07): Shop 씬 전체를 `ShopRoot` (500, 0, 0) 아래에 둔다 — Farm · Shop이 동시에 로드되므로 공간이 겹치면 안 됨. BALANCE 9-1의 Shop 좌표는 `ShopRoot` 기준 로컬 좌표로 읽는다. Farm은 -X로 확장되므로 +X 쪽으로 분리. 오프셋은 루트 위치만 바꾸면 됨
   - 구현: `SceneBootstrapper`(Core, 구역 씬 이름 목록을 인스펙터로 받아 `LoadSceneAsync(Additive)`, 이미 열려 있으면 건너뜀, 모두 끝나면 `IsReady` + `Ready` 이벤트, 실패 시 Error 로그 후 Ready 안 함)
   - 씬 `Assets/_Project/Scenes/` Core · Farm · Shop, Build Settings 0 Core / 1 Farm / 2 Shop
@@ -250,14 +250,14 @@
   - 제거: 임시 씬 `_Empty01`, `Assets/Scenes` 폴더
   - 테스트: Core만 열고 Play → Core · Farm · Shop 모두 loaded, `IsReady = true`, 콘솔 0건 (오류 0 · 경고 0)
   - 참고: Farm이나 Shop만 열고 Play하면 Core가 없어 아무것도 시작되지 않는다 → 필요해지면 "항상 Core에서 플레이" 에디터 옵션을 별도 항목으로. 플레이어 · 카메라 이동은 1-1, 스폰 지점은 2-3
-- [x] **0-4. 문서 3종 + 테스트 어셈블리** (2026-10-07) — 플레이 확인 대기
+- [x] **0-4. 문서 3종 + 테스트 어셈블리** (2026-10-07) — 플레이 확인 완료 (2026-10-08)
   - 문서: CLAUDE.md · GDD.md · TASKS.md · BALANCE.md 저장소 루트에 커밋되어 있음 (0-0 · 0-2)
   - 구현: `NevrianGlowFarm.Logic` asmdef(`Scripts/Logic/`, `noEngineReferences: true` — 엔진 참조 자체를 막음), 식별용 `LogicAssembly`
   - 구현: `NevrianGlowFarm.Tests.EditMode` asmdef(`Tests/EditMode/`, Editor 전용, `UNITY_INCLUDE_TESTS`, Logic 참조)
   - 테스트 1개(`LogicAssembly_DoesNotReferenceUnityEngine` — Logic 어셈블리가 UnityEngine/UnityEditor를 참조하지 않음) — 전체 1개 통과
   - 참고: 런타임 스크립트(`Scripts/Core` 등)는 아직 Assembly-CSharp. 테스트 어셈블리는 Assembly-CSharp를 참조할 수 없으므로 MonoBehaviour 쪽 테스트가 필요해지면 Runtime asmdef를 추가한다. 규칙 테스트는 전부 Logic으로
   - 참고: 콘솔 경고 1건 "Account API did not become accessible" — `com.unity.ai.assistant` 패키지(에디터 전용, MCP 연결용)에서 발생, 프로젝트 코드와 무관
-- [x] **0-5. LogCollector** (2026-10-07) — 플레이 확인 대기
+- [x] **0-5. LogCollector** (2026-10-07) — 플레이 확인 완료 (2026-10-08)
   - 결정 (2026-10-07): 새 로그는 받는 즉시 파일에 쓰고(직후 크래시 대비), 횟수만 늘면 1초 간격으로 모아 쓴다 — 매 프레임 오류가 매 프레임 파일 쓰기가 되지 않게. 파일은 임시 파일에 쓴 뒤 교체(원자적 쓰기), 첫 로그가 들어올 때 생성(빈 파일 없음)
   - 구현: Logic `LogAggregator`(메시지+스택 묶기 · 횟수 · 최대 개수 초과분 집계), `LogLineFormatter`(한 줄 형식 · 줄바꿈 → ` ↵ `), `LogSeverity` · `LogContext`
   - 구현: Core `LogCollector`(`logMessageReceivedThreaded`, 실행 순서 -1000, 잠금으로 스레드 안전, 자기 로그 재귀 방지) → Core 씬 첫 오브젝트로 배치
@@ -268,7 +268,7 @@
   - 확인: 플레이 중 같은 예외 2회 → 세션 파일에 1줄 `x2`, 임시 파일 남지 않음
   - 결정 (2026-10-08): Unity AI Assistant 패키지(`com.unity.ai.assistant`, MCP 브리지) 경고는 걸러내지 않고 그대로 둔다. QA · "경고 0" 판정에서 `Account API did not become accessible` · `Failed to collect Windows signature for ...claude.exe` 두 문구는 무시 — 에디터 전용 패키지라 빌드 로그에는 나오지 않고, 걸러내면 패키지의 진짜 문제도 가려짐 (Claude 실행 파일의 ECDSA 서명을 패키지가 해석하지 못해 생기는 경고, 연결은 정상)
   - 참고: 일차 · 단계 · 구역은 아직 `Day 0 | - | -` — `SetDayAndPhase`는 1-3 GameManager, `SetZone`은 2-3 ZoneTransition에서 연결. 빌드(플레이어)에서의 동작 확인은 1-5 빌드 때
-- [x] **0-6. 임시 데이터 세트 Setup 메뉴** (2026-10-08) — 플레이 확인 대기 — 임시값 사용(교체 대기: 작물 CSV 10/11)
+- [x] **0-6. 임시 데이터 세트 Setup 메뉴** (2026-10-08) — 플레이 확인 완료 (2026-10-08) — 임시값 사용(교체 대기: 작물 CSV 10/11)
   - 결정 (2026-10-08): 이번 범위는 Settings 6종 + 작물 3종. 상품 · 스킬은 효과 구조(EffectSO · Modifier)를 정하는 3-3 · 4-3에서 같은 Setup 메뉴에 추가 — 미리 만든 효과 구조를 다시 뜯는 일을 피함
   - 결정 (2026-10-08): 작물 재수확은 `regrowDays`(간격) + `maxHarvests`(한 포기 총 수확 횟수)로 표현 — BALANCE "최대 3회"와 3-1 검산(9 · 13 · 17일차)이 총 3회이므로 "추가 횟수"보다 헷갈리지 않음. 거대 X 작물은 `giantChance = 0`
   - 결정 (2026-10-08): 구획 가격 · 씨앗 일일 입고량 · 인벤토리/진열대 확장 가격은 Settings가 아니라 상점 상품(BALANCE 9-2, 3-3)에 둔다
@@ -277,10 +277,20 @@
   - 에셋: `Data/Crops/crop_moonroot · crop_mushroomflower · crop_lanternfruit`, `Data/Stats/PlayerSettings · GameStartSettings · InventorySettings · CleaningSettings · SalesSettings · Progression`
   - 확인: 1회차 생성 9 → 값 BALANCE 2-1 ~ 2-7과 일치, 값 하나 바꾸고 2회차 → 유지 9 · 바꾼 값 그대로, 초기화 → 초기화 9 · 원래 값 복원. 콘솔 오류 · 경고 0 (AI Assistant 경고 제외)
   - 참고: 필드 이름이 2-1 CSV 임포터의 열 이름 기준이 된다. 김봉준 작물 CSV가 오면 열 이름을 이 필드에 맞추거나 임포터에서 대응표를 둔다
+- [x] **1-1. PlayerController (1인칭 카메라 전용)** (2026-10-08) — 플레이 확인 대기 — 임시값 사용(교체 대기: 레벨 배치도 10/9 — 시작 위치)
+  - 결정 (2026-10-08): 입력은 템플릿의 프로젝트 전체 입력 에셋(`Assets/InputSystem_Actions.inputactions`)의 `Player/Move · Look · Sprint`를 `InputActionReference`로 받는다 — 키 배치가 BALANCE 9-4와 같음. 핫바 · 상점 키 등 액션 정리와 에셋 위치 이동은 1-2에서 필요할 때
+  - 결정 (2026-10-08): 플레이어는 Core 씬에 둔다(구역을 오가며 유지). 몸(`Player`)이 yaw, 자식 카메라가 pitch · 눈높이 · 헤드밥. 구역 씬 로드 완료(`SceneBootstrapper.IsReady`) 전에는 움직이지 않음 — 땅이 올라오기 전 낙하 방지
+  - 구현: Logic `FirstPersonMath`(시점 yaw · pitch 제한, 헤드밥 위상 · 높이), `Systems/Player/PlayerController`(CharacterController 이동 · 중력 · 질주 · 헤드밥 · 커서 잠금, 수치는 `PlayerSettings` 에셋)
+  - 씬: Core에 `Player`(4, 0, 0) · -X 방향, CharacterController 높이 1.8 · 반지름 0.35 · 중심 0.9, `Main Camera`를 자식으로 이동(눈높이 1.7)
+  - 테스트 5개(시점 방향 · pitch 제한 · yaw 감기 · 헤드밥 위상 진행/정지 초기화 · 헤드밥 높이) — 전체 12개 통과
+  - 확인(자동): 플레이 30프레임 뒤 땅 위(y = 0, grounded), 카메라 높이 1.7, 콘솔 오류 · 경고 0 (AI Assistant 경고 제외)
+  - 미확인: 걷기 · 질주 · 시점 · 헤드밥의 실제 조작 — MCP에서 키 입력을 넣을 수 없어 사용자 플레이 확인으로 대신
+  - 참고: 농장 바닥(40×20 m) 끝에는 벽이 없어 밖으로 걸어 나가면 떨어진다 — 그레이박스 경계는 레벨 배치도(10/9) 반영 때
 
 ## 트러블슈팅
 | 문제 | 원인 | 해결 |
 |---|---|---|
 | Unity MCP `RunCommand`에서 `AssetDatabase.DeleteAsset` · `NewScene` 호출 시 "User interactions are not supported" | 사용자 확인이 필요한 API로 분류됨 | 삭제는 `Unity_ManageAsset(Delete)`, 씬 생성은 `Unity_ManageScene(Create)` 사용 |
 | MCP로 플레이 중 상태를 확인하면 프레임이 2에서 멈춤 | 에디터 창이 포커스를 잃으면 플레이 모드 프레임이 진행되지 않음 | `EditorApplication.isPaused = true` + `Step()`으로 프레임을 넘겨 확인, 끝나면 `isPaused = false`로 복구 |
+| MCP에서 `InputSystem.QueueStateEvent`로 키를 넣어도 플레이어가 움직이지 않음 (`wKey=False`) | 에디터 밖(MCP 호출 문맥)에서 큐에 넣은 이벤트가 플레이 프레임의 입력 업데이트로 처리되지 않음. Game view 포커스 설정을 바꿔도 동일 | 조작 확인은 사용자 플레이로. 자동 검증은 Logic 단위 테스트 + 정지 상태(위치 · 접지) 확인까지 |
 | (작업 중 겪을 때마다 추가) | | |
