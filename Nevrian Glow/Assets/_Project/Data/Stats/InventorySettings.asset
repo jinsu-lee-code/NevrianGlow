@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e969e450ee3437a409b3c1286d0f0142, type: 3}
+  m_Name: InventorySettings
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.InventorySettingsData
+  baseSlots: 4
+  slotsPerExpand: 4
+  maxSlots: 20
+  stackSize: 10
+  storageAccessRadius: 2
+  shelfBaseSlots: 6
+  shelfItemsPerSlot: 4
+  shelfSlotsPerUpgrade: 2
+  shelfSnapDistance: 0.6
+  placeDuration: 0.15

@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d918e429d19fca43b6259856884b4bd, type: 3}
+  m_Name: crop_lanternfruit
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.CropData
+  id: crop_lanternfruit
+  displayName: "\uB4F1\uBD88 \uC5F4\uB9E4"
+  seedPrice: 70
+  sellPrice: 80
+  growDays: 8
+  wetDays: 1
+  harvestYield: 2
+  regrowDays: 4
+  maxHarvests: 3
+  giantChance: 0
+  giantYieldMultiplier: 1
+  giantScale: 1

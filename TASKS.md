@@ -80,7 +80,7 @@
   - 저장: `persistentDataPath/Logs/session_날짜_시간.log`, 빌드에서도 동작, 디버그 창에 "로그 폴더 열기"
   - 테스트: 중복 묶기 · 형식 (순수 로직 부분)
   - 완료 조건: 일부러 Exception을 내면 세션 파일에 1줄 + 횟수 증가
-- [ ] **0-6. 임시 데이터 세트 Setup 메뉴** — 이후 모든 항목이 기획 입력 없이 돌아가게 하는 기반
+- [x] **0-6. 임시 데이터 세트 Setup 메뉴** — 이후 모든 항목이 기획 입력 없이 돌아가게 하는 기반 — 플레이 확인 대기 — 임시값 사용(교체 대기: 작물 CSV 10/11)
   - 메뉴 `Glow Farm/Setup/Create Placeholder Data`: BALANCE 2장 · 9장의 값으로 Settings 에셋 · CropData 3종 · 임시 상품 · 임시 스킬 에셋을 만든다
   - **멱등**: 여러 번 실행해도 결과가 같고, 이미 있는 에셋은 덮어쓰지 않는다(옵션으로 "초기값으로 되돌리기")
   - 나중에 들어올 CSV 임포터(2-1)와 **같은 id · 같은 필드**를 쓴다 → CSV가 오면 같은 에셋이 값만 갱신된다
@@ -266,7 +266,17 @@
   - 저장: `persistentDataPath/Logs/session_yyyyMMdd_HHmmss.log` = `%USERPROFILE%\AppData\LocalLow\FarmingDiary\Nevrian Glow Farm\Logs\`
   - 테스트 6개(묶기 · 스택 다르면 분리 · 최대 개수 · 줄 형식 · 빈 상황 `-` · 파일 형식) — 전체 7개 통과
   - 확인: 플레이 중 같은 예외 2회 → 세션 파일에 1줄 `x2`, 임시 파일 남지 않음
+  - 결정 (2026-10-08): Unity AI Assistant 패키지(`com.unity.ai.assistant`, MCP 브리지) 경고는 걸러내지 않고 그대로 둔다. QA · "경고 0" 판정에서 `Account API did not become accessible` · `Failed to collect Windows signature for ...claude.exe` 두 문구는 무시 — 에디터 전용 패키지라 빌드 로그에는 나오지 않고, 걸러내면 패키지의 진짜 문제도 가려짐 (Claude 실행 파일의 ECDSA 서명을 패키지가 해석하지 못해 생기는 경고, 연결은 정상)
   - 참고: 일차 · 단계 · 구역은 아직 `Day 0 | - | -` — `SetDayAndPhase`는 1-3 GameManager, `SetZone`은 2-3 ZoneTransition에서 연결. 빌드(플레이어)에서의 동작 확인은 1-5 빌드 때
+- [x] **0-6. 임시 데이터 세트 Setup 메뉴** (2026-10-08) — 플레이 확인 대기 — 임시값 사용(교체 대기: 작물 CSV 10/11)
+  - 결정 (2026-10-08): 이번 범위는 Settings 6종 + 작물 3종. 상품 · 스킬은 효과 구조(EffectSO · Modifier)를 정하는 3-3 · 4-3에서 같은 Setup 메뉴에 추가 — 미리 만든 효과 구조를 다시 뜯는 일을 피함
+  - 결정 (2026-10-08): 작물 재수확은 `regrowDays`(간격) + `maxHarvests`(한 포기 총 수확 횟수)로 표현 — BALANCE "최대 3회"와 3-1 검산(9 · 13 · 17일차)이 총 3회이므로 "추가 횟수"보다 헷갈리지 않음. 거대 X 작물은 `giantChance = 0`
+  - 결정 (2026-10-08): 구획 가격 · 씨앗 일일 입고량 · 인벤토리/진열대 확장 가격은 Settings가 아니라 상점 상품(BALANCE 9-2, 3-3)에 둔다
+  - 구현: `Scripts/Data/` — `ContentData`(id · 표시 이름 공통), `CropData`, `PlayerSettingsData`, `GameStartSettingsData`, `InventorySettingsData`, `CleaningSettingsData`(개수 규칙 `기본 + min(일차 ÷ n, 상한)`), `SalesSettingsData`, `ProgressionData`. 클래스 필드에는 수치 초기값 없음(범위 하한만)
+  - 구현: 메뉴 `Glow Farm/Setup/Create Placeholder Data`(없는 에셋만 생성, 있으면 유지) · `Glow Farm/Setup/Reset Placeholder Data to Defaults`(확인 창 후 BALANCE 값으로 덮어씀) — `PlaceholderDataSetup`, 수치는 이 파일 한 곳에만
+  - 에셋: `Data/Crops/crop_moonroot · crop_mushroomflower · crop_lanternfruit`, `Data/Stats/PlayerSettings · GameStartSettings · InventorySettings · CleaningSettings · SalesSettings · Progression`
+  - 확인: 1회차 생성 9 → 값 BALANCE 2-1 ~ 2-7과 일치, 값 하나 바꾸고 2회차 → 유지 9 · 바꾼 값 그대로, 초기화 → 초기화 9 · 원래 값 복원. 콘솔 오류 · 경고 0 (AI Assistant 경고 제외)
+  - 참고: 필드 이름이 2-1 CSV 임포터의 열 이름 기준이 된다. 김봉준 작물 CSV가 오면 열 이름을 이 필드에 맞추거나 임포터에서 대응표를 둔다
 
 ## 트러블슈팅
 | 문제 | 원인 | 해결 |

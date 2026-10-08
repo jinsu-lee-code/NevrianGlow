@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d918e429d19fca43b6259856884b4bd, type: 3}
+  m_Name: crop_mushroomflower
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.CropData
+  id: crop_mushroomflower
+  displayName: "\uBC84\uC12F\uAF43"
+  seedPrice: 20
+  sellPrice: 40
+  growDays: 4
+  wetDays: 2
+  harvestYield: 2
+  regrowDays: 0
+  maxHarvests: 1
+  giantChance: 0.02
+  giantYieldMultiplier: 2.5
+  giantScale: 2.2
