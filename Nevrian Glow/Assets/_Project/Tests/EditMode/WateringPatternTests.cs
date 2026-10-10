@@ -22,6 +22,35 @@ namespace NevrianGlowFarm.Tests
         }
 
         [Test]
+        public void Two_Across_IsPairInBed_XorTwo()
+        {
+            CollectionAssert.AreEqual(new[] { 5, 7 }, WateringPattern.Cells(5, 2, Total, PairDirection.Across));
+            CollectionAssert.AreEqual(new[] { 4, 6 }, WateringPattern.Cells(6, 2, Total, PairDirection.Across));
+            CollectionAssert.AreEqual(new[] { 4, 5 }, WateringPattern.Cells(5, 2, Total, PairDirection.Along));
+        }
+
+        [Test]
+        public void Two_MatchesLayout_AlongAndAcrossNeighbors()
+        {
+            // i^1 = along만 다름(across 같음), i^2 = across만 다름(along 같음) — 둘 다 붙어 있는 옆 칸
+            var c = FarmLayout.CellOffset(5, 16, 2, 5.6, 11.2);
+            var along = FarmLayout.CellOffset(5 ^ 1, 16, 2, 5.6, 11.2);
+            var across = FarmLayout.CellOffset(5 ^ 2, 16, 2, 5.6, 11.2);
+            Assert.AreEqual(c.Across, along.Across, 1e-9);
+            Assert.AreEqual(2.0, System.Math.Abs(c.Along - along.Along), 1e-9);
+            Assert.AreEqual(c.Along, across.Along, 1e-9);
+            Assert.AreEqual(2.0, System.Math.Abs(c.Across - across.Across), 1e-9);
+        }
+
+        [Test]
+        public void Direction_OnlyAffectsTwo()
+        {
+            CollectionAssert.AreEqual(WateringPattern.Cells(6, 4, Total), WateringPattern.Cells(6, 4, Total, PairDirection.Across));
+            CollectionAssert.AreEqual(WateringPattern.Cells(9, 8, Total), WateringPattern.Cells(9, 8, Total, PairDirection.Across));
+            CollectionAssert.AreEqual(new[] { 6 }, WateringPattern.Cells(6, 1, Total, PairDirection.Across));
+        }
+
+        [Test]
         public void Four_IsWholeBed()
         {
             CollectionAssert.AreEqual(new[] { 4, 5, 6, 7 }, WateringPattern.Cells(6, 4, Total));

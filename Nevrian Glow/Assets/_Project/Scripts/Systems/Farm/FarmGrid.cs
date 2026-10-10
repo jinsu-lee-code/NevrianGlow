@@ -57,6 +57,9 @@ namespace NevrianGlowFarm.Systems.Farm
         private readonly List<FarmCellView> views = new List<FarmCellView>();
         private Hotbar hotbar;
         private float busyUntil;
+        private Transform viewer;
+        private int aimIndex = -1;
+        private PairDirection aimPair;
 
         public FarmState State => state;
         public int CellCount => state != null ? state.Cells.Count : 0;
@@ -85,6 +88,9 @@ namespace NevrianGlowFarm.Systems.Farm
             hotbar = FindFirstObjectByType<Hotbar>();
             if (hotbar == null)
                 Debug.LogError("[FarmGrid] Hotbar를 찾지 못함 — Core 씬에서 플레이", this);
+            // 물뿌리개 2칸 방향 기준 = 1인칭 카메라 (Core 씬)
+            var cam = Camera.main;
+            viewer = cam != null ? cam.transform : null;
             SpawnMissingViews();
             RefreshAll();
         }
@@ -109,7 +115,7 @@ namespace NevrianGlowFarm.Systems.Farm
             if (held is WateringCanData can)
             {
                 // 범위(등급 칸 수) 안에서 물이 필요한 칸이 하나라도 있으면 (조준한 칸이 아니어도)
-                int thirsty = CountThirsty(index, can);
+                int thirsty = CountThirsty(index, can, PairFor(index));
                 if (thirsty == 0)
                     return null;
                 return can.CellCount > 1 ? $"물주기 ({thirsty}칸)" : "물주기";
@@ -123,22 +129,55 @@ namespace NevrianGlowFarm.Systems.Farm
                 return;
 
             // 동작이 있는 도구(물뿌리개 기울이기 0.3초)는 동작이 끝난 뒤 효과 — 그동안은 다시 쓰지 않는다.
+            // 2칸 짝 방향은 누른 순간 보던 방향으로 정한다 (기울이는 동안 고개를 돌려도 바뀌지 않음).
+            var pair = PairFor(index);
             if (held is ToolData tool && tool.UseDelay > 0f)
             {
                 busyUntil = Time.time + tool.UseDelay;
-                StartCoroutine(UseAfter(index, held, tool.UseDelay));
+                StartCoroutine(UseAfter(index, held, pair, tool.UseDelay));
                 return;
             }
-            UseNow(index, held);
+            UseNow(index, held, pair);
         }
 
-        private IEnumerator UseAfter(int index, ItemData held, float delay)
+        private IEnumerator UseAfter(int index, ItemData held, PairDirection pair, float delay)
         {
             yield return new WaitForSeconds(delay);
-            UseNow(index, held);
+            UseNow(index, held, pair);
         }
 
-        private void UseNow(int index, ItemData held)
+        /// <summary>
+        /// 조준점이 움직일 때(InteractionRaycaster → FarmCellView) — 2칸 짝 방향이 바뀌면 true(프롬프트 칸 수 다시 받기).
+        /// </summary>
+        public bool UpdateAim(int index, ItemData held)
+        {
+            if (!(held is WateringCanData) || state == null)
+                return false;
+            var pair = PairFor(index);
+            if (index == aimIndex && pair == aimPair)
+                return false;
+            aimIndex = index;
+            aimPair = pair;
+            return true;
+        }
+
+        public void ClearAim() => aimIndex = -1;
+
+        /// <summary>
+        /// 같은 밭의 두 옆 칸(i^1 · i^2) 중 플레이어가 보는 수평 방향에 더 가까운 쪽. 칸의 실제 위치로 고르므로 밭 배치 방향에 기대지 않는다.
+        /// </summary>
+        private PairDirection PairFor(int index)
+        {
+            int along = index ^ 1, across = index ^ 2;
+            if (viewer == null || across >= views.Count || along >= views.Count)
+                return PairDirection.Along;
+            Vector3 look = Vector3.ProjectOnPlane(viewer.forward, Vector3.up);
+            Vector3 a = Vector3.ProjectOnPlane(views[along].transform.position - views[index].transform.position, Vector3.up).normalized;
+            Vector3 b = Vector3.ProjectOnPlane(views[across].transform.position - views[index].transform.position, Vector3.up).normalized;
+            return Mathf.Abs(Vector3.Dot(look, a)) >= Mathf.Abs(Vector3.Dot(look, b)) ? PairDirection.Along : PairDirection.Across;
+        }
+
+        private void UseNow(int index, ItemData held, PairDirection pair)
         {
             var cell = state.Cells[index];
             bool changed = false;
@@ -146,7 +185,7 @@ namespace NevrianGlowFarm.Systems.Farm
             if (held is WateringCanData can)
             {
                 int watered = 0;
-                foreach (int i in WateringPattern.Cells(index, can.CellCount, state.Cells.Count))
+                foreach (int i in WateringPattern.Cells(index, can.CellCount, state.Cells.Count, pair))
                 {
                     var c = state.Cells[i];
                     if (c.HasCrop && FarmRules.TryWater(c, SpecOf(c.CropId)))
@@ -177,10 +216,10 @@ namespace NevrianGlowFarm.Systems.Farm
         }
 
         /// <summary>물뿌리개 범위 안에서 물을 주면 바뀌는 칸 수.</summary>
-        private int CountThirsty(int index, WateringCanData can)
+        private int CountThirsty(int index, WateringCanData can, PairDirection pair)
         {
             int count = 0;
-            foreach (int i in WateringPattern.Cells(index, can.CellCount, state.Cells.Count))
+            foreach (int i in WateringPattern.Cells(index, can.CellCount, state.Cells.Count, pair))
             {
                 var c = state.Cells[i];
                 if (c.HasCrop && state.StatusOf(i) == FarmCellStatus.Growing && c.WetDaysLeft < SpecOf(c.CropId).WetDays)

@@ -8,7 +8,7 @@ namespace NevrianGlowFarm.Systems.Farm
     /// 밭 한 칸의 겉모습 + 상호작용 창구. 상태와 규칙은 FarmGrid(→ Logic FarmRules)에 있고 여기는 전달 · 표시만 한다.
     /// 프리팹 구조: 루트(콜라이더 · Interactable 레이어) / Soil(흙) / Crop(작물) — 모델 교체(5-2)는 자식만 바꾼다.
     /// </summary>
-    public class FarmCellView : MonoBehaviour, IItemUseTarget, IHandInteractable
+    public class FarmCellView : MonoBehaviour, IItemUseTarget, IHandInteractable, IAimPointTarget
     {
         [Header("참조")]
         [Tooltip("흙 표시 (색으로 개간 · 수분 상태)")]
@@ -35,6 +35,9 @@ namespace NevrianGlowFarm.Systems.Farm
         public void Use(ItemData held) { if (grid != null) grid.Use(index, held); }
         public string GetHandPrompt() => grid != null ? grid.GetHandPrompt(index) : null;
         public void InteractHand() { if (grid != null) grid.InteractHand(index); }
+        // 보는 방향이 바뀌면 2칸 물뿌리개 짝이 바뀐다 → 프롬프트 칸 수를 다시 받는다
+        public bool UpdateAim(Vector3 point, ItemData held) => grid != null && grid.UpdateAim(index, held);
+        public void ClearAim() { if (grid != null) grid.ClearAim(); }
 
         /// <summary>물을 받은 칸의 짧은 반응 — 흙이 살짝 부풀었다 돌아온다 (물방울 VFX는 5-8).</summary>
         public void Splash()
