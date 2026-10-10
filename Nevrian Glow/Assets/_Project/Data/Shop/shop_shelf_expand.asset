@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68fa8dd89a6f8b4479e30da8f34972c2, type: 3}
+  m_Name: shop_shelf_expand
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.ShelfExpandProductData
+  id: shop_shelf_expand
+  displayName: "\uC9C4\uC5F4\uB300 \uD655\uC7A5"
+  sortOrder: 32
+  category: "\uD655\uC7A5"
+  repeatable: 0
+  tiers:
+  - price: 150
+    requirements: []
+  - price: 250
+    requirements: []
+  - price: 400
+    requirements: []
+  dailyStock: 
+  stockFromNextDay: 0
+  slots: 2

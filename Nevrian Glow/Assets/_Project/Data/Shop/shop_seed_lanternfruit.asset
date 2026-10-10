@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0e503d28d72f594dadd7c22f29d6c3b, type: 3}
+  m_Name: shop_seed_lanternfruit
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.ItemProductData
+  id: shop_seed_lanternfruit
+  displayName: "\uB4F1\uBD88 \uC5F4\uB9E4 \uC528\uC557"
+  sortOrder: 12
+  category: "\uC528\uC557"
+  repeatable: 1
+  tiers:
+  - price: 70
+    requirements:
+    - kind: 1
+      targetId: skill_unlock_lantern
+      value: 1
+  dailyStock: 04000000
+  stockFromNextDay: 0
+  item: {fileID: 11400000, guid: 7163b34af8cd65b4294c0a9f1fa9a84b, type: 2}
+  count: 1

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NevrianGlowFarm.Data;
 using NevrianGlowFarm.Logic.Game;
 using UnityEngine;
@@ -10,7 +11,7 @@ namespace NevrianGlowFarm.Core
     /// 구역 씬이 모두 올라온 뒤(SceneBootstrapper.Ready) 1일차 상점 단계로 시작한다.
     /// </summary>
     [DefaultExecutionOrder(-100)]
-    public class GameManager : MonoBehaviour
+    public class GameManager : MonoBehaviour, Logic.Shop.IUnlockContext
     {
         [Header("참조")]
         [Tooltip("시작 자금 (Data/Stats/GameStartSettings)")]
@@ -38,6 +39,8 @@ namespace NevrianGlowFarm.Core
         private DayCycle cycle;
         private Wallet wallet;
         private Progression progression;
+        private readonly SkillLevels skills = new SkillLevels();
+        private readonly GameRecord record = new GameRecord();
 
         /// <summary>실행 중인 GameManager. Core 씬이 없으면 null.</summary>
         public static GameManager Instance => instance;
@@ -122,6 +125,26 @@ namespace NevrianGlowFarm.Core
             if (gain.LeveledUp)
                 GameEvents.RaiseLeveledUp(progression.Level, gain.LevelsGained);
             return gain;
+        }
+
+        // ── 스킬 단계 · 기록 (상점 해금 조건이 읽는다, IUnlockContext) ──
+
+        public int SkillLevel(string skillId) => skills.LevelOf(skillId);
+        public IReadOnlyDictionary<string, int> AllSkillLevels => skills.All;
+        public bool HasHarvested(string cropId) => record.HasHarvested(cropId);
+
+        /// <summary>스킬 단계를 정한다. SP 소비 · 선행 조건은 SkillSystem(4-3)이 확인한 뒤 부른다 (지금은 디버그 창).</summary>
+        public void SetSkillLevel(string skillId, int level)
+        {
+            if (skills.SetLevel(skillId, level))
+                GameEvents.RaiseSkillLevelChanged(skillId, skills.LevelOf(skillId));
+        }
+
+        /// <summary>수확을 기록한다 (밭이 부른다). 처음이면 알린다.</summary>
+        public void RecordHarvest(string cropId)
+        {
+            if (record.RecordHarvest(cropId))
+                GameEvents.RaiseCropFirstHarvested(cropId);
         }
 
         /// <summary>다음 단계로 (스킬 다음은 다음 날 상점). 각 단계의 "끝내기"가 부른다.</summary>

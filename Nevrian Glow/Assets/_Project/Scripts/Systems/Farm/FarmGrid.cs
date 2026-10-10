@@ -255,6 +255,8 @@ namespace NevrianGlowFarm.Systems.Farm
             {
                 hotbar.TryAdd(crop, result.Yield);
                 RefreshCell(index);
+                if (GameManager.Instance != null)
+                    GameManager.Instance.RecordHarvest(crop.Id); // 해금 조건 "첫 수확"
             }
         }
 
@@ -292,6 +294,20 @@ namespace NevrianGlowFarm.Systems.Farm
         }
 
         // ── 표시 ─────────────────────────────────────────────
+
+        public int PlotCount => state != null ? state.PlotCount : 0;
+        public int MaxPlotCount => settings != null ? settings.MaxPlotCount : 0;
+
+        /// <summary>밭 구획을 늘린다 (상점 밭 구획 확장 3-3). 새 칸은 미개간. 최대를 넘으면 false.</summary>
+        public bool TryAddPlots(int plots)
+        {
+            if (state == null || plots <= 0 || state.PlotCount + plots > settings.MaxPlotCount)
+                return false;
+            state.SetPlotCount(state.PlotCount + plots);
+            SpawnMissingViews();
+            RefreshAll();
+            return true;
+        }
 
         private void SpawnMissingViews()
         {

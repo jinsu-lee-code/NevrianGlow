@@ -31,6 +31,14 @@ namespace NevrianGlowFarm.Core
         /// <summary>레벨이 오를 때 (새 레벨, 이번에 오른 레벨 수) — 레벨업 연출 · 튜토리얼 첫 스킬.</summary>
         public static event Action<int, int> LeveledUp;
 
+        /// <summary>스킬 단계가 바뀔 때 (스킬 id, 새 단계) — 상점 해금 · 스킬 효과(4-3).</summary>
+        public static event Action<string, int> SkillLevelChanged;
+
+        /// <summary>작물을 처음 수확했을 때 (작물 id) — 해금 조건 "첫 수확".</summary>
+        public static event Action<string> CropFirstHarvested;
+
+        internal static void RaiseSkillLevelChanged(string skillId, int level) => SkillLevelChanged?.Invoke(skillId, level);
+        internal static void RaiseCropFirstHarvested(string cropId) => CropFirstHarvested?.Invoke(cropId);
         internal static void RaisePhaseChanged(PhaseChange change) => PhaseChanged?.Invoke(change);
         internal static void RaiseDayChanged(int day) => DayChanged?.Invoke(day);
         internal static void RaiseMoneyChanged(int money) => MoneyChanged?.Invoke(money);
@@ -48,6 +56,8 @@ namespace NevrianGlowFarm.Core
             SkillPointsChanged = null;
             ExpChanged = null;
             LeveledUp = null;
+            SkillLevelChanged = null;
+            CropFirstHarvested = null;
         }
     }
 }

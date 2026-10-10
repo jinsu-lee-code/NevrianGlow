@@ -155,6 +155,16 @@
                     "interactions": "",
                     "initialStateCheck": false,
                     "priority": 0
+                },
+                {
+                    "name": "Shop",
+                    "type": "Button",
+                    "id": "b2d94e17-6a3c-4f58-8e01-7c5a9d3f2b64",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
                 }
             ],
             "bindings": [
@@ -683,6 +693,17 @@
                     "processors": "",
                     "groups": "Keyboard&Mouse",
                     "action": "SkipSales",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "e6a1c3d8-94b7-4f25-b0a3-5d8f1e2c7a96",
+                    "path": "<Keyboard>/b",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "Shop",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

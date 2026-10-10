@@ -24,6 +24,15 @@ namespace NevrianGlowFarm.Editor
         private const string ItemsFolder = DataRoot + "/Items";
         private const string ZonesFolder = DataRoot + "/Zones";
         private const string CustomersFolder = DataRoot + "/Customers";
+        private const string ShopFolder = DataRoot + "/Shop";
+
+        // BALANCE 9-2: 작물 순서(Crops)대로 씨앗 가격 · 하루 입고량 · 해금 스킬 (없으면 기본 상품)
+        private static readonly (int Price, int Stock, string Skill)[] SeedProducts =
+        {
+            (10, 12, null),
+            (20, 8, "skill_unlock_mushroom"),
+            (70, 4, "skill_unlock_lantern"),
+        };
         private const string CustomerPrefabPath = "Assets/_Project/Prefabs/Shop/customer.prefab";
 
         // BALANCE 9-5: 피피(작은) · 오르(큰). 색 · 속도 · 바구니 자리는 임시 (2026-10-11)
@@ -320,6 +329,8 @@ namespace NevrianGlowFarm.Editor
                 });
             }
 
+            EnsureProducts(resetExisting, report);
+
             // BALANCE 2-7 (v1 2026-10-10: 80 + 40 × (레벨 − 1) = 40 + 40 × 레벨 → base 100 → 40)
             Ensure<ProgressionData>($"{StatsFolder}/Progression.asset", resetExisting, report, so =>
             {
@@ -358,6 +369,121 @@ namespace NevrianGlowFarm.Editor
                 var element = list.GetArrayElementAtIndex(list.arraySize - 1);
                 element.FindPropertyRelative("item").objectReferenceValue = item;
                 element.FindPropertyRelative("count").intValue = count;
+            }
+        }
+
+        // ── 상품 (BALANCE 9-2 v1 임시 세트, 3-3 2026-10-11) ──
+
+        private readonly struct Tier
+        {
+            public readonly int Price;
+            public readonly string SkillId;
+            public readonly int SkillLevel;
+
+            public Tier(int price, string skillId = null, int skillLevel = 0)
+            {
+                Price = price;
+                SkillId = skillId;
+                SkillLevel = skillLevel;
+            }
+        }
+
+        private static void EnsureProducts(bool resetExisting, Report report)
+        {
+            // 씨앗: 반복 상품, 하루 입고량 (BALANCE 9-2). 작물 해금 스킬이 있어야 보인다.
+            for (int i = 0; i < Crops.Length; i++)
+            {
+                var row = Crops[i];
+                var seed = AssetDatabase.LoadAssetAtPath<ItemData>($"{ItemsFolder}/{row.SeedId}.asset");
+                var (price, stock, skill) = SeedProducts[i];
+                string id = "shop_seed_" + row.Id.Substring("crop_".Length);
+                Ensure<ItemProductData>($"{ShopFolder}/{id}.asset", resetExisting, report, so =>
+                {
+                    SetProduct(so, id, row.SeedName, 10 + i, "씨앗", true, new[] { new Tier(price, skill, skill != null ? 1 : 0) }, new[] { stock });
+                    so.FindProperty("item").objectReferenceValue = seed;
+                    so.FindProperty("count").intValue = 1;
+                });
+            }
+
+            EnsureToolUpgrade("shop_hoe_upgrade", "괭이 업그레이드", 20, "tool_hoe_1", new[] { "tool_hoe_2", "tool_hoe_3" },
+                new[] { new Tier(150), new Tier(400) }, resetExisting, report);
+            EnsureToolUpgrade("shop_mop_upgrade", "대걸레 업그레이드", 21, "tool_mop_1", new[] { "tool_mop_2", "tool_mop_3" },
+                new[] { new Tier(120), new Tier(350) }, resetExisting, report);
+            EnsureToolUpgrade("shop_watering_upgrade", "물뿌리개 업그레이드", 22, "tool_watering_1", new[] { "tool_watering_2", "tool_watering_3", "tool_watering_4" },
+                new[] { new Tier(100, "skill_watering_license", 1), new Tier(250, "skill_watering_license", 2), new Tier(500, "skill_watering_license", 3) }, resetExisting, report);
+
+            Ensure<PlotExpandProductData>($"{ShopFolder}/shop_plot_expand.asset", resetExisting, report, so =>
+            {
+                SetProduct(so, "shop_plot_expand", "밭 구획 확장", 30, "확장", false, new[] { new Tier(250), new Tier(600), new Tier(1400) }, null);
+                so.FindProperty("plots").intValue = 1;
+            });
+            // 가방 7단계: skill_bag_license 1 → 1~2단계 / 2 → 3~5단계 / 3 → 6~7단계 (임시)
+            Ensure<BagExpandProductData>($"{ShopFolder}/shop_bag_expand.asset", resetExisting, report, so =>
+            {
+                const string license = "skill_bag_license";
+                SetProduct(so, "shop_bag_expand", "가방 확장", 31, "확장", false, new[]
+                {
+                    new Tier(100, license, 1), new Tier(200, license, 1),
+                    new Tier(300, license, 2), new Tier(500, license, 2), new Tier(800, license, 2),
+                    new Tier(1200, license, 3), new Tier(1600, license, 3),
+                }, null);
+                so.FindProperty("slots").intValue = 4;
+            });
+            Ensure<ShelfExpandProductData>($"{ShopFolder}/shop_shelf_expand.asset", resetExisting, report, so =>
+            {
+                SetProduct(so, "shop_shelf_expand", "진열대 확장", 32, "확장", false, new[] { new Tier(150), new Tier(250), new Tier(400) }, null);
+                so.FindProperty("slots").intValue = 2;
+            });
+        }
+
+        private static void EnsureToolUpgrade(string id, string name, int order, string baseId, string[] tierIds, Tier[] tiers, bool resetExisting, Report report)
+        {
+            Ensure<ToolUpgradeProductData>($"{ShopFolder}/{id}.asset", resetExisting, report, so =>
+            {
+                SetProduct(so, id, name, order, "도구", false, tiers, null);
+                so.FindProperty("baseTool").objectReferenceValue = AssetDatabase.LoadAssetAtPath<ToolData>($"{ToolsFolder}/{baseId}.asset");
+                var list = so.FindProperty("tierTools");
+                list.ClearArray();
+                for (int i = 0; i < tierIds.Length; i++)
+                {
+                    list.InsertArrayElementAtIndex(i);
+                    list.GetArrayElementAtIndex(i).objectReferenceValue = AssetDatabase.LoadAssetAtPath<ToolData>($"{ToolsFolder}/{tierIds[i]}.asset");
+                }
+            });
+        }
+
+        private static void SetProduct(SerializedObject so, string id, string name, int order, string category, bool repeatable, Tier[] tiers, int[] dailyStock)
+        {
+            SetIdentity(so, id, name);
+            so.FindProperty("sortOrder").intValue = order;
+            so.FindProperty("category").stringValue = category;
+            so.FindProperty("repeatable").boolValue = repeatable;
+            so.FindProperty("stockFromNextDay").boolValue = false; // BALANCE 3-8 추천값 미채택
+            var list = so.FindProperty("tiers");
+            list.ClearArray();
+            for (int i = 0; i < tiers.Length; i++)
+            {
+                list.InsertArrayElementAtIndex(i);
+                var t = list.GetArrayElementAtIndex(i);
+                t.FindPropertyRelative("price").intValue = tiers[i].Price;
+                var reqs = t.FindPropertyRelative("requirements");
+                reqs.ClearArray();
+                if (tiers[i].SkillId == null)
+                    continue;
+                reqs.InsertArrayElementAtIndex(0);
+                var r = reqs.GetArrayElementAtIndex(0);
+                r.FindPropertyRelative("kind").enumValueIndex = (int)Logic.Shop.UnlockKind.SkillLevel;
+                r.FindPropertyRelative("targetId").stringValue = tiers[i].SkillId;
+                r.FindPropertyRelative("value").intValue = tiers[i].SkillLevel;
+            }
+            var stock = so.FindProperty("dailyStock");
+            stock.ClearArray();
+            if (dailyStock == null)
+                return;
+            for (int i = 0; i < dailyStock.Length; i++)
+            {
+                stock.InsertArrayElementAtIndex(i);
+                stock.GetArrayElementAtIndex(i).intValue = dailyStock[i];
             }
         }
 

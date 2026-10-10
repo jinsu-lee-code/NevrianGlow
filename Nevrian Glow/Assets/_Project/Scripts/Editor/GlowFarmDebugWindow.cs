@@ -37,6 +37,8 @@ namespace NevrianGlowFarm.Editor
             EditorGUILayout.Space();
             DrawSalesSection();
             EditorGUILayout.Space();
+            DrawSkillSection();
+            EditorGUILayout.Space();
             DrawHotbarSection();
             EditorGUILayout.Space();
             DrawLogSection();
@@ -144,6 +146,38 @@ namespace NevrianGlowFarm.Editor
             EditorGUILayout.LabelField("장사 시작 때 확정", locked);
             if (GUILayout.Button("바닥 쓰레기 · 얼룩 모두 치우기"))
                 cleaning.DebugCleanAll();
+        }
+
+        // 스킬 단계 (SkillSystem 4-3 전 임시) — 상점 상품 해금 조건에 나오는 스킬 id를 모아 단계를 바로 바꾼다 (SP 소비 없음)
+        private void DrawSkillSection()
+        {
+            EditorGUILayout.LabelField("스킬 단계 (4-3 전 임시)", EditorStyles.boldLabel);
+            var game = GameManager.Instance;
+            var shop = Systems.Shop.ShopSystem.Instance;
+            if (!Application.isPlaying || game == null || !game.IsStarted || shop == null)
+            {
+                EditorGUILayout.HelpBox("플레이 중일 때 상점 해금 조건의 스킬 단계를 바꿀 수 있다 (SP를 쓰지 않음).", MessageType.None);
+                return;
+            }
+            var ids = new System.Collections.Generic.SortedSet<string>();
+            foreach (var p in shop.Products)
+                foreach (var t in p.Tiers)
+                    foreach (var r in t.Requirements)
+                        if (r.Kind == Logic.Shop.UnlockKind.SkillLevel && !string.IsNullOrEmpty(r.TargetId))
+                            ids.Add(r.TargetId);
+            foreach (var id in ids)
+            {
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    int level = game.SkillLevel(id);
+                    EditorGUILayout.LabelField(id, $"{level}단계");
+                    if (GUILayout.Button("-", GUILayout.Width(30)))
+                        game.SetSkillLevel(id, level - 1);
+                    if (GUILayout.Button("+", GUILayout.Width(30)))
+                        game.SetSkillLevel(id, level + 1);
+                }
+            }
+            EditorGUILayout.LabelField("오늘 상점 지출", $"{shop.SpentToday}달러");
         }
 
         // 장사 단계 진행 (SalesSystem 3-2) — 진행 요약 · 건너뛰기(게임의 Space와 같은 함수)

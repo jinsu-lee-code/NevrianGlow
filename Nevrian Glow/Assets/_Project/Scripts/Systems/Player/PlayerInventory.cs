@@ -131,6 +131,37 @@ namespace NevrianGlowFarm.Systems.Player
             return removed;
         }
 
+        /// <summary>
+        /// 핫바 · 가방(또는 손에 든 묶음)에 있는 fromId 하나를 같은 칸에서 toItem 하나로 바꾼다 (상점 도구 등급 교체 3-3). 없으면 false.
+        /// </summary>
+        public bool TryReplaceOne(string fromId, ItemData toItem)
+        {
+            if (fromId == null || toItem == null || hotbar == null || !IsKnown(toItem))
+                return false;
+            foreach (var slots in containers)
+            {
+                for (int i = 0; i < slots.SlotCount; i++)
+                {
+                    if (slots[i].ItemId != fromId || !slots.TryRemoveAt(i, 1))
+                        continue;
+                    if (!slots.TryPlace(i, toItem.Id, 1))
+                    {
+                        slots.TryPlace(i, fromId, 1); // 되돌림 — 칸에 다른 묶음이 남은 경우
+                        continue;
+                    }
+                    NotifyChanged();
+                    return true;
+                }
+            }
+            if (cursor.ItemId == fromId && cursor.Count == 1)
+            {
+                cursor = new ItemStack(toItem.Id, 1);
+                NotifyChanged();
+                return true;
+            }
+            return false;
+        }
+
         /// <summary>핫바 · 가방에 있는 그 아이템 개수 (손에 든 묶음 제외).</summary>
         public int CountOf(ItemData item) => item == null || hotbar == null ? 0 : InventoryRules.CountOf(containers, item.Id);
 

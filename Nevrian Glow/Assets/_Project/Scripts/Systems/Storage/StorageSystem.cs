@@ -105,6 +105,21 @@ namespace NevrianGlowFarm.Systems.Storage
             return taken;
         }
 
+        /// <summary>창고에 있는 fromId 하나를 toItem 하나로 바꾼다 (상점 도구 등급 교체 3-3). 없으면 false.</summary>
+        public bool TryReplaceOne(string fromId, ItemData toItem)
+        {
+            if (storage == null || toItem == null || storage.CountOf(fromId) <= 0 || !storage.TryWithdraw(fromId, 1))
+                return false;
+            if (!storage.TryDeposit(toItem.Id, 1))
+            {
+                storage.TryDeposit(fromId, 1); // 되돌림 — 보관 불가 아이템
+                return false;
+            }
+            RefreshDebugView();
+            Changed?.Invoke();
+            return true;
+        }
+
         private void Notify(PlayerInventory inventory)
         {
             RefreshDebugView();

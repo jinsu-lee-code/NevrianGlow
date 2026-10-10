@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 410e4a4bb6bf8624786cdb3a9ba27ef1, type: 3}
+  m_Name: shop_hoe_upgrade
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.ToolUpgradeProductData
+  id: shop_hoe_upgrade
+  displayName: "\uAD2D\uC774 \uC5C5\uADF8\uB808\uC774\uB4DC"
+  sortOrder: 20
+  category: "\uB3C4\uAD6C"
+  repeatable: 0
+  tiers:
+  - price: 150
+    requirements: []
+  - price: 400
+    requirements: []
+  dailyStock: 
+  stockFromNextDay: 0
+  baseTool: {fileID: 11400000, guid: 5d4799738cea1d74cbf0b9bd5902453f, type: 2}
+  tierTools:
+  - {fileID: 11400000, guid: ba5779e1008bc0e48a20978468ee9851, type: 2}
+  - {fileID: 11400000, guid: 3641da3635c1fb1459969cc5481cff8b, type: 2}
