@@ -100,7 +100,7 @@
   - 핫바 칸 수는 데이터(기본 4, 최대 8). 시작 소지품 BALANCE 2-3 임시안
   - 범위 밖: 수량 쌓기 · 가방 · Q · Tab은 2-2
   - 테스트: 휠 선택 순환, 칸 수 변경 시 선택 유지
-- [ ] **1-3. GameManager 상태 머신 + Glow Farm 디버그 창**
+- [x] **1-3. GameManager 상태 머신 + Glow Farm 디버그 창** — 플레이 확인 대기
   - 일차 · 단계(상점 → 농사 → 청소·진열 → 장사 → 정산 → 스킬), `SetPhase`, `GameEvents.PhaseChanged`
   - 디버그 창: 다음 날, 단계 강제 전환, 달러 · SP 추가
   - 테스트: 단계 순서 · 일차 증가 (순수 로직)
@@ -326,6 +326,16 @@
   - 플레이 확인 (2026-10-10, 사용자): 키 1~4 · 휠 · 좌클릭 · E 정상
   - 피드백 (2026-10-10): 좌클릭으로 켠 기둥 색을 E가 끄고 그 반대도 됨 → 원인: `InteractionProbe`가 두 입력에 색 켜기/끄기 상태 하나를 같이 써서 서로의 표시를 뒤집음(입력 분리 · 횟수는 정상) → 수정: 입력별 색으로 0.25초 깜빡임(좌클릭 = 시안, E = 마젠타), 새 입력은 이전 깜빡임을 덮어씀, 깜빡이는 동안에만 Update. 확인(자동): 좌클릭 → 시안, 이어서 E → 마젠타, 0.3초 뒤 기본색, 연속 좌클릭도 매번 시안, 콘솔 0건
   - 참고: 칸 수를 줄이면 없어진 칸의 아이템은 사라진다(게임에서는 늘리기만, 줄이기는 디버그용). 비료 · 씨앗 · 작물 아이템은 4-6 · 1-4 · 2-2에서 `ItemData`로 추가
+- [x] **1-3. GameManager 상태 머신 + Glow Farm 디버그 창** (2026-10-10) — 플레이 확인 대기
+  - 결정 (2026-10-10): 규칙(`DayCycle` 일차 · 단계, `Wallet` 달러 · SP)은 Logic, `GameManager`는 알림 · 로그 연결만 하는 얇은 어댑터 — 측정 봇(4-1) · 저장(6-1)이 같은 코드를 쓴다
+  - 결정 (2026-10-10): 진행 순서는 `DayCycle.Order` 배열이 정한다(enum 값 순서에 기대지 않음). 스킬 다음 = 다음 날 상점, 일차가 바뀔 때 `GameEvents.DayChanged` 1회 → 밤 처리(1-4)는 여기에 붙인다
+  - 결정 (2026-10-10): 달러 · SP는 0 아래로 내려가지 않고, 모자라면 실패(false) + 변화 없음. 0만큼 바꾸기는 "바뀐 것 없음"으로 알리지 않는다
+  - 구현: Logic `DayPhase`(상점 · 농사 · 청소·진열 · 장사 · 정산 · 스킬, 한국어 이름) · `DayCycle`(`Advance` · `AdvanceToNextDay` · `TrySetPhase`, 결과 `PhaseChange`) · `Wallet`
+  - 구현: Core `GameEvents`(`PhaseChanged` · `DayChanged` · `MoneyChanged` · `SkillPointsChanged`, 플레이 시작 시 구독자 초기화), `GameManager`(Core `GameManager` 오브젝트, 구역 씬 로드 완료 후 1일차 상점 · 시작 자금 150으로 시작, 단계가 바뀔 때 `LogCollector.SetDayAndPhase` 호출)
+  - 구현: 디버그 창 "게임 진행" — 현재 일차 · 단계 · 달러 · SP, 다음 단계 · 다음 날, 단계 강제 전환, 달러 · SP 더하기/빼기 (창 맨 위로)
+  - 테스트 12개(시작 상태 · 단계 순서 · 스킬 → 다음 날 · 6일 진행 시 일차 변경 6회 · 다음 날 건너뛰기 · 강제 전환 / 같은 단계 무시 · 잘못된 시작 / 달러 더하기 · 빼기 · 모자람 · 0 · SP 분리 · 음수 시작) — 전체 33개 통과
+  - 확인(자동): 시작 1일차 상점 150달러 0 SP, 다음 단계 ×6 = 농사 → 청소·진열 → 장사 → 정산 → 스킬 → 2일차 상점(PhaseChanged 6 · DayChanged 1), 장사 강제 2번 → 이벤트 1번, 다음 날 → 3일차 상점, 달러 +100 성공 · −1000 실패 · 0 무시 → 250달러, SP +3, 테스트 예외 로그 줄 `Day 3 | 상점` 기록, 콘솔 오류 · 경고 0 (확인용 예외 · AI Assistant 경고 제외)
+  - 참고: HUD 표시는 2-8. 각 단계를 실제로 끝내는 버튼 · 문(농사 끝내기 · 완료 · 다음 날)은 2-3 · 3-4에서 `AdvancePhase`를 부른다. 6일차 종료 처리는 3-4
   - 참고: 상호작용 강조 효과(외곽선 등)는 그레이박스에서 생략 — 프롬프트만. Raycast는 Interactable 레이어만 보므로 벽 너머 대상도 잡힌다 → 벽이 생기는 2-3에서 가림 레이어 추가 검토
   - 참고: TMP 동적 폰트 에셋은 플레이 중 새 글자가 아틀라스에 추가되며 파일이 바뀔 수 있다(빌드 시 동적 데이터 정리 켬)
 
@@ -335,4 +345,6 @@
 | Unity MCP `RunCommand`에서 `AssetDatabase.DeleteAsset` · `NewScene` 호출 시 "User interactions are not supported" | 사용자 확인이 필요한 API로 분류됨 | 삭제는 `Unity_ManageAsset(Delete)`, 씬 생성은 `Unity_ManageScene(Create)` 사용 |
 | MCP로 플레이 중 상태를 확인하면 프레임이 2에서 멈춤 | 에디터 창이 포커스를 잃으면 플레이 모드 프레임이 진행되지 않음 | `EditorApplication.isPaused = true` + `Step()`으로 프레임을 넘겨 확인, 끝나면 `isPaused = false`로 복구 |
 | MCP에서 `InputSystem.QueueStateEvent`로 키를 넣어도 플레이어가 움직이지 않음 (`wKey=False`) | 에디터 밖(MCP 호출 문맥)에서 큐에 넣은 이벤트가 플레이 프레임의 입력 업데이트로 처리되지 않음. Game view 포커스 설정을 바꿔도 동일 | 조작 확인은 사용자 플레이로. 자동 검증은 Logic 단위 테스트 + 정지 상태(위치 · 접지) 확인까지 |
+| MCP `RunCommand`에서 `using System.Reflection` 시 "unauthorized namespaces" | MCP가 리플렉션 네임스페이스를 막음 | private 필드 확인은 결과물(로그 파일 · 공개 프로퍼티)로 대신 확인 |
+| MCP `RunCommand`로 테스트 실행이 한 번 시간 초과 | 씬 저장 · 컴파일 직후 에디터가 바빴던 것으로 추정 | `ManageEditor(GetState)`로 컴파일 · 업데이트가 끝났는지 본 뒤 다시 실행 → 정상 |
 | (작업 중 겪을 때마다 추가) | | |

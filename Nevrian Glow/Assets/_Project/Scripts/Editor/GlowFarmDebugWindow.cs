@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using NevrianGlowFarm.Core;
+using NevrianGlowFarm.Logic.Game;
 using NevrianGlowFarm.Systems.Player;
 using UnityEditor;
 using UnityEngine;
@@ -18,12 +19,65 @@ namespace NevrianGlowFarm.Editor
         }
 
         private Hotbar hotbar;
+        private DayPhase forcedPhase;
+        private int moneyAmount = 100;
+        private int skillPointAmount = 3;
 
         private void OnGUI()
         {
-            DrawLogSection();
+            DrawGameSection();
             EditorGUILayout.Space();
             DrawHotbarSection();
+            EditorGUILayout.Space();
+            DrawLogSection();
+        }
+
+        private void DrawGameSection()
+        {
+            EditorGUILayout.LabelField("게임 진행 (GameManager)", EditorStyles.boldLabel);
+
+            var game = GameManager.Instance;
+            if (!Application.isPlaying || game == null)
+            {
+                EditorGUILayout.HelpBox("Core 씬을 플레이하면 일차 · 단계 · 달러 · SP를 바꿀 수 있다.", MessageType.None);
+                return;
+            }
+            if (!game.IsStarted)
+            {
+                EditorGUILayout.HelpBox("구역 씬을 불러오는 중…", MessageType.None);
+                return;
+            }
+
+            EditorGUILayout.LabelField("현재", $"{game.Day}일차 · {DayPhaseNames.ToKorean(game.Phase)} · {game.Money}달러 · {game.SkillPoints} SP");
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("다음 단계"))
+                    game.AdvancePhase();
+                if (GUILayout.Button("다음 날 (상점으로)"))
+                    game.AdvanceToNextDay();
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                forcedPhase = (DayPhase)EditorGUILayout.EnumPopup("단계 강제 전환", forcedPhase);
+                if (GUILayout.Button("적용", GUILayout.Width(60)))
+                    game.ForcePhase(forcedPhase);
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                moneyAmount = EditorGUILayout.IntField("달러 (음수 = 빼기)", moneyAmount);
+                if (GUILayout.Button("적용", GUILayout.Width(60)) && !game.TryChangeMoney(moneyAmount))
+                    Debug.Log($"[디버그] 달러 {moneyAmount:+#;-#;0} 적용 안 됨 — 0이거나 보유량보다 많이 뺌");
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                skillPointAmount = EditorGUILayout.IntField("SP (음수 = 빼기)", skillPointAmount);
+                if (GUILayout.Button("적용", GUILayout.Width(60)) && !game.TryChangeSkillPoints(skillPointAmount))
+                    Debug.Log($"[디버그] SP {skillPointAmount:+#;-#;0} 적용 안 됨 — 0이거나 보유량보다 많이 뺌");
+            }
         }
 
         private void DrawHotbarSection()
