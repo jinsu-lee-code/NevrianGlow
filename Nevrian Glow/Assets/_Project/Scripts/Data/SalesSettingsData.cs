@@ -1,3 +1,4 @@
+using NevrianGlowFarm.Logic.Sales;
 using UnityEngine;
 
 namespace NevrianGlowFarm.Data
@@ -57,5 +58,9 @@ namespace NevrianGlowFarm.Data
         public int PurchaseMax => Mathf.Max(purchaseMin, purchaseMax);
         public float StopDistance => stopDistance;
         public float QueueSpacing => queueSpacing;
+
+        /// <summary>Logic 장사 규칙 값 (SalesRules · SalesSession).</summary>
+        public SalesSpec ToSpec() => new SalesSpec(baseCustomers, customerDayDivisor, customerCap, dirtyCustomerMultiplier,
+            salesDuration, spawnWindow, maxConcurrentCustomers, purchaseMin, purchaseMax);
     }
 }

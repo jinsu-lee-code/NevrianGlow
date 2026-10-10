@@ -35,6 +35,8 @@ namespace NevrianGlowFarm.Editor
             EditorGUILayout.Space();
             DrawCleaningSection();
             EditorGUILayout.Space();
+            DrawSalesSection();
+            EditorGUILayout.Space();
             DrawHotbarSection();
             EditorGUILayout.Space();
             DrawLogSection();
@@ -142,6 +144,76 @@ namespace NevrianGlowFarm.Editor
             EditorGUILayout.LabelField("장사 시작 때 확정", locked);
             if (GUILayout.Button("바닥 쓰레기 · 얼룩 모두 치우기"))
                 cleaning.DebugCleanAll();
+        }
+
+        private const string SalesSettingsPath = "Assets/_Project/Data/Stats/SalesSettings.asset";
+        private const int SalesSeed = 20261011;
+        private const int PurchasePurpose = 2; // 손님 구매용 난수 흐름 (청소 배치 = 3)
+        private Data.SalesSettingsData salesSettings;
+
+        // 손님(3-2)이 생기기 전 SalesSimulator(3-1) 확인용 — 실제 게임의 '건너뛰기'와 같은 함수(SkipRemaining)로 진열대 작물을 판다
+        private void DrawSalesSection()
+        {
+            EditorGUILayout.LabelField("장사 (SalesSimulator)", EditorStyles.boldLabel);
+            var game = GameManager.Instance;
+            var cleaning = Systems.Cleaning.CleaningSystem.Instance;
+            if (!Application.isPlaying || game == null || !game.IsStarted)
+            {
+                EditorGUILayout.HelpBox("플레이 중일 때 오늘 손님 수와 '장사 바로 처리' 버튼이 보인다.", MessageType.None);
+                return;
+            }
+            if (salesSettings == null)
+                salesSettings = AssetDatabase.LoadAssetAtPath<Data.SalesSettingsData>(SalesSettingsPath);
+            if (salesSettings == null)
+            {
+                EditorGUILayout.HelpBox($"{SalesSettingsPath} 없음 — Glow Farm/Setup/Create Placeholder Data", MessageType.Warning);
+                return;
+            }
+
+            var spec = salesSettings.ToSpec();
+            double clean = cleaning == null ? 1.0 : cleaning.LockedCleanliness >= 0f ? cleaning.LockedCleanliness : cleaning.CurrentCleanliness();
+            int customers = Logic.Sales.SalesRules.CustomerCount(game.Day, 0, clean, spec);
+            var shelves = FindObjectsByType<Systems.Shop.ShelfDisplay>(FindObjectsSortMode.InstanceID);
+            int displayed = 0;
+            foreach (var s in shelves)
+                if (s.State != null)
+                    displayed += s.State.TotalCount;
+            EditorGUILayout.LabelField("오늘 손님", $"{customers}명 (청결도 {clean:P0} · 보너스 0) · 진열 {displayed}개");
+
+            using (new EditorGUI.DisabledScope(game.Phase != DayPhase.Sales))
+            {
+                if (GUILayout.Button("장사 바로 처리 (건너뛰기와 같은 계산 · 달러 · 경험치 반영)"))
+                    RunSalesNow(game, spec, customers, shelves);
+            }
+            if (game.Phase != DayPhase.Sales)
+                EditorGUILayout.HelpBox("장사 단계에서만 누를 수 있다 (위 '다음 단계' · '단계 강제 전환').", MessageType.None);
+        }
+
+        private static void RunSalesNow(GameManager game, Logic.Sales.SalesSpec spec, int customers, Systems.Shop.ShelfDisplay[] displays)
+        {
+            var states = new System.Collections.Generic.List<Logic.Shop.ShelfState>();
+            foreach (var d in displays)
+                states.Add(d.State);
+            var prices = new System.Collections.Generic.Dictionary<string, int>();
+            var session = new Logic.Sales.SalesSession(customers, spec);
+            var random = new Logic.SeededRandom(Logic.SeededRandom.SeedFor(SalesSeed, PurchasePurpose, game.Day));
+            session.SkipRemaining(states, random, id => prices.TryGetValue(id, out int p) ? p : 0, (shelf, slot) =>
+            {
+                var crop = displays[shelf].TryTakeForSale(slot); // 겉모습도 같이 빠진다
+                if (crop == null)
+                    return null;
+                prices[crop.Id] = crop.SellPrice;
+                return crop.Id;
+            });
+            if (session.Revenue > 0)
+            {
+                game.TryChangeMoney(session.Revenue);
+                game.AddRevenueExp(session.Revenue);
+            }
+            var sold = new System.Text.StringBuilder();
+            foreach (var pair in session.Sold)
+                sold.Append(sold.Length > 0 ? ", " : "").Append(pair.Key).Append(" ×").Append(pair.Value);
+            Debug.Log($"[디버그] 장사: 손님 {session.Total}명 (구매 {session.Buyers} · 빈손 {session.EmptyHanded}) · 판매 {session.ItemsSold}개 ({sold}) · 매출 {session.Revenue}달러");
         }
 
         private void DrawHotbarSection()
