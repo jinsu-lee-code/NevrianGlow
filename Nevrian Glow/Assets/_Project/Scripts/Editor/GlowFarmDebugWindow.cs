@@ -24,6 +24,8 @@ namespace NevrianGlowFarm.Editor
         private int moneyAmount = 100;
         private int skillPointAmount = 3;
         private int expAmount = 80;
+        private Data.ItemData addItem;
+        private int addCount = 1;
 
         private void OnGUI()
         {
@@ -169,6 +171,18 @@ namespace NevrianGlowFarm.Editor
                     hotbar.SetSlotCount(hotbar.SlotCount - 1);
                 if (GUILayout.Button("칸 +1"))
                     hotbar.SetSlotCount(hotbar.SlotCount + 1);
+            }
+
+            // 아이템 넣기 — 상점(3-3)이 없는 동안 등급 도구 · 씨앗 확인용. 핫바 빈 칸부터, 모자라면 가방
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                addItem = (Data.ItemData)EditorGUILayout.ObjectField("아이템 넣기", addItem, typeof(Data.ItemData), false);
+                addCount = Mathf.Max(1, EditorGUILayout.IntField(addCount, GUILayout.Width(40)));
+                using (new EditorGUI.DisabledScope(addItem == null))
+                {
+                    if (GUILayout.Button("넣기", GUILayout.Width(60)) && !hotbar.TryAdd(addItem, addCount))
+                        Debug.Log($"[디버그] {addItem.DisplayName} ×{addCount} 넣기 실패 — 핫바 · 가방에 자리 없음 (도구는 칸마다 1개)");
+                }
             }
 
             var inventory = hotbar.Inventory;
