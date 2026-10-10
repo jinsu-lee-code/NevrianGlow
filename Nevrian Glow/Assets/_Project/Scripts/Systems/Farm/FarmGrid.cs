@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using NevrianGlowFarm.Core;
 using NevrianGlowFarm.Data;
@@ -55,6 +56,7 @@ namespace NevrianGlowFarm.Systems.Farm
         private readonly NightPipeline night = new NightPipeline();
         private readonly List<FarmCellView> views = new List<FarmCellView>();
         private Hotbar hotbar;
+        private float busyUntil;
 
         public FarmState State => state;
         public int CellCount => state != null ? state.Cells.Count : 0;
@@ -104,17 +106,60 @@ namespace NevrianGlowFarm.Systems.Farm
             }
             if (held is SeedData seed && seed.Crop != null && status == FarmCellStatus.Tilled && hotbar != null)
                 return $"{seed.Crop.DisplayName} 심기 (씨앗 {hotbar.SelectedCount}개)";
-            if (held is WateringCanData && status == FarmCellStatus.Growing && cell.WetDaysLeft < SpecOf(cell.CropId).WetDays)
-                return "물주기";
+            if (held is WateringCanData can)
+            {
+                // 범위(등급 칸 수) 안에서 물이 필요한 칸이 하나라도 있으면 (조준한 칸이 아니어도)
+                int thirsty = CountThirsty(index, can);
+                if (thirsty == 0)
+                    return null;
+                return can.CellCount > 1 ? $"물주기 ({thirsty}칸)" : "물주기";
+            }
             return null;
         }
 
         public void Use(int index, ItemData held)
         {
-            if (state == null || held == null)
+            if (state == null || held == null || Time.time < busyUntil)
                 return;
+
+            // 동작이 있는 도구(물뿌리개 기울이기 0.3초)는 동작이 끝난 뒤 효과 — 그동안은 다시 쓰지 않는다.
+            if (held is ToolData tool && tool.UseDelay > 0f)
+            {
+                busyUntil = Time.time + tool.UseDelay;
+                StartCoroutine(UseAfter(index, held, tool.UseDelay));
+                return;
+            }
+            UseNow(index, held);
+        }
+
+        private IEnumerator UseAfter(int index, ItemData held, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            UseNow(index, held);
+        }
+
+        private void UseNow(int index, ItemData held)
+        {
             var cell = state.Cells[index];
             bool changed = false;
+
+            if (held is WateringCanData can)
+            {
+                int watered = 0;
+                foreach (int i in WateringPattern.Cells(index, can.CellCount, state.Cells.Count))
+                {
+                    var c = state.Cells[i];
+                    if (c.HasCrop && FarmRules.TryWater(c, SpecOf(c.CropId)))
+                    {
+                        RefreshCell(i, false);
+                        views[i].Splash();
+                        watered++;
+                    }
+                }
+                if (watered > 0)
+                    UpdateSummary();
+                return;
+            }
 
             if (held is HoeData hoe)
                 changed = FarmRules.TryTill(cell, hoe.WorkPerUse, settings.TillWorkRequired);
@@ -126,11 +171,22 @@ namespace NevrianGlowFarm.Systems.Farm
                 else if (hotbar != null && hotbar.TryConsumeSelected(1))
                     changed = FarmRules.TryPlant(cell, seed.Crop.Id);
             }
-            else if (held is WateringCanData && cell.HasCrop)
-                changed = FarmRules.TryWater(cell, SpecOf(cell.CropId));
 
             if (changed)
                 RefreshCell(index);
+        }
+
+        /// <summary>물뿌리개 범위 안에서 물을 주면 바뀌는 칸 수.</summary>
+        private int CountThirsty(int index, WateringCanData can)
+        {
+            int count = 0;
+            foreach (int i in WateringPattern.Cells(index, can.CellCount, state.Cells.Count))
+            {
+                var c = state.Cells[i];
+                if (c.HasCrop && state.StatusOf(i) == FarmCellStatus.Growing && c.WetDaysLeft < SpecOf(c.CropId).WetDays)
+                    count++;
+            }
+            return count;
         }
 
         public string GetHandPrompt(int index)

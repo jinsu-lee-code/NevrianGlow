@@ -76,6 +76,9 @@ namespace NevrianGlowFarm.Systems.Interaction
         /// <summary>프롬프트가 바뀔 때만 발생. 비어 있으면 숨긴다.</summary>
         public event Action<string> PromptChanged;
 
+        /// <summary>좌클릭으로 대상에 아이템을 썼을 때 (든 아이템) — 1인칭 도구 동작(HeldItemView)이 듣는다.</summary>
+        public event Action<ItemData> ItemUsed;
+
         private void Awake()
         {
             if (rayOrigin == null || settings == null || hotbar == null || interactAction == null || useAction == null || secondaryAction == null)
@@ -142,6 +145,7 @@ namespace NevrianGlowFarm.Systems.Interaction
             {
                 useTarget.Use(held);
                 promptDirty = true;
+                ItemUsed?.Invoke(held);
             }
 
             if (secondaryAction.action.WasPressedThisFrame() && IsAlive(secondaryTarget) && !string.IsNullOrEmpty(secondaryPrompt))

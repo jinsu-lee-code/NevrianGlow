@@ -36,6 +36,33 @@ namespace NevrianGlowFarm.Systems.Farm
         public string GetHandPrompt() => grid != null ? grid.GetHandPrompt(index) : null;
         public void InteractHand() { if (grid != null) grid.InteractHand(index); }
 
+        /// <summary>물을 받은 칸의 짧은 반응 — 흙이 살짝 부풀었다 돌아온다 (물방울 VFX는 5-8).</summary>
+        public void Splash()
+        {
+            if (splash != null)
+                StopCoroutine(splash);
+            splash = StartCoroutine(SplashRoutine());
+        }
+
+        private System.Collections.IEnumerator SplashRoutine()
+        {
+            var soil = soilRenderer.transform;
+            if (soilBaseScale == Vector3.zero)
+                soilBaseScale = soil.localScale;
+            const float duration = 0.25f;
+            for (float t = 0f; t < duration; t += Time.deltaTime)
+            {
+                float k = Mathf.Sin(t / duration * Mathf.PI); // 0 → 1 → 0
+                soil.localScale = new Vector3(soilBaseScale.x * (1f + 0.06f * k), soilBaseScale.y * (1f + 1.5f * k), soilBaseScale.z * (1f + 0.06f * k));
+                yield return null;
+            }
+            soil.localScale = soilBaseScale;
+            splash = null;
+        }
+
+        private Coroutine splash;
+        private Vector3 soilBaseScale;
+
         /// <summary>흙 색, 작물 표시 여부 · 색 · 크기(0~1 성장 비율)를 바꾼다. FarmGrid가 상태가 바뀐 칸에만 부른다.</summary>
         public void Show(Color soilColor, bool hasCrop, Color cropColor, float cropScale)
         {

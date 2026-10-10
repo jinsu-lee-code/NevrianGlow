@@ -15,7 +15,12 @@ namespace NevrianGlowFarm.Data
         [Tooltip("창고에 넣을 수 있는지 — 쓰레기는 끈다 (GDD 4-3 · 4-4)")]
         [SerializeField] private bool canStore = true;
 
+        [Header("모습")]
+        [Tooltip("들었을 때 1인칭 화면 아래쪽에 보이는 모델 — 비우면 종류별 그레이박스 (모델 교체 5-2)")]
+        [SerializeField] private GameObject heldPrefab;
+
         public virtual int MaxStack => maxStack;
         public bool CanStore => canStore;
+        public GameObject HeldPrefab => heldPrefab;
     }
 }

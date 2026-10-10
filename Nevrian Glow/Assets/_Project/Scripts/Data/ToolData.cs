@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace NevrianGlowFarm.Data
 {
     /// <summary>
@@ -6,6 +8,11 @@ namespace NevrianGlowFarm.Data
     /// </summary>
     public abstract class ToolData : ItemData
     {
+        [Header("동작")]
+        [Tooltip("좌클릭 후 효과가 들어가기까지 — 동작(기울이기 등)이 끝나는 시점, 그동안은 다시 쓸 수 없다 (초)")]
+        [SerializeField, Min(0f)] private float useDelay;
+
         public override int MaxStack => 1;
+        public float UseDelay => useDelay;
     }
 }

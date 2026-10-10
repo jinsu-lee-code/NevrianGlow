@@ -61,6 +61,8 @@ namespace NevrianGlowFarm.Editor
             ("tool_hoe_3", "발광 괭이", 3f),
         };
 
+        private const float WateringUseDelay = 0.3f; // BALANCE 2-11: 기울이기 0.3초 뒤 물 (괭이 · 대걸레는 0)
+
         private static readonly (string Id, string Name, int CellCount)[] WateringCans =
         {
             ("tool_watering_1", "물뿌리개", 1),
@@ -169,6 +171,7 @@ namespace NevrianGlowFarm.Editor
                 {
                     SetIdentity(so, can.Id, can.Name);
                     so.FindProperty("cellCount").intValue = can.CellCount;
+                    so.FindProperty("useDelay").floatValue = WateringUseDelay;
                 }));
             }
             foreach (var mop in Mops)
