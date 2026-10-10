@@ -5,7 +5,7 @@ namespace NevrianGlowFarm.UI
 {
     /// <summary>
     /// 게임 화면(가방 · 창고, 이후 상점 · 정산 · 스킬) 공통: 열면 플레이어 조작을 잠그고 커서를 보이게, 닫으면 푼다.
-    /// 한 번에 하나만 열린다 — 다른 화면을 열면 먼저 열린 화면이 닫힌다.
+    /// 한 번에 하나만 열린다 — 다른 화면을 열면 먼저 열린 화면이 닫힌다(닫을 수 없는 상태면 새 화면을 열지 않는다).
     /// 같은 프레임에 닫힌 화면이 있으면 그 프레임의 열기 키는 무시한다 (Tab 한 번에 닫혔다 다시 열리지 않게).
     /// </summary>
     public abstract class GameScreen : MonoBehaviour
@@ -50,7 +50,11 @@ namespace NevrianGlowFarm.UI
             if (current == this)
                 return;
             if (current != null)
+            {
                 current.Close();
+                if (current != null)
+                    return; // 먼저 열린 화면이 닫히지 않으면(정산 · 손에 든 묶음) 열지 않는다
+            }
             current = this;
             panel.SetActive(true);
             PlayerInputGate.Block(this);

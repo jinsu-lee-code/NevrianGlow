@@ -1,0 +1,146 @@
+using NevrianGlowFarm.Core;
+using NevrianGlowFarm.Data;
+using NevrianGlowFarm.Logic.Game;
+using NevrianGlowFarm.Systems.Sales;
+using NevrianGlowFarm.Systems.Shop;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace NevrianGlowFarm.UI
+{
+    /// <summary>
+    /// 정산 화면 (GDD 4-1: 손님 · 판매 · 매출 · 지출 · 순이익 · 경험치). 정산 단계에 들어서면 저절로 열린다.
+    /// Esc · 다른 화면으로는 닫히지 않고 '다음 날' 버튼만 — 누르면 다음 날로 넘기고(밤 처리 · 상점 입고는 날 변경에 붙어 있음)
+    /// ZoneTransition이 같은 페이드로 농장에 옮긴다. 디버그로 정산 단계를 벗어나면 같이 닫힌다.
+    /// </summary>
+    public class SettlementScreen : GameScreen
+    {
+        [Header("참조")]
+        [Tooltip("오늘 상점 지출 (Core Shop)")]
+        [SerializeField] private ShopSystem shop;
+        [Tooltip("작물 표시 이름 (Data/ContentDatabase)")]
+        [SerializeField] private ContentDatabase database;
+        [Tooltip("제목 (n일차 정산)")]
+        [SerializeField] private TMP_Text titleLabel;
+        [Tooltip("본문 (줄마다 한 항목)")]
+        [SerializeField] private TMP_Text bodyLabel;
+        [Tooltip("'다음 날' 버튼")]
+        [SerializeField] private Button nextDayButton;
+
+        private bool advancing;
+        private bool pending;
+
+        public static SettlementScreen Instance { get; private set; }
+
+        /// <summary>지금 보여 주는 정산 (열린 동안 유효).</summary>
+        public SettlementReport Report { get; private set; }
+
+        protected override void Awake()
+        {
+            base.Awake();
+            if (shop == null || database == null || titleLabel == null || bodyLabel == null || nextDayButton == null)
+            {
+                Debug.LogError("[SettlementScreen] 참조가 비어 있음 - 인스펙터의 참조 항목 확인", this);
+                enabled = false;
+                return;
+            }
+            Instance = this;
+            nextDayButton.onClick.AddListener(NextDay);
+        }
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+            if (Instance == this)
+                Instance = null;
+        }
+
+        private void OnEnable() => GameEvents.PhaseChanged += OnPhaseChanged;
+        private void OnDisable() => GameEvents.PhaseChanged -= OnPhaseChanged;
+
+        private void OnPhaseChanged(PhaseChange change)
+        {
+            if (change.Phase == DayPhase.Settlement)
+                pending = true;
+            else
+            {
+                pending = false;
+                if (IsOpen)
+                    ForceClose();
+            }
+        }
+
+        private void Update()
+        {
+            if (!pending || IsOpen)
+                return;
+            // 다른 화면(가방 등)이 열려 있으면 먼저 닫아 본다 — 닫을 수 없는 상태면 다음 프레임에 다시
+            if (Current != null)
+                Current.Close();
+            if (Current == null)
+                Open();
+        }
+
+        /// <summary>오늘 정산을 만들어 연다 (정산 단계가 아니어도 디버그로 열 수 있다).</summary>
+        public void Open()
+        {
+            pending = false;
+            Show();
+        }
+
+        protected override void OnOpened()
+        {
+            advancing = false;
+            Report = BuildReport();
+            var game = GameManager.Instance;
+            titleLabel.text = $"{Report.Day}일차 정산";
+            string body = string.Join("\n", Report.Lines(NameOf));
+            if (game != null)
+                body += $"\n\n보유 {game.Money:N0}달러 · SP {game.SkillPoints}";
+            bodyLabel.text = body;
+        }
+
+        // '다음 날'로만 닫힌다 (Esc · 다른 화면 열기로는 안 닫힘)
+        protected override bool OnClosing() => advancing;
+
+        /// <summary>'다음 날': 화면을 닫고 다음 날로 (농장 이동은 ZoneTransition).</summary>
+        public void NextDay()
+        {
+            if (!IsOpen)
+                return;
+            ForceClose();
+            if (GameManager.Instance != null)
+                GameManager.Instance.AdvanceToNextDay();
+        }
+
+        private void ForceClose()
+        {
+            advancing = true;
+            Close();
+            advancing = false;
+        }
+
+        private SettlementReport BuildReport()
+        {
+            var game = GameManager.Instance;
+            int day = game != null ? game.Day : 0;
+            int level = game != null ? game.Level : Progression.FirstLevel;
+            int spent = shop.SpentToday;
+            var sales = SalesSystem.Instance;
+            // 오늘 장사 결과만 (디버그로 장사 없이 정산에 오면 지난 결과가 남아 있을 수 있다)
+            if (sales != null && sales.LastResult.HasValue && sales.LastResult.Value.Day == day)
+            {
+                var r = sales.LastResult.Value;
+                return new SettlementReport(day, true, r.Customers, r.Buyers, r.EmptyHanded, r.ItemsSold, r.Revenue, r.Sold, spent, r.Exp, level);
+            }
+            return new SettlementReport(day, false, 0, 0, 0, 0, 0, null, spent, default, level);
+        }
+
+        private string NameOf(string cropId)
+        {
+            var crop = database.Get<CropData>(cropId);
+            return crop != null ? crop.DisplayName : null;
+        }
+    }
+}

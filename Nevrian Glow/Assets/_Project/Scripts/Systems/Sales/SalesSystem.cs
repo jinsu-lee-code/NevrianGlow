@@ -24,9 +24,12 @@ namespace NevrianGlowFarm.Systems.Sales
         public int Revenue { get; }
         public IReadOnlyDictionary<string, int> Sold { get; }
         public bool Skipped { get; }
+        /// <summary>장사가 끝날 때 받은 경험치 (매출 × 1) · 레벨업.</summary>
+        public ExpGain Exp { get; }
 
-        public SalesResult(int day, SalesSession session, bool skipped)
+        public SalesResult(int day, SalesSession session, bool skipped, ExpGain exp)
         {
+            Exp = exp;
             Day = day;
             Customers = session.Total;
             Buyers = session.Buyers;
@@ -230,11 +233,10 @@ namespace NevrianGlowFarm.Systems.Sales
         {
             running = false;
             ClearCustomers();
-            var result = new SalesResult(day, session, skipped);
+            // 경험치 = 매출 × 1 (정산 화면 3-3b는 이 결과를 보여 준다)
+            var gain = GameManager.Instance != null && session.Revenue > 0 ? GameManager.Instance.AddRevenueExp(session.Revenue) : default;
+            var result = new SalesResult(day, session, skipped, gain);
             lastResult = result;
-            // 경험치 = 매출 × 1 (정산 화면 3-3은 이 결과를 보여 준다)
-            if (GameManager.Instance != null && result.Revenue > 0)
-                GameManager.Instance.AddRevenueExp(result.Revenue);
             Debug.Log($"[SalesSystem] {day}일차 장사 끝{(skipped ? " (건너뛰기)" : "")}: 손님 {result.Customers}명 (구매 {result.Buyers} · 빈손 {result.EmptyHanded}) · 판매 {result.ItemsSold}개 · 매출 {result.Revenue}달러");
             UpdateDebugView();
             Finished?.Invoke(result);
