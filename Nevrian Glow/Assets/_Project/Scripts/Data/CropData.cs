@@ -2,10 +2,17 @@ using UnityEngine;
 
 namespace NevrianGlowFarm.Data
 {
-    /// <summary>작물 한 종 (BALANCE 2-2). 단계 프리팹 · 커스텀 인스펙터는 2-1에서 추가한다.</summary>
+    /// <summary>
+    /// 작물 한 종 (BALANCE 2-2). 수확물도 이 에셋 그대로 인벤토리 칸에 들어간다(ItemData).
+    /// 단계 프리팹 · 커스텀 인스펙터는 2-1에서 추가한다.
+    /// </summary>
     [CreateAssetMenu(menuName = "Glow Farm/Data/Crop", fileName = "crop_new")]
-    public class CropData : ContentData
+    public class CropData : ItemData
     {
+        [Header("그레이박스")]
+        [Tooltip("그레이박스 작물 색 — 모델 교체(5-2) 전까지 (BALANCE 9-5: 월광 시안 · 버섯꽃 보라 · 등불 금빛)")]
+        [SerializeField] private Color greyboxColor = Color.white;
+
         [Header("가격")]
         [Tooltip("씨앗 1개 가격 (달러)")]
         [SerializeField, Min(0)] private int seedPrice;
@@ -43,5 +50,6 @@ namespace NevrianGlowFarm.Data
         public float GiantChance => giantChance;
         public float GiantYieldMultiplier => giantYieldMultiplier;
         public float GiantScale => giantScale;
+        public Color GreyboxColor => greyboxColor;
     }
 }

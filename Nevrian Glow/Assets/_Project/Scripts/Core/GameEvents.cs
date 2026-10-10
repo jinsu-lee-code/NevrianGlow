@@ -13,7 +13,10 @@ namespace NevrianGlowFarm.Core
         /// <summary>단계가 바뀔 때. 일차가 바뀌었으면 DayChanged보다 먼저 온다.</summary>
         public static event Action<PhaseChange> PhaseChanged;
 
-        /// <summary>일차가 바뀔 때 1회 (새 일차). 밤 처리(1-4)는 여기서 1회.</summary>
+        /// <summary>
+        /// 일차가 바뀔 때 1회 (새 일차). 새 게임 시작 때도 초기값으로 1회 온다 (HUD 표시용).
+        /// 밤 처리처럼 "날이 넘어갈 때만" 할 일은 PhaseChanged의 DayChanged로 판단한다.
+        /// </summary>
         public static event Action<int> DayChanged;
 
         /// <summary>달러가 바뀔 때 (새 값).</summary>

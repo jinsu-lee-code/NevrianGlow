@@ -20,13 +20,25 @@ namespace NevrianGlowFarm.Data
             public int Count => count;
         }
 
+        [Serializable]
+        public struct StartingItem
+        {
+            [Tooltip("아이템 — 비우면 빈 칸")]
+            [SerializeField] private ItemData item;
+            [Tooltip("개수 — 칸당 최대를 넘으면 최대까지만 (개)")]
+            [SerializeField, Min(1)] private int count;
+
+            public ItemData Item => item;
+            public int Count => count;
+        }
+
         [Header("시작 상태")]
         [Tooltip("시작 자금 (달러)")]
         [SerializeField, Min(0)] private int startingMoney;
         [Tooltip("시작할 때 바로 팔 수 있는 작물")]
         [SerializeField] private List<StartingCrop> startingCrops = new List<StartingCrop>();
-        [Tooltip("시작 핫바 — 1번 칸부터 순서대로, 빈 칸은 비워 둔다 (BALANCE 2-3)")]
-        [SerializeField] private List<ItemData> startingHotbar = new List<ItemData>();
+        [Tooltip("시작 핫바 — 1번 칸부터 순서대로, 아이템을 비운 줄은 빈 칸 (BALANCE 2-3)")]
+        [SerializeField] private List<StartingItem> startingHotbarItems = new List<StartingItem>();
 
         [Header("밭 구획")]
         [Tooltip("처음 열려 있는 구획 수 (개)")]
@@ -35,6 +47,10 @@ namespace NevrianGlowFarm.Data
         [SerializeField, Min(1)] private int maxPlotCount = 1;
         [Tooltip("구획 하나의 칸 수 (칸)")]
         [SerializeField, Min(1)] private int cellsPerPlot = 1;
+
+        [Header("개간")]
+        [Tooltip("칸 하나를 개간하는 데 필요한 작업량 — 괭이 1회 작업량으로 나눈 만큼 갈아야 한다 (작업량)")]
+        [SerializeField, Min(0.01f)] private float tillWorkRequired = 0.01f;
 
         [Header("밭 간격")]
         [Tooltip("칸 사이 간격 (m)")]
@@ -48,10 +64,11 @@ namespace NevrianGlowFarm.Data
 
         public int StartingMoney => startingMoney;
         public IReadOnlyList<StartingCrop> StartingCrops => startingCrops;
-        public IReadOnlyList<ItemData> StartingHotbar => startingHotbar;
+        public IReadOnlyList<StartingItem> StartingHotbar => startingHotbarItems;
         public int StartPlotCount => startPlotCount;
         public int MaxPlotCount => maxPlotCount;
         public int CellsPerPlot => cellsPerPlot;
+        public float TillWorkRequired => tillWorkRequired;
         public float CellPitch => cellPitch;
         public float BedPitch => bedPitch;
         public float PlotPitch => plotPitch;

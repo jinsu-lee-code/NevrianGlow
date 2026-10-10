@@ -1,0 +1,356 @@
+using System.Collections.Generic;
+using NevrianGlowFarm.Core;
+using NevrianGlowFarm.Data;
+using NevrianGlowFarm.Logic.Farm;
+using NevrianGlowFarm.Logic.Game;
+using NevrianGlowFarm.Systems.Player;
+using UnityEngine;
+
+namespace NevrianGlowFarm.Systems.Farm
+{
+    /// <summary>
+    /// 농장 밭 (GDD 4-2, 노션 GDD 12.3). 이 오브젝트 위치 = 첫 구획 첫 밭의 중심(BALANCE 9-1 밭 원점).
+    /// 칸 상태 · 규칙은 Logic(FarmState · FarmRules · NightPipeline), 여기는 칸 표시 생성 · 입력 전달 · 밤 처리 연결만 한다.
+    /// 밤 처리는 일차가 바뀌는 단계 전환(PhaseChange.DayChanged) 때 1회.
+    /// </summary>
+    public class FarmGrid : MonoBehaviour
+    {
+        [Header("참조")]
+        [Tooltip("구획 수 · 칸 간격 · 개간 작업량 (Data/Stats/GameStartSettings)")]
+        [SerializeField] private GameStartSettingsData settings;
+        [Tooltip("칸 프리팹 (Prefabs/Farm/farm_cell)")]
+        [SerializeField] private FarmCellView cellPrefab;
+        [Tooltip("겹치면 안 되는 구역 (길 · 문 주변) — 겹치면 기즈모 빨강 + 시작 시 경고")]
+        [SerializeField] private List<ForbiddenZone> forbiddenZones = new List<ForbiddenZone>();
+
+        [Header("조정값")]
+        [Tooltip("칸 하나의 흙 크기 — 겹침 검사에도 쓴다, 칸 프리팹 크기와 같게 (m)")]
+        [SerializeField, Min(0.1f)] private float cellFootprint = 1.6f;
+        [Tooltip("미개간 흙 색 (BALANCE 9-5 임시)")]
+        [SerializeField] private Color untilledColor = new Color(0.024f, 0.086f, 0.122f);
+        [Tooltip("개간된 흙 색 — 개간 중에는 진행만큼 이 색에 가까워진다")]
+        [SerializeField] private Color tilledColor = new Color(0.17f, 0.33f, 0.47f);
+        [Tooltip("젖은 흙 색 (심은 칸에 물을 줬을 때)")]
+        [SerializeField] private Color wetColor = new Color(0.08f, 0.22f, 0.42f);
+        [Tooltip("갓 심은 작물 크기 (배)")]
+        [SerializeField, Range(0.05f, 1f)] private float seedlingScale = 0.25f;
+        [Tooltip("다 자란 작물 크기 (배)")]
+        [SerializeField, Range(0.1f, 2f)] private float grownScale = 0.9f;
+        [Tooltip("다 자란 작물을 흰색 쪽으로 밝히는 정도 (0~1)")]
+        [SerializeField, Range(0f, 1f)] private float readyBrighten = 0.35f;
+
+        [Header("기즈모")]
+        [Tooltip("칸 상태 색 (파랑 = 개간, 초록 = 자라는 중, 노랑 = 다 자람, 빨강 = 금지 구역 겹침)")]
+        [SerializeField] private bool drawCells = true;
+        [Tooltip("다음 구획 자리 빨강 점선")]
+        [SerializeField] private bool drawNextPlot = true;
+
+        [Header("디버그")]
+        [Tooltip("칸 상태 요약 (읽기 전용)")]
+        [SerializeField] private string summary;
+
+        private FarmState state;
+        private readonly NightPipeline night = new NightPipeline();
+        private readonly List<FarmCellView> views = new List<FarmCellView>();
+        private readonly Dictionary<string, CropData> crops = new Dictionary<string, CropData>();
+        private Hotbar hotbar;
+
+        public FarmState State => state;
+        public int CellCount => state != null ? state.Cells.Count : 0;
+        public string Summary => summary;
+
+        private void Awake()
+        {
+            if (settings == null || cellPrefab == null)
+            {
+                Debug.LogError("[FarmGrid] 참조가 비어 있음 — 인스펙터의 참조 항목 확인", this);
+                enabled = false;
+                return;
+            }
+            state = new FarmState(settings.CellsPerPlot, settings.StartPlotCount, SpecOf);
+            WarnForbiddenOverlaps();
+        }
+
+        private void OnEnable() => GameEvents.PhaseChanged += OnPhaseChanged;
+        private void OnDisable() => GameEvents.PhaseChanged -= OnPhaseChanged;
+
+        private void Start()
+        {
+            if (!enabled)
+                return;
+            // 핫바는 Core 씬에 있어 씬 사이 참조를 걸 수 없다 → 시작할 때 한 번만 찾는다.
+            hotbar = FindFirstObjectByType<Hotbar>();
+            if (hotbar == null)
+                Debug.LogError("[FarmGrid] Hotbar를 찾지 못함 — Core 씬에서 플레이", this);
+            SpawnMissingViews();
+            RefreshAll();
+        }
+
+        // ── 입력 (FarmCellView가 전달) ─────────────────────────────
+
+        public string GetUsePrompt(int index, ItemData held)
+        {
+            if (state == null || held == null)
+                return null;
+            var cell = state.Cells[index];
+            var status = state.StatusOf(index);
+
+            if (held is HoeData hoe && (status == FarmCellStatus.Untilled || status == FarmCellStatus.Tilling))
+            {
+                int total = Mathf.CeilToInt(settings.TillWorkRequired / hoe.WorkPerUse - 1e-4f);
+                int done = Mathf.Min(total, Mathf.RoundToInt(cell.TillProgress / hoe.WorkPerUse));
+                return $"{hoe.DisplayName}(으)로 갈기 ({done}/{total})";
+            }
+            if (held is SeedData seed && seed.Crop != null && status == FarmCellStatus.Tilled && hotbar != null)
+                return $"{seed.Crop.DisplayName} 심기 (씨앗 {hotbar.SelectedCount}개)";
+            if (held is WateringCanData && status == FarmCellStatus.Growing && cell.WetDaysLeft < SpecOf(cell.CropId).WetDays)
+                return "물주기";
+            return null;
+        }
+
+        public void Use(int index, ItemData held)
+        {
+            if (state == null || held == null)
+                return;
+            var cell = state.Cells[index];
+            bool changed = false;
+
+            if (held is HoeData hoe)
+                changed = FarmRules.TryTill(cell, hoe.WorkPerUse, settings.TillWorkRequired);
+            else if (held is SeedData seed && seed.Crop != null && FarmRules.GetStatus(cell, default) == FarmCellStatus.Tilled)
+            {
+                // 씨앗을 먼저 쓰고 심는다 — 씨앗이 없으면 심지 않는다.
+                Register(seed.Crop);
+                if (hotbar != null && hotbar.TryConsumeSelected(1))
+                    changed = FarmRules.TryPlant(cell, seed.Crop.Id);
+            }
+            else if (held is WateringCanData && cell.HasCrop)
+                changed = FarmRules.TryWater(cell, SpecOf(cell.CropId));
+
+            if (changed)
+                RefreshCell(index);
+        }
+
+        public string GetHandPrompt(int index)
+        {
+            if (state == null || state.StatusOf(index) != FarmCellStatus.Ready)
+                return null;
+            var cell = state.Cells[index];
+            var crop = crops[cell.CropId];
+            int yield = SpecOf(cell.CropId).HarvestYield;
+            return hotbar != null && hotbar.CanAdd(crop, yield)
+                ? $"{crop.DisplayName} 수확 ×{yield}"
+                : $"{crop.DisplayName} 수확 불가 — 핫바에 자리 없음";
+        }
+
+        public void InteractHand(int index)
+        {
+            if (state == null || hotbar == null || state.StatusOf(index) != FarmCellStatus.Ready)
+                return;
+            var cell = state.Cells[index];
+            var crop = crops[cell.CropId];
+            var spec = SpecOf(cell.CropId);
+            // 넣을 자리가 없으면 수확하지 않는다 (GDD 4-2).
+            if (!hotbar.CanAdd(crop, spec.HarvestYield))
+                return;
+            var result = FarmRules.TryHarvest(cell, spec);
+            if (result.Succeeded)
+            {
+                hotbar.TryAdd(crop, result.Yield);
+                RefreshCell(index);
+            }
+        }
+
+        // ── 밤 처리 ───────────────────────────────────────────
+
+        private void OnPhaseChanged(PhaseChange change)
+        {
+            if (change.DayChanged)
+                RunNight();
+        }
+
+        /// <summary>밤 처리 1회 (성장 → … → 작물 없는 칸 미개간). 일차 전환 때 자동으로 불린다.</summary>
+        public void RunNight()
+        {
+            if (state == null)
+                return;
+            night.Run(state);
+            RefreshAll();
+        }
+
+        /// <summary>디버그: 자라는 칸에 모두 물을 준다. 바뀐 칸 수를 돌려준다.</summary>
+        public int DebugWaterAll()
+        {
+            if (state == null)
+                return 0;
+            int count = 0;
+            for (int i = 0; i < state.Cells.Count; i++)
+            {
+                var cell = state.Cells[i];
+                if (cell.HasCrop && FarmRules.TryWater(cell, SpecOf(cell.CropId)))
+                    count++;
+            }
+            RefreshAll();
+            return count;
+        }
+
+        // ── 표시 ─────────────────────────────────────────────
+
+        private void SpawnMissingViews()
+        {
+            for (int i = views.Count; i < state.Cells.Count; i++)
+            {
+                var view = Instantiate(cellPrefab, CellPosition(i), CellRotation(), transform);
+                view.Bind(this, i);
+                views.Add(view);
+            }
+        }
+
+        private void RefreshAll()
+        {
+            for (int i = 0; i < views.Count; i++)
+                RefreshCell(i, false);
+            UpdateSummary();
+        }
+
+        private void RefreshCell(int index, bool updateSummary = true)
+        {
+            var cell = state.Cells[index];
+            var status = state.StatusOf(index);
+
+            Color soil = status switch
+            {
+                FarmCellStatus.Untilled => untilledColor,
+                FarmCellStatus.Tilling => Color.Lerp(untilledColor, tilledColor, cell.TillProgress / settings.TillWorkRequired),
+                _ => cell.IsWet ? wetColor : tilledColor,
+            };
+
+            if (!cell.HasCrop)
+            {
+                views[index].Show(soil, false, default, 0f);
+            }
+            else
+            {
+                var spec = SpecOf(cell.CropId);
+                float growth = Mathf.Clamp01((float)cell.Age / FarmRules.RequiredDays(cell, spec));
+                Color color = crops[cell.CropId].GreyboxColor;
+                if (status == FarmCellStatus.Ready)
+                    color = Color.Lerp(color, Color.white, readyBrighten);
+                views[index].Show(soil, true, color, Mathf.Lerp(seedlingScale, grownScale, growth));
+            }
+
+            if (updateSummary)
+                UpdateSummary();
+        }
+
+        private void UpdateSummary()
+        {
+            int untilled = 0, tilling = 0, tilled = 0, growing = 0, ready = 0;
+            for (int i = 0; i < state.Cells.Count; i++)
+            {
+                switch (state.StatusOf(i))
+                {
+                    case FarmCellStatus.Untilled: untilled++; break;
+                    case FarmCellStatus.Tilling: tilling++; break;
+                    case FarmCellStatus.Tilled: tilled++; break;
+                    case FarmCellStatus.Growing: growing++; break;
+                    case FarmCellStatus.Ready: ready++; break;
+                }
+            }
+            summary = $"{state.Cells.Count}칸 · 미개간 {untilled} · 개간 중 {tilling} · 개간됨 {tilled} · 자라는 중 {growing} · 다 자람 {ready}";
+        }
+
+        // ── 작물 규칙 ─────────────────────────────────────────
+
+        private void Register(CropData crop)
+        {
+            if (crop != null && !string.IsNullOrEmpty(crop.Id))
+                crops[crop.Id] = crop;
+        }
+
+        // 심은 작물만 등록돼 있다. 저장에서 불러올 때(6-1)는 2-1 ContentDatabase로 찾는다.
+        private CropSpec SpecOf(string cropId)
+        {
+            var c = crops[cropId];
+            return new CropSpec(c.GrowDays, c.WetDays, c.HarvestYield, c.RegrowDays, c.MaxHarvests);
+        }
+
+        // ── 배치 ─────────────────────────────────────────────
+
+        private Vector3 AlongDir => settings.PlotExpandDirection.sqrMagnitude > 0f ? settings.PlotExpandDirection.normalized : Vector3.left;
+        private Vector3 AcrossDir => Vector3.Cross(Vector3.up, AlongDir).normalized;
+        private Quaternion CellRotation() => Quaternion.LookRotation(AcrossDir, Vector3.up);
+
+        /// <summary>칸 중심의 월드 위치 (바닥 높이 = 이 오브젝트 높이).</summary>
+        public Vector3 CellPosition(int index)
+        {
+            var (along, across) = FarmLayout.CellOffset(index, settings.CellsPerPlot, settings.CellPitch, settings.BedPitch, settings.PlotPitch);
+            return transform.position + AlongDir * (float)along + AcrossDir * (float)across;
+        }
+
+        private bool OverlapsForbidden(Vector3 center)
+        {
+            float half = cellFootprint * 0.5f;
+            foreach (var zone in forbiddenZones)
+                if (zone != null && zone.Overlaps(center, half, half))
+                    return true;
+            return false;
+        }
+
+        // 최대 구획까지 모든 칸 자리를 검사해, 레벨 배치가 바뀌어 길 · 문과 겹치면 바로 알린다.
+        private void WarnForbiddenOverlaps()
+        {
+            int total = settings.MaxPlotCount * settings.CellsPerPlot;
+            int overlaps = 0;
+            for (int i = 0; i < total; i++)
+                if (OverlapsForbidden(CellPosition(i)))
+                    overlaps++;
+            if (overlaps > 0)
+                Debug.LogWarning($"[FarmGrid] 최대 {settings.MaxPlotCount}구획 중 {overlaps}칸이 금지 구역(길 · 문)과 겹침 — 씬 기즈모(빨강) 확인 후 밭 원점 · 간격 조정", this);
+        }
+
+        private void OnDrawGizmos()
+        {
+            if (settings == null)
+                return;
+            int open = state != null ? state.PlotCount : settings.StartPlotCount;
+            Vector3 size = new Vector3(cellFootprint, 0f, cellFootprint);
+
+            if (drawCells)
+            {
+                for (int i = 0; i < open * settings.CellsPerPlot; i++)
+                {
+                    Vector3 p = CellPosition(i) + Vector3.up * 0.15f;
+                    Color c = OverlapsForbidden(p) ? GizmoKit.Forbidden
+                        : state == null ? GizmoKit.ToolRange
+                        : state.StatusOf(i) switch
+                        {
+                            FarmCellStatus.Ready => GizmoKit.HarvestDisplay,
+                            FarmCellStatus.Growing => GizmoKit.Spawn,
+                            FarmCellStatus.Tilled => GizmoKit.ToolRange,
+                            FarmCellStatus.Tilling => GizmoKit.ToolRange,
+                            _ => Color.gray,
+                        };
+                    GizmoKit.FlatBox(p, size, c, 0.2f);
+                }
+            }
+
+            if (drawNextPlot && open < settings.MaxPlotCount)
+            {
+                // 다음 구획 자리: 칸 바깥 테두리를 빨강 점선으로, 그 안에서 금지 구역과 겹치는 칸은 빨강 칠
+                var b = FarmLayout.PlotCenterBounds(open, settings.CellsPerPlot, settings.CellPitch, settings.BedPitch, settings.PlotPitch);
+                float h = cellFootprint * 0.5f;
+                Vector3 o = transform.position + Vector3.up * 0.15f;
+                Vector3 Corner(double along, double across) => o + AlongDir * (float)along + AcrossDir * (float)across;
+                GizmoKit.DashedQuad(Corner(b.AlongMin - h, b.AcrossMin - h), Corner(b.AlongMax + h, b.AcrossMin - h),
+                    Corner(b.AlongMax + h, b.AcrossMax + h), Corner(b.AlongMin - h, b.AcrossMax + h), 0.4f, GizmoKit.Forbidden);
+                for (int i = open * settings.CellsPerPlot; i < (open + 1) * settings.CellsPerPlot; i++)
+                {
+                    Vector3 p = CellPosition(i) + Vector3.up * 0.15f;
+                    if (OverlapsForbidden(p))
+                        GizmoKit.FlatBox(p, size, GizmoKit.Forbidden, 0.35f);
+                }
+            }
+        }
+    }
+}

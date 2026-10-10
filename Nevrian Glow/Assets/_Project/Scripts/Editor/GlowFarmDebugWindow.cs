@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using NevrianGlowFarm.Core;
 using NevrianGlowFarm.Logic.Game;
+using NevrianGlowFarm.Systems.Farm;
 using NevrianGlowFarm.Systems.Player;
 using UnityEditor;
 using UnityEngine;
@@ -26,6 +27,8 @@ namespace NevrianGlowFarm.Editor
         private void OnGUI()
         {
             DrawGameSection();
+            EditorGUILayout.Space();
+            DrawFarmSection();
             EditorGUILayout.Space();
             DrawHotbarSection();
             EditorGUILayout.Space();
@@ -79,6 +82,32 @@ namespace NevrianGlowFarm.Editor
                     Debug.Log($"[디버그] SP {skillPointAmount:+#;-#;0} 적용 안 됨 — 0이거나 보유량보다 많이 뺌");
             }
         }
+
+        private void DrawFarmSection()
+        {
+            EditorGUILayout.LabelField("밭 (FarmGrid)", EditorStyles.boldLabel);
+
+            if (!Application.isPlaying)
+            {
+                farm = null;
+                EditorGUILayout.HelpBox("플레이 중일 때 칸 상태 요약과 물주기 버튼이 보인다. 밤 처리는 위의 '다음 단계'(스킬 → 다음 날) · '다음 날'로.", MessageType.None);
+                return;
+            }
+
+            if (farm == null)
+                farm = FindFirstObjectByType<FarmGrid>();
+            if (farm == null)
+            {
+                EditorGUILayout.HelpBox("씬에 FarmGrid가 없다 (Farm 씬 로드 확인).", MessageType.Warning);
+                return;
+            }
+
+            EditorGUILayout.LabelField(farm.Summary, EditorStyles.wordWrappedLabel);
+            if (GUILayout.Button("자라는 칸 모두 물주기"))
+                Debug.Log($"[디버그] 물주기: {farm.DebugWaterAll()}칸");
+        }
+
+        private FarmGrid farm;
 
         private void DrawHotbarSection()
         {

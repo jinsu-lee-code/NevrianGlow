@@ -80,6 +80,7 @@ namespace NevrianGlowFarm.Systems.Interaction
             }
             if (interactAction != null) interactAction.action.Enable();
             if (useAction != null) useAction.action.Enable();
+            GameEvents.PhaseChanged += OnPhaseChanged;
             promptDirty = true;
         }
 
@@ -90,6 +91,7 @@ namespace NevrianGlowFarm.Systems.Interaction
                 hotbar.SelectionChanged -= OnHeldItemChanged;
                 hotbar.SlotsChanged -= OnSlotsChanged;
             }
+            GameEvents.PhaseChanged -= OnPhaseChanged;
             SetPrompt(null);
         }
 
@@ -166,6 +168,8 @@ namespace NevrianGlowFarm.Systems.Interaction
 
         private void OnHeldItemChanged(int index) => promptDirty = true;
         private void OnSlotsChanged() => promptDirty = true;
+        // 밤이 지나면 보고 있던 칸이 다 자랄 수 있다 → 단계가 바뀔 때도 다시 받는다.
+        private void OnPhaseChanged(Logic.Game.PhaseChange change) => promptDirty = true;
 
         // 파괴된 MonoBehaviour는 인터페이스로 들고 있으면 null 비교가 통과하므로 Unity 기준으로 확인한다.
         private static bool IsAlive(object target) => target is UnityEngine.Object obj && obj != null;

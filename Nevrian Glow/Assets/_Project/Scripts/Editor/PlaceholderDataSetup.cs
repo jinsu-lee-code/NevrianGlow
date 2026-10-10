@@ -20,29 +20,36 @@ namespace NevrianGlowFarm.Editor
         private const string StatsFolder = DataRoot + "/Stats";
         private const string CropsFolder = DataRoot + "/Crops";
         private const string ToolsFolder = DataRoot + "/Tools";
+        private const string ItemsFolder = DataRoot + "/Items";
 
         private readonly struct CropRow
         {
             public readonly string Id, Name;
             public readonly int SeedPrice, SellPrice, GrowDays, WetDays, Yield, RegrowDays, MaxHarvests;
             public readonly float GiantChance, GiantYield, GiantScale;
+            public readonly string SeedId, SeedName, ColorHex;
 
             public CropRow(string id, string name, int seedPrice, int sellPrice, int growDays, int wetDays, int yield,
-                           int regrowDays, int maxHarvests, float giantChance, float giantYield, float giantScale)
+                           int regrowDays, int maxHarvests, float giantChance, float giantYield, float giantScale,
+                           string seedId, string seedName, string colorHex)
             {
                 Id = id; Name = name; SeedPrice = seedPrice; SellPrice = sellPrice; GrowDays = growDays; WetDays = wetDays;
                 Yield = yield; RegrowDays = regrowDays; MaxHarvests = maxHarvests;
                 GiantChance = giantChance; GiantYield = giantYield; GiantScale = giantScale;
+                SeedId = seedId; SeedName = seedName; ColorHex = colorHex;
             }
         }
 
         // BALANCE 2-2 (v1 2026-10-10: 버섯꽃 성장 4 → 2). 거대 작물: giantChance 0.02 / giantYieldMultiplier 2.5 / giantScale 2.2 (거대 X = 확률 0).
+        // 씨앗 id · 그레이박스 색은 BALANCE 2-12 · 9-5 (월광 시안 · 버섯꽃 보라 · 등불 금빛).
         private static readonly CropRow[] Crops =
         {
-            new CropRow("crop_moonroot",       "월광 뿌리", 10, 15, 1, 1, 1, 0, 1, 0.02f, 2.5f, 2.2f),
-            new CropRow("crop_mushroomflower", "버섯꽃",    20, 40, 2, 2, 2, 0, 1, 0.02f, 2.5f, 2.2f),
-            new CropRow("crop_lanternfruit",   "등불 열매", 70, 80, 8, 1, 2, 4, 3, 0f,    1f,   1f),
+            new CropRow("crop_moonroot",       "월광 뿌리", 10, 15, 1, 1, 1, 0, 1, 0.02f, 2.5f, 2.2f, "item_seed_moonroot",       "월광 뿌리 씨앗", "#62F2E1"),
+            new CropRow("crop_mushroomflower", "버섯꽃",    20, 40, 2, 2, 2, 0, 1, 0.02f, 2.5f, 2.2f, "item_seed_mushroomflower", "버섯꽃 씨앗",    "#A08BFF"),
+            new CropRow("crop_lanternfruit",   "등불 열매", 70, 80, 8, 1, 2, 4, 3, 0f,    1f,   1f,   "item_seed_lanternfruit",   "등불 열매 씨앗", "#FFD27A"),
         };
+
+        private const int ItemStackSize = 10; // BALANCE 2-4: 도구 · 장치 외 칸당 10개
 
         // BALANCE 2-11 도구 등급 (v1 2026-10-10). 등급 하나 = 에셋 하나.
         private static readonly (string Id, string Name, float WorkPerUse)[] Hoes =
@@ -67,8 +74,14 @@ namespace NevrianGlowFarm.Editor
             ("tool_mop_3", "발광 대걸레", 1.7f, 1.5f),
         };
 
-        // BALANCE 2-3 시작 핫바 (임시, GDD 열린 항목 22): 1번 칸부터, 남는 칸은 빈 칸.
-        private static readonly string[] StartingHotbarIds = { "tool_hoe_1", "tool_watering_1", "tool_mop_1" };
+        // BALANCE 2-3 시작 핫바 (임시, GDD 열린 항목 22): 1번 칸부터, 4번은 수확물 자리로 비워 둔다.
+        // 대걸레는 가게 창고에 둔다(2-2, 시뮬레이션 추천안). 월광 씨앗 10개는 상점(3-3)이 생기기 전 개발용 임시.
+        private static readonly (string Id, int Count)[] StartingHotbar =
+        {
+            ("tool_hoe_1", 1),
+            ("tool_watering_1", 1),
+            ("item_seed_moonroot", 10),
+        };
 
         private const string StartingCropId = "crop_moonroot"; // BALANCE 2-3 시작 작물
         private const int StartingCropCount = 2;
@@ -118,13 +131,27 @@ namespace NevrianGlowFarm.Editor
                     so.FindProperty("giantChance").floatValue = row.GiantChance;
                     so.FindProperty("giantYieldMultiplier").floatValue = row.GiantYield;
                     so.FindProperty("giantScale").floatValue = row.GiantScale;
+                    so.FindProperty("maxStack").intValue = ItemStackSize;
+                    if (ColorUtility.TryParseHtmlString(row.ColorHex, out var color))
+                        so.FindProperty("greyboxColor").colorValue = color;
                 });
             }
 
-            var tools = new List<ItemData>();
+            var items = new List<ItemData>();
+            for (int i = 0; i < Crops.Length; i++)
+            {
+                var row = Crops[i];
+                var crop = crops[i];
+                items.Add(Ensure<SeedData>($"{ItemsFolder}/{row.SeedId}.asset", resetExisting, report, so =>
+                {
+                    SetIdentity(so, row.SeedId, row.SeedName);
+                    so.FindProperty("maxStack").intValue = ItemStackSize;
+                    so.FindProperty("crop").objectReferenceValue = crop;
+                }));
+            }
             foreach (var hoe in Hoes)
             {
-                tools.Add(Ensure<HoeData>($"{ToolsFolder}/{hoe.Id}.asset", resetExisting, report, so =>
+                items.Add(Ensure<HoeData>($"{ToolsFolder}/{hoe.Id}.asset", resetExisting, report, so =>
                 {
                     SetIdentity(so, hoe.Id, hoe.Name);
                     so.FindProperty("workPerUse").floatValue = hoe.WorkPerUse;
@@ -132,7 +159,7 @@ namespace NevrianGlowFarm.Editor
             }
             foreach (var can in WateringCans)
             {
-                tools.Add(Ensure<WateringCanData>($"{ToolsFolder}/{can.Id}.asset", resetExisting, report, so =>
+                items.Add(Ensure<WateringCanData>($"{ToolsFolder}/{can.Id}.asset", resetExisting, report, so =>
                 {
                     SetIdentity(so, can.Id, can.Name);
                     so.FindProperty("cellCount").intValue = can.CellCount;
@@ -140,7 +167,7 @@ namespace NevrianGlowFarm.Editor
             }
             foreach (var mop in Mops)
             {
-                tools.Add(Ensure<MopData>($"{ToolsFolder}/{mop.Id}.asset", resetExisting, report, so =>
+                items.Add(Ensure<MopData>($"{ToolsFolder}/{mop.Id}.asset", resetExisting, report, so =>
                 {
                     SetIdentity(so, mop.Id, mop.Name);
                     so.FindProperty("radius").floatValue = mop.Radius;
@@ -175,19 +202,22 @@ namespace NevrianGlowFarm.Editor
                     element.FindPropertyRelative("crop").objectReferenceValue = startCrop;
                     element.FindPropertyRelative("count").intValue = StartingCropCount;
                 }
-                var hotbar = so.FindProperty("startingHotbar");
+                var hotbar = so.FindProperty("startingHotbarItems");
                 hotbar.ClearArray();
-                foreach (string toolId in StartingHotbarIds)
+                foreach (var (itemId, count) in StartingHotbar)
                 {
-                    var tool = tools.Find(t => t != null && t.Id == toolId);
-                    if (tool == null)
+                    var item = items.Find(t => t != null && t.Id == itemId);
+                    if (item == null)
                     {
-                        Debug.LogError($"[Setup] 시작 핫바의 {toolId}를 찾지 못함 — 건너뜀");
+                        Debug.LogError($"[Setup] 시작 핫바의 {itemId}를 찾지 못함 — 건너뜀");
                         continue;
                     }
                     hotbar.InsertArrayElementAtIndex(hotbar.arraySize);
-                    hotbar.GetArrayElementAtIndex(hotbar.arraySize - 1).objectReferenceValue = tool;
+                    var element = hotbar.GetArrayElementAtIndex(hotbar.arraySize - 1);
+                    element.FindPropertyRelative("item").objectReferenceValue = item;
+                    element.FindPropertyRelative("count").intValue = count;
                 }
+                so.FindProperty("tillWorkRequired").floatValue = 3f; // BALANCE 2-11 칸 필요 작업량
                 so.FindProperty("startPlotCount").intValue = 2;
                 so.FindProperty("maxPlotCount").intValue = 5;
                 so.FindProperty("cellsPerPlot").intValue = 16;

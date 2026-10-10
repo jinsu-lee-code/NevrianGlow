@@ -65,7 +65,9 @@ namespace NevrianGlowFarm.UI
                 if (!used)
                     continue;
                 var item = hotbar.GetItem(i);
-                slots[i].SetContent(i + 1, item != null ? item.DisplayName : emptyLabel);
+                int count = hotbar.GetCount(i);
+                string label = item == null ? emptyLabel : item.MaxStack > 1 ? $"{item.DisplayName} ×{count}" : item.DisplayName;
+                slots[i].SetContent(i + 1, label);
                 slots[i].SetSelected(false, normalColor, selectedColor);
             }
 

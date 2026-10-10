@@ -32,5 +32,40 @@ namespace NevrianGlowFarm.Core
             Gizmos.color = color;
             Gizmos.DrawWireSphere(position, radius);
         }
+
+        public static void WireBox(Vector3 center, Vector3 size, Color color)
+        {
+            Gizmos.color = color;
+            Gizmos.DrawWireCube(center, size);
+        }
+
+        /// <summary>바닥에 눕힌 반투명 사각형 (칸 상태 표시용). size는 x · z만 쓴다.</summary>
+        public static void FlatBox(Vector3 center, Vector3 size, Color color, float alpha = 0.35f)
+        {
+            Gizmos.color = new Color(color.r, color.g, color.b, alpha);
+            Gizmos.DrawCube(center, new Vector3(size.x, 0.02f, size.z));
+            Gizmos.color = color;
+            Gizmos.DrawWireCube(center, new Vector3(size.x, 0.02f, size.z));
+        }
+
+        public static void DashedLine(Vector3 from, Vector3 to, float dash, Color color)
+        {
+            Gizmos.color = color;
+            float length = Vector3.Distance(from, to);
+            if (length <= 0f || dash <= 0f)
+                return;
+            Vector3 dir = (to - from) / length;
+            for (float t = 0f; t < length; t += dash * 2f)
+                Gizmos.DrawLine(from + dir * t, from + dir * Mathf.Min(t + dash, length));
+        }
+
+        /// <summary>바닥 점선 사각형. 네 꼭짓점을 순서대로 받는다.</summary>
+        public static void DashedQuad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, float dash, Color color)
+        {
+            DashedLine(a, b, dash, color);
+            DashedLine(b, c, dash, color);
+            DashedLine(c, d, dash, color);
+            DashedLine(d, a, dash, color);
+        }
     }
 }
