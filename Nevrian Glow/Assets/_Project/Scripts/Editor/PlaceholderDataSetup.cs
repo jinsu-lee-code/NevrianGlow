@@ -341,6 +341,8 @@ namespace NevrianGlowFarm.Editor
                 so.FindProperty("skillPointsPerLevel").intValue = 3;
             });
 
+            EnsureDaySimulator(resetExisting, report);
+
             AssetDatabase.SaveAssets();
             return report.ToString();
         }
@@ -434,6 +436,72 @@ namespace NevrianGlowFarm.Editor
             {
                 SetProduct(so, "shop_shelf_expand", "진열대 확장", 32, "확장", false, new[] { new Tier(150), new Tier(250), new Tier(400) }, null);
                 so.FindProperty("slots").intValue = 2;
+            });
+        }
+
+        // ── 측정 봇 (TASKS 4-1, BALANCE 4번 · GDD 6장, 2026-10-11) ──
+
+        private static void EnsureDaySimulator(bool resetExisting, Report report)
+        {
+            CropData Crop(string id) => AssetDatabase.LoadAssetAtPath<CropData>($"{CropsFolder}/{id}.asset");
+            Ensure<DaySimulatorSettingsData>($"{StatsFolder}/DaySimulatorSettings.asset", resetExisting, report, so =>
+            {
+                so.FindProperty("gameStart").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameStartSettingsData>($"{StatsFolder}/GameStartSettings.asset");
+                so.FindProperty("sales").objectReferenceValue = AssetDatabase.LoadAssetAtPath<SalesSettingsData>($"{StatsFolder}/SalesSettings.asset");
+                so.FindProperty("progression").objectReferenceValue = AssetDatabase.LoadAssetAtPath<ProgressionData>($"{StatsFolder}/Progression.asset");
+                so.FindProperty("inventory").objectReferenceValue = AssetDatabase.LoadAssetAtPath<InventorySettingsData>($"{StatsFolder}/InventorySettings.asset");
+                so.FindProperty("database").objectReferenceValue = AssetDatabase.LoadAssetAtPath<ContentDatabase>($"{DataRoot}/ContentDatabase.asset");
+                so.FindProperty("seedCount").intValue = 20;
+                so.FindProperty("baseSeed").intValue = 20261011;
+                so.FindProperty("days").intValue = 6;
+                so.FindProperty("cleanliness").floatValue = 0.9f;
+                so.FindProperty("customerBonus").floatValue = 0f;
+
+                // BALANCE 4번 5: 작물 해금 → 고품질 (비용 9-3 임시 — 스킬 데이터 4-3에서 교체)
+                var skills = so.FindProperty("skillPriority");
+                skills.ClearArray();
+                void Skill(string id, int[] costs, string pre, int preLevel)
+                {
+                    skills.InsertArrayElementAtIndex(skills.arraySize);
+                    var e = skills.GetArrayElementAtIndex(skills.arraySize - 1);
+                    e.FindPropertyRelative("skillId").stringValue = id;
+                    var list = e.FindPropertyRelative("costs");
+                    list.ClearArray();
+                    for (int i = 0; i < costs.Length; i++)
+                    {
+                        list.InsertArrayElementAtIndex(i);
+                        list.GetArrayElementAtIndex(i).intValue = costs[i];
+                    }
+                    e.FindPropertyRelative("prerequisiteId").stringValue = pre ?? string.Empty;
+                    e.FindPropertyRelative("prerequisiteLevel").intValue = preLevel;
+                }
+                Skill("skill_unlock_mushroom", new[] { 3 }, null, 0);
+                Skill("skill_unlock_lantern", new[] { 6 }, "skill_unlock_mushroom", 1);
+                Skill("skill_quality", new[] { 2, 3, 4 }, null, 0);
+
+                // GDD 6장 프로토타입 목표 경험 → 판정 조건 (임시 해석, 기획 확인 대기)
+                var goals = so.FindProperty("goals");
+                goals.ClearArray();
+                void Goal(int day, Logic.Simulation.SimGoalKind kind, string cropId, int amount, string label)
+                {
+                    goals.InsertArrayElementAtIndex(goals.arraySize);
+                    var e = goals.GetArrayElementAtIndex(goals.arraySize - 1);
+                    e.FindPropertyRelative("day").intValue = day;
+                    e.FindPropertyRelative("kind").enumValueIndex = (int)kind;
+                    e.FindPropertyRelative("crop").objectReferenceValue = cropId != null ? Crop(cropId) : null;
+                    e.FindPropertyRelative("amount").intValue = amount;
+                    e.FindPropertyRelative("label").stringValue = label;
+                }
+                Goal(1, Logic.Simulation.SimGoalKind.PlantedAtLeast, null, 4, "밭 4칸 정도 개간하고 심기");
+                Goal(2, Logic.Simulation.SimGoalKind.HarvestedAtLeast, null, 1, "첫 수확");
+                Goal(2, Logic.Simulation.SimGoalKind.PlantedAtLeast, null, 10, "밭 10칸 개간하고 심기");
+                Goal(3, Logic.Simulation.SimGoalKind.CropUnlocked, "crop_mushroomflower", 0, "버섯꽃 해금");
+                Goal(3, Logic.Simulation.SimGoalKind.PlantedAtLeast, "crop_mushroomflower", 4, "버섯꽃 4칸 심기");
+                Goal(3, Logic.Simulation.SimGoalKind.PlantedAtLeast, "crop_moonroot", 1, "남은 돈으로 월광 심기");
+                Goal(4, Logic.Simulation.SimGoalKind.PlantedMoreThanPreviousDay, "crop_mushroomflower", 0, "버섯꽃을 더 많이 심기");
+                Goal(5, Logic.Simulation.SimGoalKind.HarvestedAtLeast, "crop_mushroomflower", 1, "버섯꽃 첫 수확");
+                Goal(6, Logic.Simulation.SimGoalKind.CropUnlocked, "crop_lanternfruit", 0, "등불 열매 해금");
+                Goal(6, Logic.Simulation.SimGoalKind.PlantedAtLeast, "crop_lanternfruit", 4, "등불 열매 4칸 심기");
             });
         }
 
