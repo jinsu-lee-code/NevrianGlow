@@ -22,5 +22,8 @@ namespace NevrianGlowFarm.Data
         public int LevelUpBase => levelUpBase;
         public int LevelUpPerLevel => levelUpPerLevel;
         public int SkillPointsPerLevel => skillPointsPerLevel;
+
+        /// <summary>규칙 계산용 값 묶음 (Logic Progression).</summary>
+        public Logic.Game.LevelCurve ToCurve() => new Logic.Game.LevelCurve(expPerRevenue, levelUpBase, levelUpPerLevel, skillPointsPerLevel);
     }
 }

@@ -23,6 +23,7 @@ namespace NevrianGlowFarm.Editor
         private DayPhase forcedPhase;
         private int moneyAmount = 100;
         private int skillPointAmount = 3;
+        private int expAmount = 80;
 
         private void OnGUI()
         {
@@ -54,6 +55,7 @@ namespace NevrianGlowFarm.Editor
             }
 
             EditorGUILayout.LabelField("현재", $"{game.Day}일차 · {DayPhaseNames.ToKorean(game.Phase)} · {game.Money}달러 · {game.SkillPoints} SP");
+            EditorGUILayout.LabelField("레벨", $"Lv{game.Level} · 경험치 {game.Exp} / {game.ExpRequired}");
 
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -75,6 +77,17 @@ namespace NevrianGlowFarm.Editor
                 moneyAmount = EditorGUILayout.IntField("달러 (음수 = 빼기)", moneyAmount);
                 if (GUILayout.Button("적용", GUILayout.Width(60)) && !game.TryChangeMoney(moneyAmount))
                     Debug.Log($"[디버그] 달러 {moneyAmount:+#;-#;0} 적용 안 됨 — 0이거나 보유량보다 많이 뺌");
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                expAmount = EditorGUILayout.IntField("경험치 더하기", expAmount);
+                if (GUILayout.Button("적용", GUILayout.Width(60)))
+                {
+                    var gain = game.AddExp(expAmount);
+                    if (gain.LeveledUp)
+                        Debug.Log($"[디버그] 경험치 +{gain.Exp} → Lv{game.Level} (레벨 {gain.LevelsGained} 오름 · SP +{gain.SkillPointsGained})");
+                }
             }
 
             using (new EditorGUILayout.HorizontalScope())

@@ -25,10 +25,18 @@ namespace NevrianGlowFarm.Core
         /// <summary>SP가 바뀔 때 (새 값).</summary>
         public static event Action<int> SkillPointsChanged;
 
+        /// <summary>경험치가 바뀔 때 (레벨 안 경험치, 다음 레벨까지 필요량) — HUD 경험치 바.</summary>
+        public static event Action<int, int> ExpChanged;
+
+        /// <summary>레벨이 오를 때 (새 레벨, 이번에 오른 레벨 수) — 레벨업 연출 · 튜토리얼 첫 스킬.</summary>
+        public static event Action<int, int> LeveledUp;
+
         internal static void RaisePhaseChanged(PhaseChange change) => PhaseChanged?.Invoke(change);
         internal static void RaiseDayChanged(int day) => DayChanged?.Invoke(day);
         internal static void RaiseMoneyChanged(int money) => MoneyChanged?.Invoke(money);
         internal static void RaiseSkillPointsChanged(int skillPoints) => SkillPointsChanged?.Invoke(skillPoints);
+        internal static void RaiseExpChanged(int exp, int required) => ExpChanged?.Invoke(exp, required);
+        internal static void RaiseLeveledUp(int level, int levelsGained) => LeveledUp?.Invoke(level, levelsGained);
 
         // 도메인 리로드를 끈 플레이 모드 설정에서도 이전 플레이의 구독자가 남지 않게 한다.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -38,6 +46,8 @@ namespace NevrianGlowFarm.Core
             DayChanged = null;
             MoneyChanged = null;
             SkillPointsChanged = null;
+            ExpChanged = null;
+            LeveledUp = null;
         }
     }
 }

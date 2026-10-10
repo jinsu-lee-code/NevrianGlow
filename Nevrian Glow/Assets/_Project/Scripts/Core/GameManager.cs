@@ -17,6 +17,8 @@ namespace NevrianGlowFarm.Core
         [SerializeField] private GameStartSettingsData startSettings;
         [Tooltip("구역 씬 로드 완료를 알려 주는 부트스트래퍼 (Core)")]
         [SerializeField] private SceneBootstrapper bootstrapper;
+        [Tooltip("경험치 · 레벨 규칙 (Data/Stats/Progression)")]
+        [SerializeField] private ProgressionData progressionData;
 
         [Header("디버그")]
         [Tooltip("현재 일차 (읽기 전용)")]
@@ -27,10 +29,15 @@ namespace NevrianGlowFarm.Core
         [SerializeField] private int money;
         [Tooltip("보유 SP (읽기 전용)")]
         [SerializeField] private int skillPoints;
+        [Tooltip("레벨 (읽기 전용)")]
+        [SerializeField] private int level;
+        [Tooltip("레벨 안 경험치 / 다음 레벨까지 (읽기 전용)")]
+        [SerializeField] private string expView;
 
         private static GameManager instance;
         private DayCycle cycle;
         private Wallet wallet;
+        private Progression progression;
 
         /// <summary>실행 중인 GameManager. Core 씬이 없으면 null.</summary>
         public static GameManager Instance => instance;
@@ -41,6 +48,9 @@ namespace NevrianGlowFarm.Core
         public DayPhase Phase => cycle != null ? cycle.Phase : DayPhase.Shop;
         public int Money => wallet != null ? wallet.Money : 0;
         public int SkillPoints => wallet != null ? wallet.SkillPoints : 0;
+        public int Level => progression != null ? progression.Level : Progression.FirstLevel;
+        public int Exp => progression != null ? progression.Exp : 0;
+        public int ExpRequired => progression != null ? progression.Required : 0;
 
         private void Awake()
         {
@@ -50,7 +60,7 @@ namespace NevrianGlowFarm.Core
                 enabled = false;
                 return;
             }
-            if (startSettings == null || bootstrapper == null)
+            if (startSettings == null || bootstrapper == null || progressionData == null)
             {
                 Debug.LogError("[GameManager] 참조가 비어 있음 — 인스펙터의 참조 항목 확인", this);
                 enabled = false;
@@ -83,6 +93,7 @@ namespace NevrianGlowFarm.Core
             bootstrapper.Ready -= StartNewGame;
             cycle = new DayCycle();
             wallet = new Wallet(startSettings.StartingMoney, 0);
+            progression = new Progression(progressionData.ToCurve());
             SyncDebugView();
 
             var start = new PhaseChange(cycle.Day, cycle.Phase, cycle.Day, cycle.Phase);
@@ -91,6 +102,26 @@ namespace NevrianGlowFarm.Core
             GameEvents.RaiseDayChanged(cycle.Day);
             GameEvents.RaiseMoneyChanged(wallet.Money);
             GameEvents.RaiseSkillPointsChanged(wallet.SkillPoints);
+            GameEvents.RaiseExpChanged(progression.Exp, progression.Required);
+        }
+
+        /// <summary>매출로 경험치를 받는다 (정산 3-3: 경험치 = 매출 × 1). 레벨업하면 SP가 더해진다.</summary>
+        public ExpGain AddRevenueExp(int revenue) => RequireStarted() ? ApplyExp(progression.AddRevenue(revenue)) : default;
+
+        /// <summary>경험치를 바로 더한다 (디버그 · 이후 다른 경험치 출처).</summary>
+        public ExpGain AddExp(int amount) => RequireStarted() ? ApplyExp(progression.AddExp(amount)) : default;
+
+        private ExpGain ApplyExp(ExpGain gain)
+        {
+            if (gain.Exp <= 0)
+                return gain;
+            if (gain.SkillPointsGained > 0 && wallet.TryChangeSkillPoints(gain.SkillPointsGained))
+                GameEvents.RaiseSkillPointsChanged(wallet.SkillPoints);
+            SyncDebugView();
+            GameEvents.RaiseExpChanged(progression.Exp, progression.Required);
+            if (gain.LeveledUp)
+                GameEvents.RaiseLeveledUp(progression.Level, gain.LevelsGained);
+            return gain;
         }
 
         /// <summary>다음 단계로 (스킬 다음은 다음 날 상점). 각 단계의 "끝내기"가 부른다.</summary>
@@ -163,6 +194,11 @@ namespace NevrianGlowFarm.Core
             phase = cycle.Phase;
             money = wallet.Money;
             skillPoints = wallet.SkillPoints;
+            if (progression != null)
+            {
+                level = progression.Level;
+                expView = $"{progression.Exp} / {progression.Required}";
+            }
         }
     }
 }

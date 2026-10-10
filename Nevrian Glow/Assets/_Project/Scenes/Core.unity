@@ -980,10 +980,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Core.GameManager
   startSettings: {fileID: 11400000, guid: 0b48beb8da4fc334db3bf574f59cba51, type: 2}
   bootstrapper: {fileID: 153839637}
+  progressionData: {fileID: 11400000, guid: 5a8aabf3c52cb114cab2cf8c246a4924, type: 2}
   day: 0
   phase: 0
   money: 0
   skillPoints: 0
+  level: 0
+  expView: 
 --- !u!1 &365114329
 GameObject:
   m_ObjectHideFlags: 0
