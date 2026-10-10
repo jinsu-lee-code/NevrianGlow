@@ -12,13 +12,13 @@ namespace NevrianGlowFarm.UI
         [SerializeField] private Image background;
         [Tooltip("숫자 키 글자")]
         [SerializeField] private TMP_Text keyLabel;
-        [Tooltip("도구 이름 글자")]
+        [Tooltip("아이템 이름 글자")]
         [SerializeField] private TMP_Text nameLabel;
 
-        public void SetContent(int keyNumber, string toolName)
+        public void SetContent(int keyNumber, string itemName)
         {
             keyLabel.text = keyNumber.ToString();
-            nameLabel.text = toolName;
+            nameLabel.text = itemName;
         }
 
         public void SetSelected(bool selected, Color normalColor, Color selectedColor)

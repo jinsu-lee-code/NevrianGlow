@@ -22,6 +22,4 @@ MonoBehaviour:
     dayBonusCap: 4
   minSpacing: 0.8
   placementAttempts: 30
-  mopRadius: 0.9
-  mopSpeed: 0.9
   carryCount: 1

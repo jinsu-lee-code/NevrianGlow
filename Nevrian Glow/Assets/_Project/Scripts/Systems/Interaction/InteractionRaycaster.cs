@@ -8,8 +8,9 @@ using UnityEngine.InputSystem;
 namespace NevrianGlowFarm.Systems.Interaction
 {
     /// <summary>
-    /// 화면 중앙 Raycast로 IInteractable을 찾고, 현재 도구로 프롬프트를 받아 알린다 (노션 GDD 12.3).
-    /// 대상 · 도구가 바뀔 때와 상호작용 직후에만 프롬프트를 다시 받는다. 클릭 · E에 Interact(tool).
+    /// 화면 중앙 Raycast로 대상을 찾는다 (노션 GDD 12.3, GDD 4-3).
+    /// E = 손 동작(IHandInteractable, 든 아이템과 무관) / 좌클릭 = 든 아이템 사용(IItemUseTarget). 한 대상이 둘 다 가질 수 있다.
+    /// 대상 · 든 아이템이 바뀔 때와 상호작용 직후에만 프롬프트를 다시 받는다.
     /// </summary>
     public class InteractionRaycaster : MonoBehaviour
     {
@@ -18,16 +19,20 @@ namespace NevrianGlowFarm.Systems.Interaction
         [SerializeField] private Transform rayOrigin;
         [Tooltip("사거리 (Data/Stats/PlayerSettings의 상호작용 거리)")]
         [SerializeField] private PlayerSettingsData settings;
-        [Tooltip("현재 도구를 주는 핫바")]
+        [Tooltip("든 아이템을 주는 핫바")]
         [SerializeField] private Hotbar hotbar;
-        [Tooltip("상호작용 입력 (Player/Interact, E)")]
+        [Tooltip("손 동작 입력 (Player/Interact, E)")]
         [SerializeField] private InputActionReference interactAction;
-        [Tooltip("도구 사용 입력 (Player/Attack, 좌클릭)")]
+        [Tooltip("든 아이템 사용 입력 (Player/Attack, 좌클릭)")]
         [SerializeField] private InputActionReference useAction;
 
         [Header("조정값")]
         [Tooltip("Raycast가 맞는 레이어 (Interactable)")]
         [SerializeField] private LayerMask interactableMask;
+        [Tooltip("프롬프트에 붙이는 손 동작 키 이름")]
+        [SerializeField] private string handKeyLabel = "E";
+        [Tooltip("프롬프트에 붙이는 아이템 사용 키 이름")]
+        [SerializeField] private string useKeyLabel = "좌클릭";
 
         [Header("기즈모")]
         [Tooltip("플레이 중 시안 직선 + 맞은 점 표시")]
@@ -40,13 +45,18 @@ namespace NevrianGlowFarm.Systems.Interaction
         [SerializeField] private string prompt;
 
         private Collider lastCollider;
-        private IInteractable target;
+        private IHandInteractable handTarget;
+        private IItemUseTarget useTarget;
+        private string handPrompt;
+        private string usePrompt;
         private bool promptDirty = true;
         private bool hasHit;
         private Vector3 hitPoint;
 
-        /// <summary>지금 보고 있는 대상. 없으면 null.</summary>
-        public IInteractable Target => IsAlive(target) ? target : null;
+        /// <summary>지금 보고 있는 E 대상. 없으면 null.</summary>
+        public IHandInteractable HandTarget => IsAlive(handTarget) ? handTarget : null;
+        /// <summary>지금 보고 있는 좌클릭 대상. 없으면 null.</summary>
+        public IItemUseTarget UseTarget => IsAlive(useTarget) ? useTarget : null;
         public string Prompt => prompt;
 
         /// <summary>프롬프트가 바뀔 때만 발생. 비어 있으면 숨긴다.</summary>
@@ -63,7 +73,11 @@ namespace NevrianGlowFarm.Systems.Interaction
 
         private void OnEnable()
         {
-            if (hotbar != null) hotbar.SelectionChanged += OnToolChanged;
+            if (hotbar != null)
+            {
+                hotbar.SelectionChanged += OnHeldItemChanged;
+                hotbar.SlotsChanged += OnSlotsChanged;
+            }
             if (interactAction != null) interactAction.action.Enable();
             if (useAction != null) useAction.action.Enable();
             promptDirty = true;
@@ -71,7 +85,11 @@ namespace NevrianGlowFarm.Systems.Interaction
 
         private void OnDisable()
         {
-            if (hotbar != null) hotbar.SelectionChanged -= OnToolChanged;
+            if (hotbar != null)
+            {
+                hotbar.SelectionChanged -= OnHeldItemChanged;
+                hotbar.SlotsChanged -= OnSlotsChanged;
+            }
             SetPrompt(null);
         }
 
@@ -82,10 +100,15 @@ namespace NevrianGlowFarm.Systems.Interaction
             if (promptDirty)
                 RefreshPrompt();
 
-            bool pressed = interactAction.action.WasPressedThisFrame() || useAction.action.WasPressedThisFrame();
-            if (pressed && IsAlive(target) && !string.IsNullOrEmpty(prompt))
+            if (interactAction.action.WasPressedThisFrame() && IsAlive(handTarget) && !string.IsNullOrEmpty(handPrompt))
             {
-                target.Interact(hotbar.SelectedTool);
+                handTarget.InteractHand();
+                promptDirty = true;
+            }
+
+            if (useAction.action.WasPressedThisFrame() && IsAlive(useTarget) && !string.IsNullOrEmpty(usePrompt))
+            {
+                useTarget.Use(hotbar.SelectedItem);
                 promptDirty = true;
             }
         }
@@ -101,20 +124,35 @@ namespace NevrianGlowFarm.Systems.Interaction
                 hitPoint = hit.point;
             }
 
-            // 콜라이더가 바뀔 때만 컴포넌트를 찾는다 (매 프레임 GetComponent 금지).
-            if (hitCollider == lastCollider && IsAlive(target) == (target != null))
+            // 콜라이더가 바뀔 때(또는 대상이 파괴됐을 때)만 컴포넌트를 찾는다 (매 프레임 GetComponent 금지).
+            bool targetsAlive = IsAlive(handTarget) == (handTarget != null) && IsAlive(useTarget) == (useTarget != null);
+            if (hitCollider == lastCollider && targetsAlive)
                 return;
 
             lastCollider = hitCollider;
-            target = hitCollider != null ? hitCollider.GetComponentInParent<IInteractable>() : null;
-            targetName = IsAlive(target) ? ((Component)target).name : string.Empty;
+            handTarget = hitCollider != null ? hitCollider.GetComponentInParent<IHandInteractable>() : null;
+            useTarget = hitCollider != null ? hitCollider.GetComponentInParent<IItemUseTarget>() : null;
+            var shown = IsAlive(handTarget) ? (Component)handTarget : IsAlive(useTarget) ? (Component)useTarget : null;
+            targetName = shown != null ? shown.name : string.Empty;
             promptDirty = true;
         }
 
         private void RefreshPrompt()
         {
             promptDirty = false;
-            SetPrompt(IsAlive(target) ? target.GetPrompt(hotbar.SelectedTool) : null);
+            handPrompt = IsAlive(handTarget) ? handTarget.GetHandPrompt() : null;
+            usePrompt = IsAlive(useTarget) ? useTarget.GetUsePrompt(hotbar.SelectedItem) : null;
+
+            bool hasHand = !string.IsNullOrEmpty(handPrompt);
+            bool hasUse = !string.IsNullOrEmpty(usePrompt);
+            string combined = null;
+            if (hasUse && hasHand)
+                combined = $"[{useKeyLabel}] {usePrompt}\n[{handKeyLabel}] {handPrompt}";
+            else if (hasUse)
+                combined = $"[{useKeyLabel}] {usePrompt}";
+            else if (hasHand)
+                combined = $"[{handKeyLabel}] {handPrompt}";
+            SetPrompt(combined);
         }
 
         private void SetPrompt(string newPrompt)
@@ -126,10 +164,11 @@ namespace NevrianGlowFarm.Systems.Interaction
             PromptChanged?.Invoke(prompt);
         }
 
-        private void OnToolChanged(int index) => promptDirty = true;
+        private void OnHeldItemChanged(int index) => promptDirty = true;
+        private void OnSlotsChanged() => promptDirty = true;
 
         // 파괴된 MonoBehaviour는 인터페이스로 들고 있으면 null 비교가 통과하므로 Unity 기준으로 확인한다.
-        private static bool IsAlive(IInteractable interactable) => interactable is UnityEngine.Object obj && obj != null;
+        private static bool IsAlive(object target) => target is UnityEngine.Object obj && obj != null;
 
         private void OnDrawGizmos()
         {

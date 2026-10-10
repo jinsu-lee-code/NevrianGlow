@@ -18,7 +18,8 @@
 | 상점 상품 | `Data/Shop/shop_*.asset` | shop.csv (김봉준) | 2-8, 임시 9-2 |
 | 스킬 | `Data/Skills/skill_*.asset` | skills.csv (김봉준) | 2-9, 임시 9-3 |
 | 장소 이동 | Core 씬 `ZoneTransition` 인스펙터 | — | 2-10 |
-| 도구 등급 (괭이 · 대걸레 · 물뿌리개) | `Data/Items/tool_*.asset` (현재 `Data/Tools/`) | — | 2-11 |
+| 도구 등급 (괭이 · 대걸레 · 물뿌리개) | `Data/Tools/tool_*.asset` (HoeData · MopData · WateringCanData) | — | 2-11 |
+| 핫바 칸 수 · 시작 핫바 | `Data/Stats/InventorySettings.asset` · `GameStartSettings.asset` | — | 2-3 · 2-4 |
 | 아이템 (씨앗 · 비료 · 쓰레기) | `Data/Items/item_*.asset` | — | 2-12 |
 
 ## 2. 수치 표

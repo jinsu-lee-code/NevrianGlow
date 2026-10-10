@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System;
+using System.Collections.Generic;
 using System.IO;
 using NevrianGlowFarm.Data;
 using UnityEditor;
@@ -43,15 +44,31 @@ namespace NevrianGlowFarm.Editor
             new CropRow("crop_lanternfruit",   "등불 열매", 70, 80, 8, 1, 2, 4, 3, 0f,    1f,   1f),
         };
 
-        // BALANCE 9-4 핫바 1~5 순서. 핫바에 놓는 순서는 씬의 Hotbar 인스펙터가 정한다.
-        private static readonly (string Id, string Name)[] Tools =
+        // BALANCE 2-11 도구 등급 (v1 2026-10-10). 등급 하나 = 에셋 하나.
+        private static readonly (string Id, string Name, float WorkPerUse)[] Hoes =
         {
-            ("tool_hand", "손"),
-            ("tool_seedbag", "씨앗 주머니"),
-            ("tool_wateringcan", "물뿌리개"),
-            ("tool_mop", "대걸레"),
-            ("tool_fertilizer", "비료"),
+            ("tool_hoe_1", "낡은 괭이", 1f),
+            ("tool_hoe_2", "철 괭이", 1.5f),
+            ("tool_hoe_3", "발광 괭이", 3f),
         };
+
+        private static readonly (string Id, string Name, int CellCount)[] WateringCans =
+        {
+            ("tool_watering_1", "물뿌리개", 1),
+            ("tool_watering_2", "물뿌리개 2등급", 2),
+            ("tool_watering_3", "물뿌리개 3등급", 4),
+            ("tool_watering_4", "물뿌리개 4등급", 8),
+        };
+
+        private static readonly (string Id, string Name, float Radius, float Speed)[] Mops =
+        {
+            ("tool_mop_1", "낡은 대걸레", 0.9f, 0.9f),
+            ("tool_mop_2", "좋은 대걸레", 1.3f, 1.2f),
+            ("tool_mop_3", "발광 대걸레", 1.7f, 1.5f),
+        };
+
+        // BALANCE 2-3 시작 핫바 (임시, GDD 열린 항목 22): 1번 칸부터, 남는 칸은 빈 칸.
+        private static readonly string[] StartingHotbarIds = { "tool_hoe_1", "tool_watering_1", "tool_mop_1" };
 
         private const string StartingCropId = "crop_moonroot"; // BALANCE 2-3 시작 작물
         private const int StartingCropCount = 2;
@@ -104,13 +121,31 @@ namespace NevrianGlowFarm.Editor
                 });
             }
 
-            foreach (var tool in Tools)
+            var tools = new List<ItemData>();
+            foreach (var hoe in Hoes)
             {
-                Ensure<ToolData>($"{ToolsFolder}/{tool.Id}.asset", resetExisting, report, so =>
+                tools.Add(Ensure<HoeData>($"{ToolsFolder}/{hoe.Id}.asset", resetExisting, report, so =>
                 {
-                    so.FindProperty("id").stringValue = tool.Id;
-                    so.FindProperty("displayName").stringValue = tool.Name;
-                });
+                    SetIdentity(so, hoe.Id, hoe.Name);
+                    so.FindProperty("workPerUse").floatValue = hoe.WorkPerUse;
+                }));
+            }
+            foreach (var can in WateringCans)
+            {
+                tools.Add(Ensure<WateringCanData>($"{ToolsFolder}/{can.Id}.asset", resetExisting, report, so =>
+                {
+                    SetIdentity(so, can.Id, can.Name);
+                    so.FindProperty("cellCount").intValue = can.CellCount;
+                }));
+            }
+            foreach (var mop in Mops)
+            {
+                tools.Add(Ensure<MopData>($"{ToolsFolder}/{mop.Id}.asset", resetExisting, report, so =>
+                {
+                    SetIdentity(so, mop.Id, mop.Name);
+                    so.FindProperty("radius").floatValue = mop.Radius;
+                    so.FindProperty("speed").floatValue = mop.Speed;
+                }));
             }
 
             // BALANCE 2-1
@@ -140,6 +175,19 @@ namespace NevrianGlowFarm.Editor
                     element.FindPropertyRelative("crop").objectReferenceValue = startCrop;
                     element.FindPropertyRelative("count").intValue = StartingCropCount;
                 }
+                var hotbar = so.FindProperty("startingHotbar");
+                hotbar.ClearArray();
+                foreach (string toolId in StartingHotbarIds)
+                {
+                    var tool = tools.Find(t => t != null && t.Id == toolId);
+                    if (tool == null)
+                    {
+                        Debug.LogError($"[Setup] 시작 핫바의 {toolId}를 찾지 못함 — 건너뜀");
+                        continue;
+                    }
+                    hotbar.InsertArrayElementAtIndex(hotbar.arraySize);
+                    hotbar.GetArrayElementAtIndex(hotbar.arraySize - 1).objectReferenceValue = tool;
+                }
                 so.FindProperty("startPlotCount").intValue = 2;
                 so.FindProperty("maxPlotCount").intValue = 5;
                 so.FindProperty("cellsPerPlot").intValue = 16;
@@ -152,6 +200,8 @@ namespace NevrianGlowFarm.Editor
             // BALANCE 2-4
             Ensure<InventorySettingsData>($"{StatsFolder}/InventorySettings.asset", resetExisting, report, so =>
             {
+                so.FindProperty("hotbarBaseSlots").intValue = 4;
+                so.FindProperty("hotbarMaxSlots").intValue = 8;
                 so.FindProperty("baseSlots").intValue = 4;
                 so.FindProperty("slotsPerExpand").intValue = 4;
                 so.FindProperty("maxSlots").intValue = 20;
@@ -171,8 +221,6 @@ namespace NevrianGlowFarm.Editor
                 SetDailyCount(so.FindProperty("stain"), 4, 2, 4);
                 so.FindProperty("minSpacing").floatValue = 0.8f;
                 so.FindProperty("placementAttempts").intValue = 30;
-                so.FindProperty("mopRadius").floatValue = 0.9f;
-                so.FindProperty("mopSpeed").floatValue = 0.9f;
                 so.FindProperty("carryCount").intValue = 1;
             });
 
@@ -206,6 +254,12 @@ namespace NevrianGlowFarm.Editor
 
             AssetDatabase.SaveAssets();
             return report.ToString();
+        }
+
+        private static void SetIdentity(SerializedObject so, string id, string displayName)
+        {
+            so.FindProperty("id").stringValue = id;
+            so.FindProperty("displayName").stringValue = displayName;
         }
 
         private static void SetDailyCount(SerializedProperty prop, int baseCount, int dayDivisor, int dayBonusCap)

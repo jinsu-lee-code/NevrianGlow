@@ -105,6 +105,16 @@
                     "interactions": "",
                     "initialStateCheck": false,
                     "priority": 0
+                },
+                {
+                    "name": "HotbarScroll",
+                    "type": "Value",
+                    "id": "c71e5a2d-4b83-4f19-9e6a-2d8b7f3c1a05",
+                    "expectedControlType": "Axis",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
                 }
             ],
             "bindings": [
@@ -583,12 +593,12 @@
                 },
                 {
                     "name": "",
-                    "id": "18b18c03-0ae8-47a8-b0e6-55877e72197d",
-                    "path": "<Keyboard>/9",
+                    "id": "3f6b2c1e-9d47-4a8e-b5c2-7e1a0d9f4b63",
+                    "path": "<Mouse>/scroll/y",
                     "interactions": "",
                     "processors": "",
                     "groups": "Keyboard&Mouse",
-                    "action": "Hotbar",
+                    "action": "HotbarScroll",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

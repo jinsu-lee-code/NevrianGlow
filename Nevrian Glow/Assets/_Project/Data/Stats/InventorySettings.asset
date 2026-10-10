@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e969e450ee3437a409b3c1286d0f0142, type: 3}
   m_Name: InventorySettings
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.InventorySettingsData
+  hotbarBaseSlots: 4
+  hotbarMaxSlots: 8
   baseSlots: 4
   slotsPerExpand: 4
   maxSlots: 20

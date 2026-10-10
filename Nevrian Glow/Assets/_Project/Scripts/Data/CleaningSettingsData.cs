@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace NevrianGlowFarm.Data
 {
-    /// <summary>청소 (BALANCE 2-5). 대걸레 스킬 효과는 스킬(4-3)에서 덮어쓴다.</summary>
+    /// <summary>청소 (BALANCE 2-5). 대걸레 반경 · 속도는 대걸레 등급 데이터(MopData, BALANCE 2-11)에 있다.</summary>
     [CreateAssetMenu(menuName = "Glow Farm/Settings/Cleaning", fileName = "CleaningSettings")]
     public class CleaningSettingsData : ScriptableObject
     {
@@ -35,11 +35,7 @@ namespace NevrianGlowFarm.Data
         [Tooltip("한 개를 놓을 자리를 찾는 최대 시도 (회)")]
         [SerializeField, Min(1)] private int placementAttempts = 1;
 
-        [Header("도구")]
-        [Tooltip("대걸레 닦는 반경 (m)")]
-        [SerializeField, Min(0.1f)] private float mopRadius = 0.1f;
-        [Tooltip("대걸레 닦는 속도 (얼룩 진하기/초)")]
-        [SerializeField, Min(0.01f)] private float mopSpeed = 0.01f;
+        [Header("줍기 (2-4에서 쓰레기 아이템으로 대체)")]
         [Tooltip("한 번에 들 수 있는 쓰레기 (개)")]
         [SerializeField, Min(1)] private int carryCount = 1;
 
@@ -47,8 +43,6 @@ namespace NevrianGlowFarm.Data
         public DailyCount Stain => stain;
         public float MinSpacing => minSpacing;
         public int PlacementAttempts => placementAttempts;
-        public float MopRadius => mopRadius;
-        public float MopSpeed => mopSpeed;
         public int CarryCount => carryCount;
     }
 }

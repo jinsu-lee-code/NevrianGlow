@@ -2,11 +2,17 @@ using UnityEngine;
 
 namespace NevrianGlowFarm.Data
 {
-    /// <summary>인벤토리 · 창고 · 진열 (BALANCE 2-4). 확장 가격은 상점 상품(3-3)에 둔다.</summary>
+    /// <summary>핫바 · 인벤토리 · 창고 · 진열 (BALANCE 2-4). 확장 가격은 상점 상품(3-3)에 둔다.</summary>
     [CreateAssetMenu(menuName = "Glow Farm/Settings/Inventory", fileName = "InventorySettings")]
     public class InventorySettingsData : ScriptableObject
     {
-        [Header("인벤토리")]
+        [Header("핫바")]
+        [Tooltip("처음 핫바 칸 수 (칸)")]
+        [SerializeField, Min(1)] private int hotbarBaseSlots = 1;
+        [Tooltip("스킬로 늘릴 수 있는 최대 핫바 칸 수 — 숫자 키 1~8 (칸)")]
+        [SerializeField, Range(1, 8)] private int hotbarMaxSlots = 1;
+
+        [Header("인벤토리 (2-2에서 가방으로 정리)")]
         [Tooltip("처음 칸 수 (칸)")]
         [SerializeField, Min(1)] private int baseSlots = 1;
         [Tooltip("확장 1회마다 늘어나는 칸 수 (칸)")]
@@ -32,6 +38,8 @@ namespace NevrianGlowFarm.Data
         [Tooltip("진열 놓기 동작 시간 (초)")]
         [SerializeField, Min(0f)] private float placeDuration;
 
+        public int HotbarBaseSlots => Mathf.Min(hotbarBaseSlots, hotbarMaxSlots);
+        public int HotbarMaxSlots => hotbarMaxSlots;
         public int BaseSlots => baseSlots;
         public int SlotsPerExpand => slotsPerExpand;
         public int MaxSlots => maxSlots;
