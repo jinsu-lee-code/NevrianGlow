@@ -1,0 +1,160 @@
+using NevrianGlowFarm.Core;
+using NevrianGlowFarm.Data;
+using NevrianGlowFarm.Logic.Game;
+using NevrianGlowFarm.Systems.Zones;
+using TMPro;
+using UnityEngine;
+
+namespace NevrianGlowFarm.UI
+{
+    /// <summary>
+    /// HUD 최소판 (GDD 5 화면 목록, TASKS 2-8): 일차 · 단계 · 지역 / 달러 · SP / 레벨 · 경험치 바.
+    /// 핫바(HotbarView) · 상호작용 프롬프트(InteractionPromptView)는 따로 있다. 값은 GameEvents가 알릴 때만 바꾼다(매 프레임 갱신 없음).
+    /// 그레이박스: 단색 패널 + 글자 — UI 아트(5-4) · UI 흐름도 도착 후 한꺼번에 다듬는다.
+    /// </summary>
+    public class HudView : MonoBehaviour
+    {
+        [Header("참조")]
+        [Tooltip("일차 · 단계 · 지역 한 줄")]
+        [SerializeField] private TMP_Text dayLabel;
+        [Tooltip("달러 · SP 한 줄")]
+        [SerializeField] private TMP_Text walletLabel;
+        [Tooltip("레벨 · 경험치 숫자")]
+        [SerializeField] private TMP_Text levelLabel;
+        [Tooltip("경험치 바 채움 — 가로 앵커(anchorMax.x)를 비율로 바꾼다")]
+        [SerializeField] private RectTransform expFill;
+
+        private int day;
+        private DayPhase phase;
+        private string zoneName = string.Empty;
+        private int money;
+        private int skillPoints;
+        private int exp;
+        private int expRequired = 1;
+        private bool subscribed;
+
+        private void OnEnable()
+        {
+            if (dayLabel == null || walletLabel == null || levelLabel == null || expFill == null)
+            {
+                Debug.LogError("[HudView] 참조가 비어 있음 — 인스펙터의 참조 항목 확인", this);
+                return;
+            }
+            GameEvents.PhaseChanged += OnPhase;
+            GameEvents.MoneyChanged += OnMoney;
+            GameEvents.SkillPointsChanged += OnSkillPoints;
+            GameEvents.ExpChanged += OnExp;
+            subscribed = true;
+            ReadCurrent();
+        }
+
+        private void Start()
+        {
+            // ZoneTransition은 Awake에서 준비된다 → 구독은 Start에서
+            if (ZoneTransition.Instance != null)
+            {
+                ZoneTransition.Instance.ZoneChanged += OnZone;
+                if (ZoneTransition.Instance.Current != null)
+                    OnZone(ZoneTransition.Instance.Current);
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (!subscribed)
+                return;
+            GameEvents.PhaseChanged -= OnPhase;
+            GameEvents.MoneyChanged -= OnMoney;
+            GameEvents.SkillPointsChanged -= OnSkillPoints;
+            GameEvents.ExpChanged -= OnExp;
+            subscribed = false;
+        }
+
+        private void OnDestroy()
+        {
+            if (ZoneTransition.Instance != null)
+                ZoneTransition.Instance.ZoneChanged -= OnZone;
+        }
+
+        // 이미 시작한 게임이면(HUD가 늦게 켜짐) 지금 값을 바로 읽는다.
+        private void ReadCurrent()
+        {
+            var game = GameManager.Instance;
+            if (game == null || !game.IsStarted)
+            {
+                dayLabel.text = string.Empty;
+                walletLabel.text = string.Empty;
+                levelLabel.text = string.Empty;
+                SetFill(0f);
+                return;
+            }
+            day = game.Day;
+            phase = game.Phase;
+            money = game.Money;
+            skillPoints = game.SkillPoints;
+            exp = game.Exp;
+            expRequired = game.ExpRequired;
+            RefreshDay();
+            RefreshWallet();
+            RefreshLevel();
+        }
+
+        private void OnPhase(PhaseChange change)
+        {
+            day = change.Day;
+            phase = change.Phase;
+            RefreshDay();
+        }
+
+        private void OnZone(ZoneProfileData zone)
+        {
+            zoneName = zone != null ? zone.DisplayName : string.Empty;
+            RefreshDay();
+        }
+
+        private void OnMoney(int value)
+        {
+            money = value;
+            RefreshWallet();
+        }
+
+        private void OnSkillPoints(int value)
+        {
+            skillPoints = value;
+            RefreshWallet();
+        }
+
+        private void OnExp(int value, int required)
+        {
+            exp = value;
+            expRequired = Mathf.Max(1, required);
+            RefreshLevel();
+        }
+
+        private void RefreshDay()
+        {
+            if (day <= 0)
+                return;
+            string zone = string.IsNullOrEmpty(zoneName) ? string.Empty : $" · {zoneName}";
+            dayLabel.text = $"{day}일차 · {DayPhaseNames.ToKorean(phase)}{zone}";
+        }
+
+        private void RefreshWallet() => walletLabel.text = $"{money:N0} 달러 · SP {skillPoints}";
+
+        private void RefreshLevel()
+        {
+            var game = GameManager.Instance;
+            int level = game != null ? game.Level : Progression.FirstLevel;
+            levelLabel.text = $"Lv{level}  {exp} / {expRequired}";
+            SetFill((float)exp / expRequired);
+        }
+
+        private void SetFill(float ratio)
+        {
+            expFill.anchorMin = new Vector2(0f, 0f);
+            expFill.anchorMax = new Vector2(Mathf.Clamp01(ratio), 1f);
+            expFill.offsetMin = Vector2.zero;
+            expFill.offsetMax = Vector2.zero;
+        }
+    }
+}
