@@ -137,6 +137,19 @@ namespace NevrianGlowFarm.Editor
                 if (GUILayout.Button("칸 +1"))
                     hotbar.SetSlotCount(hotbar.SlotCount + 1);
             }
+
+            var inventory = hotbar.Inventory;
+            if (inventory == null || inventory.Bag == null)
+                return;
+            int step = inventory.Settings.BagSlotsPerExpand;
+            EditorGUILayout.LabelField("가방", $"{inventory.Bag.SlotCount}칸 (최대 {inventory.Settings.BagMaxSlots}) — 상점 가방 확장(3-3) 확인용");
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button($"가방 −{step}"))
+                    inventory.SetBagSlotCount(inventory.Bag.SlotCount - step);
+                if (GUILayout.Button($"가방 +{step}"))
+                    inventory.SetBagSlotCount(inventory.Bag.SlotCount + step);
+            }
         }
 
         private void OnInspectorUpdate()

@@ -70,20 +70,29 @@ namespace NevrianGlowFarm.Systems.Player
             if (lookAction != null) lookAction.action.Enable();
             if (sprintAction != null) sprintAction.action.Enable();
 
-            if (lockCursor)
-            {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-            }
+            PlayerInputGate.Changed += OnGateChanged;
+            ApplyCursor(PlayerInputGate.IsBlocked);
         }
 
         private void OnDisable()
         {
+            PlayerInputGate.Changed -= OnGateChanged;
             if (lockCursor)
             {
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
             }
+        }
+
+        private void OnGateChanged(bool blocked) => ApplyCursor(blocked);
+
+        // 화면(가방 · 창고 등)이 열려 조작이 잠기면 커서를 풀어 보이게 한다.
+        private void ApplyCursor(bool blocked)
+        {
+            if (!lockCursor)
+                return;
+            Cursor.lockState = blocked ? CursorLockMode.None : CursorLockMode.Locked;
+            Cursor.visible = blocked;
         }
 
         private void Update()
@@ -95,8 +104,11 @@ namespace NevrianGlowFarm.Systems.Player
                     return;
             }
 
-            UpdateLook();
-            Vector2 moveInput = UpdateMove();
+            // 조작이 잠겨도 중력은 계속 받는다 (입력만 0).
+            bool blocked = PlayerInputGate.IsBlocked;
+            if (!blocked)
+                UpdateLook();
+            Vector2 moveInput = UpdateMove(blocked);
             UpdateHeadBob(moveInput);
         }
 
@@ -109,10 +121,10 @@ namespace NevrianGlowFarm.Systems.Player
             cameraPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
         }
 
-        private Vector2 UpdateMove()
+        private Vector2 UpdateMove(bool blocked)
         {
-            Vector2 input = Vector2.ClampMagnitude(moveAction.action.ReadValue<Vector2>(), 1f);
-            bool sprinting = sprintAction.action.IsPressed();
+            Vector2 input = blocked ? Vector2.zero : Vector2.ClampMagnitude(moveAction.action.ReadValue<Vector2>(), 1f);
+            bool sprinting = !blocked && sprintAction.action.IsPressed();
             float speed = settings.MoveSpeed * (sprinting ? settings.SprintMultiplier : 1f);
 
             Vector3 horizontal = (transform.right * input.x + transform.forward * input.y) * speed;

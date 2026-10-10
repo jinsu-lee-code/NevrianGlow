@@ -83,8 +83,12 @@ namespace NevrianGlowFarm.Editor
             ("item_seed_moonroot", 10),
         };
 
-        private const string StartingCropId = "crop_moonroot"; // BALANCE 2-3 시작 작물
-        private const int StartingCropCount = 2;
+        // BALANCE 2-3 시작 창고: 바로 팔 수 있는 시작 작물 2개 + 가게에서 쓸 대걸레 (1-4 결정)
+        private static readonly (string Id, int Count)[] StartingStorage =
+        {
+            ("crop_moonroot", 2),
+            ("tool_mop_1", 1),
+        };
 
         private class Report
         {
@@ -192,31 +196,10 @@ namespace NevrianGlowFarm.Editor
             Ensure<GameStartSettingsData>($"{StatsFolder}/GameStartSettings.asset", resetExisting, report, so =>
             {
                 so.FindProperty("startingMoney").intValue = 150;
-                var list = so.FindProperty("startingCrops");
-                list.ClearArray();
-                var startCrop = Array.Find(crops, c => c != null && c.Id == StartingCropId);
-                if (startCrop != null)
-                {
-                    list.InsertArrayElementAtIndex(0);
-                    var element = list.GetArrayElementAtIndex(0);
-                    element.FindPropertyRelative("crop").objectReferenceValue = startCrop;
-                    element.FindPropertyRelative("count").intValue = StartingCropCount;
-                }
-                var hotbar = so.FindProperty("startingHotbarItems");
-                hotbar.ClearArray();
-                foreach (var (itemId, count) in StartingHotbar)
-                {
-                    var item = items.Find(t => t != null && t.Id == itemId);
-                    if (item == null)
-                    {
-                        Debug.LogError($"[Setup] 시작 핫바의 {itemId}를 찾지 못함 — 건너뜀");
-                        continue;
-                    }
-                    hotbar.InsertArrayElementAtIndex(hotbar.arraySize);
-                    var element = hotbar.GetArrayElementAtIndex(hotbar.arraySize - 1);
-                    element.FindPropertyRelative("item").objectReferenceValue = item;
-                    element.FindPropertyRelative("count").intValue = count;
-                }
+                var known = new List<ItemData>(items);
+                known.AddRange(crops);
+                SetStartingItems(so.FindProperty("startingHotbarItems"), StartingHotbar, known, "시작 핫바");
+                SetStartingItems(so.FindProperty("startingStorageItems"), StartingStorage, known, "시작 창고");
                 so.FindProperty("tillWorkRequired").floatValue = 3f; // BALANCE 2-11 칸 필요 작업량
                 so.FindProperty("startPlotCount").intValue = 2;
                 so.FindProperty("maxPlotCount").intValue = 5;
@@ -232,10 +215,9 @@ namespace NevrianGlowFarm.Editor
             {
                 so.FindProperty("hotbarBaseSlots").intValue = 4;
                 so.FindProperty("hotbarMaxSlots").intValue = 8;
-                so.FindProperty("baseSlots").intValue = 4;
-                so.FindProperty("slotsPerExpand").intValue = 4;
-                so.FindProperty("maxSlots").intValue = 20;
-                so.FindProperty("stackSize").intValue = 10;
+                so.FindProperty("bagBaseSlots").intValue = 4;      // v1 2026-10-08: 가방 4 → 32칸, 7단계 × 4
+                so.FindProperty("bagSlotsPerExpand").intValue = 4;
+                so.FindProperty("bagMaxSlots").intValue = 32;
                 so.FindProperty("storageAccessRadius").floatValue = 2f;
                 so.FindProperty("shelfBaseSlots").intValue = 6;
                 so.FindProperty("shelfItemsPerSlot").intValue = 4;
@@ -284,6 +266,24 @@ namespace NevrianGlowFarm.Editor
 
             AssetDatabase.SaveAssets();
             return report.ToString();
+        }
+
+        private static void SetStartingItems(SerializedProperty list, (string Id, int Count)[] rows, List<ItemData> known, string label)
+        {
+            list.ClearArray();
+            foreach (var (itemId, count) in rows)
+            {
+                var item = known.Find(t => t != null && t.Id == itemId);
+                if (item == null)
+                {
+                    Debug.LogError($"[Setup] {label}의 {itemId}를 찾지 못함 — 건너뜀");
+                    continue;
+                }
+                list.InsertArrayElementAtIndex(list.arraySize);
+                var element = list.GetArrayElementAtIndex(list.arraySize - 1);
+                element.FindPropertyRelative("item").objectReferenceValue = item;
+                element.FindPropertyRelative("count").intValue = count;
+            }
         }
 
         private static void SetIdentity(SerializedObject so, string id, string displayName)

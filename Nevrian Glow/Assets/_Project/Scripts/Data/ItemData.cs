@@ -12,7 +12,10 @@ namespace NevrianGlowFarm.Data
         [Header("칸")]
         [Tooltip("한 칸에 쌓을 수 있는 개수 — 도구는 이 값과 상관없이 1 (개)")]
         [SerializeField, Min(1)] private int maxStack = 1;
+        [Tooltip("창고에 넣을 수 있는지 — 쓰레기는 끈다 (GDD 4-3 · 4-4)")]
+        [SerializeField] private bool canStore = true;
 
         public virtual int MaxStack => maxStack;
+        public bool CanStore => canStore;
     }
 }

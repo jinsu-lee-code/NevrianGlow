@@ -15,4 +15,5 @@ MonoBehaviour:
   id: item_seed_moonroot
   displayName: "\uC6D4\uAD11 \uBFCC\uB9AC \uC528\uC557"
   maxStack: 10
+  canStore: 1
   crop: {fileID: 11400000, guid: a35777c6f4e853649b7821763c65220c, type: 2}

@@ -15,4 +15,5 @@ MonoBehaviour:
   id: tool_watering_2
   displayName: "\uBB3C\uBFCC\uB9AC\uAC1C 2\uB4F1\uAE09"
   maxStack: 1
+  canStore: 1
   cellCount: 2

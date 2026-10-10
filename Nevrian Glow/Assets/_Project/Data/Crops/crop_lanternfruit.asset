@@ -15,7 +15,9 @@ MonoBehaviour:
   id: crop_lanternfruit
   displayName: "\uB4F1\uBD88 \uC5F4\uB9E4"
   maxStack: 10
+  canStore: 1
   greyboxColor: {r: 1, g: 0.8235294, b: 0.47843137, a: 1}
+  stagePrefabs: []
   seedPrice: 70
   sellPrice: 80
   growDays: 8

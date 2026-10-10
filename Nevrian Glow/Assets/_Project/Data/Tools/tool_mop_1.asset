@@ -15,5 +15,6 @@ MonoBehaviour:
   id: tool_mop_1
   displayName: "\uB0A1\uC740 \uB300\uAC78\uB808"
   maxStack: 1
+  canStore: 1
   radius: 0.9
   speed: 0.9

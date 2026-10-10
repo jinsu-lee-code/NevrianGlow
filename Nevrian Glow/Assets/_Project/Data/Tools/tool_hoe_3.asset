@@ -15,4 +15,5 @@ MonoBehaviour:
   id: tool_hoe_3
   displayName: "\uBC1C\uAD11 \uAD2D\uC774"
   maxStack: 1
+  canStore: 1
   workPerUse: 3

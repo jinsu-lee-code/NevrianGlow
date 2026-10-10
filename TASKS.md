@@ -122,7 +122,7 @@
   - CropData(id · 가격 · 성장 · wetDays · 수확량 · 재수확 · 단계 프리팹 · 거대 설정), 폴더 자동 수집
   - 커스텀 인스펙터: 일일 수익(계산값) · 성장 타임라인 막대
   - 에디터 메뉴 "CSV 가져오기"(멱등)
-- [ ] **2-2. 통합 Inventory · WorldItem · StorageSystem** — 노션 GDD 12.4, GDD 4-3 (갱신 2026-10-08)
+- [x] **2-2. 통합 Inventory · WorldItem · StorageSystem** — 노션 GDD 12.4, GDD 4-3 (갱신 2026-10-08) — 플레이 확인 대기 — 임시값 사용(교체 대기: UI 흐름도 10/14 · UI 아트 10/23)
   - 통합 인벤토리 = 핫바 4 + 가방 4 (칸 수 데이터), 도구 · 장치 칸당 1 / 그 외 10, 주운 아이템 순서: 같은 묶음 → 빈 핫바 → 빈 가방 — 쌓기 · 넣기 규칙(`SlotInventory` · `InventoryRules`)은 1-4에서 완료, 2-2는 가방 묶음을 `Hotbar`의 containers 뒤에 붙이고 가방 화면 · 창고 · 바닥 아이템을 만든다
   - 대걸레(tool_mop_1)는 가게 창고에 넣어 둔다 (시작 핫바에서 뺌, 1-4)
   - 가방 화면(Tab): 집기 · 놓기 · 바꾸기 · 합치기
@@ -368,6 +368,22 @@
   - 확인(자동): 데이터베이스 16개 수집 · 문제 0 · 2회차 변화 없음, 내보낸 CSV 다시 가져오기 = 변화 없음 3, 월광 판매가 15 → 16 갱신 1 · 되돌리기, 틀린 CSV(정수 아님 · 중복 id · 잘못된 id · 모르는 열 `memo` 무시) → 적용 안 함 · 값 그대로, 범위(성장일 0 · 거대 확률 1.5 · 색 `#zzz`) → 적용 안 함, 쉼표 든 이름 따옴표 처리, 새 id → 생성 1 · 다시 → 변화 없음 1, 씨앗 참조 id 틀림 → 오류, 에셋 만들기 · 지우기 · 다시 가져오기 직후 데이터베이스 자동 갱신(빈 참조 0), 밭 한 바퀴 회귀(개간 → 수확) 정상, 콘솔 오류 · 경고 0
   - 미확인: 작물 인스펙터(계산값 · 타임라인 막대)의 실제 모습 — 사용자 확인, CSV 메뉴의 파일 선택 창(MCP는 창을 띄울 수 없어 함수로 확인)
   - 참고: 김봉준 작물 CSV가 다른 열 이름(한글 등)으로 오면 `CSV/crops.csv` 양식으로 맞춰 달라고 요청하거나, 임포터에 열 이름 대응표를 추가
+- [x] **2-2. 통합 Inventory · WorldItem · StorageSystem** (2026-10-10) — 플레이 확인 대기 — 임시값 사용(교체 대기: UI 흐름도 10/14 · UI 아트 10/23)
+  - 결정 (2026-10-10): `PlayerInventory`가 핫바 + 가방 칸 묶음과 "손에 든 묶음"(가방 화면)을 가지고, `Hotbar`는 선택 · 입력만 — 넣기는 언제나 같은 묶음 → 빈 핫바 → 빈 가방(1-4 규칙 그대로)
+  - 결정 (2026-10-10): 가방 화면 칸 클릭 = 집기 · 놓기 · 바꾸기 · 합치기 (손에 든 묶음과 칸 하나 사이). 닫을 때 손에 든 묶음은 같은 규칙으로 돌려놓고, 둘 곳이 없으면 닫지 않고 안내
+  - 결정 (2026-10-10): 창고는 Core 씬 하나(`StorageSystem`), 농장 · 가게 접근 지점(`StorageAccessPoint`, 반경 2 m)이 같은 창고를 연다. 창고 화면: 목록 클릭 = 한 묶음 꺼내기(자리가 모자라면 들어가는 만큼), 가방 · 핫바 칸 클릭 = 그 칸 통째로 넣기, "전부 넣기" = **도구를 뺀** 보관 가능 아이템 전부. 보관 불가는 `ItemData.canStore`(쓰레기 2-4에서 끔)
+  - 결정 (2026-10-10): 줍기는 묶음 전체가 들어갈 때만(수확과 같은 규칙). 내려놓기는 조준한 바닥(Default 레이어, 경사 35° 이하, 손 닿는 거리 = 상호작용 5 m)에만, 물리 없이 놓고 맞은 바닥의 구역 씬으로 옮긴다. Shift+Q의 Shift는 질주 키 그대로 (GDD 열린 항목 21)
+  - 결정 (2026-10-10): 화면이 열리면 `PlayerInputGate`로 이동 · 시점 · 상호작용 · 핫바 · 내려놓기를 잠그고 커서를 보인다(중력은 계속). 화면은 한 번에 하나(`GameScreen`), Tab 한 번에 닫혔다 다시 열리지 않게 같은 프레임 열기 무시 — 상점 · 정산 · 스킬 화면(3-3 · 4-3)도 같은 기반을 쓴다
+  - 구현: Logic `CursorRules`(칸 클릭 · 돌려놓기), `Storage`(무제한 · 들어온 순서 · 보관 불가 거부) · `StorageRules`(칸 넣기 · 전부 넣기 · 한 묶음 꺼내기)
+  - 구현: Data `InventorySettings` 가방 필드(`bagBaseSlots` 4 · `bagSlotsPerExpand` 4 · `bagMaxSlots` 32, 이전 이름 이어받음), `ItemData.canStore`, `GameStartSettings.startingStorageItems`(월광 2 · 낡은 대걸레 — `startingCrops` 대체)
+  - 구현: Systems `PlayerInventory` · `Hotbar`(선택만), `StorageSystem` · `StorageAccessPoint`, `WorldItem`(E 줍기) · `ItemDropper`(Q · Shift+Q), Core `PlayerInputGate`, UI `GameScreen` · `InventoryScreen`(Tab) · `StorageScreen` · `SlotGridView` · `ItemLabel`, `HotbarSlotView` 클릭 버튼
+  - 씬: Core `Player`(PlayerInventory · ItemDropper 추가), `Storage`, `UICanvas/InventoryScreen` · `StorageScreen`(단색 패널 + 글자), Farm `FarmRoot/StorageAccessPoint_Farm` (6, 0, 2.5), Shop `ShopRoot/StorageAccessPoint_Shop` (−5, 0, 2)
+  - 설정: 입력 에셋 `Player/Drop`(Q) · `Player/Inventory`(Tab), 닫기는 `UI/Cancel`(Esc). 프리팹 `Prefabs/Items/world_item` · `Prefabs/Storage/storage_point`, 재질 `mat_greybox_storage`(보라). 디버그 창 "가방 ±4"
+  - 테스트 10개(칸 클릭 집기 · 놓기 / 합치기 남은 개수 / 바꾸기 / 변화 없음 / 돌려놓기 순서 / 창고 무제한 · 순서 / 쓰레기 거부 / 꺼내기 0 · 모자람 / 전부 넣기 도구 · 쓰레기 남김 / 한 묶음 · 들어가는 만큼) — 전체 90개 통과
+  - 확인(자동): 시작 핫바 `괭이 · 물뿌리개 · 씨앗 ×10 · -` · 가방 4칸 비움 · 창고 `월광 ×2 · 낡은 대걸레`, 월광 15개 → 핫바 4번 10 + 가방 1번 5, 가방 화면 열기 → 조작 잠김 · 커서 보임 → 집기 · 놓기 · 합치기(손 5 남음) · 바꾸기 → 닫기 → 손의 물뿌리개가 빈 핫바 1번으로 · 잠김 풀림, 창고 반경 밖 "더 가까이 가기" · 안 "창고 열기", 대걸레 꺼내기 → 핫바 4번, 전부 넣기 → 월광 · 씨앗만 넣고 도구 남김, 칸 클릭 넣기, **가게 접근 지점에서 같은 내용**, Q → 씨앗 1개가 땅(y 0.02) · Farm 씬에 놓임, Shift+Q → 9개, 빈 칸 · 하늘 Q → 놓지 않음, 가득 차면 "줍기 불가 — 넣을 칸 없음" + 그대로, 다음 날에도 바닥 아이템 유지, 칸을 비우면 줍기, 콘솔 오류 · 경고 0
+  - 피드백 (2026-10-10, 자동 확인 중): 내려놓은 아이템이 높이 1.63 m · Core 씬에 놓임 → 원인: 카메라 Raycast가 플레이어 자신의 CharacterController(Default 레이어)에 먼저 맞음 → 수정: 가까운 것부터 보며 자기 몸 건너뛰기
+  - 미확인: 실제 Tab · Q · Shift+Q · 마우스 클릭 · 화면 배치 모습 — 사용자 플레이 확인 (MCP 카메라 캡처에는 화면 UI가 찍히지 않음)
+  - 참고: 같은 곳에 여러 번 내려놓으면 겹쳐 놓인다(줍기는 위의 것부터). 바닥 아이템 저장은 6-1, 쓰레기 아이템 · 청결도 반영은 2-4, 가방 확장 상품은 3-3, 핫바 확장 스킬은 4-3
   - 참고: 상호작용 강조 효과(외곽선 등)는 그레이박스에서 생략 — 프롬프트만. Raycast는 Interactable 레이어만 보므로 벽 너머 대상도 잡힌다 → 벽이 생기는 2-3에서 가림 레이어 추가 검토
   - 참고: TMP 동적 폰트 에셋은 플레이 중 새 글자가 아틀라스에 추가되며 파일이 바뀔 수 있다(빌드 시 동적 데이터 정리 켬)
 

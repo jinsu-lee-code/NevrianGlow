@@ -13,9 +13,6 @@ MonoBehaviour:
   m_Name: GameStartSettings
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.GameStartSettingsData
   startingMoney: 150
-  startingCrops:
-  - crop: {fileID: 11400000, guid: a35777c6f4e853649b7821763c65220c, type: 2}
-    count: 2
   startingHotbarItems:
   - item: {fileID: 11400000, guid: 5d4799738cea1d74cbf0b9bd5902453f, type: 2}
     count: 1
@@ -23,6 +20,11 @@ MonoBehaviour:
     count: 1
   - item: {fileID: 11400000, guid: 951abf54dedae774fa34f4dbea44d508, type: 2}
     count: 10
+  startingStorageItems:
+  - item: {fileID: 11400000, guid: a35777c6f4e853649b7821763c65220c, type: 2}
+    count: 2
+  - item: {fileID: 11400000, guid: e59d00e08fdcfa743a80da95306d1217, type: 2}
+    count: 1
   startPlotCount: 2
   maxPlotCount: 5
   cellsPerPlot: 16

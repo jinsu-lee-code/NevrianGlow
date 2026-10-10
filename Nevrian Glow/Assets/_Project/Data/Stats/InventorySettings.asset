@@ -14,10 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.InventorySettingsData
   hotbarBaseSlots: 4
   hotbarMaxSlots: 8
-  baseSlots: 4
-  slotsPerExpand: 4
-  maxSlots: 20
-  stackSize: 10
+  bagBaseSlots: 4
+  bagSlotsPerExpand: 4
+  bagMaxSlots: 32
   storageAccessRadius: 2
   shelfBaseSlots: 6
   shelfItemsPerSlot: 4

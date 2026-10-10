@@ -15,7 +15,9 @@ MonoBehaviour:
   id: crop_mushroomflower
   displayName: "\uBC84\uC12F\uAF43"
   maxStack: 10
+  canStore: 1
   greyboxColor: {r: 0.627451, g: 0.54509807, b: 1, a: 1}
+  stagePrefabs: []
   seedPrice: 20
   sellPrice: 40
   growDays: 2

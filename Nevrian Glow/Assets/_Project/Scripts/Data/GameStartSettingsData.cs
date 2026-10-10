@@ -9,18 +9,6 @@ namespace NevrianGlowFarm.Data
     public class GameStartSettingsData : ScriptableObject
     {
         [Serializable]
-        public struct StartingCrop
-        {
-            [Tooltip("시작할 때 들고 있는 작물")]
-            [SerializeField] private CropData crop;
-            [Tooltip("개수 (개)")]
-            [SerializeField, Min(1)] private int count;
-
-            public CropData Crop => crop;
-            public int Count => count;
-        }
-
-        [Serializable]
         public struct StartingItem
         {
             [Tooltip("아이템 — 비우면 빈 칸")]
@@ -35,10 +23,10 @@ namespace NevrianGlowFarm.Data
         [Header("시작 상태")]
         [Tooltip("시작 자금 (달러)")]
         [SerializeField, Min(0)] private int startingMoney;
-        [Tooltip("시작할 때 바로 팔 수 있는 작물")]
-        [SerializeField] private List<StartingCrop> startingCrops = new List<StartingCrop>();
         [Tooltip("시작 핫바 — 1번 칸부터 순서대로, 아이템을 비운 줄은 빈 칸 (BALANCE 2-3)")]
         [SerializeField] private List<StartingItem> startingHotbarItems = new List<StartingItem>();
+        [Tooltip("시작 창고 — 바로 팔 수 있는 시작 작물, 가게에서 쓸 대걸레 등 (BALANCE 2-3)")]
+        [SerializeField] private List<StartingItem> startingStorageItems = new List<StartingItem>();
 
         [Header("밭 구획")]
         [Tooltip("처음 열려 있는 구획 수 (개)")]
@@ -63,8 +51,8 @@ namespace NevrianGlowFarm.Data
         [SerializeField] private Vector3 plotExpandDirection = Vector3.left;
 
         public int StartingMoney => startingMoney;
-        public IReadOnlyList<StartingCrop> StartingCrops => startingCrops;
         public IReadOnlyList<StartingItem> StartingHotbar => startingHotbarItems;
+        public IReadOnlyList<StartingItem> StartingStorage => startingStorageItems;
         public int StartPlotCount => startPlotCount;
         public int MaxPlotCount => maxPlotCount;
         public int CellsPerPlot => cellsPerPlot;

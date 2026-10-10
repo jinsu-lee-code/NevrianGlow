@@ -97,6 +97,14 @@ namespace NevrianGlowFarm.Systems.Interaction
 
         private void Update()
         {
+            // 화면(가방 · 창고)이 열려 조작이 잠기면 프롬프트를 숨기고 입력을 받지 않는다. 닫히면 다시 받는다.
+            if (PlayerInputGate.IsBlocked)
+            {
+                SetPrompt(null);
+                promptDirty = true;
+                return;
+            }
+
             UpdateTarget();
 
             if (promptDirty)

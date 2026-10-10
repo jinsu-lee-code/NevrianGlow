@@ -1,8 +1,9 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace NevrianGlowFarm.Data
 {
-    /// <summary>핫바 · 인벤토리 · 창고 · 진열 (BALANCE 2-4). 확장 가격은 상점 상품(3-3)에 둔다.</summary>
+    /// <summary>핫바 · 가방 · 창고 · 진열 (BALANCE 2-4). 칸당 개수는 아이템마다(ItemData), 확장 가격은 상점 상품(3-3)에 둔다.</summary>
     [CreateAssetMenu(menuName = "Glow Farm/Settings/Inventory", fileName = "InventorySettings")]
     public class InventorySettingsData : ScriptableObject
     {
@@ -12,15 +13,16 @@ namespace NevrianGlowFarm.Data
         [Tooltip("스킬로 늘릴 수 있는 최대 핫바 칸 수 — 숫자 키 1~8 (칸)")]
         [SerializeField, Range(1, 8)] private int hotbarMaxSlots = 1;
 
-        [Header("인벤토리 (2-2에서 가방으로 정리)")]
-        [Tooltip("처음 칸 수 (칸)")]
-        [SerializeField, Min(1)] private int baseSlots = 1;
-        [Tooltip("확장 1회마다 늘어나는 칸 수 (칸)")]
-        [SerializeField, Min(1)] private int slotsPerExpand = 1;
-        [Tooltip("최대 칸 수 (칸)")]
-        [SerializeField, Min(1)] private int maxSlots = 1;
-        [Tooltip("한 칸에 쌓을 수 있는 개수 (개)")]
-        [SerializeField, Min(1)] private int stackSize = 1;
+        [Header("가방")]
+        [Tooltip("처음 가방 칸 수 (칸)")]
+        [FormerlySerializedAs("baseSlots")]
+        [SerializeField, Min(0)] private int bagBaseSlots;
+        [Tooltip("가방 확장 1단계마다 늘어나는 칸 수 — 단계 가격은 상점 상품(3-3) (칸)")]
+        [FormerlySerializedAs("slotsPerExpand")]
+        [SerializeField, Min(1)] private int bagSlotsPerExpand = 1;
+        [Tooltip("최대 가방 칸 수 (칸)")]
+        [FormerlySerializedAs("maxSlots")]
+        [SerializeField, Min(0)] private int bagMaxSlots;
 
         [Header("창고")]
         [Tooltip("창고 접근 반경 (m)")]
@@ -40,10 +42,9 @@ namespace NevrianGlowFarm.Data
 
         public int HotbarBaseSlots => Mathf.Min(hotbarBaseSlots, hotbarMaxSlots);
         public int HotbarMaxSlots => hotbarMaxSlots;
-        public int BaseSlots => baseSlots;
-        public int SlotsPerExpand => slotsPerExpand;
-        public int MaxSlots => maxSlots;
-        public int StackSize => stackSize;
+        public int BagBaseSlots => Mathf.Min(bagBaseSlots, bagMaxSlots);
+        public int BagSlotsPerExpand => bagSlotsPerExpand;
+        public int BagMaxSlots => bagMaxSlots;
         public float StorageAccessRadius => storageAccessRadius;
         public int ShelfBaseSlots => shelfBaseSlots;
         public int ShelfItemsPerSlot => shelfItemsPerSlot;
