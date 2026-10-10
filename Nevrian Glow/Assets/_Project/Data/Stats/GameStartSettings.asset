@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc5c22d4528240d45ae741a80b319c81, type: 3}
   m_Name: GameStartSettings
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.GameStartSettingsData
-  startingMoney: 100
+  startingMoney: 150
   startingCrops:
   - crop: {fileID: 11400000, guid: a35777c6f4e853649b7821763c65220c, type: 2}
     count: 2

@@ -35,11 +35,11 @@ namespace NevrianGlowFarm.Editor
             }
         }
 
-        // BALANCE 2-2. 거대 작물: giantChance 0.02 / giantYieldMultiplier 2.5 / giantScale 2.2 (거대 X = 확률 0).
+        // BALANCE 2-2 (v1 2026-10-10: 버섯꽃 성장 4 → 2). 거대 작물: giantChance 0.02 / giantYieldMultiplier 2.5 / giantScale 2.2 (거대 X = 확률 0).
         private static readonly CropRow[] Crops =
         {
             new CropRow("crop_moonroot",       "월광 뿌리", 10, 15, 1, 1, 1, 0, 1, 0.02f, 2.5f, 2.2f),
-            new CropRow("crop_mushroomflower", "버섯꽃",    20, 40, 4, 2, 2, 0, 1, 0.02f, 2.5f, 2.2f),
+            new CropRow("crop_mushroomflower", "버섯꽃",    20, 40, 2, 2, 2, 0, 1, 0.02f, 2.5f, 2.2f),
             new CropRow("crop_lanternfruit",   "등불 열매", 70, 80, 8, 1, 2, 4, 3, 0f,    1f,   1f),
         };
 
@@ -126,10 +126,10 @@ namespace NevrianGlowFarm.Editor
                 so.FindProperty("interactMaxDistance").floatValue = 5f;
             });
 
-            // BALANCE 2-3
+            // BALANCE 2-3 (v1 2026-10-10: 시작 자금 100 → 150)
             Ensure<GameStartSettingsData>($"{StatsFolder}/GameStartSettings.asset", resetExisting, report, so =>
             {
-                so.FindProperty("startingMoney").intValue = 100;
+                so.FindProperty("startingMoney").intValue = 150;
                 var list = so.FindProperty("startingCrops");
                 list.ClearArray();
                 var startCrop = Array.Find(crops, c => c != null && c.Id == StartingCropId);
@@ -195,11 +195,11 @@ namespace NevrianGlowFarm.Editor
                 so.FindProperty("queueSpacing").floatValue = 0.8f;
             });
 
-            // BALANCE 2-7
+            // BALANCE 2-7 (v1 2026-10-10: 80 + 40 × (레벨 − 1) = 40 + 40 × 레벨 → base 100 → 40)
             Ensure<ProgressionData>($"{StatsFolder}/Progression.asset", resetExisting, report, so =>
             {
                 so.FindProperty("expPerRevenue").floatValue = 1f;
-                so.FindProperty("levelUpBase").intValue = 100;
+                so.FindProperty("levelUpBase").intValue = 40;
                 so.FindProperty("levelUpPerLevel").intValue = 40;
                 so.FindProperty("skillPointsPerLevel").intValue = 3;
             });

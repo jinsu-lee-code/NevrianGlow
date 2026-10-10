@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: "\uBC84\uC12F\uAF43"
   seedPrice: 20
   sellPrice: 40
-  growDays: 4
+  growDays: 2
   wetDays: 2
   harvestYield: 2
   regrowDays: 0
