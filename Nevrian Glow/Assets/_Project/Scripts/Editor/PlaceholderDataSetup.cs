@@ -23,6 +23,15 @@ namespace NevrianGlowFarm.Editor
         private const string ToolsFolder = DataRoot + "/Tools";
         private const string ItemsFolder = DataRoot + "/Items";
         private const string ZonesFolder = DataRoot + "/Zones";
+        private const string CustomersFolder = DataRoot + "/Customers";
+        private const string CustomerPrefabPath = "Assets/_Project/Prefabs/Shop/customer.prefab";
+
+        // BALANCE 9-5: 피피(작은) · 오르(큰). 색 · 속도 · 바구니 자리는 임시 (2026-10-11)
+        private static readonly (string Id, string Name, CustomerBodySize Body, string ColorHex, float WalkMul, float Weight, int UnlockDay, Vector3 Basket)[] Customers =
+        {
+            ("customer_pipi", "피피", CustomerBodySize.Small, "#FF9AD5", 1.1f, 1f, 1, new Vector3(-0.24f, 0.55f, 0.1f)),
+            ("customer_or", "오르", CustomerBodySize.Large, "#A08BFF", 0.85f, 1f, 1, new Vector3(-0.4f, 0.95f, 0.15f)),
+        };
 
         private readonly struct CropRow
         {
@@ -291,6 +300,25 @@ namespace NevrianGlowFarm.Editor
                 so.FindProperty("stopDistance").floatValue = 0.3f;
                 so.FindProperty("queueSpacing").floatValue = 0.8f;
             });
+
+            // BALANCE 9-5 임시 손님 2종 (3-2, 2026-10-11) — 프리팹은 Glow Farm/Setup/Create Customer Greybox
+            var customerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(CustomerPrefabPath);
+            foreach (var c in Customers)
+            {
+                Ensure<CustomerData>($"{CustomersFolder}/{c.Id}.asset", resetExisting, report, so =>
+                {
+                    SetIdentity(so, c.Id, c.Name);
+                    so.FindProperty("prefab").objectReferenceValue = customerPrefab;
+                    so.FindProperty("bodySize").enumValueIndex = (int)c.Body;
+                    if (ColorUtility.TryParseHtmlString(c.ColorHex, out var color))
+                        so.FindProperty("greyboxColor").colorValue = color;
+                    so.FindProperty("basketSocketOffset").vector3Value = c.Basket;
+                    so.FindProperty("itemSocketOffset").vector3Value = c.Basket + new Vector3(0.1f, 0.1f, 0.1f);
+                    so.FindProperty("walkSpeedMul").floatValue = c.WalkMul;
+                    so.FindProperty("spawnWeight").floatValue = c.Weight;
+                    so.FindProperty("unlockDay").intValue = c.UnlockDay;
+                });
+            }
 
             // BALANCE 2-7 (v1 2026-10-10: 80 + 40 × (레벨 − 1) = 40 + 40 × 레벨 → base 100 → 40)
             Ensure<ProgressionData>($"{StatsFolder}/Progression.asset", resetExisting, report, so =>

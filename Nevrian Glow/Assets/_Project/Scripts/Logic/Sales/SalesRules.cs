@@ -59,6 +59,32 @@ namespace NevrianGlowFarm.Logic.Sales
             return k * (spec.Duration * spec.SpawnWindow / customerCount);
         }
 
+        /// <summary>
+        /// 손님 종류 고르기 (노션 GDD 12.4 SalesSimulator 5): 등장 일차(unlockDay)가 지난 종류 중 등장 가중치로 고른다.
+        /// 고를 수 있는 종류가 없으면(가중치 합 0) −1.
+        /// </summary>
+        public static int PickCustomerType(IReadOnlyList<double> weights, IReadOnlyList<int> unlockDays, int day, IRandomSource random)
+        {
+            double total = 0;
+            for (int i = 0; i < weights.Count; i++)
+                if (unlockDays[i] <= day && weights[i] > 0)
+                    total += weights[i];
+            if (total <= 0)
+                return -1;
+            double pick = random.NextDouble() * total;
+            int last = -1;
+            for (int i = 0; i < weights.Count; i++)
+            {
+                if (unlockDays[i] > day || weights[i] <= 0)
+                    continue;
+                last = i;
+                if (pick < weights[i])
+                    return i;
+                pick -= weights[i];
+            }
+            return last; // 부동소수 끝자리 오차
+        }
+
         /// <summary>손님 한 명이 사려는 개수 (최소 ~ 최대, 균등).</summary>
         public static int WantedCount(IRandomSource random, SalesSpec spec) => random.NextInt(spec.PurchaseMin, spec.PurchaseMax + 1);
 

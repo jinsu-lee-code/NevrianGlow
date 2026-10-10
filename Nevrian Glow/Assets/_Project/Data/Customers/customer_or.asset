@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 825cf464b9e55c844ad2c38a3e386588, type: 3}
+  m_Name: customer_or
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.CustomerData
+  id: customer_or
+  displayName: "\uC624\uB974"
+  prefab: {fileID: 8692623647252547470, guid: 488074fd3442d0b41b6e4fe77913cdd4, type: 3}
+  bodySize: 2
+  greyboxColor: {r: 0.627451, g: 0.54509807, b: 1, a: 1}
+  basketSocketOffset: {x: -0.4, y: 0.95, z: 0.15}
+  itemSocketOffset: {x: -0.3, y: 1.05, z: 0.25}
+  walkSpeedMul: 0.85
+  spawnWeight: 1
+  unlockDay: 1

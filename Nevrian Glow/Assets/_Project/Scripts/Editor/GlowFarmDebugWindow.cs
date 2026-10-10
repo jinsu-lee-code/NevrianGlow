@@ -146,74 +146,38 @@ namespace NevrianGlowFarm.Editor
                 cleaning.DebugCleanAll();
         }
 
-        private const string SalesSettingsPath = "Assets/_Project/Data/Stats/SalesSettings.asset";
-        private const int SalesSeed = 20261011;
-        private const int PurchasePurpose = 2; // 손님 구매용 난수 흐름 (청소 배치 = 3)
-        private Data.SalesSettingsData salesSettings;
-
-        // 손님(3-2)이 생기기 전 SalesSimulator(3-1) 확인용 — 실제 게임의 '건너뛰기'와 같은 함수(SkipRemaining)로 진열대 작물을 판다
+        // 장사 단계 진행 (SalesSystem 3-2) — 진행 요약 · 건너뛰기(게임의 Space와 같은 함수)
         private void DrawSalesSection()
         {
-            EditorGUILayout.LabelField("장사 (SalesSimulator)", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("장사 (SalesSystem)", EditorStyles.boldLabel);
             var game = GameManager.Instance;
-            var cleaning = Systems.Cleaning.CleaningSystem.Instance;
+            var sales = Systems.Sales.SalesSystem.Instance;
             if (!Application.isPlaying || game == null || !game.IsStarted)
             {
-                EditorGUILayout.HelpBox("플레이 중일 때 오늘 손님 수와 '장사 바로 처리' 버튼이 보인다.", MessageType.None);
+                EditorGUILayout.HelpBox("플레이 중일 때 장사 진행과 '건너뛰기' 버튼이 보인다. 장사는 장사 단계에 들어서면 자동으로 시작한다.", MessageType.None);
                 return;
             }
-            if (salesSettings == null)
-                salesSettings = AssetDatabase.LoadAssetAtPath<Data.SalesSettingsData>(SalesSettingsPath);
-            if (salesSettings == null)
+            if (sales == null)
             {
-                EditorGUILayout.HelpBox($"{SalesSettingsPath} 없음 — Glow Farm/Setup/Create Placeholder Data", MessageType.Warning);
+                EditorGUILayout.HelpBox("씬에 SalesSystem이 없다 (Shop 씬 로드 확인).", MessageType.Warning);
                 return;
             }
 
-            var spec = salesSettings.ToSpec();
-            double clean = cleaning == null ? 1.0 : cleaning.LockedCleanliness >= 0f ? cleaning.LockedCleanliness : cleaning.CurrentCleanliness();
-            int customers = Logic.Sales.SalesRules.CustomerCount(game.Day, 0, clean, spec);
-            var shelves = FindObjectsByType<Systems.Shop.ShelfDisplay>(FindObjectsSortMode.InstanceID);
-            int displayed = 0;
-            foreach (var s in shelves)
-                if (s.State != null)
-                    displayed += s.State.TotalCount;
-            EditorGUILayout.LabelField("오늘 손님", $"{customers}명 (청결도 {clean:P0} · 보너스 0) · 진열 {displayed}개");
-
-            using (new EditorGUI.DisabledScope(game.Phase != DayPhase.Sales))
+            var session = sales.Session;
+            if (sales.IsRunning && session != null)
             {
-                if (GUILayout.Button("장사 바로 처리 (건너뛰기와 같은 계산 · 달러 · 경험치 반영)"))
-                    RunSalesNow(game, spec, customers, shelves);
+                EditorGUILayout.LabelField("진행", $"{sales.Elapsed:0.0}초 · 손님 {session.Spawned}/{session.Total} (가게 안 {session.InStore})");
+                EditorGUILayout.LabelField("판매", $"구매 {session.Buyers} · 빈손 {session.EmptyHanded} · {session.ItemsSold}개 · {session.Revenue}달러");
+                if (GUILayout.Button("건너뛰기 (Space와 같음 — 남은 손님 바로 처리 → 정산)"))
+                    sales.FinishNow(advancePhase: true);
             }
-            if (game.Phase != DayPhase.Sales)
-                EditorGUILayout.HelpBox("장사 단계에서만 누를 수 있다 (위 '다음 단계' · '단계 강제 전환').", MessageType.None);
-        }
-
-        private static void RunSalesNow(GameManager game, Logic.Sales.SalesSpec spec, int customers, Systems.Shop.ShelfDisplay[] displays)
-        {
-            var states = new System.Collections.Generic.List<Logic.Shop.ShelfState>();
-            foreach (var d in displays)
-                states.Add(d.State);
-            var prices = new System.Collections.Generic.Dictionary<string, int>();
-            var session = new Logic.Sales.SalesSession(customers, spec);
-            var random = new Logic.SeededRandom(Logic.SeededRandom.SeedFor(SalesSeed, PurchasePurpose, game.Day));
-            session.SkipRemaining(states, random, id => prices.TryGetValue(id, out int p) ? p : 0, (shelf, slot) =>
+            else if (sales.LastResult.HasValue)
             {
-                var crop = displays[shelf].TryTakeForSale(slot); // 겉모습도 같이 빠진다
-                if (crop == null)
-                    return null;
-                prices[crop.Id] = crop.SellPrice;
-                return crop.Id;
-            });
-            if (session.Revenue > 0)
-            {
-                game.TryChangeMoney(session.Revenue);
-                game.AddRevenueExp(session.Revenue);
+                var r = sales.LastResult.Value;
+                EditorGUILayout.LabelField("지난 장사", $"{r.Day}일차 · 손님 {r.Customers} (구매 {r.Buyers} · 빈손 {r.EmptyHanded}) · {r.ItemsSold}개 · {r.Revenue}달러{(r.Skipped ? " · 건너뜀" : "")}");
             }
-            var sold = new System.Text.StringBuilder();
-            foreach (var pair in session.Sold)
-                sold.Append(sold.Length > 0 ? ", " : "").Append(pair.Key).Append(" ×").Append(pair.Value);
-            Debug.Log($"[디버그] 장사: 손님 {session.Total}명 (구매 {session.Buyers} · 빈손 {session.EmptyHanded}) · 판매 {session.ItemsSold}개 ({sold}) · 매출 {session.Revenue}달러");
+            else
+                EditorGUILayout.HelpBox("장사 단계가 아니다 (위 '다음 단계' · '단계 강제 전환'으로 장사 단계).", MessageType.None);
         }
 
         private void DrawHotbarSection()

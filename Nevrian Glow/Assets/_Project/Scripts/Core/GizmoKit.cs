@@ -59,6 +59,52 @@ namespace NevrianGlowFarm.Core
                 Gizmos.DrawLine(from + dir * t, from + dir * Mathf.Min(t + dash, length));
         }
 
+        /// <summary>바닥에 눕힌 원 (반경 표시).</summary>
+        public static void FloorCircle(Vector3 center, float radius, Color color, int segments = 24)
+        {
+            Gizmos.color = color;
+            Vector3 prev = center + new Vector3(radius, 0f, 0f);
+            for (int i = 1; i <= segments; i++)
+            {
+                float a = i * Mathf.PI * 2f / segments;
+                Vector3 next = center + new Vector3(Mathf.Cos(a) * radius, 0f, Mathf.Sin(a) * radius);
+                Gizmos.DrawLine(prev, next);
+                prev = next;
+            }
+        }
+
+        /// <summary>화살표 (선 + 끝 갈래 두 개, 수평 방향 기준).</summary>
+        public static void Arrow(Vector3 from, Vector3 to, Color color, float head = 0.25f)
+        {
+            Line(from, to, color);
+            Vector3 dir = to - from;
+            dir.y = 0f;
+            if (dir.sqrMagnitude < 1e-6f)
+                return;
+            dir.Normalize();
+            Vector3 side = Vector3.Cross(Vector3.up, dir);
+            Line(to, to - dir * head + side * head * 0.6f, color);
+            Line(to, to - dir * head - side * head * 0.6f, color);
+        }
+
+        /// <summary>세운 캡슐 윤곽 (바닥 기준 위치 · 키 · 반경).</summary>
+        public static void WireCapsule(Vector3 bottom, float height, float radius, Color color)
+        {
+            WirePoint(bottom + Vector3.up * radius, radius, color);
+            WirePoint(bottom + Vector3.up * (height - radius), radius, color);
+            Line(bottom + new Vector3(-radius, radius, 0f), bottom + new Vector3(-radius, height - radius, 0f), color);
+            Line(bottom + new Vector3(radius, radius, 0f), bottom + new Vector3(radius, height - radius, 0f), color);
+        }
+
+        /// <summary>글자 (씬 뷰 전용 — 빌드에서는 아무것도 하지 않음).</summary>
+        public static void Label(Vector3 position, string text, Color color)
+        {
+#if UNITY_EDITOR
+            var style = new GUIStyle(UnityEditor.EditorStyles.boldLabel) { normal = { textColor = color } };
+            UnityEditor.Handles.Label(position, text, style);
+#endif
+        }
+
         /// <summary>바닥 점선 사각형. 네 꼭짓점을 순서대로 받는다.</summary>
         public static void DashedQuad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, float dash, Color color)
         {

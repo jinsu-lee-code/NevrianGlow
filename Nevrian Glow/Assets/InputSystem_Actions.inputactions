@@ -145,6 +145,16 @@
                     "interactions": "",
                     "initialStateCheck": false,
                     "priority": 0
+                },
+                {
+                    "name": "SkipSales",
+                    "type": "Button",
+                    "id": "8c3e5a71-2b94-4f06-a1d7-6e9b0c4f2a58",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
                 }
             ],
             "bindings": [
@@ -662,6 +672,17 @@
                     "processors": "",
                     "groups": "Keyboard&Mouse",
                     "action": "Retrieve",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "4f7a2c90-d6e1-4b38-9a52-1c8e7f3b6d04",
+                    "path": "<Keyboard>/space",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "SkipSales",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
