@@ -72,6 +72,8 @@ namespace NevrianGlowFarm.Logic.Simulation
         /// <summary>밭 구획 상품 (없으면 Id null). PlotsPerTier = 한 단계에 늘어나는 구획.</summary>
         public ProductSpec PlotProduct { get; set; }
         public int PlotsPerTier { get; set; } = 1;
+        /// <summary>true = 구획 살 돈이 있으면 구획 먼저(BALANCE 4번 1), false = 씨앗을 먼저 사고 남은 돈으로 구획 (4-2 실험).</summary>
+        public bool PlotBeforeSeeds { get; set; } = true;
         public int ShelfSlots { get; set; } = 6;
         public int ShelfItemsPerSlot { get; set; } = 4;
         public SalesSpec Sales { get; set; }

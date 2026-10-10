@@ -89,6 +89,34 @@ namespace NevrianGlowFarm.Tests
         }
 
         [Test]
+        public void SeedsFirst_PlotWithLeftover()
+        {
+            var config = Config(money: 300);
+            config.PlotBeforeSeeds = false;
+            var d1 = DaySimulator.Run(config, 1).Days[0];
+            Assert.AreEqual(12, d1.Planted["crop_a"], "씨앗 먼저 → 입고 12개 (120달러)");
+            Assert.AreEqual(16, d1.OpenCells, "남은 180달러로는 250 구획을 못 삼");
+            Assert.AreEqual(180, d1.Money);
+        }
+
+        [Test]
+        public void PlaySessionLog_AddsTimeAndWritesTable()
+        {
+            var log = new PlaySessionLog();
+            log.AddTime(1, DayPhase.Farming, 95.4);
+            log.AddTime(1, DayPhase.Farming, 30);
+            log.AddTime(1, DayPhase.Sales, 31);
+            log.AddTime(1, DayPhase.Shop, -5);
+            log.DayOf(1).Settlement = new SettlementReport(1, true, 8, 7, 1, 6, 90, null, 20, new ExpGain(90, 1, 3), 2);
+            log.DayOf(1).Cleanliness = 0.75;
+            Assert.AreEqual(156.4, log.DayOf(1).TotalSeconds, 1e-6);
+            string md = log.Markdown("기록");
+            StringAssert.Contains("| 1 | 0:00 | 2:05 | 0:00 | 0:31 | 0:00 | 2:36 | 75 % | 8 | 6 | 90 | 20 | 70 |", md);
+            StringAssert.Contains("합계 플레이 시간: 2:36", md);
+            Assert.AreEqual("10:05", PlaySessionLog.Time(605));
+        }
+
+        [Test]
         public void Skills_InPriority_SavesForExpensiveFirst()
         {
             var config = Config(money: 0);

@@ -84,6 +84,7 @@ namespace NevrianGlowFarm.Editor
                 Curve = settings.Progression.ToCurve(),
                 Cleanliness = settings.Cleanliness,
                 CustomerBonus = settings.CustomerBonus,
+                PlotBeforeSeeds = settings.PlotBeforeSeeds,
             };
 
             // 시작 소지품: 씨앗은 심을 씨앗, 작물은 바로 팔 수확물 (핫바 · 창고 모두)

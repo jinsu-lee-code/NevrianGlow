@@ -102,13 +102,9 @@ namespace NevrianGlowFarm.Logic.Simulation
                         if (shop.Offer(c.SeedProduct, ctx, wallet.Money).Visible)
                             row.Unlocked.Add(c.Id);
                     }
-                if (config.PlotProduct.Id != null && config.PlotProduct.Tiers != null)
-                {
-                    // 구획 가격 이상 남으면 구획을 먼저 (하루 한 단계)
-                    var plot = config.PlotProduct;
-                    if (shop.TryBuy(plot, ctx, wallet.Money, out var bought) && wallet.TryChangeMoney(-bought.Price))
-                        farm.SetPlotCount(farm.PlotCount + Math.Max(1, config.PlotsPerTier));
-                }
+                // 구획 가격 이상 남으면 구획을 먼저 (하루 한 단계) — 실험 옵션이면 씨앗 뒤 남은 돈으로
+                if (config.PlotBeforeSeeds)
+                    TryBuyPlot(config, shop, ctx, wallet, farm);
                 int need = FreeCellsToday(farm, crops) - seeds.Values.Sum();
                 foreach (var c in byProfit)
                 {
@@ -121,6 +117,8 @@ namespace NevrianGlowFarm.Logic.Simulation
                         need -= c.SeedsPerBuy;
                     }
                 }
+                if (!config.PlotBeforeSeeds)
+                    TryBuyPlot(config, shop, ctx, wallet, farm);
                 row.Spent = shop.SpentToday;
 
                 // ── 농사: 수확 → 개간 · 심기(이익 큰 씨앗부터) → 물 ──
@@ -192,7 +190,16 @@ namespace NevrianGlowFarm.Logic.Simulation
             return run;
         }
 
-        /// <summary>오늘 심을 수 있는 칸 = 작물 없는 칸 + 오늘 수확하면 비는 칸 (봇은 다 자란 것을 안다).</summary>
+        private static void TryBuyPlot(DaySimConfig config, ShopState shop, Context ctx, Wallet wallet, FarmState farm)
+        {
+            var plot = config.PlotProduct;
+            if (plot.Id == null || plot.Tiers == null)
+                return;
+            if (shop.TryBuy(plot, ctx, wallet.Money, out var bought) && wallet.TryChangeMoney(-bought.Price))
+                farm.SetPlotCount(farm.PlotCount + Math.Max(1, config.PlotsPerTier));
+        }
+
+        /// <summary>오늘 심을 수 있는 칸 =작물 없는 칸 + 오늘 수확하면 비는 칸 (봇은 다 자란 것을 안다).</summary>
         public static int FreeCellsToday(FarmState farm, IReadOnlyDictionary<string, SimCrop> crops)
         {
             int free = 0;
