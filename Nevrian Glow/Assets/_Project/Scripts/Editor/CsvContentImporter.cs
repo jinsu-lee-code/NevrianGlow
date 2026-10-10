@@ -135,22 +135,27 @@ namespace NevrianGlowFarm.Editor
                 var asset = AssetDatabase.LoadAssetAtPath<T>(path);
                 bool created = asset == null;
                 if (created)
-                {
-                    EnsureFolder(folder);
                     asset = ScriptableObject.CreateInstance<T>();
-                    AssetDatabase.CreateAsset(asset, path);
-                }
 
                 var so = new SerializedObject(asset);
                 so.FindProperty("id").stringValue = id;
                 foreach (var pair in values)
                     Apply(so.FindProperty(pair.Key), pair.Value, db);
-
                 bool changed = so.ApplyModifiedPropertiesWithoutUndo();
-                if (created) report.Created++;
-                else if (changed) report.Updated++;
+
+                // 새 에셋은 값을 다 채운 뒤 만든다 — 만드는 순간 ContentDatabase 자동 검사가 빈 id 오류를 내지 않게.
+                if (created)
+                {
+                    EnsureFolder(folder);
+                    AssetDatabase.CreateAsset(asset, path);
+                    report.Created++;
+                }
+                else if (changed)
+                {
+                    report.Updated++;
+                    EditorUtility.SetDirty(asset);
+                }
                 else report.Unchanged++;
-                if (changed) EditorUtility.SetDirty(asset);
             }
             AssetDatabase.SaveAssets();
             ContentDatabaseBuilder.Refresh();

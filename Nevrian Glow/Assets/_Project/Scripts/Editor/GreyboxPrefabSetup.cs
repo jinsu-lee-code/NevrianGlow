@@ -14,6 +14,8 @@ namespace NevrianGlowFarm.Editor
     {
         private const string MaterialPath = "Assets/_Project/Art/Materials/mat_greybox_cell.mat";
         private const string StorageMaterialPath = "Assets/_Project/Art/Materials/mat_greybox_storage.mat";
+        private const string DoorMaterialPath = "Assets/_Project/Art/Materials/mat_greybox_door.mat";
+        private const string DoorPath = "Assets/_Project/Prefabs/Zones/zone_door.prefab";
         private const string FarmCellPath = "Assets/_Project/Prefabs/Farm/farm_cell.prefab";
         private const string WorldItemPath = "Assets/_Project/Prefabs/Items/world_item.prefab";
         private const string StoragePointPath = "Assets/_Project/Prefabs/Storage/storage_point.prefab";
@@ -40,7 +42,25 @@ namespace NevrianGlowFarm.Editor
             result += Ensure(FarmCellPath, () => BuildFarmCell(material, layer));
             result += Ensure(WorldItemPath, () => BuildWorldItem(material, layer));
             result += Ensure(StoragePointPath, () => BuildStoragePoint(material, layer));
+            result += Ensure(DoorPath, () => BuildDoor(layer));
             return result;
+        }
+
+        // 지역 문: 루트 콜라이더 + ZoneDoor / Model 문짝 (금빛 — 그레이박스 구분용). 앞쪽(+Z)이 플레이어 쪽.
+        private static GameObject BuildDoor(int layer)
+        {
+            var root = new GameObject("zone_door") { layer = layer };
+            var box = root.AddComponent<BoxCollider>();
+            box.size = new Vector3(1.4f, 2.4f, 0.4f);
+            box.center = new Vector3(0f, 1.2f, 0f);
+
+            var gold = EnsureMaterial(DoorMaterialPath, new Color(1f, 0.82f, 0.48f), out _); // 금빛 #FFD27A
+            var model = CreateVisual(PrimitiveType.Cube, "Model", root.transform, gold);
+            model.transform.localPosition = new Vector3(0f, 1.2f, 0f);
+            model.transform.localScale = new Vector3(1.4f, 2.4f, 0.3f);
+
+            root.AddComponent<Systems.Zones.ZoneDoor>();
+            return root;
         }
 
         private static string Ensure(string path, System.Func<GameObject> build)

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using NevrianGlowFarm.Data;
+using NevrianGlowFarm.Logic.Game;
 using UnityEditor;
 using UnityEngine;
 
@@ -21,6 +22,7 @@ namespace NevrianGlowFarm.Editor
         private const string CropsFolder = DataRoot + "/Crops";
         private const string ToolsFolder = DataRoot + "/Tools";
         private const string ItemsFolder = DataRoot + "/Items";
+        private const string ZonesFolder = DataRoot + "/Zones";
 
         private readonly struct CropRow
         {
@@ -179,6 +181,30 @@ namespace NevrianGlowFarm.Editor
                 }));
             }
 
+            // BALANCE 2-10 지역 (임시 분위기 — 5-1 조명 · 후처리에서 확정). 농장 = 농사 단계 · 하루 시작, 가게 = 청소·진열 · 장사 · 정산.
+            Ensure<ZoneProfileData>($"{ZonesFolder}/zone_farm.asset", resetExisting, report, so =>
+            {
+                SetIdentity(so, "zone_farm", "농장");
+                SetPhases(so.FindProperty("phases"), DayPhase.Farming);
+                so.FindProperty("isDayStart").boolValue = true;
+                so.FindProperty("ambientColor").colorValue = new Color(0.20f, 0.22f, 0.40f);  // 차가운 청보라 황혼
+                so.FindProperty("fog").boolValue = true;
+                so.FindProperty("fogColor").colorValue = new Color(0.055f, 0.15f, 0.25f);     // 심청 #0E2640
+                so.FindProperty("fogDensity").floatValue = 0.02f;
+                so.FindProperty("bgmId").stringValue = "bgm_twilight_field";
+            });
+            Ensure<ZoneProfileData>($"{ZonesFolder}/zone_shop.asset", resetExisting, report, so =>
+            {
+                SetIdentity(so, "zone_shop", "가게");
+                SetPhases(so.FindProperty("phases"), DayPhase.CleanDisplay, DayPhase.Sales, DayPhase.Settlement);
+                so.FindProperty("isDayStart").boolValue = false;
+                so.FindProperty("ambientColor").colorValue = new Color(0.36f, 0.29f, 0.36f);  // 한 단계 따뜻하게 (GDD 8)
+                so.FindProperty("fog").boolValue = false;
+                so.FindProperty("fogColor").colorValue = new Color(0.16f, 0.14f, 0.25f);
+                so.FindProperty("fogDensity").floatValue = 0f;
+                so.FindProperty("bgmId").stringValue = "bgm_lumian_market";
+            });
+
             // BALANCE 2-1
             Ensure<PlayerSettingsData>($"{StatsFolder}/PlayerSettings.asset", resetExisting, report, so =>
             {
@@ -268,6 +294,16 @@ namespace NevrianGlowFarm.Editor
             return report.ToString();
         }
 
+        private static void SetPhases(SerializedProperty list, params DayPhase[] phases)
+        {
+            list.ClearArray();
+            foreach (var phase in phases)
+            {
+                list.InsertArrayElementAtIndex(list.arraySize);
+                list.GetArrayElementAtIndex(list.arraySize - 1).enumValueIndex = (int)phase;
+            }
+        }
+
         private static void SetStartingItems(SerializedProperty list, (string Id, int Count)[] rows, List<ItemData> known, string label)
         {
             list.ClearArray();
@@ -303,7 +339,6 @@ namespace NevrianGlowFarm.Editor
             where T : ScriptableObject
         {
             var asset = AssetDatabase.LoadAssetAtPath<T>(path);
-            bool created = false;
 
             if (asset == null)
             {
@@ -314,13 +349,18 @@ namespace NevrianGlowFarm.Editor
                     return null;
                 }
 
+                // 값을 먼저 채운 뒤 에셋으로 만든다 — 만드는 순간 ContentDatabase 자동 검사가 돌아 빈 id 오류를 내지 않게.
                 EnsureFolder(Path.GetDirectoryName(path).Replace('\\', '/'));
                 asset = ScriptableObject.CreateInstance<T>();
+                var fresh = new SerializedObject(asset);
+                apply(fresh);
+                fresh.ApplyModifiedPropertiesWithoutUndo();
                 AssetDatabase.CreateAsset(asset, path);
-                created = true;
+                report.Created++;
+                return asset;
             }
 
-            if (!created && !resetExisting)
+            if (!resetExisting)
             {
                 report.Kept++;
                 return asset;
@@ -330,9 +370,7 @@ namespace NevrianGlowFarm.Editor
             apply(so);
             so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(asset);
-
-            if (created) report.Created++;
-            else report.Reset++;
+            report.Reset++;
             return asset;
         }
 

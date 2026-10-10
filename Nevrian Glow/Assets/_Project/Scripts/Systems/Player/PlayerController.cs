@@ -84,6 +84,23 @@ namespace NevrianGlowFarm.Systems.Player
             }
         }
 
+        /// <summary>
+        /// 순간이동 (장소 이동, CLAUDE 핵심 규칙 8): CharacterController를 끄고 → 위치 지정 → SyncTransforms → 다시 켠다.
+        /// 바라보는 방향도 정하고(위아래 시점은 정면으로), 떨어지던 속도는 버린다.
+        /// </summary>
+        public void TeleportTo(Vector3 position, float newYaw)
+        {
+            controller.enabled = false;
+            transform.SetPositionAndRotation(position, Quaternion.Euler(0f, newYaw, 0f));
+            Physics.SyncTransforms();
+            controller.enabled = true;
+
+            yaw = newYaw;
+            pitch = 0f;
+            verticalVelocity = 0f;
+            cameraPivot.localRotation = Quaternion.identity;
+        }
+
         private void OnGateChanged(bool blocked) => ApplyCursor(blocked);
 
         // 화면(가방 · 창고 등)이 열려 조작이 잠기면 커서를 풀어 보이게 한다.
