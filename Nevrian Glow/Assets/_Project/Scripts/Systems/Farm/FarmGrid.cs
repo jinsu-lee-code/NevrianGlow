@@ -18,6 +18,8 @@ namespace NevrianGlowFarm.Systems.Farm
         [Header("참조")]
         [Tooltip("구획 수 · 칸 간격 · 개간 작업량 (Data/Stats/GameStartSettings)")]
         [SerializeField] private GameStartSettingsData settings;
+        [Tooltip("작물 id → 작물 데이터 (Data/ContentDatabase)")]
+        [SerializeField] private ContentDatabase database;
         [Tooltip("칸 프리팹 (Prefabs/Farm/farm_cell)")]
         [SerializeField] private FarmCellView cellPrefab;
         [Tooltip("겹치면 안 되는 구역 (길 · 문 주변) — 겹치면 기즈모 빨강 + 시작 시 경고")]
@@ -52,7 +54,6 @@ namespace NevrianGlowFarm.Systems.Farm
         private FarmState state;
         private readonly NightPipeline night = new NightPipeline();
         private readonly List<FarmCellView> views = new List<FarmCellView>();
-        private readonly Dictionary<string, CropData> crops = new Dictionary<string, CropData>();
         private Hotbar hotbar;
 
         public FarmState State => state;
@@ -61,7 +62,7 @@ namespace NevrianGlowFarm.Systems.Farm
 
         private void Awake()
         {
-            if (settings == null || cellPrefab == null)
+            if (settings == null || cellPrefab == null || database == null)
             {
                 Debug.LogError("[FarmGrid] 참조가 비어 있음 — 인스펙터의 참조 항목 확인", this);
                 enabled = false;
@@ -119,9 +120,10 @@ namespace NevrianGlowFarm.Systems.Farm
                 changed = FarmRules.TryTill(cell, hoe.WorkPerUse, settings.TillWorkRequired);
             else if (held is SeedData seed && seed.Crop != null && FarmRules.GetStatus(cell, default) == FarmCellStatus.Tilled)
             {
-                // 씨앗을 먼저 쓰고 심는다 — 씨앗이 없으면 심지 않는다.
-                Register(seed.Crop);
-                if (hotbar != null && hotbar.TryConsumeSelected(1))
+                // 씨앗을 먼저 쓰고 심는다 — 씨앗이 없으면 심지 않는다. 데이터베이스에 없는 작물은 심지 않는다(성장 규칙을 찾을 수 없음).
+                if (!database.TryGet(seed.Crop.Id, out CropData _))
+                    Debug.LogError($"[FarmGrid] 작물 '{seed.Crop.Id}'가 ContentDatabase에 없음 — Glow Farm/Data/Refresh Content Database", this);
+                else if (hotbar != null && hotbar.TryConsumeSelected(1))
                     changed = FarmRules.TryPlant(cell, seed.Crop.Id);
             }
             else if (held is WateringCanData && cell.HasCrop)
@@ -136,7 +138,7 @@ namespace NevrianGlowFarm.Systems.Farm
             if (state == null || state.StatusOf(index) != FarmCellStatus.Ready)
                 return null;
             var cell = state.Cells[index];
-            var crop = crops[cell.CropId];
+            var crop = CropOf(cell.CropId);
             int yield = SpecOf(cell.CropId).HarvestYield;
             return hotbar != null && hotbar.CanAdd(crop, yield)
                 ? $"{crop.DisplayName} 수확 ×{yield}"
@@ -148,7 +150,7 @@ namespace NevrianGlowFarm.Systems.Farm
             if (state == null || hotbar == null || state.StatusOf(index) != FarmCellStatus.Ready)
                 return;
             var cell = state.Cells[index];
-            var crop = crops[cell.CropId];
+            var crop = CropOf(cell.CropId);
             var spec = SpecOf(cell.CropId);
             // 넣을 자리가 없으면 수확하지 않는다 (GDD 4-2).
             if (!hotbar.CanAdd(crop, spec.HarvestYield))
@@ -233,7 +235,7 @@ namespace NevrianGlowFarm.Systems.Farm
             {
                 var spec = SpecOf(cell.CropId);
                 float growth = Mathf.Clamp01((float)cell.Age / FarmRules.RequiredDays(cell, spec));
-                Color color = crops[cell.CropId].GreyboxColor;
+                Color color = CropOf(cell.CropId).GreyboxColor;
                 if (status == FarmCellStatus.Ready)
                     color = Color.Lerp(color, Color.white, readyBrighten);
                 views[index].Show(soil, true, color, Mathf.Lerp(seedlingScale, grownScale, growth));
@@ -262,18 +264,10 @@ namespace NevrianGlowFarm.Systems.Farm
 
         // ── 작물 규칙 ─────────────────────────────────────────
 
-        private void Register(CropData crop)
-        {
-            if (crop != null && !string.IsNullOrEmpty(crop.Id))
-                crops[crop.Id] = crop;
-        }
+        // 칸에는 작물 id만 있다 (저장 6-1도 id). 심을 때 데이터베이스에 있는지 확인하므로 여기서는 반드시 찾힌다.
+        private CropData CropOf(string cropId) => database.Get<CropData>(cropId);
 
-        // 심은 작물만 등록돼 있다. 저장에서 불러올 때(6-1)는 2-1 ContentDatabase로 찾는다.
-        private CropSpec SpecOf(string cropId)
-        {
-            var c = crops[cropId];
-            return new CropSpec(c.GrowDays, c.WetDays, c.HarvestYield, c.RegrowDays, c.MaxHarvests);
-        }
+        private CropSpec SpecOf(string cropId) => CropOf(cropId).ToSpec();
 
         // ── 배치 ─────────────────────────────────────────────
 

@@ -404,6 +404,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Systems.Farm.FarmGrid
   settings: {fileID: 11400000, guid: 0b48beb8da4fc334db3bf574f59cba51, type: 2}
+  database: {fileID: 11400000, guid: 56581527d44eb5145b820af02e243a9c, type: 2}
   cellPrefab: {fileID: 158116667792137591, guid: 56235f1273e03354083b1dc39d88ca6b, type: 3}
   forbiddenZones:
   - {fileID: 358396347}

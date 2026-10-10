@@ -865,11 +865,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Systems.Player.Hotbar
   inventorySettings: {fileID: 11400000, guid: 30bb7898390762747a0dbf9e3d696a57, type: 2}
   startSettings: {fileID: 11400000, guid: 0b48beb8da4fc334db3bf574f59cba51, type: 2}
+  database: {fileID: 11400000, guid: 56581527d44eb5145b820af02e243a9c, type: 2}
   slotAction: {fileID: -2098559546805047597, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   scrollAction: {fileID: -1943159550275289242, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   scrollDownIsNext: 1
   selectedIndex: 0
-  slots: []
+  slotView: []
 --- !u!1 &953453726
 GameObject:
   m_ObjectHideFlags: 0

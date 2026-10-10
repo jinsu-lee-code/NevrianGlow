@@ -16,6 +16,7 @@ MonoBehaviour:
   displayName: "\uC6D4\uAD11 \uBFCC\uB9AC"
   maxStack: 10
   greyboxColor: {r: 0.38431373, g: 0.9490196, b: 0.88235295, a: 1}
+  stagePrefabs: []
   seedPrice: 10
   sellPrice: 15
   growDays: 1

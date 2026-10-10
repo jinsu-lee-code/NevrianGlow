@@ -21,6 +21,8 @@ namespace NevrianGlowFarm.Systems.Player
         [SerializeField] private InventorySettingsData inventorySettings;
         [Tooltip("시작 핫바 내용 (Data/Stats/GameStartSettings)")]
         [SerializeField] private GameStartSettingsData startSettings;
+        [Tooltip("아이템 id → 아이템 데이터 (Data/ContentDatabase)")]
+        [SerializeField] private ContentDatabase database;
         [Tooltip("핫바 숫자 키 입력 (Player/Hotbar, 키 1~8)")]
         [SerializeField] private InputActionReference slotAction;
         [Tooltip("핫바 휠 입력 (Player/HotbarScroll, 마우스 휠)")]
@@ -38,7 +40,6 @@ namespace NevrianGlowFarm.Systems.Player
 
         private SlotInventory slots;
         private SlotInventory[] containers;
-        private readonly Dictionary<string, ItemData> items = new Dictionary<string, ItemData>();
 
         public int SlotCount => slots != null ? slots.SlotCount : 0;
         public int SelectedIndex => selectedIndex;
@@ -53,7 +54,7 @@ namespace NevrianGlowFarm.Systems.Player
 
         private void Awake()
         {
-            if (inventorySettings == null || startSettings == null)
+            if (inventorySettings == null || startSettings == null || database == null)
             {
                 Debug.LogError("[Hotbar] 참조가 비어 있음 — 인스펙터의 참조 항목 확인", this);
                 enabled = false;
@@ -74,7 +75,8 @@ namespace NevrianGlowFarm.Systems.Player
                     Debug.LogWarning($"[Hotbar] 시작 핫바 {i + 1}번째 줄({entry.Item.Id})이 칸 수 {slots.SlotCount}를 넘어 넣지 못함 — GameStartSettings 확인", this);
                     continue;
                 }
-                Register(entry.Item);
+                if (!IsKnown(entry.Item))
+                    continue;
                 slots.TryPlace(i, entry.Item.Id, Mathf.Min(entry.Count, entry.Item.MaxStack));
             }
 
@@ -107,7 +109,7 @@ namespace NevrianGlowFarm.Systems.Player
             if (slots == null)
                 return null;
             var stack = slots[index];
-            return !stack.IsEmpty && items.TryGetValue(stack.ItemId, out var item) ? item : null;
+            return stack.IsEmpty ? null : database.Get<ItemData>(stack.ItemId);
         }
 
         public int GetCount(int index) => slots != null ? slots[index].Count : 0;
@@ -132,9 +134,8 @@ namespace NevrianGlowFarm.Systems.Player
         /// <summary>count개를 전부 넣는다. 자리가 모자라면 아무것도 넣지 않고 false (수확 · 줍기 실패).</summary>
         public bool TryAdd(ItemData item, int count)
         {
-            if (slots == null || item == null)
+            if (slots == null || item == null || !IsKnown(item))
                 return false;
-            Register(item);
             if (!InventoryRules.TryAddAll(containers, item.Id, count))
                 return false;
             NotifySlotsChanged();
@@ -168,14 +169,16 @@ namespace NevrianGlowFarm.Systems.Player
                 SelectionChanged?.Invoke(selectedIndex);
         }
 
-        // 아이템 에셋을 id로 다시 찾기 위한 표. 전체 목록은 2-1 ContentDatabase가 대신한다.
-        private void Register(ItemData item)
+        // 칸에는 id만 들어간다 → 다시 찾을 수 없는 아이템(데이터베이스에 없음)은 넣지 않는다.
+        private bool IsKnown(ItemData item)
         {
-            if (item != null && !string.IsNullOrEmpty(item.Id))
-                items[item.Id] = item;
+            if (database.TryGet(item.Id, out ItemData _))
+                return true;
+            Debug.LogError($"[Hotbar] 아이템 '{item.Id}'가 ContentDatabase에 없어 넣지 않음 — Glow Farm/Data/Refresh Content Database", this);
+            return false;
         }
 
-        private int MaxStackOf(string itemId) => items.TryGetValue(itemId, out var item) ? item.MaxStack : 1;
+        private int MaxStackOf(string itemId) => database.TryGet(itemId, out ItemData item) ? item.MaxStack : 1;
 
         private void NotifySlotsChanged()
         {

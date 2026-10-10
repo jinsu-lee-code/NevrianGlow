@@ -20,6 +20,10 @@
 | 장소 이동 | Core 씬 `ZoneTransition` 인스펙터 | — | 2-10 |
 | 도구 등급 (괭이 · 대걸레 · 물뿌리개) | `Data/Tools/tool_*.asset` (HoeData · MopData · WateringCanData) | — | 2-11 |
 | 핫바 칸 수 · 시작 핫바 | `Data/Stats/InventorySettings.asset` · `GameStartSettings.asset` | — | 2-3 · 2-4 |
+| 씨앗 | `Data/Items/item_seed_*.asset` | — | 2-12 |
+| 콘텐츠 목록 (id → 에셋) | `Data/ContentDatabase.asset` (자동 수집) | — | — |
+
+CSV 양식 (2026-10-10, 2-1): 첫 열 `id`, 나머지 열 이름 = 에셋 필드 이름, 숫자 소수점은 `.`, 색은 `#RRGGBB`, 다른 콘텐츠 참조는 상대 id. 현재 값 양식 = 저장소 `CSV/crops.csv` (메뉴 `Glow Farm/Data/Export Crops CSV...`로 다시 만들 수 있음).
 | 아이템 (씨앗 · 비료 · 쓰레기) | `Data/Items/item_*.asset` | — | 2-12 |
 
 ## 2. 수치 표

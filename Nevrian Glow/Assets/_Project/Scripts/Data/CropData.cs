@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace NevrianGlowFarm.Data
@@ -9,9 +10,11 @@ namespace NevrianGlowFarm.Data
     [CreateAssetMenu(menuName = "Glow Farm/Data/Crop", fileName = "crop_new")]
     public class CropData : ItemData
     {
-        [Header("그레이박스")]
+        [Header("모습")]
         [Tooltip("그레이박스 작물 색 — 모델 교체(5-2) 전까지 (BALANCE 9-5: 월광 시안 · 버섯꽃 보라 · 등불 금빛)")]
         [SerializeField] private Color greyboxColor = Color.white;
+        [Tooltip("성장 단계 프리팹 (새싹 → 다 자람 순) — 비어 있으면 그레이박스 구로 표시. 모델 교체(5-2) 때 채운다")]
+        [SerializeField] private List<GameObject> stagePrefabs = new List<GameObject>();
 
         [Header("가격")]
         [Tooltip("씨앗 1개 가격 (달러)")]
@@ -51,5 +54,9 @@ namespace NevrianGlowFarm.Data
         public float GiantYieldMultiplier => giantYieldMultiplier;
         public float GiantScale => giantScale;
         public Color GreyboxColor => greyboxColor;
+        public IReadOnlyList<GameObject> StagePrefabs => stagePrefabs;
+
+        /// <summary>규칙 계산용 값 묶음 (Logic FarmRules · CropEconomics).</summary>
+        public Logic.Farm.CropSpec ToSpec() => new Logic.Farm.CropSpec(growDays, wetDays, harvestYield, regrowDays, maxHarvests);
     }
 }
