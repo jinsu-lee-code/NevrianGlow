@@ -33,3 +33,4 @@ MonoBehaviour:
   bedPitch: 5.6
   plotPitch: 11.2
   plotExpandDirection: {x: -1, y: 0, z: 0}
+  demoLastDay: 6

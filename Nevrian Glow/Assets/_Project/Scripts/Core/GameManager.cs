@@ -41,6 +41,7 @@ namespace NevrianGlowFarm.Core
         private Progression progression;
         private readonly SkillLevels skills = new SkillLevels();
         private readonly GameRecord record = new GameRecord();
+        private readonly RunSummary run = new RunSummary();
 
         /// <summary>실행 중인 GameManager. Core 씬이 없으면 null.</summary>
         public static GameManager Instance => instance;
@@ -146,6 +147,19 @@ namespace NevrianGlowFarm.Core
             if (record.RecordHarvest(cropId))
                 GameEvents.RaiseCropFirstHarvested(cropId);
         }
+
+        public IEnumerable<string> HarvestedCrops => record.Harvested;
+
+        // ── 한 판 기록 (데모 종료 화면 3-4) ──
+
+        /// <summary>날마다 정산 모음.</summary>
+        public RunSummary Run => run;
+
+        /// <summary>데모 마지막 일차 (0 = 종료 화면 없음, GameStartSettings).</summary>
+        public int DemoLastDay => startSettings != null ? startSettings.DemoLastDay : 0;
+
+        /// <summary>정산 화면이 그날 정산을 기록한다 (같은 날은 덮어씀).</summary>
+        public void RecordSettlement(SettlementReport report) => run.Record(report);
 
         /// <summary>다음 단계로 (스킬 다음은 다음 날 상점). 각 단계의 "끝내기"가 부른다.</summary>
         public void AdvancePhase()

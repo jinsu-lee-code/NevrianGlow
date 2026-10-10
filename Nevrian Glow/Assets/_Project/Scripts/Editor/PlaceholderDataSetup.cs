@@ -255,6 +255,7 @@ namespace NevrianGlowFarm.Editor
                 so.FindProperty("bedPitch").floatValue = 5.6f;
                 so.FindProperty("plotPitch").floatValue = 11.2f;
                 so.FindProperty("plotExpandDirection").vector3Value = new Vector3(-1f, 0f, 0f);
+                so.FindProperty("demoLastDay").intValue = 6; // GDD 6장 데모 1~6일차
             });
 
             // BALANCE 2-4

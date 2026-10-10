@@ -50,6 +50,54 @@ namespace NevrianGlowFarm.Tests
             Assert.AreEqual("경험치 +240 (Lv 3) · 레벨 업! SP +6", lines[lines.Count - 1]);
         }
 
+        private static SettlementReport Day(int day, int revenue, int spent, int customers = 8, int items = 4) =>
+            new SettlementReport(day, true, customers, customers, 0, items, revenue, new Dictionary<string, int>(), spent, default, 1);
+
+        [Test]
+        public void RunSummary_SumsDays_SameDayOverwrites()
+        {
+            var run = new RunSummary();
+            run.Record(Day(1, 60, 150));
+            run.Record(Day(2, 200, 20));
+            run.Record(Day(2, 240, 20)); // 같은 날 다시 → 덮어씀
+            Assert.AreEqual(2, run.DaysRecorded);
+            Assert.AreEqual(300, run.TotalRevenue);
+            Assert.AreEqual(170, run.TotalSpent);
+            Assert.AreEqual(130, run.TotalNetProfit);
+            Assert.AreEqual(16, run.TotalCustomers);
+            Assert.IsTrue(run.TryBestDay(out var best));
+            Assert.AreEqual(2, best.Day);
+
+            var lines = run.Lines(3, 280, new[] { "월광", "버섯꽃" });
+            Assert.AreEqual("손님 16명 · 판매 8개", lines[0]);
+            Assert.AreEqual("매출 합계 +300달러 · 지출 합계 -170달러", lines[1]);
+            Assert.AreEqual("순이익 합계 +130달러", lines[2]);
+            Assert.AreEqual("가장 많이 판 날: 2일차 (240달러)", lines[3]);
+            Assert.AreEqual("레벨 3 · 보유 280달러", lines[4]);
+            Assert.AreEqual("수확한 작물: 월광, 버섯꽃", lines[5]);
+        }
+
+        [Test]
+        public void RunSummary_NoRevenue_NoBestDay_NoHarvest()
+        {
+            var run = new RunSummary();
+            run.Record(new SettlementReport(1, false, 0, 0, 0, 0, 0, null, 50, default, 1));
+            Assert.IsFalse(run.TryBestDay(out _));
+            var lines = run.Lines(1, 100, new string[0]);
+            Assert.AreEqual("순이익 합계 -50달러", lines[2]);
+            Assert.AreEqual(5, lines.Count, "가장 많이 판 날 줄 없음");
+            Assert.AreEqual("수확한 작물 없음", lines[4]);
+        }
+
+        [Test]
+        public void DemoLastDay_ZeroMeansNone()
+        {
+            Assert.IsTrue(RunSummary.IsDemoLastDay(6, 6));
+            Assert.IsFalse(RunSummary.IsDemoLastDay(5, 6));
+            Assert.IsFalse(RunSummary.IsDemoLastDay(7, 6), "계속 플레이한 뒤에는 다시 안 뜸");
+            Assert.IsFalse(RunSummary.IsDemoLastDay(6, 0));
+        }
+
         [Test]
         public void NoSales_OnlySpending()
         {

@@ -368,6 +368,16 @@ namespace NevrianGlowFarm.Systems.Sales
             return crop != null ? crop.SellPrice : 0;
         }
 
+        /// <summary>지금 진열대에 놓인 작물 수 (장사 전 안내 — 영업 팻말).</summary>
+        public int DisplayedNow()
+        {
+            int n = 0;
+            foreach (var s in shelves)
+                if (s != null)
+                    n += s.State.TotalCount;
+            return n;
+        }
+
         private int DisplayedCount()
         {
             int n = 0;

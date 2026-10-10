@@ -50,6 +50,10 @@ namespace NevrianGlowFarm.Data
         [Tooltip("구획이 늘어나는 방향 (단위 벡터)")]
         [SerializeField] private Vector3 plotExpandDirection = Vector3.left;
 
+        [Header("데모")]
+        [Tooltip("데모 마지막 일차 — 이날 정산 뒤 데모 종료 화면(계속 플레이 가능). 0이면 종료 화면 없음 (일차)")]
+        [SerializeField, Min(0)] private int demoLastDay;
+
         public int StartingMoney => startingMoney;
         public IReadOnlyList<StartingItem> StartingHotbar => startingHotbarItems;
         public IReadOnlyList<StartingItem> StartingStorage => startingStorageItems;
@@ -61,5 +65,6 @@ namespace NevrianGlowFarm.Data
         public float BedPitch => bedPitch;
         public float PlotPitch => plotPitch;
         public Vector3 PlotExpandDirection => plotExpandDirection;
+        public int DemoLastDay => demoLastDay;
     }
 }

@@ -70,9 +70,13 @@ namespace NevrianGlowFarm.UI
             current = null;
             lastClosedFrame = Time.frameCount;
             PlayerInputGate.Release(this);
+            OnClosed();
         }
 
         protected virtual void OnOpened() { }
+
+        /// <summary>닫힌 뒤 (입력 잠금이 풀린 다음).</summary>
+        protected virtual void OnClosed() { }
 
         /// <summary>닫기 직전. false면 닫지 않는다 (예: 손에 든 묶음을 둘 곳이 없음).</summary>
         protected virtual bool OnClosing() => true;

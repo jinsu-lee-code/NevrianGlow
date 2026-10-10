@@ -12,6 +12,7 @@ namespace NevrianGlowFarm.UI
     /// <summary>
     /// 상점 화면 (B, 어디서나 — GDD 3장 화면 표). 보이는 상품을 한 줄씩: 분류 · 이름(단계) · 가격 · 오늘 남은 입고 · 상태.
     /// 줄을 누르면 산다. 잠긴 단계는 조건을 함께 적는다. B · Esc로 닫는다. 모양은 UI를 몰아서 다듬을 때까지 그레이박스.
+    /// 하루 시작(상점 단계)에는 저절로 열리고, 그때 닫으면 농사 단계로 넘어간다 (3-4).
     /// </summary>
     public class ShopScreen : GameScreen
     {
@@ -67,9 +68,19 @@ namespace NevrianGlowFarm.UI
             toggleAction.action.Enable();
             cancelAction.action.Enable();
             shop.Changed += Rebuild;
+            GameEvents.PhaseChanged += OnPhaseChanged;
         }
 
-        private void OnDisable() => shop.Changed -= Rebuild;
+        private void OnDisable()
+        {
+            shop.Changed -= Rebuild;
+            GameEvents.PhaseChanged -= OnPhaseChanged;
+        }
+
+        // 하루 시작(상점 단계)이면 저절로 연다 — 닫으면 농사 단계로 (GDD 4-1 "상점: 닫기", 결정 2026-10-11)
+        private void OnPhaseChanged(Logic.Game.PhaseChange change) => openForDayStart = change.Phase == Logic.Game.DayPhase.Shop;
+
+        private bool openForDayStart;
 
         private void Update()
         {
@@ -77,6 +88,12 @@ namespace NevrianGlowFarm.UI
             {
                 if (toggleAction.action.WasPressedThisFrame() || cancelAction.action.WasPressedThisFrame())
                     Close();
+                return;
+            }
+            if (openForDayStart && Current == null)
+            {
+                openForDayStart = false;
+                Open();
                 return;
             }
             // 다른 화면이 열려 있거나 이번 프레임에 닫혔으면 열지 않는다.
@@ -90,6 +107,13 @@ namespace NevrianGlowFarm.UI
         {
             messageLabel.text = string.Empty;
             Rebuild();
+        }
+
+        protected override void OnClosed()
+        {
+            var game = GameManager.Instance;
+            if (game != null && game.IsStarted && game.Phase == Logic.Game.DayPhase.Shop)
+                game.AdvancePhase(); // 상점 → 농사
         }
 
         /// <summary>상품 줄 하나를 산다 (화면 클릭 · 디버그).</summary>
@@ -106,7 +130,9 @@ namespace NevrianGlowFarm.UI
             if (!IsOpen)
                 return;
             var game = GameManager.Instance;
-            titleLabel.text = game != null ? $"상점 - 보유 {game.Money:N0}달러" : "상점";
+            titleLabel.text = game == null ? "상점"
+                : game.Phase == Logic.Game.DayPhase.Shop ? $"{game.Day}일차 상점 - 보유 {game.Money:N0}달러 · 닫으면 농사 시작"
+                : $"상점 - 보유 {game.Money:N0}달러";
 
             rowProducts.Clear();
             foreach (var p in shop.Products)

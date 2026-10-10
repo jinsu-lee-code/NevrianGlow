@@ -27,6 +27,16 @@ namespace NevrianGlowFarm.UI
         [SerializeField] private TMP_Text bodyLabel;
         [Tooltip("'다음 날' 버튼")]
         [SerializeField] private Button nextDayButton;
+        [Tooltip("'다음 날' 버튼 글자 (데모 마지막 날에는 '데모 결과 보기')")]
+        [SerializeField] private TMP_Text nextDayLabel;
+        [Tooltip("데모 종료 화면 (Core UICanvas/DemoEndScreen)")]
+        [SerializeField] private DemoEndScreen demoEndScreen;
+
+        [Header("조정값")]
+        [Tooltip("평소 버튼 글자")]
+        [SerializeField] private string nextDayText = "다음 날";
+        [Tooltip("데모 마지막 날 버튼 글자")]
+        [SerializeField] private string demoEndText = "데모 결과 보기";
 
         private bool advancing;
         private bool pending;
@@ -39,7 +49,7 @@ namespace NevrianGlowFarm.UI
         protected override void Awake()
         {
             base.Awake();
-            if (shop == null || database == null || titleLabel == null || bodyLabel == null || nextDayButton == null)
+            if (shop == null || database == null || titleLabel == null || bodyLabel == null || nextDayButton == null || nextDayLabel == null || demoEndScreen == null)
             {
                 Debug.LogError("[SettlementScreen] 참조가 비어 있음 - 인스펙터의 참조 항목 확인", this);
                 enabled = false;
@@ -97,20 +107,30 @@ namespace NevrianGlowFarm.UI
             titleLabel.text = $"{Report.Day}일차 정산";
             string body = string.Join("\n", Report.Lines(NameOf));
             if (game != null)
+            {
                 body += $"\n\n보유 {game.Money:N0}달러 · SP {game.SkillPoints}";
+                game.RecordSettlement(Report);
+            }
             bodyLabel.text = body;
+            nextDayLabel.text = IsDemoEnd ? demoEndText : nextDayText;
         }
+
+        private bool IsDemoEnd => GameManager.Instance != null && RunSummary.IsDemoLastDay(Report.Day, GameManager.Instance.DemoLastDay);
 
         // '다음 날'로만 닫힌다 (Esc · 다른 화면 열기로는 안 닫힘)
         protected override bool OnClosing() => advancing;
 
-        /// <summary>'다음 날': 화면을 닫고 다음 날로 (농장 이동은 ZoneTransition).</summary>
+        /// <summary>'다음 날': 화면을 닫고 다음 날로 (농장 이동은 ZoneTransition).
+        /// 데모 마지막 날이면 대신 데모 종료 화면을 연다 (거기서 '계속 플레이' = 다음 날).</summary>
         public void NextDay()
         {
             if (!IsOpen)
                 return;
+            bool demoEnd = IsDemoEnd;
             ForceClose();
-            if (GameManager.Instance != null)
+            if (demoEnd)
+                demoEndScreen.Open();
+            else if (GameManager.Instance != null)
                 GameManager.Instance.AdvanceToNextDay();
         }
 
