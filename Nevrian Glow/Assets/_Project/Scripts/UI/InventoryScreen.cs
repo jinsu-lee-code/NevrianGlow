@@ -96,7 +96,7 @@ namespace NevrianGlowFarm.UI
         {
             if (inventory.ReturnCursor())
                 return true;
-            messageLabel.text = "손에 든 아이템을 놓을 칸이 없음 — 빈 칸에 놓은 뒤 닫기";
+            messageLabel.text = "손에 든 아이템을 놓을 칸이 없음 - 빈 칸에 놓은 뒤 닫기";
             return false;
         }
 

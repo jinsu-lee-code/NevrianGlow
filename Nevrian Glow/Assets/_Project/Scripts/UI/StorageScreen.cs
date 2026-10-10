@@ -135,7 +135,7 @@ namespace NevrianGlowFarm.UI
             int taken = storage.WithdrawStack(inventory, itemId);
             var item = inventory.Lookup(itemId);
             string name = item != null ? item.DisplayName : itemId;
-            messageLabel.text = taken > 0 ? $"{name} ×{taken} 꺼냄" : $"{name} — 넣을 칸 없음";
+            messageLabel.text = taken > 0 ? $"{name} ×{taken} 꺼냄" : $"{name} - 넣을 칸 없음";
         }
 
         /// <summary>도구를 뺀 보관 가능 아이템을 모두 넣는다.</summary>

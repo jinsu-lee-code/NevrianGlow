@@ -62,7 +62,7 @@ namespace NevrianGlowFarm.Systems.Items
             string label = count > 1 ? $"{item.DisplayName} ×{count}" : item.DisplayName;
             return inventory != null && inventory.CanAdd(item, count)
                 ? $"{label} 줍기"
-                : $"{label} 줍기 불가 — 넣을 칸 없음";
+                : $"{label} 줍기 불가 - 넣을 칸 없음";
         }
 
         public void InteractHand()

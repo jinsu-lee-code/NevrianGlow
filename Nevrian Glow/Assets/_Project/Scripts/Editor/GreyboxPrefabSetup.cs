@@ -20,6 +20,11 @@ namespace NevrianGlowFarm.Editor
         private const string TrashBinMaterialPath = "Assets/_Project/Art/Materials/mat_greybox_trashbin.mat";
         private const string StainPath = "Assets/_Project/Prefabs/Cleaning/stain.prefab";
         private const string TrashBinPath = "Assets/_Project/Prefabs/Cleaning/trash_bin.prefab";
+        private const string ShelfMaterialPath = "Assets/_Project/Art/Materials/mat_greybox_shelf.mat";
+        private const string HologramMaterialPath = "Assets/_Project/Art/Materials/mat_hologram_placement.mat";
+        private const string HologramShaderPath = "Assets/Holograms/Shader Graphs/Examples/Basic_Scanline_Hologram.shadergraph";
+        private const string ShelfItemPath = "Assets/_Project/Prefabs/Shop/shelf_item.prefab";
+        private const string ShelfPath = "Assets/_Project/Prefabs/Shop/shelf.prefab";
         private const string FarmCellPath = "Assets/_Project/Prefabs/Farm/farm_cell.prefab";
         private const string WorldItemPath = "Assets/_Project/Prefabs/Items/world_item.prefab";
         private const string StoragePointPath = "Assets/_Project/Prefabs/Storage/storage_point.prefab";
@@ -49,7 +54,82 @@ namespace NevrianGlowFarm.Editor
             result += Ensure(DoorPath, () => BuildDoor(layer));
             result += Ensure(StainPath, () => BuildStain(layer));
             result += Ensure(TrashBinPath, () => BuildTrashBin(layer));
+            result += Ensure(ShelfItemPath, () => BuildShelfItem(material));
+            result += Ensure(ShelfPath, () => BuildShelf(material, layer));
             return result;
+        }
+
+        // 진열된 작물 하나: 콜라이더 없는 작은 구 (색은 작물 그레이박스 색 — 진열대가 칠한다).
+        private static GameObject BuildShelfItem(Material material)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            go.name = "shelf_item";
+            Object.DestroyImmediate(go.GetComponent<Collider>());
+            go.GetComponent<Renderer>().sharedMaterial = material;
+            return go;
+        }
+
+        // 진열대: 루트 조준 콜라이더 + ShelfDisplay / Body 상자 / Hologram 구 (Holograms 패키지 셰이더 재질). 로컬 +Z = 손님 쪽.
+        private static GameObject BuildShelf(Material material, int layer)
+        {
+            var root = new GameObject("shelf") { layer = layer };
+            var box = root.AddComponent<BoxCollider>();
+            box.size = new Vector3(6.2f, 1.3f, 0.9f);
+            box.center = new Vector3(0f, 0.65f, 0f);
+
+            var wood = EnsureMaterial(ShelfMaterialPath, new Color(0.35f, 0.3f, 0.45f), out _);
+            var body = CreateVisual(PrimitiveType.Cube, "Body", root.transform, wood);
+            body.transform.localPosition = new Vector3(0f, 0.5f, 0f);
+            body.transform.localScale = new Vector3(6.2f, 1f, 0.8f);
+
+            var holo = CreateVisual(PrimitiveType.Sphere, "Hologram", root.transform, EnsureHologramMaterial());
+            holo.transform.localScale = Vector3.one * 0.24f;
+            holo.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            holo.SetActive(false);
+
+            var shelf = root.AddComponent<Systems.Shop.ShelfDisplay>();
+            var so = new SerializedObject(shelf);
+            so.FindProperty("settings").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Data.InventorySettingsData>("Assets/_Project/Data/Stats/InventorySettings.asset");
+            so.FindProperty("database").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Data.ContentDatabase>("Assets/_Project/Data/ContentDatabase.asset");
+            so.FindProperty("body").objectReferenceValue = body.transform;
+            so.FindProperty("aimCollider").objectReferenceValue = box;
+            so.FindProperty("hologram").objectReferenceValue = holo.GetComponent<Renderer>();
+            so.FindProperty("itemPrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Renderer>(ShelfItemPath);
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return root;
+        }
+
+        // 진열 홀로그램 재질: Holograms 패키지의 스캔라인 셰이더 그래프로 만든다 (패키지 파일은 건드리지 않는다).
+        // 값은 패키지 예제 재질(Scanline_Hologram_Empty — 용량 정리로 지움, 2-5)에서 옮긴 것. 색은 진열대가 실행 중 바꾼다.
+        private static Material EnsureHologramMaterial()
+        {
+            var material = AssetDatabase.LoadAssetAtPath<Material>(HologramMaterialPath);
+            if (material != null)
+                return material;
+            var shader = AssetDatabase.LoadAssetAtPath<Shader>(HologramShaderPath);
+            if (shader == null)
+            {
+                Debug.LogError($"[Setup] 홀로그램 셰이더가 없음: {HologramShaderPath} - Holograms 패키지 확인");
+                return EnsureTransparentMaterial(StainMaterialPath);
+            }
+            material = new Material(shader) { name = Path.GetFileNameWithoutExtension(HologramMaterialPath) };
+            material.SetColor("_Hologram_Color", new Color(0.38f, 0.95f, 0.88f, 0.35f));
+            material.SetColor("_Texture_Tint_Color", new Color(0f, 0.374f, 0.443f, 0.298f));
+            material.SetFloat("_Emission_Scale", 10f);
+            material.SetFloat("_Fresnel_Power", 1.5f);
+            material.SetFloat("_Pattern_Speed", 5f);
+            material.SetFloat("_Pattern_Density", 250f);
+            material.SetVector("_Pattern_Direction", new Vector4(0f, -1f, 0f, 0f));
+            material.SetFloat("_Pattern_Edge_A", 0.1f);
+            material.SetFloat("_Pattern_Edge_B", 0.5f);
+            material.SetFloat("_Pattern_Boost", 0.5f);
+            material.SetFloat("_Pattern_Noise_Scale", 250f);
+            material.SetFloat("_Displacement_Speed", 0.5f);
+            material.SetFloat("_Displacement_Density", 0.2f);
+            material.SetVector("_Displacement_Noise_Direction", new Vector4(0f, 1f, 0f, 0f));
+            EnsureFolder(Path.GetDirectoryName(HologramMaterialPath).Replace('\\', '/'));
+            AssetDatabase.CreateAsset(material, HologramMaterialPath);
+            return material;
         }
 
         // 얼룩: 조준용 얇은 트리거(Interactable) + Stain / Model 반투명 원판 (투명도 = 남은 양). URP Decal 교체는 비주얼 단계.

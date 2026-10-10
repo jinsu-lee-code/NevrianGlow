@@ -26,7 +26,7 @@ namespace NevrianGlowFarm.Systems.Storage
         {
             if (settings == null)
                 return null;
-            return InReach() ? $"{displayName} 열기" : $"{displayName} — 더 가까이 가기";
+            return InReach() ? $"{displayName} 열기" : $"{displayName} - 더 가까이 가기";
         }
 
         public void InteractHand()

@@ -142,7 +142,7 @@ namespace NevrianGlowFarm.Systems.Farm
             int yield = SpecOf(cell.CropId).HarvestYield;
             return hotbar != null && hotbar.CanAdd(crop, yield)
                 ? $"{crop.DisplayName} 수확 ×{yield}"
-                : $"{crop.DisplayName} 수확 불가 — 핫바에 자리 없음";
+                : $"{crop.DisplayName} 수확 불가 - 넣을 칸 없음";
         }
 
         public void InteractHand(int index)

@@ -135,6 +135,16 @@
                     "interactions": "",
                     "initialStateCheck": false,
                     "priority": 0
+                },
+                {
+                    "name": "Retrieve",
+                    "type": "Button",
+                    "id": "d5a7c9e1-3f2b-4d6a-9c8e-7b1f0a2d4e63",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
                 }
             ],
             "bindings": [
@@ -641,6 +651,17 @@
                     "processors": "",
                     "groups": "Keyboard&Mouse",
                     "action": "Inventory",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a6b8d0f2-4e3c-4a7b-8d9f-2c4e6a8b0d13",
+                    "path": "<Mouse>/rightButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "Retrieve",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

@@ -101,6 +101,24 @@ namespace NevrianGlowFarm.Systems.Player
             cameraPivot.localRotation = Quaternion.identity;
         }
 
+        /// <summary>시점을 정한다 (좌우 yaw · 위아래 pitch, 도). 위아래는 시점 제한 안으로 자른다. 연출 · 자동 확인용.</summary>
+        public void SetLook(float newYaw, float newPitch)
+        {
+            yaw = newYaw;
+            pitch = Mathf.Clamp(newPitch, -settings.PitchLimit, settings.PitchLimit);
+            transform.rotation = Quaternion.Euler(0f, yaw, 0f);
+            cameraPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+        }
+
+        /// <summary>world 지점을 바라보게 시점을 정한다.</summary>
+        public void LookAt(Vector3 world)
+        {
+            Vector3 d = world - cameraPivot.position;
+            float newYaw = Mathf.Atan2(d.x, d.z) * Mathf.Rad2Deg;
+            float newPitch = -Mathf.Atan2(d.y, new Vector2(d.x, d.z).magnitude) * Mathf.Rad2Deg;
+            SetLook(newYaw, newPitch);
+        }
+
         private void OnGateChanged(bool blocked) => ApplyCursor(blocked);
 
         // 화면(가방 · 창고 등)이 열려 조작이 잠기면 커서를 풀어 보이게 한다.

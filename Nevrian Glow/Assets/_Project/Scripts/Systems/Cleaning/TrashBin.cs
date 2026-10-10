@@ -18,7 +18,7 @@ namespace NevrianGlowFarm.Systems.Cleaning
             if (settings == null || settings.TrashItem == null || inventory == null)
                 return null;
             int count = inventory.CountOf(settings.TrashItem);
-            return count > 0 ? $"쓰레기 버리기 ×{count}" : "쓰레기통 — 버릴 쓰레기 없음";
+            return count > 0 ? $"쓰레기 버리기 ×{count}" : "쓰레기통 - 버릴 쓰레기 없음";
         }
 
         public void InteractHand()

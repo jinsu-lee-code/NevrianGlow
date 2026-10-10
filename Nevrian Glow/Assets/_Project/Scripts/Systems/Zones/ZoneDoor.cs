@@ -28,7 +28,7 @@ namespace NevrianGlowFarm.Systems.Zones
             if (destination == null || game == null || !game.IsStarted)
                 return null;
             if (game.Phase != usablePhase)
-                return $"{destination.DisplayName} 문 — {DayPhaseNames.ToKorean(usablePhase)} 단계에 열림 (지금 {DayPhaseNames.ToKorean(game.Phase)})";
+                return $"{destination.DisplayName} 문 - {DayPhaseNames.ToKorean(usablePhase)} 단계에 열림 (지금 {DayPhaseNames.ToKorean(game.Phase)})";
             return advancesPhase
                 ? $"{DayPhaseNames.ToKorean(usablePhase)} 끝내고 {destination.DisplayName}(으)로 가기"
                 : $"{destination.DisplayName}(으)로 가기";

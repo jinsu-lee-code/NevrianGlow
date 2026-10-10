@@ -1876,11 +1876,13 @@ MonoBehaviour:
   hotbar: {fileID: 657109489}
   interactAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   useAction: {fileID: 1120369429361536294, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  secondaryAction: {fileID: 6879176095168284927, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   interactableMask:
     serializedVersion: 2
     m_Bits: 256
   handKeyLabel: E
   useKeyLabel: "\uC88C\uD074\uB9AD"
+  secondaryKeyLabel: "\uC6B0\uD074\uB9AD"
   drawRay: 1
   targetName: 
   prompt: 
@@ -4717,7 +4719,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uAC00\uBC29 \u2014 \uCE78\uC744 \uB204\uB974\uBA74 \uB123\uAE30"
+  m_text: "\uAC00\uBC29 - \uCE78\uC744 \uB204\uB974\uBA74 \uB123\uAE30"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 2c6050e2c256a8148bb0f9a3f8321b55, type: 2}
   m_sharedMaterial: {fileID: -1442706544564424424, guid: 2c6050e2c256a8148bb0f9a3f8321b55, type: 2}
