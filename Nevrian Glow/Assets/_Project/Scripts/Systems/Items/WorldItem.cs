@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NevrianGlowFarm.Data;
 using NevrianGlowFarm.Systems.Interaction;
 using NevrianGlowFarm.Systems.Player;
@@ -28,10 +29,17 @@ namespace NevrianGlowFarm.Systems.Items
 
         private ItemData item;
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        private static readonly List<WorldItem> all = new List<WorldItem>();
+
+        /// <summary>지금 놓여 있는 모든 바닥 아이템 (청결도 · 배치 · 저장 6-1이 쓴다 — 매 프레임 찾지 않게).</summary>
+        public static IReadOnlyList<WorldItem> All => all;
 
         public ItemData Item => item;
         public string ItemId => itemId;
         public int Count => count;
+
+        private void OnEnable() => all.Add(this);
+        private void OnDisable() => all.Remove(this);
 
         /// <summary>내용을 정한다 (내려놓을 때 · 불러올 때).</summary>
         public void Init(ItemData data, int amount)

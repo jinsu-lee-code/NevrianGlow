@@ -120,6 +120,20 @@ namespace NevrianGlowFarm.Systems.Player
             return true;
         }
 
+        /// <summary>핫바 · 가방에 있는 그 아이템을 모두 뺀다 (쓰레기통 비우기). 뺀 개수.</summary>
+        public int RemoveAll(ItemData item)
+        {
+            if (item == null || hotbar == null)
+                return 0;
+            int removed = InventoryRules.RemoveAll(containers, item.Id);
+            if (removed > 0)
+                NotifyChanged();
+            return removed;
+        }
+
+        /// <summary>핫바 · 가방에 있는 그 아이템 개수 (손에 든 묶음 제외).</summary>
+        public int CountOf(ItemData item) => item == null || hotbar == null ? 0 : InventoryRules.CountOf(containers, item.Id);
+
         // ── 가방 화면 ──
 
         /// <summary>칸 클릭 (집기 · 놓기 · 바꾸기 · 합치기).</summary>

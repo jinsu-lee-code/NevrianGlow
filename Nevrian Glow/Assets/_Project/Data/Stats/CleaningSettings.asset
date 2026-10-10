@@ -22,4 +22,4 @@ MonoBehaviour:
     dayBonusCap: 4
   minSpacing: 0.8
   placementAttempts: 30
-  carryCount: 1
+  trashItem: {fileID: 11400000, guid: b7b18517e808ae845bcd66da214a0a8f, type: 2}

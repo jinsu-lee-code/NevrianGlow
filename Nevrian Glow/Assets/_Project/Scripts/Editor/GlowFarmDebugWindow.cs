@@ -30,6 +30,8 @@ namespace NevrianGlowFarm.Editor
             EditorGUILayout.Space();
             DrawFarmSection();
             EditorGUILayout.Space();
+            DrawCleaningSection();
+            EditorGUILayout.Space();
             DrawHotbarSection();
             EditorGUILayout.Space();
             DrawLogSection();
@@ -108,6 +110,24 @@ namespace NevrianGlowFarm.Editor
         }
 
         private FarmGrid farm;
+
+        private void DrawCleaningSection()
+        {
+            EditorGUILayout.LabelField("청소 (CleaningSystem)", EditorStyles.boldLabel);
+            var cleaning = Systems.Cleaning.CleaningSystem.Instance;
+            if (!Application.isPlaying || cleaning == null)
+            {
+                EditorGUILayout.HelpBox("플레이 중일 때 청결도와 치우기 버튼이 보인다. 쓰레기 · 얼룩은 청소·진열 단계에 들어설 때 놓인다.", MessageType.None);
+                return;
+            }
+
+            string locked = cleaning.LockedCleanliness < 0f ? "아직" : cleaning.LockedCleanliness.ToString("P0");
+            EditorGUILayout.LabelField("오늘 처음", $"쓰레기 {cleaning.InitialTrash} · 얼룩 {cleaning.InitialStains}");
+            EditorGUILayout.LabelField("지금", $"바닥 쓰레기 {cleaning.FloorTrashCount()} · 얼룩 양 {cleaning.StainAmountSum():0.##} · 청결도 {cleaning.CurrentCleanliness():P0}");
+            EditorGUILayout.LabelField("장사 시작 때 확정", locked);
+            if (GUILayout.Button("바닥 쓰레기 · 얼룩 모두 치우기"))
+                cleaning.DebugCleanAll();
+        }
 
         private void DrawHotbarSection()
         {

@@ -252,6 +252,14 @@ namespace NevrianGlowFarm.Editor
                 so.FindProperty("placeDuration").floatValue = 0.15f;
             });
 
+            // BALANCE 2-12 쓰레기 아이템 (2-4): 칸당 10개, 창고 불가
+            var trashItem = Ensure<ItemData>($"{ItemsFolder}/item_trash.asset", resetExisting, report, so =>
+            {
+                SetIdentity(so, "item_trash", "쓰레기");
+                so.FindProperty("maxStack").intValue = ItemStackSize;
+                so.FindProperty("canStore").boolValue = false;
+            });
+
             // BALANCE 2-5
             Ensure<CleaningSettingsData>($"{StatsFolder}/CleaningSettings.asset", resetExisting, report, so =>
             {
@@ -259,7 +267,7 @@ namespace NevrianGlowFarm.Editor
                 SetDailyCount(so.FindProperty("stain"), 4, 2, 4);
                 so.FindProperty("minSpacing").floatValue = 0.8f;
                 so.FindProperty("placementAttempts").intValue = 30;
-                so.FindProperty("carryCount").intValue = 1;
+                so.FindProperty("trashItem").objectReferenceValue = trashItem;
             });
 
             // BALANCE 2-6

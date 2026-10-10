@@ -1788,6 +1788,7 @@ GameObject:
   - component: {fileID: 657109488}
   - component: {fileID: 657109490}
   - component: {fileID: 657109491}
+  - component: {fileID: 657109492}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -1940,6 +1941,27 @@ MonoBehaviour:
     m_Bits: 1
   lift: 0.02
   maxSlope: 35
+--- !u!114 &657109492
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 657109484}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b58b327990d59a4e941f63653978712, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Systems.Cleaning.MopTool
+  rayOrigin: {fileID: 953453730}
+  settings: {fileID: 11400000, guid: 9a560630b26b341499db8d63fb2f2400, type: 2}
+  hotbar: {fileID: 657109489}
+  useAction: {fileID: 1120369429361536294, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 1
+  drawRange: 1
+  mopping: 0
 --- !u!1 &702139112
 GameObject:
   m_ObjectHideFlags: 0

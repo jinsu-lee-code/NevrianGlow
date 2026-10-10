@@ -16,6 +16,10 @@ namespace NevrianGlowFarm.Editor
         private const string StorageMaterialPath = "Assets/_Project/Art/Materials/mat_greybox_storage.mat";
         private const string DoorMaterialPath = "Assets/_Project/Art/Materials/mat_greybox_door.mat";
         private const string DoorPath = "Assets/_Project/Prefabs/Zones/zone_door.prefab";
+        private const string StainMaterialPath = "Assets/_Project/Art/Materials/mat_greybox_stain.mat";
+        private const string TrashBinMaterialPath = "Assets/_Project/Art/Materials/mat_greybox_trashbin.mat";
+        private const string StainPath = "Assets/_Project/Prefabs/Cleaning/stain.prefab";
+        private const string TrashBinPath = "Assets/_Project/Prefabs/Cleaning/trash_bin.prefab";
         private const string FarmCellPath = "Assets/_Project/Prefabs/Farm/farm_cell.prefab";
         private const string WorldItemPath = "Assets/_Project/Prefabs/Items/world_item.prefab";
         private const string StoragePointPath = "Assets/_Project/Prefabs/Storage/storage_point.prefab";
@@ -43,7 +47,71 @@ namespace NevrianGlowFarm.Editor
             result += Ensure(WorldItemPath, () => BuildWorldItem(material, layer));
             result += Ensure(StoragePointPath, () => BuildStoragePoint(material, layer));
             result += Ensure(DoorPath, () => BuildDoor(layer));
+            result += Ensure(StainPath, () => BuildStain(layer));
+            result += Ensure(TrashBinPath, () => BuildTrashBin(layer));
             return result;
+        }
+
+        // 얼룩: 조준용 얇은 트리거(Interactable) + Stain / Model 반투명 원판 (투명도 = 남은 양). URP Decal 교체는 비주얼 단계.
+        private static GameObject BuildStain(int layer)
+        {
+            var root = new GameObject("stain") { layer = layer };
+            var box = root.AddComponent<BoxCollider>();
+            box.isTrigger = true;
+            box.size = new Vector3(0.9f, 0.06f, 0.9f);
+            box.center = new Vector3(0f, 0.03f, 0f);
+
+            var translucent = EnsureTransparentMaterial(StainMaterialPath);
+            var model = CreateVisual(PrimitiveType.Cylinder, "Model", root.transform, translucent);
+            model.transform.localPosition = new Vector3(0f, 0.012f, 0f);
+            model.transform.localScale = new Vector3(0.9f, 0.005f, 0.9f);
+
+            var stain = root.AddComponent<Systems.Cleaning.Stain>();
+            var so = new SerializedObject(stain);
+            so.FindProperty("modelRenderer").objectReferenceValue = model.GetComponent<Renderer>();
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return root;
+        }
+
+        // 쓰레기통: 루트 콜라이더 + TrashBin / Model 통 (짙은 초록).
+        private static GameObject BuildTrashBin(int layer)
+        {
+            var root = new GameObject("trash_bin") { layer = layer };
+            var box = root.AddComponent<BoxCollider>();
+            box.size = new Vector3(0.7f, 0.9f, 0.7f);
+            box.center = new Vector3(0f, 0.45f, 0f);
+
+            var green = EnsureMaterial(TrashBinMaterialPath, new Color(0.15f, 0.4f, 0.3f), out _);
+            var model = CreateVisual(PrimitiveType.Cylinder, "Model", root.transform, green);
+            model.transform.localPosition = new Vector3(0f, 0.45f, 0f);
+            model.transform.localScale = new Vector3(0.7f, 0.45f, 0.7f);
+
+            var bin = root.AddComponent<Systems.Cleaning.TrashBin>();
+            var so = new SerializedObject(bin);
+            so.FindProperty("settings").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<Data.CleaningSettingsData>("Assets/_Project/Data/Stats/CleaningSettings.asset");
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return root;
+        }
+
+        // URP Unlit 반투명 재질 (알파는 MaterialPropertyBlock으로 칸마다 바꾼다).
+        private static Material EnsureTransparentMaterial(string path)
+        {
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material != null)
+                return material;
+            material = new Material(Shader.Find("Universal Render Pipeline/Unlit")) { name = Path.GetFileNameWithoutExtension(path) };
+            material.SetFloat("_Surface", 1f);   // Transparent
+            material.SetFloat("_Blend", 0f);     // Alpha
+            material.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            material.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            material.SetFloat("_ZWrite", 0f);
+            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            material.SetColor("_BaseColor", new Color(0.25f, 0.18f, 0.32f, 0.85f));
+            EnsureFolder(Path.GetDirectoryName(path).Replace('\\', '/'));
+            AssetDatabase.CreateAsset(material, path);
+            return material;
         }
 
         // 지역 문: 루트 콜라이더 + ZoneDoor / Model 문짝 (금빛 — 그레이박스 구분용). 앞쪽(+Z)이 플레이어 쪽.
@@ -80,6 +148,7 @@ namespace NevrianGlowFarm.Editor
         {
             var root = new GameObject("world_item") { layer = layer };
             var box = root.AddComponent<BoxCollider>();
+            box.isTrigger = true; // 조준(트리거도 맞음)만 하고 몸은 통과 — 쓰레기에 걸려 넘어가지 못하지 않게
             box.size = new Vector3(0.45f, 0.35f, 0.45f);
             box.center = new Vector3(0f, 0.175f, 0f);
 

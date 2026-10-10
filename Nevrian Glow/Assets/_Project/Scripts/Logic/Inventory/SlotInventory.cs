@@ -130,6 +130,33 @@ namespace NevrianGlowFarm.Logic.Inventory
             return true;
         }
 
+        /// <summary>모든 묶음에서 그 아이템을 전부 뺀다 (쓰레기통 비우기). 뺀 개수.</summary>
+        public static int RemoveAll(IReadOnlyList<SlotInventory> containers, string itemId)
+        {
+            int removed = 0;
+            foreach (var inv in containers)
+                for (int i = 0; i < inv.SlotCount; i++)
+                {
+                    var s = inv[i];
+                    if (s.IsEmpty || s.ItemId != itemId)
+                        continue;
+                    removed += s.Count;
+                    inv.Set(i, ItemStack.Empty);
+                }
+            return removed;
+        }
+
+        /// <summary>모든 묶음에 있는 그 아이템 개수.</summary>
+        public static int CountOf(IReadOnlyList<SlotInventory> containers, string itemId)
+        {
+            int count = 0;
+            foreach (var inv in containers)
+                for (int i = 0; i < inv.SlotCount; i++)
+                    if (!inv[i].IsEmpty && inv[i].ItemId == itemId)
+                        count += inv[i].Count;
+            return count;
+        }
+
         private static int FreeSpace(IReadOnlyList<SlotInventory> containers, string itemId, int enough)
         {
             int free = 0;

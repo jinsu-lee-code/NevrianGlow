@@ -35,14 +35,14 @@ namespace NevrianGlowFarm.Data
         [Tooltip("한 개를 놓을 자리를 찾는 최대 시도 (회)")]
         [SerializeField, Min(1)] private int placementAttempts = 1;
 
-        [Header("줍기 (2-4에서 쓰레기 아이템으로 대체)")]
-        [Tooltip("한 번에 들 수 있는 쓰레기 (개)")]
-        [SerializeField, Min(1)] private int carryCount = 1;
+        [Header("쓰레기")]
+        [Tooltip("쓰레기 아이템 (Data/Items/item_trash) — 바닥에 놓이고, 주우면 인벤토리 칸을 차지하며, 창고에 넣을 수 없다")]
+        [SerializeField] private ItemData trashItem;
 
         public DailyCount Trash => trash;
         public DailyCount Stain => stain;
         public float MinSpacing => minSpacing;
         public int PlacementAttempts => placementAttempts;
-        public int CarryCount => carryCount;
+        public ItemData TrashItem => trashItem;
     }
 }
