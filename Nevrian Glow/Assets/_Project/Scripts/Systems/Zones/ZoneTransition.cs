@@ -168,14 +168,23 @@ namespace NevrianGlowFarm.Systems.Zones
 
         private static void Apply(ZoneProfileData zone)
         {
-            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-            RenderSettings.ambientLight = zone.AmbientColor;
             RenderSettings.fog = zone.Fog;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
             RenderSettings.fogColor = zone.FogColor;
             RenderSettings.fogDensity = zone.FogDensity;
             if (zone.Skybox != null)
                 RenderSettings.skybox = zone.Skybox;
+
+            if (zone.UseSkyboxAmbient)
+            {
+                RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Skybox;
+                DynamicGI.UpdateEnvironment(); // 하늘이 바뀌었으면 앰비언트 · 반사를 다시 계산
+            }
+            else
+            {
+                RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+                RenderSettings.ambientLight = zone.AmbientColor;
+            }
         }
 
         private ZoneProfileData Find(string id)

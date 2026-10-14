@@ -195,7 +195,7 @@
   - 주의: 에디터 플레이 테스트 · 촬영 전에 저장 폴더 백업, 끝나면 복원
 
 ## Phase 5. 비주얼 · 사운드 · UI · 메타 (10/23 ~ 10/28, 에셋 도착 순서대로)
-- [ ] **5-1. 조명 · 후처리** — 황혼 앰비언트, Bloom, 가게 따뜻한 조명, 실시간 광원 4~6개
+- [~] **5-1. 조명 · 후처리** — 황혼 앰비언트, Bloom, 가게 따뜻한 조명, 실시간 광원 4~6개 — 농장 배경 씬 적용 (2026-10-14, 플레이 확인 대기) · 가게 조명 남음
 - [ ] **5-2. 모델 교체** — 그레이박스 → 리터칭 모델 (1유닛 정규화 → 실제 크기, URP 재질, 분홍 0)
 - [ ] **5-3. 손님 애니메이션 최종 적용** — 5종 + 왼팔 바구니 레이어, 소켓 보정, 체형 3단계 검수
 - [ ] **5-4. UI 아트 적용** — 패널 · 아이콘 15종 · 폰트(라이선스 확인)
@@ -544,6 +544,20 @@
   - 사전 진단 (측정 봇 실험 1, BALANCE 7번): D1 2일차 10칸(1일차 입고량) · D2 3일차 구획 먼저 · D3 4일차 버섯꽃 입고 상한 · D4 6일차 등불(칸당 이익 · 성장 8일) · D5 레벨 빠름 · D6 시작 씨앗 ×10 → PLAYTEST.md 4번
   - 확인(자동): 2일 진행 → `Reports/playtest_*.md`에 일차별 줄(청결도 · 손님 5 · 판매 3 · 매출 45 · 보유 195 → 240 · Lv 2 · 3) 생성 확인 후 확인용 파일 삭제
   - 남은 일: 사용자 직접 플레이 30분 → 메모 → 기록 파일 · 봇과 맞춰 진단 표 채우기 → 김봉준 결정 → BALANCE 실험 표
+
+## Phase 5 작업 일지
+
+- [~] **5-1. 조명 · 후처리 — 농장 배경 씬 적용** (2026-10-14) — 플레이 확인 대기
+  - 입력: 아트 파트 배경 씬 `Assets/Scenes/BackGroundScene.unity` + `Assets/Art/`(Environment · Characters · SDCat, 약 75 MB), URP 설정 변경(기본 볼륨 프로필 `SampleSceneProfile`, GPU Resident Drawer 켬, SDCat 외곽선 렌더 피처, SSAO 강도 0.7) — 아트 쪽 변경은 그대로 받음
+  - 결정 (2026-10-14): 배경 씬은 아트 파트 소유로 두고 **4번째 Additive 씬**으로 함께 로드한다(`SceneBootstrapper.zoneScenes`에 `BackGroundScene` 추가 + Build Settings 3번) — 게임 로직 씬(Core · Farm · Shop)과 파일이 분리돼 병합 충돌이 없고, 배경 교체 = 씬 파일 교체
+  - 결정 (2026-10-14): 해 · 하늘 · 후처리는 배경 씬 것을 쓴다 — Core `Directional Light` 끔(삭제 안 함), 배경 씬의 룩데브용 `Main Camera` · `TallGrass_Test` · `LanternFruit` 끔(카메라 · AudioListener · MainCamera 태그 중복 방지, 삭제 안 함). Core 카메라 원경 1000 → 2500 m(배경 카메라와 같게, 구름 2 km)
+  - 결정 (2026-10-14): 농장 지역 분위기는 배경 씬 조명을 따른다 — `ZoneProfileData.useSkyboxAmbient`(새 옵션, 기본 끔) 켬 + 하늘 `M_Sky_DeepBlue` + 안개 끔(배경의 `GroundFog`가 담당). `ZoneTransition.Apply`가 하늘 앰비언트면 `DynamicGI.UpdateEnvironment()`. 가게는 기존 단색 앰비언트 그대로. Setup 메뉴의 zone_farm 기본값도 같게(초기화해도 배경 조명 유지)
+  - 결정 (2026-10-14): Farm 그레이박스 바닥은 렌더러만 끔(충돌 유지) — 배경 지형이 농장 구역에서 높이 0(측정 0.000 ~ 0.004 m)이라 z-fighting
+  - 수정: 배경 스크립트 `Art/Environment/Sky/Editor/CloudShapeBaker.cs`가 `UnityEngine.VFX.SDF`를 써서 컴파일 오류 → 프로젝트 전체 스크립트가 다시 로드되지 않던 상태(DayNight · GroundFog · 달 등 컴포넌트가 비어 보임). **Visual Effect Graph 17.3.0 패키지 추가**로 해결
+  - 수정: GPU Resident Drawer가 켜져 있어 빌드 시 오류 경고 → Graphics 설정 `BatchRendererGroup Variants = Keep All`
+  - 확인(자동): Core Play → Core · Farm · Shop · BackGroundScene 4개 로드 · `IsReady`, 앰비언트 = Skybox · 하늘 `M_Sky_DeepBlue` · 안개 끔, 켜진 조명 1개(배경 해) · 카메라 1개 · AudioListener 1개, 화면 캡처로 하늘 · 행성 · 구름 · 지형 · 풀 위에 밭 · 팻말 보임. EditMode 180개 통과
+  - 미확인: 걷기 · 가게 이동 등 조작(키 입력 제한), 빌드에서의 모습
+  - 남은 일: 배경 풀(`Terrain_LookDev`의 `LayerGrassSpawner`, 중심 (0,0,0) 반경 35 m)이 밭 · 길 위에도 자람 → 아트 파트와 제외 구역(밭 · 길 · 문) 정하기. 배경 지형은 x·z −250 ~ 250이라 가게(500, 0, 0)는 지형 밖(실내라 문제없음, 창이 생기면 확인). 시간대는 배경 `DayNight.hour = 24`(밤) — "영원한 황혼"과 맞는지 아트 파트와 확인
 
 ## 트러블슈팅
 | 문제 | 원인 | 해결 |

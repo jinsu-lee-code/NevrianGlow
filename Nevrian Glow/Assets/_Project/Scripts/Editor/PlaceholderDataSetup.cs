@@ -23,6 +23,7 @@ namespace NevrianGlowFarm.Editor
         private const string ToolsFolder = DataRoot + "/Tools";
         private const string ItemsFolder = DataRoot + "/Items";
         private const string ZonesFolder = DataRoot + "/Zones";
+        private const string BackgroundSkyboxPath = "Assets/Art/Environment/DeepBlue/M_Sky_DeepBlue.mat";
         private const string CustomersFolder = DataRoot + "/Customers";
         private const string ShopFolder = DataRoot + "/Shop";
 
@@ -208,8 +209,11 @@ namespace NevrianGlowFarm.Editor
                 SetIdentity(so, "zone_farm", "농장");
                 SetPhases(so.FindProperty("phases"), DayPhase.Farming);
                 so.FindProperty("isDayStart").boolValue = true;
-                so.FindProperty("ambientColor").colorValue = new Color(0.20f, 0.22f, 0.40f);  // 차가운 청보라 황혼
-                so.FindProperty("fog").boolValue = true;
+                // 배경 씬(Assets/Scenes/BackGroundScene)의 하늘 · 조명을 그대로 쓴다 — 하늘 재질 앰비언트, 안개는 배경의 GroundFog가 맡음 (2026-10-14)
+                so.FindProperty("useSkyboxAmbient").boolValue = true;
+                so.FindProperty("skybox").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Material>(BackgroundSkyboxPath);
+                so.FindProperty("ambientColor").colorValue = new Color(0.20f, 0.22f, 0.40f);  // 하늘 앰비언트를 끌 때 쓰는 단색
+                so.FindProperty("fog").boolValue = false;
                 so.FindProperty("fogColor").colorValue = new Color(0.055f, 0.15f, 0.25f);     // 심청 #0E2640
                 so.FindProperty("fogDensity").floatValue = 0.02f;
                 so.FindProperty("bgmId").stringValue = "bgm_twilight_field";

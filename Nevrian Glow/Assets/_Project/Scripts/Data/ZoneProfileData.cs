@@ -18,6 +18,8 @@ namespace NevrianGlowFarm.Data
         [SerializeField] private bool isDayStart;
 
         [Header("분위기 (BALANCE 2-10 임시, 5-1 조명 · 후처리에서 확정)")]
+        [Tooltip("켜면 하늘 재질로 앰비언트를 계산한다 (배경 씬 조명 그대로) — 끄면 아래 단색")]
+        [SerializeField] private bool useSkyboxAmbient;
         [Tooltip("앰비언트 색 (단색 모드)")]
         [SerializeField] private Color ambientColor = Color.gray;
         [Tooltip("안개 켜기")]
@@ -33,6 +35,7 @@ namespace NevrianGlowFarm.Data
 
         public IReadOnlyList<DayPhase> Phases => phases;
         public bool IsDayStart => isDayStart;
+        public bool UseSkyboxAmbient => useSkyboxAmbient;
         public Color AmbientColor => ambientColor;
         public bool Fog => fog;
         public Color FogColor => fogColor;

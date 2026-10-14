@@ -16,9 +16,10 @@ MonoBehaviour:
   displayName: "\uB18D\uC7A5"
   phases: 01000000
   isDayStart: 1
+  useSkyboxAmbient: 1
   ambientColor: {r: 0.2, g: 0.22, b: 0.4, a: 1}
-  fog: 1
+  fog: 0
   fogColor: {r: 0.055, g: 0.15, b: 0.25, a: 1}
   fogDensity: 0.02
-  skybox: {fileID: 0}
+  skybox: {fileID: 2100000, guid: e184177764406104284629835649d3cd, type: 2}
   bgmId: bgm_twilight_field
