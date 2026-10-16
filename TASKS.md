@@ -41,6 +41,8 @@
 | 효과음 · BGM | 백경민 | 10/18 · 10/25 | 소리 id만 호출, 파일 없으면 무음 | SoundLibrary에 클립 연결 |
 | 튜토리얼 대본 | 김봉준 | 10/28 | 임시 문구 | 대본 데이터 교체 |
 
+결정 (2026-10-16): **에셋 납품은 파트 브랜치로 받는다** — `Art`(김승희 · 배경) · `Animator`(김기인) · `Sound`(백경민). 각 파트는 자기 폴더(`Assets/Art/` · `Assets/Art/Characters/` · `Assets/Audio/`)에만 올리고 BRANCH_파트.md 납품 기록에 한 줄 → 개발이 폴더 밖 변경이 없는지 확인 후 `dev`로 병합(`MM.DD/Merge/파트-요약`)하고 게임에 연결. 파트는 작업 전 `dev`를 자기 브랜치로 가져와 최신 게임에서 확인한다. 이유: 폴더를 나눠 병합 충돌을 없애고, 파트가 GitHub Desktop만으로 올리고 개발은 한 번에 가져올 수 있게. 운영 방식 BRANCHES.md, 사용법 BRANCH_ART.md · BRANCH_ANIMATOR.md · BRANCH_SOUND.md. 같은 날 세 파트 브랜치를 0-1 시점에서 `dev` 최신(10/16)으로 옮기고 `main`도 `dev`로 맞춤 (1주차 빌드 이후 밀려 있던 병합)
+
 ---
 
 ## Phase 0. 세팅 (10/7 ~ 10/10)
