@@ -45,7 +45,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AuroraAmount: 0.8245926
+    - _AuroraAmount: 0.88555765
     - _AuroraCentreCyan: 0.55
     - _AuroraDetailTile: 2
     - _AuroraFlicker: 0.25
@@ -53,7 +53,7 @@ Material:
     - _AuroraFlowRate: 0.08
     - _AuroraFlowSpeed: 0.01
     - _AuroraFlowStrength: 0.15
-    - _AuroraGlow: 0.5772148
+    - _AuroraGlow: 0.61989033
     - _AuroraGradHeight: 0.1
     - _AuroraLengthVar: 0.3
     - _AuroraPatches: 0.6
@@ -67,7 +67,7 @@ Material:
     - _AuroraTwist: 0.35
     - _AuroraWave: 0.6
     - _AuroraWaveSpeed: 0.8
-    - _BandAmount: 0.28508148
+    - _BandAmount: 0.27288848
     - _BandHeight: 0.08
     - _BodyHaze: 0.1
     - _BodyHazeLow: 0.55
@@ -94,40 +94,40 @@ Material:
     - _GiantSize: 0.55
     - _GiantSpin: 0.08
     - _GiantStorm: 1
-    - _GlowAmount: 0.2340326
-    - _GlowPower: 18.245926
+    - _GlowAmount: 0.22915539
+    - _GlowPower: 18.855576
     - _GradientPower: 1
     - _GroundFade: 12
-    - _HaloAmount: 0.08455704
-    - _HaloSize: 0.08938519
+    - _HaloAmount: 0.07602193
+    - _HaloSize: 0.08786106
     - _MidHeight: 0.3
     - _Moon2Size: 0.03
     - _Moon3Size: 0.022
     - _Moon4Size: 0.014
-    - _PlanetAmount: 0.98245925
+    - _PlanetAmount: 0.9885558
     - _PlanetAxisSign: 1
     - _PlanetBandAmount: 0.2
     - _PlanetBands: 7
     - _PlanetRimWidth: 0.07
     - _PlanetSize: 0.13
-    - _PlanetSkyDraw: 1
+    - _PlanetSkyDraw: 0
     - _PlanetSpin: 0.05
     - _RingAmount: 0.75
     - _RingSpin: 0.25
-    - _StarAmount: 0.86844444
+    - _StarAmount: 0.91416824
     - _StarBandBoost: 1.5
     - _StarDensity: 0.05
     - _StarScale: 160
     - _StarTintAmount: 0.6
     - _StarTwinkle: 0.55
-    - _SunBrightness: 4.350815
-    - _SunSize: 0.01113926
-    - _SunsetAmount: 0.1954252
+    - _SunBrightness: 4.2288847
+    - _SunSize: 0.009005482
+    - _SunsetAmount: 0.16921021
     - _SunsetHeight: 0.22
     - _SunsetSpread: 2.5
     - _VolAmount: 0
     - _VolBottom: 1200
-    - _VolCoverage: 0.58772147
+    - _VolCoverage: 0.59198904
     - _VolDebugMask: 0
     - _VolDensity: 8
     - _VolEdge: 0.015
@@ -168,7 +168,7 @@ Material:
     - _AuroraStream: {r: 1, g: 0.008, b: 0.3, a: 0}
     - _AuroraTaper: {r: 0.55, g: 0.85, b: 0.7, a: 1}
     - _AuroraUndulate: {r: 0.14, g: 3, b: 0.45, a: 1}
-    - _BandColor: {r: 0.28487757, g: 0.35562587, b: 0.5538243, a: 0.9381556}
+    - _BandColor: {r: 0.23577519, g: 0.3236415, b: 0.53156453, a: 0.9335832}
     - _CloudLitColor: {r: 1, g: 1, b: 1, a: 1}
     - _CloudShadowColor: {r: 1, g: 1, b: 1, a: 1}
     - _CloudWind: {r: 0.012, g: 0.004, b: 0, a: 0}
@@ -182,14 +182,14 @@ Material:
     - _GalaxyPlane: {r: 0.4721943, g: 0.56768537, b: -0.6743633, a: 9}
     - _GalaxyTile: {r: 3, g: 2, b: 0.5, a: 0.7}
     - _GiantAxis: {r: 0.35, g: -0.2, b: 0, a: 0}
-    - _GiantBand: {r: 0.80877036, g: 0.85, b: 1.0912297, a: 1}
+    - _GiantBand: {r: 0.8057221, g: 0.85, b: 1.0942779, a: 1}
     - _GiantDir: {r: -0.8660254, g: 0, b: 0.5, a: 0}
-    - _GiantLit: {r: 0.35612905, g: 0.40560463, b: 0.76034373, a: 1}
-    - _GiantRim: {r: 0.4877024, g: 0.5350815, b: 0.94122964, a: 1}
-    - _GiantShadow: {r: 0.06929374, g: 0.085785404, b: 0.23858808, a: 1}
-    - _GroundColor: {r: 0.0639788, g: 0.09810169, b: 0.25853842, a: 1}
-    - _HorizonColor: {r: 0.23043545, g: 0.26528975, b: 0.4226525, a: 0.9340326}
-    - _MidColor: {r: 0.057440512, g: 0.084614955, b: 0.22881131, a: 1}
+    - _GiantLit: {r: 0.33662015, g: 0.3897536, b: 0.74632174, a: 1}
+    - _GiantRim: {r: 0.45721975, g: 0.5228885, b: 0.9442779, a: 1}
+    - _GiantShadow: {r: 0.06258761, g: 0.08029857, b: 0.22517578, a: 1}
+    - _GroundColor: {r: 0.055372067, g: 0.088538565, b: 0.24228096, a: 1}
+    - _HorizonColor: {r: 0.18020731, g: 0.23271519, b: 0.39388406, a: 0.9291554}
+    - _MidColor: {r: 0.04429129, g: 0.06883587, b: 0.20107807, a: 1}
     - _Moon2Dir: {r: 0.858452, g: 0.4067367, b: 0.3124509, a: 0}
     - _Moon2Lit: {r: 1, g: 0.9019608, b: 0.9490196, a: 1}
     - _Moon2Orbit: {r: 0.36, g: 90, b: 0.3, a: 0}
@@ -199,11 +199,11 @@ Material:
     - _Moon4Dir: {r: 0.55797875, g: 0.7880108, b: -0.2601899, a: 0}
     - _Moon4Orbit: {r: 0.55, g: 160, b: 0.35, a: 2}
     - _OverallColor: {r: 1, g: 1, b: 1, a: 1}
-    - _PlanetBand: {r: 0.5155764, g: 0.43122932, b: 0.8321952, a: 1}
+    - _PlanetBand: {r: 0.5026662, g: 0.42310053, b: 0.8264573, a: 1}
     - _PlanetDir: {r: 0.53289515, g: 0.5591929, b: -0.6350796, a: 0}
-    - _PlanetLit: {r: 0.8159559, g: 0.76532286, b: 0.98693043, a: 1}
+    - _PlanetLit: {r: 0.8049582, g: 0.76101947, b: 0.9914729, a: 1}
     - _PlanetRim: {r: 0.8039216, g: 0.74509805, b: 1, a: 1}
-    - _PlanetShadow: {r: 0.19772205, g: 0.14791165, b: 0.40755817, a: 1}
+    - _PlanetShadow: {r: 0.18624626, g: 0.1373922, b: 0.3913007, a: 1}
     - _RingColor: {r: 0.91764706, g: 0.8627451, b: 1, a: 1}
     - _RingInnerOuter: {r: 1.35, g: 2.1, b: 0.35, a: 0.22}
     - _StarBlink: {r: 0.8, g: 3.5, b: 0.15, a: 0.85}
@@ -214,18 +214,18 @@ Material:
     - _StarNear: {r: 70, g: 0.025, b: 0.035, a: 0.06}
     - _StarWarm: {r: 1, g: 0.78, b: 0.6, a: 1}
     - _StormColor: {r: 0.95, g: 0.55, b: 0.75, a: 1}
-    - _SunColor: {r: 0.8868206, g: 0.8978336, b: 0.98417896, a: 1}
-    - _SunsetColor: {r: 0.29348516, g: 0.24092343, b: 0.5485943, a: 1}
-    - _SunsetHotColor: {r: 0.5181777, g: 0.42722985, b: 0.7394533, a: 1}
+    - _SunColor: {r: 0.8784529, g: 0.89926803, b: 0.9896777, a: 1}
+    - _SunsetColor: {r: 0.2705335, g: 0.2198844, b: 0.52420825, a: 1}
+    - _SunsetHotColor: {r: 0.48255485, g: 0.40140924, b: 0.73323727, a: 1}
     - _VolHaze: {r: 0.03, g: 0.16, b: 0.85, a: 0}
     - _VolHorizonFade: {r: 0, g: 0.04, b: 0, a: 0}
-    - _VolLitFar: {r: 0.22619471, g: 0.26609826, b: 0.48295456, a: 1}
-    - _VolLitSun: {r: 0.31521374, g: 0.3251274, b: 0.5393753, a: 1}
-    - _VolRimColor: {r: 0.63782597, g: 0.690877, b: 0.98693043, a: 1}
-    - _VolShadowFar: {r: 0.07223325, g: 0.092733555, b: 0.24133487, a: 1}
-    - _VolShadowSun: {r: 0.124652214, g: 0.12658097, b: 0.30311546, a: 1}
+    - _VolLitFar: {r: 0.19391899, g: 0.23358345, b: 0.45139608, a: 1}
+    - _VolLitSun: {r: 0.2683542, g: 0.2911781, b: 0.5154674, a: 1}
+    - _VolRimColor: {r: 0.6110492, g: 0.6770104, b: 0.9914729, a: 1}
+    - _VolShadowFar: {r: 0.06075758, g: 0.079584256, b: 0.2174269, a: 1}
+    - _VolShadowSun: {r: 0.10313516, g: 0.10984549, b: 0.2768167, a: 1}
     - _VolSunSideFade: {r: 0.06, g: 0.2, b: 180, a: 30}
     - _VolWind: {r: 8, g: 3, b: 0, a: 0}
-    - _ZenithColor: {r: 0.019742338, g: 0.033088457, b: 0.103462905, a: 1}
+    - _ZenithColor: {r: 0.014243631, g: 0.025677118, b: 0.08385847, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
