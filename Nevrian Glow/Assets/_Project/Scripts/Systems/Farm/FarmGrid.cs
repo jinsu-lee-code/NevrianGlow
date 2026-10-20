@@ -358,16 +358,22 @@ namespace NevrianGlowFarm.Systems.Farm
 
             if (!cell.HasCrop)
             {
-                views[index].Show(soil, false, default, 0f);
+                views[index].Show(soil, false, default, 0f, null);
             }
             else
             {
                 var spec = SpecOf(cell.CropId);
+                var crop = CropOf(cell.CropId);
                 float growth = Mathf.Clamp01((float)cell.Age / FarmRules.RequiredDays(cell, spec));
-                Color color = CropOf(cell.CropId).GreyboxColor;
-                if (status == FarmCellStatus.Ready)
+                bool ready = status == FarmCellStatus.Ready;
+                Color color = crop.GreyboxColor;
+                if (ready)
                     color = Color.Lerp(color, Color.white, readyBrighten);
-                views[index].Show(soil, true, color, Mathf.Lerp(seedlingScale, grownScale, growth));
+                // 단계 프리팹(5-2): 칸이 비어 있는 단계는 null → 그레이박스
+                var stages = crop.StagePrefabs;
+                int stage = CropStageRules.StageIndex(stages.Count, growth, ready);
+                var stagePrefab = stage >= 0 ? stages[stage] : null;
+                views[index].Show(soil, true, color, Mathf.Lerp(seedlingScale, grownScale, growth), stagePrefab);
             }
 
             if (updateSummary)
