@@ -8,6 +8,7 @@
 | 요청서 id | 프리팹 · 모델 (Assets/Art/…) | 실제 크기 | 요청서와 다른 점 |
 |---|---|---|---|
 | `crop_lanternfruit_mature` | `Crops/lanternfruit/Models/crop_lanternfruit_mature.fbx` (씬 `BackGroundScene`의 `LanternFruit`) | 높이 약 1.8 m | 프리팹 없음(씬 배치만, 꺼 둠). 열매 `fruit_*` 분리 · 재질 슬롯 이름(`M_Base` 등) 미적용 |
+| `item_lanternfruit` | `Crops/lanternfruit/pf_item_lanternfruit.prefab`, `Models/item_lanternfruit.fbx` | 0.125 × 0.15 × 0.125 m · 824 tris | 덩굴 열매와 같은 셰이더 `ToonLanternShell`. 진열대 칸(0.5 × 0.4)에 2 × 2. 피벗 바닥 가운데(아래를 평평하게 눌러 섬). 셰이더 값이 모델 좌표 기준이라 크기는 프리팹 `Model`에서 줄임(0.076배) — 크기를 바꿀 땐 루트에서 |
 | `crop_common_seeded` | `Crops/common/pf_crop_common_seeded.prefab` (원본 `_Source/Teal_Rock_Mound_1240`) | 0.80 × 0.17 × 0.80 m | 씨앗 심은 흙 둔덕(공용). 옛 이름 `rock_mound` |
 | `crop_moonroot_sprout` | `Crops/moonroot/pf_crop_moonroot_sprout.prefab` (원본 `_Source/Glowing_Fantasy_Plant_2029`) | 높이 0.25 m | 옛 이름 `glowing_plant_a` |
 | `crop_moonroot_mature` | `Crops/moonroot/pf_crop_moonroot_mature.prefab` (원본 `_Source/Alien_Glowing_Plant_2163`) | 높이 0.50 m | 옛 이름 `alien_glowing_plant`. 뿌리 전체가 보임(요청서는 반쯤 묻힘 → 밭 칸에서 조금 내려 박아도 됨) |
@@ -21,6 +22,8 @@
 | `env_farm_door` | `Environment/farm_door/Models/env_farm_door.fbx` (씬 `Shop_Door`, (22, 0, −9)) | — | 프리팹 없음(씬 배치). 재질 3개 `mat_env_farm_door_*` — 사용자가 편 UV에 Varco 원본(상점 입구1) 색을 구운 텍스처 `Textures/tex_env_farm_door_{frame,door,stairs}_albedo` 연결 |
 | `env_ground_tile` | `Environment/Ground/Textures/tex_env_ground_tile_*`, `Environment/DeepBlue/Textures/tex_env_ground_tile_deepblue_*` | 1024 타일 | 여러 벌(보라 A/B/C · 길 · 딥블루 A/B/C) — 지형 레이어 `TL_*`가 사용 중 |
 | `env_shop_floor` | `Environment/shop_floor/Materials/mat_env_shop_floor.mat`, `Textures/tex_env_shop_floor_{albedo,normal,ao}.png` | 1024 타일 | 가게 바닥 나무 판자. 바닥 12 × 10 m 평면에 쓸 때 타일링 5 × 4.17(재질에 들어 있음) |
+| `env_plot` | `Environment/plot/pf_env_plot.prefab`, `Models/env_plot.fbx` | 4.0 × 0.2 × 4.0 m · 192 tris | 두둑 테두리(2×2칸 = 4 × 4 m). 판자 + 청록 기둥 + 칸 사이 낮은 칸막이 + 바닥 흙. 칸 흙은 따로(아래). 두둑 가운데가 피벗 — 칸 중심은 (±1, 0, ±1) |
+| (env_plot 칸 흙) | `Environment/plot/pf_env_plot_soil.prefab`, `Models/env_plot_soil.fbx` | 1.66 × 0.11 × 1.66 m · 1,560 tris | `farm_cell`의 `Soil` 자식 교체용. 흰 바탕 + 회색 흙덩이 질감이라 `FarmCellView`가 칠하는 `_BaseColor`가 그대로 보임. 셰이더 `Environment/Shaders/ToonSoil` + 스크립트 `Environment/Scripts/SoilFX.cs`(`Model`에 붙어 있음): 괭이가 땅에 닿을 때 `OnTillHit(진행도 0~1, 맞은 위치)`, 심을 때 `OnPlant()`, 불러오기 후 `SetTill()`, 수확 후 `ResetSoil()`. 젖음은 기존처럼 색으로 |
 | `tool_seedbag` | `Props/seedbag/pf_tool_seedbag.prefab` (원본 `_Source/Teal_Pouch_Glowing_Leaves_1296`) | 임시 0.3 m | Varco 원본 그대로, 피벗 바닥 가운데(요청서는 손잡이 쥐는 곳) |
 | `tool_fertilizer` | `Props/fertilizer/pf_tool_fertilizer.prefab`, `Models/tool_fertilizer.fbx` | 높이 0.18 m | **Varco 원본 → 재모델로 교체** (프리팹 GUID 그대로). 병 · 액체 분리, 재질 `mat_tool_fertilizer_*` (셰이더 `ToonCrystal` · `Props/Shaders/ToonLiquid`). 액체 `Model/tool_fertilizer_liquid`에 `Props/Scripts/LiquidWobble.cs` — 병이 움직이면 수면이 출렁이고, **`Fill`(0~1)을 내리면 액체가 줄어듦**(비료 사용량 표시용). 이 스크립트가 없으면 액체가 안 보임. 원본은 `_Source/`에 그대로. 피벗 바닥 가운데 |
 | (요청서 없음 · 계산대 소품) | `Props/counter/pf_prop_counter_bell.prefab`, `Models/prop_counter_bell.fbx` | 0.17 × 0.13 × 0.17 m | 계산대 위 종. 돔 `Model/Bell_Dome`, 누름쇠 `Model/Bell_Dome/Bell_Plunger` |
@@ -50,3 +53,11 @@
 ## 지운 것 (2026-10-20)
 
 - `Props/gem_bucket`, `Props/gem_shield`와 그 원본 `_Source/Wooden_Gem_Bucket_1650`, `_Source/Wooden_Gem_Shield_807` — 요청서에 짝이 없고 쓰는 곳도 없어서 제거 (git 기록에 남아 있음)
+
+
+## 텍스처 · 데칼 (요청서 F · H)
+
+| 요청서 id | 파일 | 메모 |
+|---|---|---|
+| `vfx_water_drop` | `Environment/FX/Textures/vfx_water_drop.png` | 128 × 128 흰 물방울(위가 뾰족) + 하이라이트, 알파. 색은 파티클에서 곱하기 |
+| `decal_stain_01` | `Environment/decals/Textures/decal_stain_01.png`, 재질 `Materials/mat_decal_stain_01.mat` | 청록 포자 얼룩. URP Decal Projector에 재질만 넣으면 됨. **렌더러에 Decal 기능(Technique = Screen Space)이 있어야 보임** — 우리 툰 셰이더는 DBuffer를 안 읽음 |
