@@ -19,13 +19,13 @@ namespace NevrianGlowFarm.Data
         [Header("모습")]
         [Tooltip("손님 프리팹 — 공용 애니메이터(ac_customer) 연결 (Prefabs/Shop/customer)")]
         [SerializeField] private GameObject prefab;
-        [Tooltip("체형 단계 — 그레이박스 캡슐 키: 작은 1.2 · 보통 1.6 · 큰 2.0 m (BALANCE 9-5)")]
+        [Tooltip("체형 단계 — 키: 작은 1.2 · 보통 1.6 · 큰 2.0 m, 모델은 이 키에 맞춰 크기를 바꾼다 (BALANCE 9-5)")]
         [SerializeField] private CustomerBodySize bodySize = CustomerBodySize.Medium;
-        [Tooltip("그레이박스 캡슐 색 (손님 구분용)")]
+        [Tooltip("그레이박스 캡슐 색 (손님 구분용, 아트 모델에는 안 씀)")]
         [SerializeField] private Color greyboxColor = Color.white;
-        [Tooltip("손 소켓 보정 — 장바구니 (m, 손님 로컬)")]
+        [Tooltip("손 소켓 보정 — 장바구니 (m, 왼손 소켓 Socket_Basket 로컬)")]
         [SerializeField] private Vector3 basketSocketOffset;
-        [Tooltip("손 소켓 보정 — 집은 상품 (m, 손님 로컬)")]
+        [Tooltip("손 소켓 보정 — 집은 상품 (m, 오른손 소켓 Socket_Item 로컬)")]
         [SerializeField] private Vector3 itemSocketOffset;
 
         [Header("등장")]
@@ -45,7 +45,7 @@ namespace NevrianGlowFarm.Data
         public float SpawnWeight => spawnWeight;
         public int UnlockDay => unlockDay;
 
-        /// <summary>그레이박스 키 (m).</summary>
+        /// <summary>체형 키 (m).</summary>
         public float Height => bodySize == CustomerBodySize.Small ? 1.2f : bodySize == CustomerBodySize.Large ? 2.0f : 1.6f;
     }
 }

@@ -17,8 +17,8 @@ MonoBehaviour:
   prefab: {fileID: 8692623647252547470, guid: 488074fd3442d0b41b6e4fe77913cdd4, type: 3}
   bodySize: 0
   greyboxColor: {r: 1, g: 0.6039216, b: 0.8352941, a: 1}
-  basketSocketOffset: {x: -0.24, y: 0.55, z: 0.1}
-  itemSocketOffset: {x: -0.13999999, y: 0.65000004, z: 0.2}
+  basketSocketOffset: {x: 0, y: 0, z: 0}
+  itemSocketOffset: {x: 0, y: 0, z: 0}
   walkSpeedMul: 1.1
   spawnWeight: 1
   unlockDay: 1

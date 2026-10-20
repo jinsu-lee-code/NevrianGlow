@@ -92,11 +92,14 @@ namespace NevrianGlowFarm.Editor
             controller.AddParameter("PutItem", AnimatorControllerParameterType.Trigger);
             controller.AddParameter("Happy", AnimatorControllerParameterType.Trigger);
             controller.AddParameter("HasBasket", AnimatorControllerParameterType.Bool);
+            controller.AddParameter("WalkPlayback", AnimatorControllerParameterType.Float); // 걷기 재생 배속 (CustomerAI가 계산, 5-3)
 
             // 기본 레이어: 걷기(기본 — Speed로 섞기는 클립 납품 후 블렌드 트리로) · 둘러보기 · 장바구니 집기 · 넣기 · 해피
             var sm = controller.layers[0].stateMachine;
             var walk = sm.AddState("Walk");
             walk.motion = clips[0];
+            walk.speedParameter = "WalkPlayback";
+            walk.speedParameterActive = true;
             var browse = sm.AddState("Browse");
             browse.motion = clips[1];
             var pick = sm.AddState("PickBasket");
@@ -187,7 +190,8 @@ namespace NevrianGlowFarm.Editor
             var so = new SerializedObject(ai);
             so.FindProperty("agent").objectReferenceValue = agent;
             so.FindProperty("animator").objectReferenceValue = animator;
-            so.FindProperty("model").objectReferenceValue = model.GetComponent<Renderer>();
+            so.FindProperty("model").objectReferenceValue = model.transform;
+            so.FindProperty("greyboxRenderer").objectReferenceValue = model.GetComponent<Renderer>();
             so.FindProperty("basket").objectReferenceValue = basket;
             so.FindProperty("basketItemPrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Renderer>(ShelfItemPath);
             so.ApplyModifiedPropertiesWithoutUndo();

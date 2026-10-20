@@ -39,8 +39,9 @@ namespace NevrianGlowFarm.Editor
         // BALANCE 9-5: 피피(작은) · 오르(큰). 색 · 속도 · 바구니 자리는 임시 (2026-10-11)
         private static readonly (string Id, string Name, CustomerBodySize Body, string ColorHex, float WalkMul, float Weight, int UnlockDay, Vector3 Basket)[] Customers =
         {
-            ("customer_pipi", "피피", CustomerBodySize.Small, "#FF9AD5", 1.1f, 1f, 1, new Vector3(-0.24f, 0.55f, 0.1f)),
-            ("customer_or", "오르", CustomerBodySize.Large, "#A08BFF", 0.85f, 1f, 1, new Vector3(-0.4f, 0.95f, 0.15f)),
+            // Basket = 손 소켓(Socket_Basket) 기준 보정 — 리그 소켓이 맞으면 0 (5-3)
+            ("customer_pipi", "피피", CustomerBodySize.Small, "#FF9AD5", 1.1f, 1f, 1, Vector3.zero),
+            ("customer_or", "오르", CustomerBodySize.Large, "#A08BFF", 0.85f, 1f, 1, Vector3.zero),
         };
 
         private readonly struct CropRow
@@ -313,6 +314,7 @@ namespace NevrianGlowFarm.Editor
                 so.FindProperty("purchaseMax").intValue = 3;
                 so.FindProperty("stopDistance").floatValue = 0.3f;
                 so.FindProperty("queueSpacing").floatValue = 0.8f;
+                so.FindProperty("walkClipSpeed").floatValue = 1.62f; // anim_customer_walk (BRANCH_ANIMATOR 10/16)
             });
 
             // BALANCE 9-5 임시 손님 2종 (3-2, 2026-10-11) — 프리팹은 Glow Farm/Setup/Create Customer Greybox
@@ -327,7 +329,7 @@ namespace NevrianGlowFarm.Editor
                     if (ColorUtility.TryParseHtmlString(c.ColorHex, out var color))
                         so.FindProperty("greyboxColor").colorValue = color;
                     so.FindProperty("basketSocketOffset").vector3Value = c.Basket;
-                    so.FindProperty("itemSocketOffset").vector3Value = c.Basket + new Vector3(0.1f, 0.1f, 0.1f);
+                    so.FindProperty("itemSocketOffset").vector3Value = Vector3.zero;
                     so.FindProperty("walkSpeedMul").floatValue = c.WalkMul;
                     so.FindProperty("spawnWeight").floatValue = c.Weight;
                     so.FindProperty("unlockDay").intValue = c.UnlockDay;
