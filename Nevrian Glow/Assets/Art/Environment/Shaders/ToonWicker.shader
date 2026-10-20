@@ -39,6 +39,11 @@ Shader "DSEWA/ToonWicker"
         _RimMin ("Rim Start", Range(0, 1)) = 0.78
         _RimMax ("Rim End", Range(0, 1)) = 0.84
         _RimInShadow ("Rim In Shadow", Range(0, 1)) = 0.6
+        [Header(Emission (mask R lights up, tinted by the base colour))]
+        [NoScaleOffset] _EmissionMap ("Emission Mask", 2D) = "black" {}
+        [HDR] _EmissionColor ("Emission Color", Color) = (0, 0, 0, 1)
+        _EmissionPulse ("Emission Breath (0 = steady)", Range(0, 1)) = 0
+        _EmissionPeriod ("Breath Period (s)", Range(0.5, 20)) = 5
         [Header(Outline)]
         _OutlineColor ("Outline Color", Color) = (0.22, 0.16, 0.10, 1)
         _OutlineWidth ("Outline Width (m)", Float) = 0.006
@@ -61,6 +66,8 @@ Shader "DSEWA/ToonWicker"
             half4 _AOColor;
             half4 _RimColor;
             half _RimStrength, _RimMin, _RimMax, _RimInShadow;
+            half4 _EmissionColor;
+            half _EmissionPulse, _EmissionPeriod;
             half4 _OutlineColor;
             float _OutlineWidth;
         CBUFFER_END
@@ -95,6 +102,7 @@ Shader "DSEWA/ToonWicker"
             #include "Assets/Art/Environment/Shaders/ToonShadow.hlsl"
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
+            TEXTURE2D(_EmissionMap);
             TEXTURE2D(_BumpMap); SAMPLER(sampler_BumpMap);
             TEXTURE2D(_OcclusionMap); SAMPLER(sampler_OcclusionMap);
 
@@ -169,6 +177,10 @@ Shader "DSEWA/ToonWicker"
                 float facing = 1.0 - abs(dot(N, V));
                 color += _RimColor.rgb * smoothstep(_RimMin, _RimMax, facing) * _RimStrength * lerp(_RimInShadow, 1, lit);
                 color *= lerp(half3(1, 1, 1), light.color, _LightColorAmount);
+                // emission: painted glass etc. glows in its own (base) colour, independent of light and shadow
+                half emask = SAMPLE_TEXTURE2D(_EmissionMap, sampler_BaseMap, i.uv).r;
+                half breath = 1.0 - _EmissionPulse * (0.5 - 0.5 * sin(_Time.y * TWO_PI / max(_EmissionPeriod, 0.01)));
+                color += base * _EmissionColor.rgb * emask * breath;
                 color = MixFog(color, i.fogFactor);
                 return half4(color, 1);
             }

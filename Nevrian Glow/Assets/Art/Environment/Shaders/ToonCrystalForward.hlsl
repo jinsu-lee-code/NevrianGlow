@@ -14,6 +14,35 @@
 
 TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
 TEXTURE2D(_MatCap); SAMPLER(sampler_MatCap);
+TEXTURE2D(_BrushTex); SAMPLER(sampler_BrushTex);
+
+// painterly stroke value around 0 (-0.5..0.5): triplanar in world space, offset per object so neighbours differ
+half BrushStroke(float3 positionWS, float3 N)
+{
+    float3 objPos = GetObjectToWorldMatrix()._m03_m13_m23;
+    float3 p = positionWS * _BrushTiling + frac(sin(dot(objPos, float3(12.9898, 78.233, 37.719))) * float3(43758.5, 22578.1, 19642.3));
+    float3 w = pow(abs(N), 4.0);
+    w /= max(w.x + w.y + w.z, 1e-4);
+    half b = SAMPLE_TEXTURE2D(_BrushTex, sampler_BrushTex, p.zy).r * w.x
+           + SAMPLE_TEXTURE2D(_BrushTex, sampler_BrushTex, p.xz).r * w.y
+           + SAMPLE_TEXTURE2D(_BrushTex, sampler_BrushTex, p.xy).r * w.z;
+    return b - 0.5h;
+}
+
+// Base colour projected from the three object axes instead of the mesh UVs, for tileable materials (wood planks) on
+// props whose UVs are auto-unwrapped: side faces get the texture upright (texture V = object up, so planks stand
+// vertical), top / bottom faces get it from above. Object space, so it sticks to the prop when it moves; the import
+// scale is baked into the mesh, so tiles per metre is real size.
+half3 BoxMapBase(float3 posOS, float3 nOS)
+{
+    float3 w = pow(abs(normalize(nOS)), 4.0);
+    w /= (w.x + w.y + w.z);
+    float3 p = posOS * _BoxMapScale;
+    half3 cx = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, p.zy).rgb;
+    half3 cy = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, p.xz).rgb;
+    half3 cz = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, p.xy).rgb;
+    return cx * w.x + cy * w.y + cz * w.z;
+}
 
 struct Attributes
 {
@@ -32,6 +61,8 @@ struct Varyings
     float3 normalWS : TEXCOORD2;
     half2 mask : TEXCOORD3;      // x = edge (R), y = cut face (G)
     half fogFactor : TEXCOORD4;
+    float3 positionOS : TEXCOORD5;
+    float3 normalOS : TEXCOORD6;
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
 };
@@ -47,6 +78,8 @@ Varyings CrystalVert(Attributes input)
     o.positionWS = pos.positionWS;
     o.normalWS = TransformObjectToWorldNormal(input.normalOS);
     o.uv = TRANSFORM_TEX(input.uv, _BaseMap);
+    o.positionOS = input.positionOS.xyz;
+    o.normalOS = input.normalOS;
     o.mask = half2(input.color.r * _EdgeFromVertexColor, input.color.g * _CutFromVertexColor);
     o.fogFactor = ComputeFogFactor(pos.positionCS.z);
     return o;
@@ -97,15 +130,18 @@ half4 CrystalFrag(Varyings i, bool frontFace : SV_IsFrontFace) : SV_Target
     // self-lit crystals: cast and cloud shadows can be switched off so they keep their colour in shade
     half direct = lerp(1.0h, ToonMainLightShadow(i.positionWS, _ShadowBlur) * EvaluateCloudShadow(i.positionWS), _ReceiveShadows);
     float shade = saturate(dot(N, light.direction)) * direct + _AmbientShade;
+    half brush = BrushStroke(i.positionWS, N);
+    shade += brush * _BrushEdge;                 // the light/shadow border wanders like a painted edge
     float lit = smoothstep(_Threshold, _Threshold + _Softness, shade);
     half3 litC = lerp(_LitColor.rgb, _TipColor.rgb, h01);
     half3 shadowC = lerp(_ShadowColor.rgb, _TipColor.rgb * _TipShadow, h01);
-    half3 base = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv).rgb;
+    half3 base = _BoxMap > 0.5 ? BoxMapBase(i.positionOS, i.normalOS) : SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv).rgb;
     half3 color = lerp(shadowC, litC, lit) * base;
 
     // per-facet hue shift + saturation
     half3 hsv = RgbToHsv(color);
-    hsv.x = frac(hsv.x + dot(facetN, float3(0.62, 0.7, -0.35)) * _HueShift);   // Unity is Y-up (Blender axis (x, z, -y))
+    hsv.x = frac(hsv.x + dot(facetN, float3(0.62, 0.7, -0.35)) * _HueShift + brush * _BrushHue);
+    hsv.z = saturate(hsv.z * (1.0 + brush * 2.0 * _BrushValue));   // strokes of lighter / darker paint   // Unity is Y-up (Blender axis (x, z, -y))
     hsv.y = saturate(hsv.y * _Saturation);
     color = HsvToRgb(hsv);
 
@@ -138,6 +174,14 @@ half4 CrystalFrag(Varyings i, bool frontFace : SV_IsFrontFace) : SV_Target
     glow += _EdgeColor.rgb * i.mask.x * _EdgeStrength;
     glow += _CutColor.rgb * i.mask.y * _CutStrength;
     color = (color + glow * glowK) * baseK;
+    // the glow covers most of the body, so the strokes are painted over it too (else they vanish under the light)
+    color *= 1.0 + brush * 2.0 * _BrushValue;
+
+    // texture glow: the brightest painted parts (patterns, petal rims) emit their own colour; not shadowed.
+    // _TexGlowPulse breathes it with the same beat as the glow (min near 0 = lights up and goes out)
+    half texLum = max(base.r, max(base.g, base.b));
+    float texK = lerp(_TexGlowPulse.x, _TexGlowPulse.y, p01);
+    color += base * _TexGlowTint.rgb * smoothstep(_TexGlowThreshold, _TexGlowThreshold + _TexGlowSoftness, texLum) * _TexGlowStrength * texK;
 
     // gloss: environment reflection (sky / probes) + sharp main-light highlight, Fresnel-weighted, tinted to the tip
     half fres = 0.03 + 0.97 * pow(1.0 - NdotV, 5.0);

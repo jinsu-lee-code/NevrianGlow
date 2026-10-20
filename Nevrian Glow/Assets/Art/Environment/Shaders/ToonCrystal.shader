@@ -17,6 +17,8 @@ Shader "DSEWA/ToonCrystal"
     Properties
     {
         _BaseMap ("Base Color", 2D) = "white" {}
+        [ToggleUI] _BoxMap ("Box Map Base Color (object-space triplanar, ignores UVs)", Float) = 0
+        _BoxMapScale ("Box Map Tiles Per Metre", Range(0.1, 8)) = 1.5
         _LitColor ("Lit Color", Color) = (0.36, 0.8, 0.95, 1)
         _ShadowColor ("Shadow Color", Color) = (0.22, 0.24, 0.62, 1)
         _Threshold ("Shadow Threshold", Range(-1, 1.5)) = 0.35
@@ -31,6 +33,12 @@ Shader "DSEWA/ToonCrystal"
         _GradientRange ("Gradient Start / End (0-1 of height)", Vector) = (0, 0.85, 0, 0)
         _HueShift ("Hue Shift Per Facet", Range(0, 0.3)) = 0.11
         _Saturation ("Saturation", Range(0, 2)) = 1.25
+        [Header(Brush Strokes)]
+        [NoScaleOffset] _BrushTex ("Brush Stroke Texture (R, 0.5 = neutral)", 2D) = "gray" {}
+        _BrushTiling ("Strokes Per Metre", Range(0.1, 8)) = 1.6
+        _BrushValue ("Brightness Variation", Range(0, 0.6)) = 0
+        _BrushEdge ("Shadow Edge Breakup", Range(0, 0.6)) = 0
+        _BrushHue ("Hue Variation", Range(0, 0.1)) = 0
         [Header(Rainbow Sheen (grazing facets))]
         _SheenStrength ("Sheen Strength", Range(0, 2)) = 0.4
         _SheenPower ("Sheen Falloff", Range(0.5, 4)) = 1.3
@@ -55,6 +63,12 @@ Shader "DSEWA/ToonCrystal"
         [HDR] _CoreColor ("Core Color", Color) = (0.25, 0.9, 1.0, 1)
         _CorePower ("Core Falloff", Range(0.5, 8)) = 2.5
         _CoreStrength ("Core Strength", Range(0, 2)) = 0.3
+        [Header(Texture Glow (bright parts of the Base Color glow))]
+        _TexGlowStrength ("Texture Glow Strength (0 = off)", Range(0, 4)) = 0
+        _TexGlowThreshold ("Brightness Where Glow Starts", Range(0, 1)) = 0.55
+        _TexGlowSoftness ("Glow Edge Softness", Range(0.01, 0.5)) = 0.15
+        [HDR] _TexGlowTint ("Texture Glow Tint", Color) = (1, 1, 1, 1)
+        _TexGlowPulse ("Texture Glow Min / Max Over The Beat (1, 1 = steady)", Vector) = (1, 1, 0, 0)
         [Header(Glow Pulse)]
         _PulsePeriod ("Pulse Period (s)", Range(0.2, 10)) = 3.2
         _PulseBase ("Whole Glow Min / Max", Vector) = (0.85, 1.15, 0, 0)
@@ -100,12 +114,15 @@ Shader "DSEWA/ToonCrystal"
 
         CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
+            float _BoxMap, _BoxMapScale;
             half4 _LitColor, _ShadowColor;
             half _Threshold, _Softness, _ShadowBlur, _AmbientShade, _FlatShading, _ReceiveShadows;
             half4 _TipColor;
             half _TipShadow;
             float4 _GradientRange;
             half _HueShift, _Saturation;
+            float _BrushTiling;
+            half _BrushValue, _BrushEdge, _BrushHue;
             half _SheenStrength, _SheenPower;
             half4 _Sheen0, _Sheen1, _Sheen2, _Sheen3;
             half4 _MatCapColor;
@@ -118,6 +135,9 @@ Shader "DSEWA/ToonCrystal"
             half _CutStrength;
             half4 _CoreColor;
             half _CorePower, _CoreStrength;
+            half _TexGlowStrength, _TexGlowThreshold, _TexGlowSoftness;
+            half4 _TexGlowTint;
+            float4 _TexGlowPulse;
             float _PulsePeriod;
             float4 _PulseBase, _PulseGlow;
             float _PulseCell;

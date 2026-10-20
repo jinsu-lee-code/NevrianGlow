@@ -110,7 +110,7 @@ Material:
     - _PlanetBands: 7
     - _PlanetRimWidth: 0.07
     - _PlanetSize: 0.13
-    - _PlanetSkyDraw: 0
+    - _PlanetSkyDraw: 1
     - _PlanetSpin: 0.05
     - _RingAmount: 0.75
     - _RingSpin: 0.25

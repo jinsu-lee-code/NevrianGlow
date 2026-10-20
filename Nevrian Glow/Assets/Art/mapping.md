@@ -1,0 +1,48 @@
+# 아트 에셋 ↔ 요청서(art) 대응표
+
+요청서: 노션 "아트 에셋 요청서 (art)" (이진수, 2026-10-08). 파일명은 요청서 id 그대로 — 모델 = `<id>.fbx`, 프리팹 = `pf_<id>`, 재질 = `mat_<id>_부위`, 텍스처 = `tex_<id>_맵`.
+프리팹은 모두 루트(0,0,0 / 1,1,1) 아래 `Model` 자식 구조. 크기는 프리팹에서 실제 m로 맞춤.
+
+## 요청서 항목
+
+| 요청서 id | 프리팹 · 모델 (Assets/Art/…) | 실제 크기 | 요청서와 다른 점 |
+|---|---|---|---|
+| `crop_lanternfruit_mature` | `Crops/lanternfruit/Models/crop_lanternfruit_mature.fbx` (씬 `BackGroundScene`의 `LanternFruit`) | 높이 약 1.8 m | 프리팹 없음(씬 배치만, 꺼 둠). 열매 `fruit_*` 분리 · 재질 슬롯 이름(`M_Base` 등) 미적용 |
+| `crop_common_seeded` | `Crops/common/pf_crop_common_seeded.prefab` (원본 `_Source/Teal_Rock_Mound_1240`) | 0.80 × 0.17 × 0.80 m | 씨앗 심은 흙 둔덕(공용). 옛 이름 `rock_mound` |
+| `crop_moonroot_sprout` | `Crops/moonroot/pf_crop_moonroot_sprout.prefab` (원본 `_Source/Glowing_Fantasy_Plant_2029`) | 높이 0.25 m | 옛 이름 `glowing_plant_a` |
+| `crop_moonroot_mature` | `Crops/moonroot/pf_crop_moonroot_mature.prefab` (원본 `_Source/Alien_Glowing_Plant_2163`) | 높이 0.50 m | 옛 이름 `alien_glowing_plant`. 뿌리 전체가 보임(요청서는 반쯤 묻힘 → 밭 칸에서 조금 내려 박아도 됨) |
+| `crop_moonroot_giant` | `Crops/moonroot/pf_crop_moonroot_giant.prefab` (원본 `_Source/Glowing_Fantasy_Plant_4596`) | 1.37 × 1.60 × 1.44 m | 옛 이름 `glowing_plant_b`. 높이 기준으로 키움 — 요청서 폭 3.5 m(밭 4칸)까지 키우려면 크기만 더 올리면 됨 |
+| `tool_wateringcan_gold` · `tool_wateringcan_diamond` | `Props/wateringcan/pf_tool_wateringcan_gold.prefab` · `pf_tool_wateringcan_diamond.prefab` | 철과 같음 | **같은 메시 + 텍스처만 바꾼 업그레이드 단계**(요청서대로). `tex_tool_wateringcan_{gold,diamond}_albedo` = 철 텍스처의 붓질 명암에 색만 입힘. 재질 `mat_tool_wateringcan_{gold,diamond}_paint` — 금은 광택 강하게, 다이아는 광택 + 하늘색 테두리 빛 + 밝은 부분 약한 발광 |
+| `prop_lamp_glow` (기둥형) | `Props/lamp_glow/pf_prop_lamp_glow_stand.prefab`, `Models/prop_lamp_glow_stand.fbx` | 0.73 × 1.80 × 0.88 m | 등은 `Model/Lantern_Crystal`(셰이더 `Props/Shaders/LanternCrystal`, 발광). 원래 4 m → 요청서 1.8 m로 줄임. 실제 빛(Point Light)은 없음 |
+| `prop_lamp_glow` (벽걸이) | `Props/lamp_glow/pf_prop_lamp_glow_wall.prefab`, `Models/prop_lamp_glow_wall.fbx` | 0.55 × 0.55 × 0.38 m | 등은 `Model/Lantern_Scale`. 피벗 바닥 가운데 — 벽에 붙일 때 벽판 뒷면이 +X 쪽 |
+| `prop_counter` | `Props/counter/pf_prop_counter.prefab`, `Models/prop_counter.fbx` | 약 0.52 × 0.40 × 0.50 m | **계산대 위 금전등록기**(서랍 = 돈통, `Model/CashRegister_Drawer`). 요청서 크기 1.4 × 1.0 × 0.7 m의 계산대 탁자는 아님 → 탁자는 따로 필요하면 알려 주세요. 재질 5개(`mat_prop_counter_*`, 셰이더 `Props/Shaders/ToonSoft`) |
+| `prop_basket_customer` | `Props/basket_customer/pf_prop_basket_customer.prefab`, `Models/prop_basket_customer.fbx` | 지름 0.53 m | **열매 87개가 담긴 상태**(요청서는 빈 바구니 0.35 m). 손잡이 위치 = 자식 `GripSocket`. 크기 · 빈 바구니 여부 알려 주시면 맞춤 |
+| `env_farm_door` | `Environment/farm_door/Models/env_farm_door.fbx` (씬 `Shop_Door`, (22, 0, −9)) | — | 프리팹 없음(씬 배치). 재질 3개 `mat_env_farm_door_*` — 사용자가 편 UV에 Varco 원본(상점 입구1) 색을 구운 텍스처 `Textures/tex_env_farm_door_{frame,door,stairs}_albedo` 연결 |
+| `env_ground_tile` | `Environment/Ground/Textures/tex_env_ground_tile_*`, `Environment/DeepBlue/Textures/tex_env_ground_tile_deepblue_*` | 1024 타일 | 여러 벌(보라 A/B/C · 길 · 딥블루 A/B/C) — 지형 레이어 `TL_*`가 사용 중 |
+| `tool_seedbag` | `Props/seedbag/pf_tool_seedbag.prefab` (원본 `_Source/Teal_Pouch_Glowing_Leaves_1296`) | 임시 0.3 m | Varco 원본 그대로, 피벗 바닥 가운데(요청서는 손잡이 쥐는 곳) |
+| `tool_fertilizer` | `Props/fertilizer/pf_tool_fertilizer.prefab`, `Models/tool_fertilizer.fbx` | 높이 0.18 m | **Varco 원본 → 재모델로 교체** (프리팹 GUID 그대로). 병 · 액체 분리, 재질 `mat_tool_fertilizer_*` (셰이더 `ToonCrystal` · `Props/Shaders/ToonLiquid`). 원본은 `_Source/`에 그대로. 피벗 바닥 가운데 |
+| (요청서 없음 · 계산대 소품) | `Props/counter/pf_prop_counter_bell.prefab`, `Models/prop_counter_bell.fbx` | 0.17 × 0.13 × 0.17 m | 계산대 위 종. 돔 `Model/Bell_Dome`, 누름쇠 `Model/Bell_Dome/Bell_Plunger` |
+| `prop_trashbin` | `Props/trashbin/pf_prop_trashbin.prefab`, `Models/prop_trashbin.fbx` | 0.62 × 0.75 × 0.63 m | 뚜껑 `Model/TrashCan_Lid` 분리(열기 가능). 8.6천 tris (예산 2천) |
+| `tool_wateringcan_iron` | `Props/wateringcan/pf_tool_wateringcan_iron.prefab`, `Models/tool_wateringcan_iron.fbx` | 길이 0.45 m | 피벗 = 손잡이, 주둥이 끝 `Model/WateringCan_SpoutTip`. UV를 새로 펴고 Varco 원본 색을 구운 텍스처 `tex_tool_wateringcan_iron_albedo`(재질 `mat_tool_wateringcan_iron_paint`). 금 · 다이아 색 변형은 아직 없음 |
+
+## 요청서에 없는 것 (배경 · 추가분)
+
+| 파일 | 내용 |
+|---|---|
+| `Environment/` 하늘(`Sky/`), 구름, 달 · 행성 · 별, 오로라 텍스처 | `env_sky`는 그림 한 장 대신 셰이더 하늘(`DeepBlue/M_Sky_DeepBlue.mat`)로 구현 |
+| `Environment/Crystal/` | 수정 무리 + 빛 웅덩이(배경 장식) |
+| `Environment/Grass/`, `DeepBlue/` 풀 프리팹 | 지형 위 풀 |
+| `Environment/FX/` `tex_vfx_*` | 배경 먼지 · 빛줄기 (요청서 H의 `vfx_*`와는 별개) |
+| `Props/_Shared/Textures/tex_prop_wood*` · `Props/_Shared/Materials/mat_prop_shared_*` | 나무판 · 나무결 공용 텍스처, 소품 공용 재질 (쓰레기통 · 물뿌리개 등) |
+
+## 이름을 안 바꾼 것
+
+- 스크립트 · 셰이더 (클래스 · 셰이더 이름이 코드에 걸려 있음)
+- `_Source/` (AI 생성 원본 보관 규칙)
+- `Environment/DeepBlue/M_Sky_DeepBlue.mat` — `_Project/Scripts/Editor/PlaceholderDataSetup.cs`가 경로로 씀
+- `Environment/Sky/Meshes/SkyGalaxyStars.asset` — 씬에 경로 저장
+- 지형 레이어 · 볼륨 프로필 · 렌즈 플레어 (요청서 · 규칙에 없는 종류)
+
+## 지운 것 (2026-10-20)
+
+- `Props/gem_bucket`, `Props/gem_shield`와 그 원본 `_Source/Wooden_Gem_Bucket_1650`, `_Source/Wooden_Gem_Shield_807` — 요청서에 짝이 없고 쓰는 곳도 없어서 제거 (git 기록에 남아 있음)
