@@ -37,6 +37,7 @@ namespace NevrianGlowFarm.Systems.Cleaning
         private bool hasPoint;
         private Vector3 point;
         private float radius;
+        private int mopLoop;
 
         public bool IsMopping => mopping;
 
@@ -54,7 +55,31 @@ namespace NevrianGlowFarm.Systems.Cleaning
             if (useAction != null) useAction.action.Enable();
         }
 
+        private void OnDisable()
+        {
+            mopping = false;
+            UpdateMopSound();
+        }
+
         private void Update()
+        {
+            UpdateMopping();
+            UpdateMopSound();
+        }
+
+        // 닦는 동안 루프 소리, 손을 떼면 짧게 줄이며 멈춘다 (asset_placement 6번).
+        private void UpdateMopSound()
+        {
+            if (mopping && mopLoop == 0)
+                mopLoop = AudioManager.StartLoop(SoundCues.MopLoop);
+            else if (!mopping && mopLoop != 0)
+            {
+                AudioManager.StopLoop(mopLoop);
+                mopLoop = 0;
+            }
+        }
+
+        private void UpdateMopping()
         {
             mopping = false;
             hasPoint = false;

@@ -139,6 +139,7 @@ namespace NevrianGlowFarm.Systems.Zones
         {
             transitioning = true;
             PlayerInputGate.Block(this);
+            AudioManager.Play(SoundCues.UiFade);
             yield return fader.Fade(1f, fadeOut);
 
             midpoint?.Invoke();

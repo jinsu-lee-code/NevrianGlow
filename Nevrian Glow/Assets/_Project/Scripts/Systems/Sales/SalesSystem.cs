@@ -270,6 +270,7 @@ namespace NevrianGlowFarm.Systems.Sales
             spawnedNumber++;
             customers.Add(ai);
             ai.Begin(this, type, spawnedNumber, settings, entrance.position);
+            AudioManager.Play(SoundCues.CustomerEnter, entrance.position);
         }
 
         private void CollectTypes(int today)
@@ -346,6 +347,8 @@ namespace NevrianGlowFarm.Systems.Sales
             int paid = session.Pay(ids, PriceOf);
             if (paid > 0 && GameManager.Instance != null)
                 GameManager.Instance.TryChangeMoney(paid);
+            if (paid > 0)
+                AudioManager.Play(SoundCues.CheckoutCoin, CounterPosition);
         }
 
         public void Despawn(CustomerAI customer)
@@ -353,6 +356,7 @@ namespace NevrianGlowFarm.Systems.Sales
             line.Leave(customer.Number);
             if (customers.Remove(customer))
                 session?.Leave();
+            AudioManager.Play(SoundCues.CustomerExit, customer.transform.position);
             Destroy(customer.gameObject);
         }
 

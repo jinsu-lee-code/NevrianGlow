@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using NevrianGlowFarm.Core;
 using NevrianGlowFarm.Data;
 using UnityEngine;
 using UnityEngine.AI;
@@ -55,6 +56,8 @@ namespace NevrianGlowFarm.Systems.Sales
         [SerializeField, Min(1f)] private float walkTimeout = 12f;
         [Tooltip("그레이박스 해피 동작 — 제자리 뛰기 높이 (m)")]
         [SerializeField, Min(0f)] private float happyHop = 0.15f;
+        [Tooltip("발소리 간격 — 걸은 거리 (m). 걷기 클립 1초 두 걸음 × 2.1 m/s (animation.md B-1)")]
+        [SerializeField, Min(0.1f)] private float stepDistance = 1.05f;
 
         [Header("디버그")]
         [Tooltip("지금 상태 (읽기 전용)")]
@@ -77,6 +80,7 @@ namespace NevrianGlowFarm.Systems.Sales
         private bool paid;
         private int animEvents;
         private Vector3 modelBase;
+        private float stepTravel;
 
         public int Number { get; private set; }
         public CustomerData Data => data;
@@ -122,8 +126,19 @@ namespace NevrianGlowFarm.Systems.Sales
 
         private void Update()
         {
-            if (animator != null && agent.enabled)
-                animator.SetFloat(SpeedId, agent.velocity.magnitude);
+            if (!agent.enabled)
+                return;
+            float speed = agent.velocity.magnitude;
+            if (animator != null)
+                animator.SetFloat(SpeedId, speed);
+
+            // 발소리: 걸은 거리로 (OnFootstep 애니메이션 이벤트가 들어오기 전까지)
+            stepTravel += speed * Time.deltaTime;
+            if (stepTravel >= stepDistance)
+            {
+                stepTravel -= stepDistance;
+                AudioManager.Play(SoundCues.CustomerStep, transform.position);
+            }
         }
 
         private IEnumerator Run(SalesSettingsData settings)
@@ -136,6 +151,7 @@ namespace NevrianGlowFarm.Systems.Sales
             yield return WaitAnimation(pickBasketFallback);
             if (basket != null)
                 basket.gameObject.SetActive(true);
+            AudioManager.Play(SoundCues.BasketPick, transform.position);
             SetBool(HasBasketId, true);
 
             state = CustomerState.ToShelf;
@@ -156,6 +172,7 @@ namespace NevrianGlowFarm.Systems.Sales
                 SetTrigger(PutItemId);
                 yield return WaitAnimation(putItemFallback);
                 ShowBasketItem(items[i]);
+                AudioManager.Play(SoundCues.BasketPut, transform.position);
             }
             SetBool(BrowsingId, false);
 
@@ -191,6 +208,7 @@ namespace NevrianGlowFarm.Systems.Sales
 
             state = CustomerState.Happy;
             SetTrigger(HappyId);
+            AudioManager.Play(SoundCues.CustomerHappy, transform.position);
             yield return HappyRoutine();
 
             yield return LeaveStore();

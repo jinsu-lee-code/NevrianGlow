@@ -165,6 +165,7 @@ namespace NevrianGlowFarm.Systems.Shop
                 return;
             state.TryPlace(aimedSlot, crop.Id);
             RefreshSlot(aimedSlot, animateLast: true);
+            AudioManager.Play(SoundCues.ShelfPlace);
             // 홀로그램은 다음 자리로 (가득 차면 빨강). 마지막 1개를 놓아 손이 비면 다음 프레임 UpdateAim이 숨긴다.
             aimedCheck = state.CanPlace(aimedSlot, crop.Id);
             ShowHologram();
@@ -194,6 +195,7 @@ namespace NevrianGlowFarm.Systems.Shop
             state.TakeOne(aimedSlot);
             inventory.TryAdd(item, 1);
             RefreshSlot(aimedSlot, animateLast: false);
+            AudioManager.Play(SoundCues.ShelfTake);
             aimedCheck = aimedCrop != null ? state.CanPlace(aimedSlot, aimedCrop.Id) : PlaceCheck.NoSlot;
             ShowHologram();
         }

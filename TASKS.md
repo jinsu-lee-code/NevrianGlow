@@ -203,7 +203,7 @@
 - [ ] **5-4. UI 아트 적용** — 패널 · 아이콘 15종 · 폰트(라이선스 확인)
   - UI를 몰아서 작업할 때 함께 할 것 (결정 2026-10-10, 사용자: UI는 나중에 한 번에) — 생길 때마다 여기에 추가
     - 물뿌리개 범위 미리보기 — 조준 중 물이 들어갈 칸 표시 (2칸 짝이 보는 방향 앞이 아니라 뒤 칸일 수 있어 미리 알려 줌, 2026-10-11 사용자 요청)
-- [ ] **5-5. AudioManager** — 소리는 id로만 호출, 클립이 없으면 무음 + 일반 Log 1회(Warning 아님, 버그 로그 오염 방지). BGM 단계 전환 · 1.5초 교차, 효과음 변형 무작위 · 쿨다운, 볼륨 버스
+- [~] **5-5. AudioManager** — 소리는 id로만 호출, 클립이 없으면 무음 + 일반 Log 1회(Warning 아님, 버그 로그 오염 방지). BGM 단계 전환 · 1.5초 교차, 효과음 변형 무작위 · 쿨다운, 볼륨 버스 — 효과음 · UI 연결 (2026-10-20, 플레이 확인 대기) · BGM · 환경음은 파일 도착(10/25) 후 단계 · 구역에 연결
 - [ ] **5-6. 메타** — 타이틀(이어하기 · 새 게임 · 설정 · 종료), 일시정지, 설정(볼륨 · 감도 · 해상도)
 - [ ] **5-7. 튜토리얼** — 10/27까지 단계 시스템 + 임시 문구로 구현, 대본(10/28)은 데이터로 교체 (기능 동결 후에도 데이터 교체는 허용)
   - 1일차 개간 · 심기 · 물주기 · 청소 · 진열 / 2일차 첫 수확 (월광 1일 성장, 변경 2026-10-10: ~~3일차 수확~~) / 첫 레벨업 스킬 / 칸 부족 시 "창고에 넣고 오세요", 화면 위쪽 한 줄 · 행동 시 사라짐
@@ -561,6 +561,23 @@
   - 미확인: 걷기 · 가게 이동 등 조작(키 입력 제한), 빌드에서의 모습
   - 남은 일: 배경 풀(`Terrain_LookDev`의 `LayerGrassSpawner`, 중심 (0,0,0) 반경 35 m)이 밭 · 길 위에도 자람 → 아트 파트와 제외 구역(밭 · 길 · 문) 정하기. 배경 지형은 x·z −250 ~ 250이라 가게(500, 0, 0)는 지형 밖(실내라 문제없음, 창이 생기면 확인). 시간대는 배경 `DayNight.hour = 24`(밤) — "영원한 황혼"과 맞는지 아트 파트와 확인
 
+- [~] **파트 납품 병합 (2026-10-20)**
+  - Art 11커밋 → `87ce793 10.20/Merge/Art-…`, Animator 3커밋 → `6edb98c`, Sound 3커밋 → `2f77993` (dev). 폴더 검사: Art · Animator 밖 변경 0
+  - 결정 (2026-10-20, 사용자): Sound는 **소리 파일이면 폴더 밖이어도 가져온다** — `Claude outputs/sfx_checkout_coin_*.wav` 3개 → `Assets/Audio/SFX/_candidates/`. 맨 위 `Library` · `Temp` · `ProjectSettings/ProjectVersion.txt`(Unity로 저장소 맨 위를 연 흔적), 플레이 기록 `Reports/playtest_2026101[89]_*.md` 6개, 폰트 에셋 변경, `_Project/Audio/.gitkeep` 삭제는 제외 (Sound 브랜치에는 남아 있음)
+  - `.gitignore`: 저장소 맨 위 `/Library/` · `/Temp/` · `/Logs/` · `/UserSettings/` · `/ProjectSettings/` · `/Packages/` · `/Assets/` 추가 (루트 기준 경로 규칙 유지) — 같은 실수가 다시 올라가지 않게
+  - 확인: 컴파일 오류 0, EditMode 180 통과. 아트 셰이더 Header 경고 6 · `CharacterShadow` 경고 1은 BRANCH_ART 납품 기록으로 요청
+  - 남은 일: Art · Animator 에셋의 게임 연결은 5-2 · 5-3 (asset_placement 8번 순서: 작물 → 가게 소품 → 손님 · 애니메이션 → 도구 → 환경 → UI → VFX)
+- [~] **5-5. AudioManager — 효과음 · UI 연결** (2026-10-20) — 플레이 확인 대기
+  - 결정 (2026-10-20, 사용자): 요청서보다 긴 납품 소리는 Blender에서 파형을 보고 요청 길이로 다듬어 쓴다. 원본(`Assets/Audio/`, 사운드 파트 폴더)은 그대로, 게임용 사본은 `Assets/_Project/Audio/{SFX,UI}/` (asset_placement 0-6). 다듬기 = 요청 길이 자르기 + 끝 cos² 페이드, 앞 무음 10 ms 이하, 피크 −1 dBFS, 48 kHz 모노 24-bit. 대걸레 루프는 고른 1.6초 구간 + 끝 → 처음 0.15초 교차. 발소리 6초 파일은 첫 걸음 0.2초씩. 결과 표는 BRANCH_SOUND 납품 기록
+  - 결정 (2026-10-20): 소리 id는 요청서 이름 기준(`sfx_ui_*` · `bgm_*_loop` · `amb_*_loop`) — 10/19 납품 `ui_*`는 게임용 사본에서 `sfx_ui_*`로. 코드가 부르는 id는 `Core/SoundCues` 한 곳. BRANCH_SOUND의 예전 이름 예시(`ui_*` · `bgm_title`)는 틀려서 고침
+  - 구현: Logic `SoundRules`(변형 무작위 · 바로 전 변형 제외, 음높이 ±jitter, 파일 이름 → id) · `SoundCooldowns`, Data `SoundLibraryData`(id · 클립 · 버스 Sfx/Ui/Bgm/Ambience · 볼륨 · 3D · 루프 · 음높이 · 쿨다운, 3D 1 ~ 15 m Logarithmic), Core `AudioManager`(Core 씬 `AudioManager`, 소스 24개 풀 · 2D/3D · 루프 핸들 · 음악/환경음 1.5초 교차 · 버스 볼륨 · 없는 id는 Log 1회, 레벨업 · 스킬 단계 오름 · 새 날을 GameEvents로), UI `UiButtonSounds`(UICanvas 아래 버튼 전부 클릭 소리), 메뉴 `Glow Farm/Setup/Build Sound Library`(`_Project/Audio` → `Data/Audio/SoundLibrary` 자동 등록 · 임포트 설정, 다시 실행해도 같고 손으로 바꾼 값 유지)
+  - 연결: 심기 · 물주기(기울인 뒤 0.3초) · 수확 · 아침 성숙 알림(`FarmGrid`), 바닥 아이템 줍기(`WorldItem`), 쓰레기통(`TrashBin`, 버린 게 있을 때), 얼룩 제거(`Stain`), 대걸레 루프(`MopTool`, 닦는 동안), 손님 입장 · 퇴장 · 계산(`SalesSystem`, 입구 · 계산대 위치), 바구니 집기 · 넣기 · 해피 · 발소리 1.05 m마다(`CustomerAI`), 진열 놓기 · 회수(`ShelfDisplay`), 창고 열기 · 넣기(`StorageScreen`), 구매 성공 · 실패(`ShopScreen`), 페이드(`ZoneTransition`), 핫바 바꾸기(`Hotbar`), 칸 버튼(`HotbarSlotView`)
+  - 테스트 10개(변형 연속 금지 · 모든 변형 사용 · 1개/0개 · 음높이 범위 · 파일 이름 → id 5가지 · 쿨다운) — 전체 190 통과
+  - 확인(자동): Build Sound Library 1회 = id 22 · 클립 36 · 임포트 36 → 2회 = 유지 22 · 바꿈 0. 플레이에서 id 21개 전부 재생(3D는 지정 위치, 2D는 화면), 대걸레 루프 시작 · 정지, 없는 id(`sfx_day_start`) 두 번 불러 Log 1번
+  - 미확인: 실제 조작으로 듣는 소리(키 입력 불가) · 음량 균형 — 사용자 플레이 확인
+  - 무음(파일 아직 없음): 진열 놓기 · 회수, 창고 열기 · 넣기, 새 날, 핫바 바꾸기, 거대 작물, 플레이어 발소리, BGM · 환경음. 비료는 게임 기능(P1)이 없어 소리만 등록
+  - 참고: 상점 줄 클릭은 클릭 + 구매 성공/실패 두 소리가 겹친다 — 거슬리면 상점 줄만 클릭 소리를 뺀다. 계산 소리는 장사 건너뛰기 정산에서도 손님마다 나지만 쿨다운 0.05초로 겹침을 줄임
+
 ## 트러블슈팅
 | 문제 | 원인 | 해결 |
 |---|---|---|
@@ -575,4 +592,5 @@
 | MCP로 카메라 회전을 바꿔도 다음 프레임에 원래대로 | PlayerController가 매 프레임 자기 yaw · pitch로 카메라를 덮어씀 | `PlayerController.SetLook` / `LookAt`으로 시점을 정한다 |
 | MCP `Unity_Camera_Capture`가 게임 카메라 대신 Scene View를 찍음 | 도구가 Scene View를 우선 캡처하는 경우가 있음 | `RunCommand`에서 `Camera.main`을 RenderTexture로 렌더해 PNG로 저장한 뒤 읽는다 (화면 UI는 안 찍힘) |
 | 플레이 중 스크립트를 고친 뒤 MCP 확인 코드가 NullReference | 플레이 중 다시 컴파일되며 씬 상태가 깨짐 | 스크립트 수정은 플레이를 멈춘 뒤 → Refresh → 다시 플레이. 플레이 직후에는 `Step()` 몇 프레임 뒤에 찾는다(Farm 씬 칸 생성 전) |
+| Blender `aud.Sound.buffer(...).write()`가 "filling the audio frame failed with ffmpeg"로 실패 | 넘긴 numpy 배열이 임시 값이라 쓰기 전에 정리됨(버퍼가 배열을 복사하지 않음) → 반쯤 써진 파일이 남아 다시 쓰기도 실패 | 배열 · Sound 객체를 변수로 붙잡아 두고, 임시 폴더에 쓴 뒤 복사 |
 | (작업 중 겪을 때마다 추가) | | |

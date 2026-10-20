@@ -197,6 +197,7 @@ namespace NevrianGlowFarm.Systems.Farm
                 }
                 if (watered > 0)
                     UpdateSummary();
+                AudioManager.Play(SoundCues.WaterPour, CellPosition(index)); // 기울인 뒤 물이 나오는 순간 (마른 땅이어도 붓는 소리)
                 return;
             }
 
@@ -208,7 +209,11 @@ namespace NevrianGlowFarm.Systems.Farm
                 if (!database.TryGet(seed.Crop.Id, out CropData _))
                     Debug.LogError($"[FarmGrid] 작물 '{seed.Crop.Id}'가 ContentDatabase에 없음 — Glow Farm/Data/Refresh Content Database", this);
                 else if (hotbar != null && hotbar.TryConsumeSelected(1))
+                {
                     changed = FarmRules.TryPlant(cell, seed.Crop.Id);
+                    if (changed)
+                        AudioManager.Play(SoundCues.SeedPlant, CellPosition(index));
+                }
             }
 
             if (changed)
@@ -255,6 +260,7 @@ namespace NevrianGlowFarm.Systems.Farm
             {
                 hotbar.TryAdd(crop, result.Yield);
                 RefreshCell(index);
+                AudioManager.Play(SoundCues.HarvestPull, CellPosition(index));
                 if (GameManager.Instance != null)
                     GameManager.Instance.RecordHarvest(crop.Id); // 해금 조건 "첫 수확"
             }
@@ -273,8 +279,20 @@ namespace NevrianGlowFarm.Systems.Farm
         {
             if (state == null)
                 return;
+            int readyBefore = CountReady();
             night.Run(state);
             RefreshAll();
+            if (CountReady() > readyBefore)
+                AudioManager.Play(SoundCues.CropMature); // 아침에 다 자란 작물이 생겼으면 1회
+        }
+
+        private int CountReady()
+        {
+            int count = 0;
+            for (int i = 0; i < state.Cells.Count; i++)
+                if (state.StatusOf(i) == FarmCellStatus.Ready)
+                    count++;
+            return count;
         }
 
         /// <summary>디버그: 자라는 칸에 모두 물을 준다. 바뀐 칸 수를 돌려준다.</summary>

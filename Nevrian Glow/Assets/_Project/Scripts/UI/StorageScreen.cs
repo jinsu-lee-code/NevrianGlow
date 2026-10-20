@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using NevrianGlowFarm.Core;
 using NevrianGlowFarm.Logic.Inventory;
 using NevrianGlowFarm.Systems.Player;
 using NevrianGlowFarm.Systems.Storage;
@@ -104,6 +105,7 @@ namespace NevrianGlowFarm.UI
         {
             messageLabel.text = string.Empty;
             RebuildEntries();
+            AudioManager.Play(SoundCues.StorageOpen);
         }
 
         /// <summary>인벤토리 칸 하나를 넣는다 (화면 클릭 · 디버그).</summary>
@@ -123,7 +125,8 @@ namespace NevrianGlowFarm.UI
                 messageLabel.text = $"{(item != null ? item.DisplayName : stack.ItemId)}은(는) 창고에 넣을 수 없음";
                 return;
             }
-            storage.DepositSlot(inventory, slots, index);
+            if (storage.DepositSlot(inventory, slots, index))
+                AudioManager.Play(SoundCues.StoragePut);
             messageLabel.text = $"{ItemLabel.Of(inventory, stack, string.Empty)} 넣음";
         }
 
@@ -144,6 +147,8 @@ namespace NevrianGlowFarm.UI
             if (!IsOpen)
                 return;
             int moved = storage.DepositAll(inventory);
+            if (moved > 0)
+                AudioManager.Play(SoundCues.StoragePut);
             messageLabel.text = moved > 0 ? $"{moved}칸 넣음 (도구 · 보관 불가 아이템은 남김)" : "넣을 아이템이 없음";
         }
 
