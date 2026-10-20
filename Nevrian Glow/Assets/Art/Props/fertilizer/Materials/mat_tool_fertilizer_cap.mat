@@ -41,6 +41,8 @@ Material:
     m_Floats:
     - _AmbientShade: 0.1
     - _BackFaceOpacity: 1
+    - _BoxMap: 0
+    - _BoxMapScale: 1.5
     - _BrushEdge: 0
     - _BrushHue: 0
     - _BrushTiling: 1.6
