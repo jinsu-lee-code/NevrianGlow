@@ -37,6 +37,10 @@ namespace NevrianGlowFarm.Core
         /// <summary>작물을 처음 수확했을 때 (작물 id) — 해금 조건 "첫 수확".</summary>
         public static event Action<string> CropFirstHarvested;
 
+        /// <summary>능력치 변경(스킬 효과)이 바뀔 때 — 핫바 칸 · 밭 성장 표시 등이 다시 읽는다 (StatSystem 4-3).</summary>
+        public static event Action StatsChanged;
+
+        internal static void RaiseStatsChanged() => StatsChanged?.Invoke();
         internal static void RaiseSkillLevelChanged(string skillId, int level) => SkillLevelChanged?.Invoke(skillId, level);
         internal static void RaiseCropFirstHarvested(string cropId) => CropFirstHarvested?.Invoke(cropId);
         internal static void RaisePhaseChanged(PhaseChange change) => PhaseChanged?.Invoke(change);
@@ -58,6 +62,7 @@ namespace NevrianGlowFarm.Core
             LeveledUp = null;
             SkillLevelChanged = null;
             CropFirstHarvested = null;
+            StatsChanged = null;
         }
     }
 }

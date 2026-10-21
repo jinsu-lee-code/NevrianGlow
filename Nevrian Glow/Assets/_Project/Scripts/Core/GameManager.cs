@@ -109,6 +109,46 @@ namespace NevrianGlowFarm.Core
             GameEvents.RaiseExpChanged(progression.Exp, progression.Required);
         }
 
+        // ── 저장 (6-1) ──
+
+        /// <summary>일차 · 단계 · 달러 · SP · 레벨 · 스킬 · 수확 기록 · 날마다 정산을 저장 내용에 담는다.</summary>
+        public void CaptureTo(Logic.Save.SaveSnapshot into)
+        {
+            if (!RequireStarted())
+                return;
+            into.Day = cycle.Day;
+            into.Phase = cycle.Phase;
+            into.Money = wallet.Money;
+            into.SkillPoints = wallet.SkillPoints;
+            into.Level = progression.Level;
+            into.Exp = progression.Exp;
+            Logic.Save.SaveState.CaptureProgress(skills, record, run, into);
+        }
+
+        /// <summary>
+        /// 저장 내용으로 상태를 바꾸고 알린다. 단계 알림은 같은 날 안의 전환으로 보낸다(DayChanged 아님 → 밤 처리가 다시 돌지 않음).
+        /// 다른 시스템(밭 · 인벤토리 · 상점 …)의 복원은 SaveSystem이 이 다음에 한다.
+        /// </summary>
+        public void LoadFrom(Logic.Save.SaveSnapshot from)
+        {
+            bootstrapper.Ready -= StartNewGame;
+            cycle = new DayCycle(from.Day, from.Phase);
+            wallet = new Wallet(from.Money, from.SkillPoints);
+            progression = new Progression(progressionData.ToCurve(), from.Level, from.Exp);
+            Logic.Save.SaveState.ApplyProgress(skills, record, run, from);
+            SyncDebugView();
+
+            var change = new PhaseChange(cycle.Day, cycle.Phase, cycle.Day, cycle.Phase);
+            ReportPhase(change);
+            GameEvents.RaisePhaseChanged(change);
+            GameEvents.RaiseDayChanged(cycle.Day);
+            GameEvents.RaiseMoneyChanged(wallet.Money);
+            GameEvents.RaiseSkillPointsChanged(wallet.SkillPoints);
+            GameEvents.RaiseExpChanged(progression.Exp, progression.Required);
+            foreach (var pair in skills.All)
+                GameEvents.RaiseSkillLevelChanged(pair.Key, pair.Value);
+        }
+
         /// <summary>매출로 경험치를 받는다 (정산 3-3: 경험치 = 매출 × 1). 레벨업하면 SP가 더해진다.</summary>
         public ExpGain AddRevenueExp(int revenue) => RequireStarted() ? ApplyExp(progression.AddRevenue(revenue)) : default;
 

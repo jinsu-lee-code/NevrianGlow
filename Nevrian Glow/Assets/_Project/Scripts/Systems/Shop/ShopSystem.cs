@@ -117,6 +117,17 @@ namespace NevrianGlowFarm.Systems.Shop
                 state.NoteOpen(p.ToSpec(), game);
         }
 
+        // ── 저장 (6-1) ──
+
+        public void CaptureTo(Logic.Save.SaveSnapshot into) => Logic.Save.SaveState.CaptureShop(state, into);
+
+        /// <summary>구매 단계 · 오늘 산 개수 · 처음 열린 날 · 오늘 지출을 바꾼다. 효과(칸 수 등)는 각 시스템의 저장 값으로 따로 돌아온다.</summary>
+        public void LoadFrom(Logic.Save.SaveSnapshot from)
+        {
+            Logic.Save.SaveState.ApplyShop(state, from);
+            NotifyChanged();
+        }
+
         // ── 조회 ─────────────────────────────────────────
 
         public ProductOffer OfferOf(ShopProductData product)

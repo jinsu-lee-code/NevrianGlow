@@ -1,4 +1,5 @@
 using System;
+using NevrianGlowFarm.Core;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -27,7 +28,11 @@ namespace NevrianGlowFarm.UI
         private void Awake()
         {
             if (button != null)
-                button.onClick.AddListener(() => Clicked?.Invoke());
+                button.onClick.AddListener(() =>
+                {
+                    AudioManager.Play(SoundCues.UiClick);
+                    Clicked?.Invoke();
+                });
         }
 
         public void SetContent(int keyNumber, string itemName)

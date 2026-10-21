@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using NevrianGlowFarm.Core;
 using NevrianGlowFarm.Data;
 using NevrianGlowFarm.Systems.Interaction;
 using NevrianGlowFarm.Systems.Player;
@@ -70,6 +71,7 @@ namespace NevrianGlowFarm.Systems.Items
             var inventory = PlayerInventory.Instance;
             if (item == null || inventory == null || !inventory.TryAdd(item, count))
                 return;
+            AudioManager.Play(SoundCues.TrashPickup, transform.position); // 바닥 아이템 줍기 (쓰레기 · 떨어뜨린 물건 공용)
             Destroy(gameObject);
         }
     }

@@ -52,6 +52,11 @@ namespace NevrianGlowFarm.Logic.Farm
         public int HarvestCount { get; internal set; }
         /// <summary>비료로 줄인 필요 성장일 (4-6). 작물이 사라지면 0.</summary>
         public int FertilizerBonus { get; internal set; }
+        /// <summary>오늘 준 비료 — 그날 밤 성장 처리에서 FertilizerBonus가 된다 (GDD 4-9 "다음 아침 수확 가능"). 작물이 사라지면 0.</summary>
+        public int PendingFertilizer { get; internal set; }
+
+        /// <summary>이 작물에 비료를 이미 줬는지 (작물당 1회).</summary>
+        public bool IsFertilized => FertilizerBonus > 0 || PendingFertilizer > 0;
 
         public bool HasCrop => CropId != null;
         public bool IsWet => WetDaysLeft > 0;

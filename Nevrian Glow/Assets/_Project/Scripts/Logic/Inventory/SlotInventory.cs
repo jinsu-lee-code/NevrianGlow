@@ -75,6 +75,28 @@ namespace NevrianGlowFarm.Logic.Inventory
                 slots.RemoveRange(slotCount, slots.Count - slotCount);
         }
 
+        /// <summary>
+        /// 칸 수와 내용을 통째로 정한다 (불러오기 6-1). 칸당 최대를 넘는 개수는 최대로 자르고, 그만큼 잘린 개수를 돌려준다.
+        /// </summary>
+        public int Load(IReadOnlyList<ItemStack> stacks)
+        {
+            int clipped = 0;
+            Resize(stacks != null ? stacks.Count : 0);
+            for (int i = 0; i < slots.Count; i++)
+            {
+                var s = stacks[i];
+                if (s.IsEmpty)
+                {
+                    slots[i] = ItemStack.Empty;
+                    continue;
+                }
+                int max = MaxStackOf(s.ItemId);
+                clipped += Math.Max(0, s.Count - max);
+                slots[i] = new ItemStack(s.ItemId, Math.Min(s.Count, max));
+            }
+            return clipped;
+        }
+
         // InventoryRules 전용: 검사 없이 칸을 바꾼다.
         internal void Set(int index, ItemStack stack) => slots[index] = stack;
     }

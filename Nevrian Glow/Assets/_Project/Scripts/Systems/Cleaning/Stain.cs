@@ -1,3 +1,4 @@
+using NevrianGlowFarm.Core;
 using NevrianGlowFarm.Data;
 using NevrianGlowFarm.Logic.Cleaning;
 using NevrianGlowFarm.Systems.Interaction;
@@ -43,7 +44,11 @@ namespace NevrianGlowFarm.Systems.Cleaning
             amount = (float)CleaningRules.Wipe(amount, wipeAmount);
             Refresh();
             if (IsClean)
+            {
                 gameObject.SetActive(false);
+                if (before > 0f)
+                    AudioManager.Play(SoundCues.StainClear, transform.position);
+            }
             return before - amount;
         }
 

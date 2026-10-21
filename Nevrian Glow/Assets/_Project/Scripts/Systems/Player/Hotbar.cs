@@ -87,14 +87,20 @@ namespace NevrianGlowFarm.Systems.Player
         public void Select(int index)
         {
             if (HotbarSelection.TrySelect(index, SlotCount, ref selectedIndex))
+            {
+                AudioManager.Play(SoundCues.UiToolSwitch);
                 SelectionChanged?.Invoke(selectedIndex);
+            }
         }
 
         /// <summary>한 칸 옮긴다 (양수 = 다음 칸). 끝에서는 반대쪽으로 돈다.</summary>
         public void Cycle(int step)
         {
             if (HotbarSelection.TryCycle(step, SlotCount, ref selectedIndex))
+            {
+                AudioManager.Play(SoundCues.UiToolSwitch);
                 SelectionChanged?.Invoke(selectedIndex);
+            }
         }
 
         /// <summary>인벤토리 전체(핫바 → 가방)에 넣을 자리가 있는지.</summary>
