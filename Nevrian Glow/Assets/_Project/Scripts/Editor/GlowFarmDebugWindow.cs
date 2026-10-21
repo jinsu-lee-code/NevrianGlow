@@ -86,7 +86,21 @@ namespace NevrianGlowFarm.Editor
             }
             if (!game.IsStarted)
             {
-                EditorGUILayout.HelpBox("구역 씬을 불러오는 중…", MessageType.None);
+                var title = UI.GameScreen.Current as UI.TitleScreen;
+                if (title == null)
+                {
+                    EditorGUILayout.HelpBox("구역 씬을 불러오는 중…", MessageType.None);
+                    return;
+                }
+                // 타이틀 화면 (5-6): 저장을 건드리지 않고 바로 시작하려면 GameManager의 '타이틀 기다림'을 끈다
+                EditorGUILayout.HelpBox("타이틀 화면 - 아래 버튼 또는 게임 화면에서 시작", MessageType.None);
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("새 게임"))
+                        title.NewGame();
+                    if (GUILayout.Button("이어하기"))
+                        title.ContinueGame();
+                }
                 return;
             }
 

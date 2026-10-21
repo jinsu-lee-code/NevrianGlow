@@ -8,7 +8,7 @@ namespace NevrianGlowFarm.Core
     /// <summary>
     /// 일차 · 하루 단계 · 달러 · SP를 가진다 (CLAUDE 핵심 규칙 2: 단계는 이 상태 머신 하나로).
     /// 규칙은 Logic의 DayCycle · Wallet, 이 컴포넌트는 알림(GameEvents)과 로그 연결만 한다.
-    /// 구역 씬이 모두 올라온 뒤(SceneBootstrapper.Ready) 1일차 상점 단계로 시작한다.
+    /// 구역 씬이 모두 올라온 뒤 타이틀 화면(5-6)이 새 게임 · 이어하기로 시작한다 (타이틀을 끄면 바로 1일차 상점 단계).
     /// </summary>
     [DefaultExecutionOrder(-100)]
     public class GameManager : MonoBehaviour, Logic.Shop.IUnlockContext
@@ -20,6 +20,10 @@ namespace NevrianGlowFarm.Core
         [SerializeField] private SceneBootstrapper bootstrapper;
         [Tooltip("경험치 · 레벨 규칙 (Data/Stats/Progression)")]
         [SerializeField] private ProgressionData progressionData;
+
+        [Header("조정값")]
+        [Tooltip("타이틀 화면(새 게임 · 이어하기)이 시작을 맡는다. 끄면 구역 씬이 올라오자마자 새 게임 (에디터 빠른 확인용)")]
+        [SerializeField] private bool waitForTitle = true;
 
         [Header("디버그")]
         [Tooltip("현재 일차 (읽기 전용)")]
@@ -81,9 +85,12 @@ namespace NevrianGlowFarm.Core
                 bootstrapper.Ready -= StartNewGame;
         }
 
+        /// <summary>타이틀 화면이 새 게임 · 이어하기를 기다리는지 (아니면 바로 새 게임).</summary>
+        public bool WaitsForTitle => waitForTitle;
+
         private void Start()
         {
-            if (!enabled)
+            if (!enabled || waitForTitle)
                 return;
             if (bootstrapper.IsReady)
                 StartNewGame();
@@ -91,7 +98,7 @@ namespace NevrianGlowFarm.Core
                 bootstrapper.Ready += StartNewGame;
         }
 
-        /// <summary>1일차 첫 단계 · 시작 자금으로 새 게임을 시작한다. (저장 불러오기는 6-1)</summary>
+        /// <summary>1일차 첫 단계 · 시작 자금으로 새 게임을 시작한다 (타이틀 '새 게임' · 이어하기 직전). 저장 불러오기는 SaveSystem.</summary>
         public void StartNewGame()
         {
             bootstrapper.Ready -= StartNewGame;
