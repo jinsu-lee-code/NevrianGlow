@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using NevrianGlowFarm.Logic;
 using NevrianGlowFarm.Logic.Sales;
 using NevrianGlowFarm.Logic.Shop;
@@ -6,11 +6,11 @@ using NUnit.Framework;
 
 namespace NevrianGlowFarm.Tests
 {
-    /// <summary>BALANCE 2-6 · 3-4 손님 수, 생성 시각, 재고 가중 구매, 재고 0 즉시 퇴장, 건너뛰기 = 실시간과 같은 결과.</summary>
+    /// <summary>생성 시각, 재고 가중 구매, 재고 0 즉시 퇴장, 건너뛰기 = 실시간과 같은 결과.</summary>
     public class SalesTests
     {
-        // BALANCE 2-6 기본값
-        private static readonly SalesSpec Spec = new SalesSpec(8, 2, 24, 0.6, 30, 0.8, 6, 1, 3);
+        // 장사 30초 · 생성 구간 0.8 · 동시 6명 · 1~3개
+        private static readonly SalesSpec Spec = new SalesSpec(30, 0.8, 6, 1, 3);
         private static readonly Dictionary<string, int> Prices = new Dictionary<string, int> { { "a", 15 }, { "b", 30 } };
         private static int PriceOf(string id) => Prices[id];
 
@@ -21,27 +21,6 @@ namespace NevrianGlowFarm.Tests
                 for (int i = 0; i < count; i++)
                     shelf.TryPlace(slot, id);
             return shelf;
-        }
-
-        [TestCase(1, 8), TestCase(2, 9), TestCase(3, 9), TestCase(4, 10), TestCase(5, 10), TestCase(6, 11)]
-        public void CustomerCount_Clean100_MatchesBalance34(int day, int expected)
-        {
-            Assert.AreEqual(expected, SalesRules.CustomerCount(day, 0, 1, Spec));
-        }
-
-        [TestCase(1, 5), TestCase(2, 5), TestCase(3, 5), TestCase(4, 6), TestCase(5, 6), TestCase(6, 7)]
-        public void CustomerCount_Clean0_IsTimes06(int day, int expected)
-        {
-            Assert.AreEqual(expected, SalesRules.CustomerCount(day, 0, 0, Spec));
-        }
-
-        [Test]
-        public void CustomerCount_CapAndBonusAndHalfRoundsUp()
-        {
-            Assert.AreEqual(24, SalesRules.CustomerCount(100, 0, 1, Spec), "상한 24 (보너스 · 청결 전)");
-            Assert.AreEqual(12, SalesRules.CustomerCount(4, 0.2, 1, Spec), "10 × 1.2");
-            Assert.AreEqual(9, SalesRules.CustomerCount(1, 0.0625, 1, Spec), "8 × 1.0625 = 8.5 → 9 (짝수 반올림 아님)");
-            Assert.AreEqual(9, SalesRules.CustomerCount(2, 0, 2, Spec), "청결도 1 초과는 1로");
         }
 
         [Test]
@@ -93,7 +72,7 @@ namespace NevrianGlowFarm.Tests
                 Assert.AreEqual(8 - count, shelves[0].TotalCount);
             }
             var one = new List<ShelfState> { Shelf((2, "a", 1)) };
-            var basket = SalesRules.FillBasket(one, new SeededRandom(3), new SalesSpec(8, 2, 24, 0.6, 30, 0.8, 6, 3, 3));
+            var basket = SalesRules.FillBasket(one, new SeededRandom(3), new SalesSpec(30, 0.8, 6, 3, 3));
             CollectionAssert.AreEqual(new[] { "a" }, basket, "3개 원해도 1개뿐이면 1개");
         }
 
@@ -180,7 +159,7 @@ namespace NevrianGlowFarm.Tests
         {
             var shelves = new List<ShelfState> { Shelf((0, "a", 2)) };
             var taken = new List<(int, int)>();
-            var basket = SalesRules.FillBasket(shelves, new SeededRandom(1), new SalesSpec(8, 2, 24, 0.6, 30, 0.8, 6, 2, 2),
+            var basket = SalesRules.FillBasket(shelves, new SeededRandom(1), new SalesSpec(30, 0.8, 6, 2, 2),
                 (s, slot) => { taken.Add((s, slot)); return shelves[s].TakeOne(slot); });
             Assert.AreEqual(2, basket.Count);
             CollectionAssert.AreEqual(new[] { (0, 0), (0, 0) }, taken);

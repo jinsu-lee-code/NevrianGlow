@@ -21,7 +21,7 @@ MonoBehaviour:
   baseSeed: 20261011
   days: 6
   cleanliness: 0.9
-  customerBonus: 0
+  tidiness: 1
   plotBeforeSeeds: 1
   skillPriority:
   - skillId: skill_unlock_mushroom

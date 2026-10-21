@@ -86,6 +86,7 @@ namespace NevrianGlowFarm.Logic.Simulation
             var seeds = new Dictionary<string, int>(config.StartSeeds);
             var storage = new Dictionary<string, int>(config.StartCrops);
             var run = new SimRun { Seed = seed };
+            var customers = new CustomerModel();
             Func<string, int> priceOf = id => crops.TryGetValue(id, out var c) ? c.SellPrice : 0;
 
             for (int day = 1; day <= config.Days; day++)
@@ -159,11 +160,13 @@ namespace NevrianGlowFarm.Logic.Simulation
                         while (storage.TryGetValue(c.Id, out int n) && n > 0 && shelf.TryPlace(slot, c.Id))
                             storage[c.Id] = n - 1;
 
-                // ── 장사 (청결도 고정 · 건너뛰기와 같은 함수) ──
-                int customers = SalesRules.CustomerCount(day, config.CustomerBonus, config.Cleanliness, config.Sales);
-                var session = new SalesSession(customers, config.Sales);
+                // ── 장사 (입소문 손님 모델 · 청결도 고정 · 건너뛰기와 같은 함수) ──
+                var countRandom = new SeededRandom(SeededRandom.SeedFor(seed, DaySimConfig.CountPurpose, day));
+                int count = customers.TodayCount(day, config.Cleanliness, config.FurnitureSpots, countRandom.NextDouble(), config.CustomerModel);
+                var session = new SalesSession(count, config.Sales, day <= 1 ? config.CustomerModel.Day1FirstBuy : 0);
                 var random = new SeededRandom(SeededRandom.SeedFor(seed, DaySimConfig.PurchasePurpose, day));
                 session.SkipRemaining(shelves, random, priceOf);
+                customers.RecordSales(config.Cleanliness, config.Tidiness, session.Total, session.Buyers, config.CustomerModel);
                 wallet.TryChangeMoney(session.Revenue);
                 row.Customers = session.Total;
                 row.ItemsSold = session.ItemsSold;
@@ -186,6 +189,7 @@ namespace NevrianGlowFarm.Logic.Simulation
 
                 // ── 밤 ──
                 night.Run(farm);
+                customers.AdvanceNight(day + 1, config.AdRate, config.CustomerModel);
             }
             return run;
         }

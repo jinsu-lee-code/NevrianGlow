@@ -310,10 +310,7 @@ namespace NevrianGlowFarm.Editor
             // BALANCE 2-6
             Ensure<SalesSettingsData>($"{StatsFolder}/SalesSettings.asset", resetExisting, report, so =>
             {
-                so.FindProperty("baseCustomers").intValue = 8;
-                so.FindProperty("customerDayDivisor").intValue = 2;
-                so.FindProperty("customerCap").intValue = 24;
-                so.FindProperty("dirtyCustomerMultiplier").floatValue = 0.6f;
+                // 손님 수(입소문 모델) 값은 기획 CSV 가져오기가 넣는다 (P-2)
                 so.FindProperty("salesDuration").floatValue = 30f;
                 so.FindProperty("spawnWindow").floatValue = 0.8f;
                 so.FindProperty("maxConcurrentCustomers").intValue = 6;
@@ -480,7 +477,7 @@ namespace NevrianGlowFarm.Editor
                 so.FindProperty("baseSeed").intValue = 20261011;
                 so.FindProperty("days").intValue = 6;
                 so.FindProperty("cleanliness").floatValue = 0.9f;
-                so.FindProperty("customerBonus").floatValue = 0f;
+                so.FindProperty("tidiness").floatValue = 1f;
 
                 // 작물 해금 순서 (기획 확정 2026-10-21: P0 스킬 = 버섯꽃 3 · 등불 6 SP, 고품질 스킬 폐기)
                 var skills = so.FindProperty("skillPriority");
@@ -589,6 +586,8 @@ namespace NevrianGlowFarm.Editor
             ("stat_grow_days", "성장일", "작물 첫 성장일에 더한다 (최소 1일)"),
             ("stat_hotbar_slots", "핫바 칸", "처음 핫바 칸 수에 더한다 (최대 칸 수까지)"),
             ("stat_customer_bonus", "손님 수 보너스", "손님 수 공식의 보너스 합 (0.1 = +10%)"),
+            ("stat_customer_ad_rate", "광고 계수", "입소문 모델 광고 계수 p — 기본값(SalesSettings)에 더한다 (간판, P-2)"),
+            ("stat_extra_buy_chance", "1개 더 살 확률", "손님마다 1개 더 살 확률 (0.1 = 10%, 단골의 장바구니, P-2)"),
         };
 
         private readonly struct SkillRow

@@ -62,6 +62,12 @@ namespace NevrianGlowFarm.Logic.Save
         public Dictionary<string, int> ShopFirstOpen { get; } = new Dictionary<string, int>();
         public int ShopSpentToday { get; set; }
 
+        /// <summary>입소문 손님 모델 (P-2): 단골 수 · 오늘 새 단골 · 어제 만족도. 없던 예전 파일이면 false.</summary>
+        public bool HasCustomerModel { get; set; }
+        public double CustomerRegulars { get; set; }
+        public double CustomerNewToday { get; set; }
+        public double CustomerSatisfaction { get; set; } = 1.0;
+
         public List<WorldItemSave> WorldItems { get; } = new List<WorldItemSave>();
     }
 

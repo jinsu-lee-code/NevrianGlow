@@ -701,6 +701,31 @@ namespace NevrianGlowFarm.Editor
                     so.FindProperty("purchaseMax").intValue = Mathf.Max(1, buyMax);
                 if (CsvValue.TryFloat(V("sale_duration"), out float duration))
                     so.FindProperty("salesDuration").floatValue = Mathf.Max(1f, duration);
+                if (CsvValue.TryInt(V("buy_extra_max"), out int extraMax))
+                    so.FindProperty("purchaseExtraMax").intValue = Mathf.Max(1, extraMax);
+
+                // 입소문 손님 모델 (P-2, 손님수 설정안)
+                void Int(string key, string field) { if (CsvValue.TryInt(V(key), out int v)) so.FindProperty(field).intValue = v; }
+                void Float(string key, string field) { if (CsvValue.TryFloat(V(key), out float v)) so.FindProperty(field).floatValue = v; }
+                Int("day1_customers", "day1Customers");
+                Int("day1_first_buy", "day1FirstBuy");
+                Int("customer_regulars_after_day1", "regularsAfterDay1");
+                Int("customer_market_size", "marketSize");
+                Float("customer_ad_rate", "adRate");
+                Float("customer_wom_rate", "wordOfMouth");
+                Float("customer_churn", "churn");
+                Float("customer_visit_prob", "visitChance");
+                Int("market_day_interval", "marketDayInterval");
+                Float("market_day_mult", "marketDayMultiplier");
+                Int("customer_cap_per_spot", "capPerSpot");
+                Float("same_day_clean_min", "sameDayCleanMin");
+                Float("satisfaction_w_clean", "satisfactionClean");
+                Float("satisfaction_w_tidy", "satisfactionTidy");
+                Float("satisfaction_w_success", "satisfactionSuccess");
+                Float("customer_random", "customerRandom");
+                // 가구 자리 = 과일 진열대 자리 + 일반 진열대 자리 (진열 가구 P-4 전까지 손님 상한에만 씀)
+                if (CsvValue.TryInt(V("store_spots_fruit"), out int fruitSpots) && CsvValue.TryInt(V("store_spots_shelf"), out int shelfSpots))
+                    so.FindProperty("furnitureSpots").intValue = fruitSpots + shelfSpots;
                 Apply(so, sales, "설정 SalesSettings", report);
             }
 

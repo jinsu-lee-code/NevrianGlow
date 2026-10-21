@@ -83,7 +83,10 @@ namespace NevrianGlowFarm.Editor
                 Sales = settings.Sales.ToSpec(),
                 Curve = settings.Progression.ToCurve(),
                 Cleanliness = settings.Cleanliness,
-                CustomerBonus = settings.CustomerBonus,
+                CustomerModel = settings.Sales.ToCustomerSpec(),
+                AdRate = settings.Sales.AdRate,
+                FurnitureSpots = settings.Sales.FurnitureSpots,
+                Tidiness = settings.Tidiness,
                 PlotBeforeSeeds = settings.PlotBeforeSeeds,
             };
 

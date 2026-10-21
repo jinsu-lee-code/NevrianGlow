@@ -96,8 +96,8 @@ namespace NevrianGlowFarm.Data
         [SerializeField, Min(1)] private int days = 6;
         [Tooltip("장사 시작 때 청결도 — BALANCE 4번 3: 혼자 다 못 치운 10% 남김 (0~1)")]
         [SerializeField, Range(0f, 1f)] private float cleanliness = 0.9f;
-        [Tooltip("손님 수 보너스 합 — 스킬 · 매장 효과(4-3) 전에는 0 (배)")]
-        [SerializeField, Min(0f)] private float customerBonus;
+        [Tooltip("정돈도 가정 — 만족도에 들어감. 가게 정리(P-3) 전에는 1 (0~1)")]
+        [SerializeField, Range(0f, 1f)] private float tidiness = 1f;
         [Tooltip("켜면 구획 살 돈이 있으면 구획 먼저(BALANCE 4번 1), 끄면 씨앗을 먼저 사고 남은 돈으로 구획")]
         [SerializeField] private bool plotBeforeSeeds = true;
         [Tooltip("SP를 쓰는 순서 (BALANCE 4번 5: 작물 해금 → 고품질). 앞 스킬을 다 배울 때까지 뒤는 아껴 둔다")]
@@ -114,7 +114,7 @@ namespace NevrianGlowFarm.Data
         public int BaseSeed => baseSeed;
         public int Days => days;
         public float Cleanliness => cleanliness;
-        public float CustomerBonus => customerBonus;
+        public float Tidiness => tidiness;
         public bool PlotBeforeSeeds => plotBeforeSeeds;
         public IReadOnlyList<SkillEntry> SkillPriority => skillPriority;
         public IReadOnlyList<GoalEntry> Goals => goals;

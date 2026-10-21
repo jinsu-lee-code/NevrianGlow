@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using NevrianGlowFarm.Core;
 using NevrianGlowFarm.Data;
@@ -54,6 +54,7 @@ namespace NevrianGlowFarm.Systems.Sales
     {
         private const int PurchasePurpose = 2; // 손님 구매용 난수 흐름 (청소 배치 = 3)
         private const int CustomerPurpose = 5; // 손님 종류 · 서는 자리용 난수 흐름
+        private const int CountPurpose = 6;    // 오늘 손님 수 ± 무작위 (입소문 모델)
 
         [Header("참조")]
         [Tooltip("손님 수 · 시간 · 동작 (Data/Stats/SalesSettings)")]
@@ -76,8 +77,10 @@ namespace NevrianGlowFarm.Systems.Sales
         [SerializeField] private InputActionReference skipAction;
         [Tooltip("판매가 능력치 — 작물 판매가에 곱함 (Data/Stats/stat_sell_price, 비우면 그대로)")]
         [SerializeField] private StatData sellPriceStat;
-        [Tooltip("손님 수 보너스 능력치 — 손님 수 공식의 보너스 합 (Data/Stats/stat_customer_bonus, 비우면 0)")]
-        [SerializeField] private StatData customerBonusStat;
+        [Tooltip("광고 계수 p 능력치 — 기본값(SalesSettings)에 간판 스킬이 더함 (Data/Stats/stat_customer_ad_rate, 비우면 기본값)")]
+        [SerializeField] private StatData adRateStat;
+        [Tooltip("손님마다 1개 더 살 확률 능력치 — 단골의 장바구니 (Data/Stats/stat_extra_buy_chance, 비우면 0)")]
+        [SerializeField] private StatData extraBuyStat;
 
         [Header("조정값")]
         [Tooltip("진열대 앞에서 손님이 흩어 서는 폭 (m)")]
@@ -102,7 +105,9 @@ namespace NevrianGlowFarm.Systems.Sales
         [SerializeField] private List<string> customerView = new List<string>();
 
         private static SalesSystem instance;
+        private readonly CustomerModel model = new CustomerModel();
         private SalesSession session;
+        private double todayCleanliness = 1.0;
         private readonly CheckoutLine line = new CheckoutLine();
         private readonly List<CustomerAI> customers = new List<CustomerAI>();
         private readonly List<CustomerData> types = new List<CustomerData>();
@@ -122,6 +127,12 @@ namespace NevrianGlowFarm.Systems.Sales
         public SalesResult? LastResult => lastResult;
         public float Elapsed => elapsed;
         public IReadOnlyList<CustomerAI> Customers => customers;
+        /// <summary>입소문 손님 모델 (단골 수 · 새 단골 · 어제 만족도).</summary>
+        public CustomerModel Model => model;
+        public SalesSettingsData Settings => settings;
+
+        /// <summary>광고 계수 p = 기본값 + 간판 스킬.</summary>
+        public double AdRate => StatSystem.Apply(adRateStat, (double)settings.AdRate);
 
         /// <summary>장사가 끝났을 때 (정산 화면 3-3).</summary>
         public event Action<SalesResult> Finished;
@@ -146,14 +157,32 @@ namespace NevrianGlowFarm.Systems.Sales
         private void OnEnable()
         {
             GameEvents.PhaseChanged += OnPhaseChanged;
+            GameEvents.DayChanged += OnDayChanged;
             if (skipAction != null)
                 skipAction.action.Enable();
         }
 
-        private void OnDisable() => GameEvents.PhaseChanged -= OnPhaseChanged;
+        private void OnDisable()
+        {
+            GameEvents.PhaseChanged -= OnPhaseChanged;
+            GameEvents.DayChanged -= OnDayChanged;
+        }
+
+        // 새 게임(1일차 알림)이면 모델을 처음으로. 불러오기는 이 다음 LoadFrom이 덮는다.
+        private void OnDayChanged(int day)
+        {
+            if (day <= 1)
+                model.Reset();
+        }
 
         private void OnPhaseChanged(PhaseChange change)
         {
+            // 밤 처리: 다음 날 새 단골 · 단골 수 (손님수 설정안 2)
+            if (change.DayChanged)
+            {
+                model.AdvanceNight(change.Day, AdRate, settings.ToCustomerSpec());
+                Debug.Log($"[SalesSystem] {change.Day}일차 손님 모델: 단골 {model.Regulars:0.0} · 새 단골 {model.NewToday:0.0} · 어제 만족도 {model.Satisfaction:P0} → 기대 {model.Expected(change.Day, settings.ToCustomerSpec()):0.0}명");
+            }
             if (change.Phase == DayPhase.Sales && change.PreviousPhase != DayPhase.Sales)
                 Begin(change.Day);
             else if (running && change.Phase != DayPhase.Sales)
@@ -167,11 +196,14 @@ namespace NevrianGlowFarm.Systems.Sales
             ClearCustomers();
             day = today;
             var spec = settings.ToSpec();
-            // 청결도는 장사 시작 때 확정 (CleaningSystem도 같은 순간 같은 값으로 고정한다). 보너스 합 = 스킬 효과 (StatSystem 4-3).
+            var customerSpec = settings.ToCustomerSpec();
+            // 청결도는 장사 시작 때 확정 (CleaningSystem도 같은 순간 같은 값으로 고정한다) → 당일 청결 반응 · 오늘 만족도
             double clean = CleaningSystem.Instance != null ? CleaningSystem.Instance.CurrentCleanliness() : 1.0;
-            double bonus = StatSystem.Apply(customerBonusStat, 0.0);
-            int count = SalesRules.CustomerCount(today, bonus, clean, spec);
-            session = new SalesSession(count, spec);
+            todayCleanliness = clean;
+            var countRandom = new SeededRandom(SeededRandom.SeedFor(seed, CountPurpose, today));
+            int count = model.TodayCount(today, clean, settings.FurnitureSpots, countRandom.NextDouble(), customerSpec);
+            double extra = StatSystem.Apply(extraBuyStat, 0.0); // 단골의 장바구니
+            session = new SalesSession(count, spec, today <= 1 ? settings.Day1FirstBuy : 0, extra, settings.PurchaseExtraMax);
             purchaseRandom = new SeededRandom(SeededRandom.SeedFor(seed, PurchasePurpose, today));
             customerRandom = new SeededRandom(SeededRandom.SeedFor(seed, CustomerPurpose, today));
             CollectTypes(today);
@@ -180,7 +212,7 @@ namespace NevrianGlowFarm.Systems.Sales
             spawnedNumber = 0;
             lastResult = null;
             running = true;
-            Debug.Log($"[SalesSystem] {today}일차 장사 시작: 손님 {count}명 (청결도 {clean:P0} · 보너스 {bonus:P0}) · 진열 {DisplayedCount()}개");
+            Debug.Log($"[SalesSystem] {today}일차 장사 시작: 손님 {count}명 (기대 {model.Expected(today, customerSpec):0.0} · 청결도 {clean:P0} · 단골 {model.Regulars:0.0}) · 진열 {DisplayedCount()}개");
             UpdateDebugView();
         }
 
@@ -242,7 +274,9 @@ namespace NevrianGlowFarm.Systems.Sales
             var gain = GameManager.Instance != null && session.Revenue > 0 ? GameManager.Instance.AddRevenueExp(session.Revenue) : default;
             var result = new SalesResult(day, session, skipped, gain);
             lastResult = result;
-            Debug.Log($"[SalesSystem] {day}일차 장사 끝{(skipped ? " (건너뛰기)" : "")}: 손님 {result.Customers}명 (구매 {result.Buyers} · 빈손 {result.EmptyHanded}) · 판매 {result.ItemsSold}개 · 매출 {result.Revenue}달러");
+            // 오늘 만족도 → 다음 밤 입소문 · 이탈. 정돈도는 가게 정리(P-3) 전까지 1 (흐트러짐이 아직 없음)
+            model.RecordSales(todayCleanliness, 1.0, session.Total, session.Buyers, settings.ToCustomerSpec());
+            Debug.Log($"[SalesSystem] {day}일차 장사 끝{(skipped ? " (건너뛰기)" : "")}: 손님 {result.Customers}명 (구매 {result.Buyers} · 빈손 {result.EmptyHanded}) · 판매 {result.ItemsSold}개 · 매출 {result.Revenue}달러 · 만족도 {model.Satisfaction:P0}");
             UpdateDebugView();
             Finished?.Invoke(result);
             if (advancePhase && GameManager.Instance != null && GameManager.Instance.Phase == DayPhase.Sales)
@@ -298,6 +332,28 @@ namespace NevrianGlowFarm.Systems.Sales
                 shelfStates.Add(s != null ? s.State : new ShelfState(0, 1));
         }
 
+        // ── 저장 (6-1) ──
+
+        public void CaptureTo(Logic.Save.SaveSnapshot into)
+        {
+            into.HasCustomerModel = true;
+            into.CustomerRegulars = model.Regulars;
+            into.CustomerNewToday = model.NewToday;
+            into.CustomerSatisfaction = model.Satisfaction;
+        }
+
+        /// <summary>손님 모델을 되돌린다. 손님 모델이 없던 예전 저장이면 1일차부터 만족도 100%로 다시 계산한 값.</summary>
+        public void LoadFrom(Logic.Save.SaveSnapshot from)
+        {
+            if (from.HasCustomerModel)
+                model.Load(from.Day, from.CustomerRegulars, from.CustomerNewToday, from.CustomerSatisfaction);
+            else
+            {
+                model.Reset();
+                model.AdvanceNight(from.Day, AdRate, settings.ToCustomerSpec());
+            }
+        }
+
         /// <summary>불러오기 (6-1): 진행 중인 장사를 계산 없이 멈추고 손님을 지운다 (불러온 상태에 매출이 더해지지 않게).</summary>
         public void CancelForLoad()
         {
@@ -343,7 +399,7 @@ namespace NevrianGlowFarm.Systems.Sales
         /// <summary>진열대에서 장바구니를 채운다 (재고 비례 무작위 · 1~3개 · 마지막에 놓은 것부터).</summary>
         public List<CropData> FillBasket()
         {
-            var ids = SalesRules.FillBasket(shelfStates, purchaseRandom, session.Spec, TakeForSaleId);
+            var ids = SalesRules.FillBasket(shelfStates, purchaseRandom, session.NextWanted(purchaseRandom), TakeForSaleId);
             var crops = new List<CropData>(ids.Count);
             foreach (var id in ids)
                 crops.Add(database.Get<CropData>(id));

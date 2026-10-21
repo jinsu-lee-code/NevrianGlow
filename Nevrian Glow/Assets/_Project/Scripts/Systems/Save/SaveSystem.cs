@@ -107,6 +107,8 @@ namespace NevrianGlowFarm.Systems.Save
                 s.Shelves.Add(SaveState.Capture(shelf.State));
             if (ShopSystem.Instance != null)
                 ShopSystem.Instance.CaptureTo(s);
+            if (SalesSystem.Instance != null)
+                SalesSystem.Instance.CaptureTo(s);
             foreach (var w in WorldItem.All)
             {
                 if (w == null || string.IsNullOrEmpty(w.ItemId) || w.Count <= 0)
@@ -260,6 +262,8 @@ namespace NevrianGlowFarm.Systems.Save
                     shelves[i].LoadSlots(s.Shelves[i]);
             if (ShopSystem.Instance != null)
                 ShopSystem.Instance.LoadFrom(s);
+            if (SalesSystem.Instance != null)
+                SalesSystem.Instance.LoadFrom(s);
             foreach (var w in s.WorldItems)
                 SpawnWorldItem(w);
 

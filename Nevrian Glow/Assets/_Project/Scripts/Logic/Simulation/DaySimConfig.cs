@@ -80,8 +80,16 @@ namespace NevrianGlowFarm.Logic.Simulation
         public LevelCurve Curve { get; set; }
         /// <summary>장사 시작 때 청결도 (BALANCE 4번 3: 0.9).</summary>
         public double Cleanliness { get; set; } = 0.9;
-        /// <summary>손님 수 보너스 합 (스킬 · 매장 효과 4-3 전에는 0).</summary>
-        public double CustomerBonus { get; set; }
+        /// <summary>입소문 손님 모델 값 (게임과 같은 CustomerModel, P-2).</summary>
+        public CustomerModelSpec CustomerModel { get; set; }
+        /// <summary>광고 계수 p (봇은 간판을 배우지 않으면 기본값).</summary>
+        public double AdRate { get; set; } = 0.02;
+        /// <summary>가구 자리 (손님 상한 = 자리 × 3).</summary>
+        public int FurnitureSpots { get; set; } = 8;
+        /// <summary>정돈도 가정 (가게 정리 P-3 전에는 1).</summary>
+        public double Tidiness { get; set; } = 1.0;
+        /// <summary>손님 수 ± 무작위 용도 번호 — 게임(SalesSystem)과 같은 규칙: SeedFor(시드, 6, 일차).</summary>
+        public const int CountPurpose = 6;
         /// <summary>SP를 쓰는 순서 — 앞 스킬을 다 배울 때까지 뒤 스킬은 기다린다(아껴 둠).</summary>
         public List<SimSkill> SkillPriority { get; set; } = new List<SimSkill>();
         public List<SimGoal> Goals { get; set; } = new List<SimGoal>();

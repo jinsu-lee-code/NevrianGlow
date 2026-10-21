@@ -68,9 +68,9 @@ P0 = 버섯꽃 · 등불 해금. 나머지 데모 스킬은 P1 — 효과가 연
 | 스킬 | skill_seed_stock | skill_seed_stock | 숨김 | | 씨앗 입고 단계(seed_stock_level) 연결 전 |
 | 스킬 | skill_unlock_sprinkler | skill_unlock_sprinkler | 숨김 | | 스프링클러 대기 |
 | 스킬 | skill_clean_keep | skill_clean_keep | 숨김 | | mess_rate — 가게 정리 시스템 대기 |
-| 스킬 | skill_signboard | skill_signboard | 숨김 | | customer_ad_rate — 입소문 손님 모델 대기 |
+| 스킬 | skill_signboard | skill_signboard | 연결 | | 광고 계수 p (입소문 손님 모델 P-2에서 연결) |
 | 스킬 | skill_trash_compact | skill_trash_compact | 숨김 | | 아이템별 칸당 개수(stack_size) 연결 전 |
-| 스킬 | skill_regular_basket | skill_regular_basket | 숨김 | | extra_buy_chance — 입소문 손님 모델과 함께 |
+| 스킬 | skill_regular_basket | skill_regular_basket | 연결 | | 손님마다 1개 더 살 확률 (P-2에서 연결) |
 | 스킬 | skill_light_steps | skill_light_steps | 숨김 | | move_speed 연결 전 |
 | 스킬 | skill_fertile | skill_fertile | 숨김 | | 기획은 2차(재수확 −1) — 개발 임시 효과(성장일 −1)와 다름 |
 | 스킬 | - | skill_quality | 개발만 | | 고품질 작물 (개발 임시) → 기획 '신선 작물 프리미엄'으로 대체 |
@@ -83,12 +83,12 @@ P0 = 버섯꽃 · 등불 해금. 나머지 데모 스킬은 P1 — 효과가 연
 | 능력치 | seed_stock_level | - | 없음 | | |
 | 능력치 | giant_chance | - | 없음 | | |
 | 능력치 | mess_rate | - | 없음 | | |
-| 능력치 | customer_ad_rate | - | 없음 | | |
-| 능력치 | extra_buy_chance | - | 없음 | | 회신3 2-3 (purchase_count에서 이름 바뀜) |
+| 능력치 | customer_ad_rate | stat_customer_ad_rate | 연결 | | 기본값 = SalesSettings 광고 계수(0.02)에 더함 |
+| 능력치 | extra_buy_chance | stat_extra_buy_chance | 연결 | | 회신3 2-3 (purchase_count에서 이름 바뀜), 기본 0 |
 | 능력치 | stack_size | - | 없음 | | |
 | 능력치 | move_speed | - | 없음 | | |
 | 능력치 | - | stat_grow_days | 개발만 | | 쓰는 스킬 없음 (밭은 계속 읽음) |
-| 능력치 | - | stat_customer_bonus | 개발만 | | 쓰는 스킬 없음 (입소문 모델에서 정리) |
+| 능력치 | - | stat_customer_bonus | 개발만 | | 쓰는 곳 없음 (예전 손님 수 공식 — P-2에서 입소문 모델로 바뀜) |
 
 ## 설정 (game_settings.csv) — 어디로 들어가는지
 가져오기 코드가 키마다 처리한다 (이 표는 설명용, 상태만 보고에 쓴다).
@@ -108,6 +108,6 @@ P0 = 버섯꽃 · 등불 해금. 나머지 데모 스킬은 P1 — 효과가 연
 | 설정 | buy_max | SalesSettings.purchaseMax | 연결 | | |
 | 설정 | sale_duration | SalesSettings.salesDuration | 연결 | | |
 | 설정 | start_fruit_shelves | - | 없음 | | 진열 가구 시스템 대기 (store_* · trash_bin_location 포함, 10/20 추가) |
-| 설정 | day1_customers | - | 없음 | | 입소문 손님 모델 대기 (아래 customer_* · satisfaction_* · market_day_* 모두) |
+| 설정 | day1_customers | SalesSettings (손님 수 — 입소문 모델) | 연결 | | P-2: day1_* · customer_* · satisfaction_* · market_day_* · same_day_clean_min · buy_extra_max · store_spots_fruit + store_spots_shelf(가구 자리) 모두 |
 | 설정 | trash_day1 | - | 없음 | | 가게 정리 시스템 대기 (trash_* · stain_* · scatter_* · disorder_* 모두) |
 | 설정 | grade_s_min | - | 없음 | | 정산 등급 표시 대기 (grade_*) |
