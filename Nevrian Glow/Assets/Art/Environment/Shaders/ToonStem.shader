@@ -18,6 +18,12 @@ Shader "DSEWA/ToonStem"
         [Header(Paint Detail)]
         _PaintMap ("Paint Detail (linear grey, 0.5 = none)", 2D) = "grey" {}
         _PaintStrength ("Paint Strength (0 = off)", Range(0, 2)) = 0
+        [Header(Glow Lines)]
+        _GlowMap ("Glow Lines (stem uv, r = line)", 2D) = "black" {}
+        [HDR] _GlowColor ("Glow Color", Color) = (0.55, 0.75, 1.0, 1)
+        _GlowStrength ("Glow Strength (0 = off)", Range(0, 4)) = 0
+        _GlowFlowSpeed ("Glow Flow Speed (pulses up the stem)", Float) = 0.35
+        _GlowFlowAmount ("Glow Flow Amount", Range(0, 1)) = 0.45
         [Header(Length Gradient)]
         _BaseTint ("Base Tint (multiply at uv.y 0)", Color) = (0.55, 0.50, 0.80, 1)
         _GradientEnd ("Gradient End (uv.y)", Range(0.01, 1)) = 0.35
@@ -49,6 +55,7 @@ Shader "DSEWA/ToonStem"
         CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST, _PaintMap_ST;
             half _PaintStrength;
+            float4 _GlowMap_ST; half4 _GlowColor; half _GlowStrength, _GlowFlowSpeed, _GlowFlowAmount;
             half4 _LitColor, _ShadowColor;
             half _Threshold, _Softness, _ShadowBlur, _AmbientShade, _ShadowFormLift, _LightColorAmount;
             half4 _BaseTint, _TipTint;
@@ -86,6 +93,7 @@ Shader "DSEWA/ToonStem"
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
             TEXTURE2D(_PaintMap); SAMPLER(sampler_PaintMap);
+            TEXTURE2D(_GlowMap); SAMPLER(sampler_GlowMap);
 
             struct Attributes
             {
@@ -150,6 +158,10 @@ Shader "DSEWA/ToonStem"
                 float facing = 1.0 - abs(dot(N, V));
                 color += _RimColor.rgb * smoothstep(_RimMin, _RimMax, facing) * _RimStrength * lerp(_RimInShadow, 1, lit);
                 color *= lerp(half3(1, 1, 1), light.color, _LightColorAmount);
+                // Glow lines: thin light streaks along the stem; a soft pulse travels from the root to the tips
+                half glow = SAMPLE_TEXTURE2D(_GlowMap, sampler_GlowMap, i.uv * _GlowMap_ST.xy + _GlowMap_ST.zw).r;
+                half flow = 1.0 - _GlowFlowAmount * (0.5 + 0.5 * sin((i.uv.y * 3.0 - _Time.y * _GlowFlowSpeed) * 6.2831853));
+                color += _GlowColor.rgb * glow * flow * _GlowStrength;
                 color = MixFog(color, i.fogFactor);
                 return half4(color, 1);
             }
