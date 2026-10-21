@@ -24,6 +24,7 @@ MonoBehaviour:
   cleanliness: 0.9
   tidiness: 1
   plotBeforeSeeds: 1
+  firstDayCells: 4
   skillPriority:
   - skill: {fileID: 11400000, guid: 6542501caa98a784bb5f40c1601e6680, type: 2}
   - skill: {fileID: 11400000, guid: c526e280f4c041244965afb5d4dc514e, type: 2}

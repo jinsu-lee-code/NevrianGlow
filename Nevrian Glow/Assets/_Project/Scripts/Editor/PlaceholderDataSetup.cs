@@ -488,6 +488,7 @@ namespace NevrianGlowFarm.Editor
                 so.FindProperty("days").intValue = 6;
                 so.FindProperty("cleanliness").floatValue = 0.9f;
                 so.FindProperty("tidiness").floatValue = 1f;
+                so.FindProperty("firstDayCells").intValue = 4; // 결정 (2026-10-21, 사용자): 1일차는 튜토리얼대로 4칸
 
                 so.FindProperty("cleaning").objectReferenceValue = AssetDatabase.LoadAssetAtPath<CleaningSettingsData>($"{StatsFolder}/CleaningSettings.asset");
 
