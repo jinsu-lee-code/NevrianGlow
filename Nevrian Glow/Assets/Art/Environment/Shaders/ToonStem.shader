@@ -15,6 +15,9 @@ Shader "DSEWA/ToonStem"
         _AmbientShade ("Ambient Shade", Range(0, 1)) = 0.105
         _ShadowFormLift ("Lit Side Lift In Shadow", Range(0, 1)) = 0.45
         _LightColorAmount ("Light Color Influence", Range(0, 1)) = 0
+        [Header(Paint Detail)]
+        _PaintMap ("Paint Detail (linear grey, 0.5 = none)", 2D) = "grey" {}
+        _PaintStrength ("Paint Strength (0 = off)", Range(0, 2)) = 0
         [Header(Length Gradient)]
         _BaseTint ("Base Tint (multiply at uv.y 0)", Color) = (0.55, 0.50, 0.80, 1)
         _GradientEnd ("Gradient End (uv.y)", Range(0.01, 1)) = 0.35
@@ -44,7 +47,8 @@ Shader "DSEWA/ToonStem"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
         CBUFFER_START(UnityPerMaterial)
-            float4 _BaseMap_ST;
+            float4 _BaseMap_ST, _PaintMap_ST;
+            half _PaintStrength;
             half4 _LitColor, _ShadowColor;
             half _Threshold, _Softness, _ShadowBlur, _AmbientShade, _ShadowFormLift, _LightColorAmount;
             half4 _BaseTint, _TipTint;
@@ -81,6 +85,7 @@ Shader "DSEWA/ToonStem"
             #include "Assets/Art/Environment/Shaders/ToonShadow.hlsl"
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
+            TEXTURE2D(_PaintMap); SAMPLER(sampler_PaintMap);
 
             struct Attributes
             {
@@ -136,6 +141,9 @@ Shader "DSEWA/ToonStem"
                 // Length gradient: darker, duller base; a touch lighter toward the tips.
                 color *= lerp(_BaseTint.rgb, half3(1, 1, 1), smoothstep(0.0, _GradientEnd, i.uv.y));
                 color *= lerp(half3(1, 1, 1), _TipTint.rgb, smoothstep(_TipStart, 1.0, i.uv.y));
+                // Hand-painted detail (bark strokes): grey 0.5 leaves the colour alone
+                half3 paint = SAMPLE_TEXTURE2D(_PaintMap, sampler_PaintMap, i.uv * _PaintMap_ST.xy + _PaintMap_ST.zw).rgb;
+                color *= lerp(half3(1, 1, 1), paint * 2.0h, _PaintStrength);
                 // Ridge shading on the colour as well (flat multiply, so it shows in the shadow side too)
                 color *= 1.0 - (1.0 - ridge) * _RidgeAmount;
 
