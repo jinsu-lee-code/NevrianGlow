@@ -29,7 +29,7 @@ MonoBehaviour:
   cellsPerPlot: 16
   tillWorkRequired: 3
   cellPitch: 2
-  bedPitch: 5.6
-  plotPitch: 11.2
-  plotExpandDirection: {x: -1, y: 0, z: 0}
+  bedPitch: 4
+  plotPitch: 8
+  plotExpandDirection: {x: 0, y: 0, z: -1}
   demoLastDay: 6

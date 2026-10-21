@@ -277,9 +277,10 @@ namespace NevrianGlowFarm.Editor
                 so.FindProperty("maxPlotCount").intValue = 5;
                 so.FindProperty("cellsPerPlot").intValue = 16;
                 so.FindProperty("cellPitch").floatValue = 2f;
-                so.FindProperty("bedPitch").floatValue = 5.6f;
-                so.FindProperty("plotPitch").floatValue = 11.2f;
-                so.FindProperty("plotExpandDirection").vector3Value = new Vector3(-1f, 0f, 0f);
+                // P-5 밭 배치 (레벨배치 설정안 1절): 밭 4 × 4 m가 빈틈 없이 붙고, 구획(밭 2 × 2)이 문 벽을 따라(−Z) 이어진다 → 시작 2구획 = 4 × 2밭
+                so.FindProperty("bedPitch").floatValue = 4f;
+                so.FindProperty("plotPitch").floatValue = 8f;
+                so.FindProperty("plotExpandDirection").vector3Value = new Vector3(0f, 0f, -1f);
                 so.FindProperty("demoLastDay").intValue = 6; // GDD 6장 데모 1~6일차
             });
 

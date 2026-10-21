@@ -501,16 +501,17 @@ namespace NevrianGlowFarm.Systems.Farm
             return false;
         }
 
-        // 최대 구획까지 모든 칸 자리를 검사해, 레벨 배치가 바뀌어 길 · 문과 겹치면 바로 알린다.
+        // 시작 구획의 칸 자리를 검사해, 레벨 배치가 바뀌어 길 · 문과 겹치면 바로 알린다.
+        // 확장 배열(밭 확장권)은 P1이라 시작 밭만 본다 (P-5, 2026-10-21) — 확장 자리는 기즈모 빨강 점선으로만.
         private void WarnForbiddenOverlaps()
         {
-            int total = settings.MaxPlotCount * settings.CellsPerPlot;
+            int total = settings.StartPlotCount * settings.CellsPerPlot;
             int overlaps = 0;
             for (int i = 0; i < total; i++)
                 if (OverlapsForbidden(CellPosition(i)))
                     overlaps++;
             if (overlaps > 0)
-                Debug.LogWarning($"[FarmGrid] 최대 {settings.MaxPlotCount}구획 중 {overlaps}칸이 금지 구역(길 · 문)과 겹침 — 씬 기즈모(빨강) 확인 후 밭 원점 · 간격 조정", this);
+                Debug.LogWarning($"[FarmGrid] 시작 {settings.StartPlotCount}구획 중 {overlaps}칸이 금지 구역(길 · 문)과 겹침 — 씬 기즈모(빨강) 확인 후 Glow Farm/Setup/Build Farm Layout 다시 실행", this);
         }
 
         private void OnDrawGizmos()

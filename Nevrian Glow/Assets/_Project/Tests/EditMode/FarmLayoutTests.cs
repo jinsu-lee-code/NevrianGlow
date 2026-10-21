@@ -3,10 +3,10 @@ using NUnit.Framework;
 
 namespace NevrianGlowFarm.Tests
 {
-    /// <summary>BALANCE 2-3 · 9-1: cellPitch 2 / bedPitch 5.6 / plotPitch 11.2, 구획 16칸.</summary>
+    /// <summary>P-5 밭 배치 (레벨배치 설정안 1절): cellPitch 2 / bedPitch 4 / plotPitch 8, 구획 16칸 — 밭 4 × 4 m가 빈틈 없이 붙는다.</summary>
     public class FarmLayoutTests
     {
-        private const double Cell = 2, Bed = 5.6, Plot = 11.2, Eps = 1e-6;
+        private const double Cell = 2, Bed = 4, Plot = 8, Eps = 1e-6;
 
         private static (double Along, double Across) At(int index) => FarmLayout.CellOffset(index, 16, Cell, Bed, Plot);
 
@@ -39,7 +39,7 @@ namespace NevrianGlowFarm.Tests
         }
 
         [Test]
-        public void SecondRow_IsAcrossThePath()
+        public void SecondRow_IsOneBedAcross()
         {
             Assert.AreEqual(Bed, At(8).Across - At(0).Across, Eps);
             Assert.AreEqual(At(0).Along, At(8).Along, Eps);
@@ -53,12 +53,29 @@ namespace NevrianGlowFarm.Tests
         }
 
         [Test]
-        public void Rows_LeavePathBetween_BALANCE91()
+        public void StartTwoPlots_AreFourByTwoBeds_WithoutGaps()
         {
-            // 원점 z = -2.8 기준: 첫 줄 칸 중심 z = -3.8 · -1.8, 둘째 줄 = 1.8 · 3.8 → 길(z ±1) 바깥
-            const double originZ = -2.8;
-            Assert.AreEqual(-1.8, originZ + At(2).Across, Eps);
-            Assert.AreEqual(1.8, originZ + At(8).Across, Eps);
+            // 시작 2구획 = 32칸 → 칸 중심이 along 8줄 · across 4줄, 모두 칸 간격(2 m)으로 이어짐 = 16 × 8 m (밭 4 × 2)
+            var b = FarmLayout.AreaCenterBounds(2, 16, Cell, Bed, Plot);
+            Assert.AreEqual(16, b.AlongMax - b.AlongMin + Cell, Eps, "밭 4개 × 4 m");
+            Assert.AreEqual(8, b.AcrossMax - b.AcrossMin + Cell, Eps, "밭 2개 × 4 m");
+
+            var alongs = new System.Collections.Generic.SortedSet<double>();
+            var acrosses = new System.Collections.Generic.SortedSet<double>();
+            for (int i = 0; i < 32; i++)
+            {
+                alongs.Add(System.Math.Round(At(i).Along, 6));
+                acrosses.Add(System.Math.Round(At(i).Across, 6));
+            }
+            Assert.AreEqual(8, alongs.Count);
+            Assert.AreEqual(4, acrosses.Count);
+            double previous = double.NaN;
+            foreach (double a in alongs)
+            {
+                if (!double.IsNaN(previous))
+                    Assert.AreEqual(Cell, a - previous, Eps, "밭 사이 빈틈 없음");
+                previous = a;
+            }
         }
     }
 }
