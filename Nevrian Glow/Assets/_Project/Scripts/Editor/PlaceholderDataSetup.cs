@@ -39,8 +39,9 @@ namespace NevrianGlowFarm.Editor
         // BALANCE 9-5: 피피(작은) · 오르(큰). 색 · 속도 · 바구니 자리는 임시 (2026-10-11)
         private static readonly (string Id, string Name, CustomerBodySize Body, string ColorHex, float WalkMul, float Weight, int UnlockDay, Vector3 Basket)[] Customers =
         {
-            ("customer_pipi", "피피", CustomerBodySize.Small, "#FF9AD5", 1.1f, 1f, 1, new Vector3(-0.24f, 0.55f, 0.1f)),
-            ("customer_or", "오르", CustomerBodySize.Large, "#A08BFF", 0.85f, 1f, 1, new Vector3(-0.4f, 0.95f, 0.15f)),
+            // Basket = 손 소켓(Socket_Basket) 기준 보정 — 리그 소켓이 맞으면 0 (5-3)
+            ("customer_pipi", "피피", CustomerBodySize.Small, "#FF9AD5", 1.1f, 1f, 1, Vector3.zero),
+            ("customer_or", "오르", CustomerBodySize.Large, "#A08BFF", 0.85f, 1f, 1, Vector3.zero),
         };
 
         private readonly struct CropRow
@@ -71,6 +72,7 @@ namespace NevrianGlowFarm.Editor
         };
 
         private const int ItemStackSize = 10; // BALANCE 2-4: 도구 · 장치 외 칸당 10개
+        private const string FertilizerId = "item_fertilizer";
 
         // BALANCE 2-11 도구 등급 (v1 2026-10-10). 등급 하나 = 에셋 하나.
         private static readonly (string Id, string Name, float WorkPerUse)[] Hoes =
@@ -202,6 +204,13 @@ namespace NevrianGlowFarm.Editor
                     so.FindProperty("speed").floatValue = mop.Speed;
                 }));
             }
+            // BALANCE 2-12 · 9-2 비료 (4-6, 2026-10-21): 칸당 10, 필요 성장일 −1
+            items.Add(Ensure<FertilizerData>($"{ItemsFolder}/{FertilizerId}.asset", resetExisting, report, so =>
+            {
+                SetIdentity(so, FertilizerId, "비료");
+                so.FindProperty("maxStack").intValue = ItemStackSize;
+                so.FindProperty("growDaysReduction").intValue = 1;
+            }));
 
             // BALANCE 2-10 지역 (임시 분위기 — 5-1 조명 · 후처리에서 확정). 농장 = 농사 단계 · 하루 시작, 가게 = 청소·진열 · 장사 · 정산.
             Ensure<ZoneProfileData>($"{ZonesFolder}/zone_farm.asset", resetExisting, report, so =>
@@ -313,6 +322,7 @@ namespace NevrianGlowFarm.Editor
                 so.FindProperty("purchaseMax").intValue = 3;
                 so.FindProperty("stopDistance").floatValue = 0.3f;
                 so.FindProperty("queueSpacing").floatValue = 0.8f;
+                so.FindProperty("walkClipSpeed").floatValue = 1.62f; // anim_customer_walk (BRANCH_ANIMATOR 10/16)
             });
 
             // BALANCE 9-5 임시 손님 2종 (3-2, 2026-10-11) — 프리팹은 Glow Farm/Setup/Create Customer Greybox
@@ -327,7 +337,7 @@ namespace NevrianGlowFarm.Editor
                     if (ColorUtility.TryParseHtmlString(c.ColorHex, out var color))
                         so.FindProperty("greyboxColor").colorValue = color;
                     so.FindProperty("basketSocketOffset").vector3Value = c.Basket;
-                    so.FindProperty("itemSocketOffset").vector3Value = c.Basket + new Vector3(0.1f, 0.1f, 0.1f);
+                    so.FindProperty("itemSocketOffset").vector3Value = Vector3.zero;
                     so.FindProperty("walkSpeedMul").floatValue = c.WalkMul;
                     so.FindProperty("spawnWeight").floatValue = c.Weight;
                     so.FindProperty("unlockDay").intValue = c.UnlockDay;
@@ -335,6 +345,7 @@ namespace NevrianGlowFarm.Editor
             }
 
             EnsureProducts(resetExisting, report);
+            EnsureSkills(resetExisting, report);
 
             // BALANCE 2-7 (v1 2026-10-10: 80 + 40 × (레벨 − 1) = 40 + 40 × 레벨 → base 100 → 40)
             Ensure<ProgressionData>($"{StatsFolder}/Progression.asset", resetExisting, report, so =>
@@ -411,6 +422,14 @@ namespace NevrianGlowFarm.Editor
                     so.FindProperty("count").intValue = 1;
                 });
             }
+
+            // 비료: 반복 상품, 입고 무제한, 해금 없음 (BALANCE 9-2 임시 — GDD 열린 항목 19)
+            Ensure<ItemProductData>($"{ShopFolder}/shop_fertilizer.asset", resetExisting, report, so =>
+            {
+                SetProduct(so, "shop_fertilizer", "비료", 15, "소모품", true, new[] { new Tier(30) }, null);
+                so.FindProperty("item").objectReferenceValue = AssetDatabase.LoadAssetAtPath<ItemData>($"{ItemsFolder}/{FertilizerId}.asset");
+                so.FindProperty("count").intValue = 1;
+            });
 
             EnsureToolUpgrade("shop_hoe_upgrade", "괭이 업그레이드", 20, "tool_hoe_1", new[] { "tool_hoe_2", "tool_hoe_3" },
                 new[] { new Tier(150), new Tier(400) }, resetExisting, report);
@@ -557,6 +576,121 @@ namespace NevrianGlowFarm.Editor
             {
                 stock.InsertArrayElementAtIndex(i);
                 stock.GetArrayElementAtIndex(i).intValue = dailyStock[i];
+            }
+        }
+
+        // ── 능력치 · 스킬 (BALANCE 9-3 v1 임시 세트, 4-3 2026-10-21) ──
+
+        private const string SkillsFolder = DataRoot + "/Skills";
+
+        private static readonly (string Id, string Name, string Description)[] Stats =
+        {
+            ("stat_sell_price", "판매가", "작물 판매가에 곱한다 (기본 1배)"),
+            ("stat_grow_days", "성장일", "작물 첫 성장일에 더한다 (최소 1일)"),
+            ("stat_hotbar_slots", "핫바 칸", "처음 핫바 칸 수에 더한다 (최대 칸 수까지)"),
+            ("stat_customer_bonus", "손님 수 보너스", "손님 수 공식의 보너스 합 (0.1 = +10%)"),
+        };
+
+        private readonly struct SkillRow
+        {
+            public readonly string Id, Name, Tab, PrereqId, StatId;
+            public readonly int Order, PrereqLevel;
+            public readonly int[] Costs;
+            public readonly ModifierOp Op;
+            public readonly float[] Values;
+            public readonly string[] Descriptions;
+
+            public SkillRow(string id, string name, string tab, int order, int[] costs, string[] descriptions,
+                            string prereqId = null, int prereqLevel = 1, string statId = null, ModifierOp op = ModifierOp.Add, float[] values = null)
+            {
+                Id = id; Name = name; Tab = tab; Order = order; Costs = costs; Descriptions = descriptions;
+                PrereqId = prereqId; PrereqLevel = prereqLevel; StatId = statId; Op = op; Values = values;
+            }
+        }
+
+        // 선행 스킬이 먼저 오게 둔다 (같은 실행에서 참조를 건다)
+        private static readonly SkillRow[] Skills =
+        {
+            new SkillRow("skill_unlock_mushroom", "버섯꽃 해금", "농사", 1, new[] { 3 }, new[] { "버섯꽃 씨앗이 상점에 나온다" }),
+            new SkillRow("skill_unlock_lantern", "등불 열매 해금", "농사", 2, new[] { 6 }, new[] { "등불 열매 씨앗이 상점에 나온다" }, "skill_unlock_mushroom", 1),
+            new SkillRow("skill_quality", "고품질 작물", "농사", 3, new[] { 2, 3, 4 }, new[] { "판매가 ×1.05", "판매가 ×1.10", "판매가 ×1.15" },
+                statId: "stat_sell_price", op: ModifierOp.Multiply, values: new[] { 1.05f, 1.10f, 1.15f }),
+            new SkillRow("skill_fertile", "비옥한 땅", "농사", 4, new[] { 10 }, new[] { "모든 작물 성장일 -1 (최소 1일)" }, "skill_quality", 2,
+                "stat_grow_days", ModifierOp.Add, new[] { -1f }),
+            new SkillRow("skill_watering_license", "물뿌리개 면허", "농사", 5, new[] { 2, 3, 5 },
+                new[] { "물뿌리개 2등급이 상점에 나온다", "물뿌리개 3등급이 상점에 나온다", "물뿌리개 4등급이 상점에 나온다" }),
+            new SkillRow("skill_bag_license", "가방 면허", "공통", 1, new[] { 2, 3, 4 },
+                new[] { "가방 확장 1~2단계가 상점에 나온다", "가방 확장 3~5단계가 상점에 나온다", "가방 확장 6~7단계가 상점에 나온다" }),
+            new SkillRow("skill_hotbar", "핫바 확장", "공통", 2, new[] { 2, 4 }, new[] { "핫바 +2칸 (6칸)", "핫바 +2칸 (8칸)" },
+                statId: "stat_hotbar_slots", op: ModifierOp.Add, values: new[] { 2f, 4f }),
+            new SkillRow("skill_clean_keep", "청결 유지", "청소", 1, new[] { 2, 3, 4 }, new[] { "손님 수 +10%", "손님 수 +20%", "손님 수 +30%" },
+                statId: "stat_customer_bonus", op: ModifierOp.Add, values: new[] { 0.1f, 0.2f, 0.3f }),
+            new SkillRow("skill_signboard", "간판", "장사", 1, new[] { 2, 3, 4 }, new[] { "손님 수 +10%", "손님 수 +20%", "손님 수 +30%" },
+                statId: "stat_customer_bonus", op: ModifierOp.Add, values: new[] { 0.1f, 0.2f, 0.3f }),
+        };
+
+        private static void EnsureSkills(bool resetExisting, Report report)
+        {
+            var stats = new Dictionary<string, StatData>();
+            foreach (var (id, name, description) in Stats)
+            {
+                var stat = Ensure<StatData>($"{StatsFolder}/{id}.asset", resetExisting, report, so =>
+                {
+                    SetIdentity(so, id, name);
+                    so.FindProperty("description").stringValue = description;
+                });
+                if (stat != null)
+                    stats[id] = stat;
+            }
+
+            var made = new Dictionary<string, SkillData>();
+            foreach (var row in Skills)
+            {
+                var skill = Ensure<SkillData>($"{SkillsFolder}/{row.Id}.asset", resetExisting, report, so =>
+                {
+                    SetIdentity(so, row.Id, row.Name);
+                    so.FindProperty("tab").stringValue = row.Tab;
+                    so.FindProperty("order").intValue = row.Order;
+                    SetInts(so.FindProperty("costs"), row.Costs);
+                    var descriptions = so.FindProperty("levelDescriptions");
+                    descriptions.ClearArray();
+                    for (int i = 0; i < row.Descriptions.Length; i++)
+                    {
+                        descriptions.InsertArrayElementAtIndex(i);
+                        descriptions.GetArrayElementAtIndex(i).stringValue = row.Descriptions[i];
+                    }
+                    made.TryGetValue(row.PrereqId ?? string.Empty, out var prereq);
+                    so.FindProperty("prerequisite").objectReferenceValue = prereq;
+                    so.FindProperty("prerequisiteLevel").intValue = row.PrereqLevel;
+                    var mods = so.FindProperty("modifiers");
+                    mods.ClearArray();
+                    if (row.StatId != null && stats.TryGetValue(row.StatId, out var stat))
+                    {
+                        mods.InsertArrayElementAtIndex(0);
+                        var m = mods.GetArrayElementAtIndex(0);
+                        m.FindPropertyRelative("stat").objectReferenceValue = stat;
+                        m.FindPropertyRelative("op").enumValueIndex = (int)row.Op;
+                        var values = m.FindPropertyRelative("values");
+                        values.ClearArray();
+                        for (int i = 0; i < row.Values.Length; i++)
+                        {
+                            values.InsertArrayElementAtIndex(i);
+                            values.GetArrayElementAtIndex(i).floatValue = row.Values[i];
+                        }
+                    }
+                });
+                if (skill != null)
+                    made[row.Id] = skill;
+            }
+        }
+
+        private static void SetInts(SerializedProperty list, int[] values)
+        {
+            list.ClearArray();
+            for (int i = 0; i < values.Length; i++)
+            {
+                list.InsertArrayElementAtIndex(i);
+                list.GetArrayElementAtIndex(i).intValue = values[i];
             }
         }
 

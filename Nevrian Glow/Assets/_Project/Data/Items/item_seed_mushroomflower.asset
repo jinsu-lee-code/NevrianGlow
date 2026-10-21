@@ -16,4 +16,5 @@ MonoBehaviour:
   displayName: "\uBC84\uC12F\uAF43 \uC528\uC557"
   maxStack: 10
   canStore: 1
+  heldPrefab: {fileID: 7977416672371603278, guid: e9f338da286edfa43ae6dee4d3d99824, type: 3}
   crop: {fileID: 11400000, guid: 6663b6df60460264eb77e170b21b394d, type: 2}

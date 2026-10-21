@@ -1,3 +1,4 @@
+using NevrianGlowFarm.Core;
 using NevrianGlowFarm.Data;
 using NevrianGlowFarm.Systems.Interaction;
 using NevrianGlowFarm.Systems.Player;
@@ -24,8 +25,8 @@ namespace NevrianGlowFarm.Systems.Cleaning
         public void InteractHand()
         {
             var inventory = PlayerInventory.Instance;
-            if (settings != null && inventory != null)
-                inventory.RemoveAll(settings.TrashItem);
+            if (settings != null && inventory != null && inventory.RemoveAll(settings.TrashItem) > 0)
+                AudioManager.Play(SoundCues.TrashDrop, transform.position);
         }
     }
 }

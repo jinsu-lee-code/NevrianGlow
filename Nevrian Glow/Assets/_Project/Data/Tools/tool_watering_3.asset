@@ -16,6 +16,6 @@ MonoBehaviour:
   displayName: "\uBB3C\uBFCC\uB9AC\uAC1C 3\uB4F1\uAE09"
   maxStack: 1
   canStore: 1
-  heldPrefab: {fileID: 0}
+  heldPrefab: {fileID: 5992792221094518829, guid: 173ca37afc0b3c944974e990ffc736bd, type: 3}
   useDelay: 0.3
   cellCount: 4

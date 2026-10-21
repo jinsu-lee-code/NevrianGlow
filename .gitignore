@@ -11,6 +11,15 @@
 /Nevrian Glow/[Mm]emoryCaptures/
 /Nevrian Glow/[Rr]ecordings/
 
+# 저장소 맨 위를 Unity 프로젝트로 잘못 열었을 때 생기는 폴더 (프로젝트는 /Nevrian Glow/)
+/[Ll]ibrary/
+/[Tt]emp/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/ProjectSettings/
+/Packages/
+/Assets/
+
 # 빌드 출력
 /Build/
 /Builds/

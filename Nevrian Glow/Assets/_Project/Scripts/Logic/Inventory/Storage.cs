@@ -49,6 +49,13 @@ namespace NevrianGlowFarm.Logic.Inventory
             return true;
         }
 
+        /// <summary>모두 비운다 (불러오기 6-1).</summary>
+        public void Clear()
+        {
+            order.Clear();
+            counts.Clear();
+        }
+
         /// <summary>꺼낸다. 모자라면 false. 0이 되면 목록에서 빠진다.</summary>
         public bool TryWithdraw(string itemId, int count)
         {

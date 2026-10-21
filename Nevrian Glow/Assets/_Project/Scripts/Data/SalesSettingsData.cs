@@ -43,6 +43,8 @@ namespace NevrianGlowFarm.Data
         [SerializeField, Min(0f)] private float stopDistance;
         [Tooltip("계산대 줄 간격 (m)")]
         [SerializeField, Min(0.1f)] private float queueSpacing = 0.1f;
+        [Tooltip("걷기 클립 기준 속도 — 재생 1배 · 휴먼 스케일 1일 때 발이 나아가는 속도. 발이 미끄러지지 않게 걷기 재생 속도를 맞춘다 (m/s)")]
+        [SerializeField, Min(0.1f)] private float walkClipSpeed = 1.62f;
 
         public int BaseCustomers => baseCustomers;
         public int CustomerDayDivisor => customerDayDivisor;
@@ -58,6 +60,7 @@ namespace NevrianGlowFarm.Data
         public int PurchaseMax => Mathf.Max(purchaseMin, purchaseMax);
         public float StopDistance => stopDistance;
         public float QueueSpacing => queueSpacing;
+        public float WalkClipSpeed => walkClipSpeed;
 
         /// <summary>Logic 장사 규칙 값 (SalesRules · SalesSession).</summary>
         public SalesSpec ToSpec() => new SalesSpec(baseCustomers, customerDayDivisor, customerCap, dirtyCustomerMultiplier,

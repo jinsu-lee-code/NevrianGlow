@@ -21,6 +21,8 @@ Shader "DSEWA/ToonFoliage"
         _WindSpeed ("Wind Speed", Float) = 1.6
         _WindFreq ("Wind Wave Frequency", Float) = 0.35
         _PushStrength ("Cat Push Strength (m)", Float) = 0.6
+        _WindRadius ("Wind Radius around the player (m, 0 = everywhere)", Float) = 25
+        _WindFade ("Wind Fade Width (m)", Float) = 10
         [Header(Color Controls (SurvivalKit MF_ColorControls order))]
         _Tint ("Tint", Color) = (1, 1, 1, 1)
         _Desaturation ("Desaturation (negative = more saturated)", Range(-1, 1)) = 0
@@ -91,6 +93,7 @@ Shader "DSEWA/ToonFoliage"
             half _ShadowBlur;
             float4 _WindDir;
             float _WindStrength, _WindSpeed, _WindFreq, _PushStrength;
+            float _WindRadius, _WindFade;
             half4 _Tint;
             half _Desaturation, _HueShift, _Brightness, _Contrast;
             half4 _WindColor;
@@ -114,6 +117,7 @@ Shader "DSEWA/ToonFoliage"
             half _TipGlow, _TipGlowStart;
         CBUFFER_END
         float4 _DSEWA_CatPush;                       // global: xyz = cat position, w = radius
+        float4 _DSEWA_WindCenter;                    // global: xyz = player position, w = 1 when set (else the camera)
         float4 _DSEWA_GroundColorRect;               // global: (minX, minZ, 1/sizeX, 1/sizeZ); z = 0 -> no baker
         float4 _DSEWA_GroundShadowColor;             // global: the ground material's shadow multiply, so shaded roots match it
         float4 _DSEWA_GroundLitColor;                // global: the ground material's lit colour (the bake = albedo x lit colour)
@@ -146,6 +150,15 @@ Shader "DSEWA/ToonFoliage"
             return SAMPLE_TEXTURE2D_LOD(_DSEWA_GroundColor, sampler_DSEWA_GroundColor, uv, 0);
         }
 
+        // Wind only near the player: 1 inside _WindRadius, fading to 0 over _WindFade (radius 0 = wind everywhere).
+        // Centre = _DSEWA_WindCenter (FoliagePushSource on the player), else the camera.
+        half WindMask(float2 xz)
+        {
+            if (_WindRadius <= 0) return 1;
+            float2 c = _DSEWA_WindCenter.w > 0 ? _DSEWA_WindCenter.xz : _WorldSpaceCameraPos.xz;
+            return 1 - smoothstep(_WindRadius, _WindRadius + max(_WindFade, 1e-3), distance(xz, c));
+        }
+
         // Bend the card in world space: rooted (offset ∝ height²), wind wave + push away from the cat.
         float3 FoliageBend(float3 positionWS, float4 color)
         {
@@ -153,9 +166,15 @@ Shader "DSEWA/ToonFoliage"
             positionWS = pivot + (positionWS - pivot) * GrassEdgeScale(pivot.xz);   // every pass goes through here
             positionWS.y -= _RootSink;                                     // bottom edge hides under the ground
             float h = color.r * color.r;
-            float2 dir = normalize(_WindDir.xz + 1e-5);
-            float phase = _Time.y * _WindSpeed + color.g * 6.2832 + dot(positionWS.xz, dir) * _WindFreq;
-            float2 offset = dir * (sin(phase) * 0.7 + sin(phase * 2.3 + 1.7) * 0.3) * _WindStrength * h;
+            float2 offset = 0;
+            half wind = WindMask(pivot.xz);                                // per clump: the card bends as one
+            UNITY_BRANCH
+            if (wind > 0)                                                  // far grass skips the wind maths
+            {
+                float2 dir = normalize(_WindDir.xz + 1e-5);
+                float phase = _Time.y * _WindSpeed + color.g * 6.2832 + dot(positionWS.xz, dir) * _WindFreq;
+                offset = dir * (sin(phase) * 0.7 + sin(phase * 2.3 + 1.7) * 0.3) * _WindStrength * h * wind;
+            }
             if (_DSEWA_CatPush.w > 0)
             {
                 float2 away = positionWS.xz - _DSEWA_CatPush.xz;
@@ -207,10 +226,13 @@ Shader "DSEWA/ToonFoliage"
         // Hard-edged (toon) bands; stronger towards the tips.
         half WindColorMask(float3 positionWS, half height)
         {
+            half near = WindMask(positionWS.xz);
+            UNITY_BRANCH
+            if (near <= 0) return 0;
             float2 dir = normalize(_WindDir.xz + 1e-5);
             float2 p = positionWS.xz * _WindColorScale - dir * _Time.y * _WindColorSpeed * _WindColorScale;
             float n = ValueNoise2(p) * 0.65 + ValueNoise2(p * 2.3 + 17.1) * 0.35;
-            return smoothstep(_WindColorThreshold, _WindColorThreshold + _WindColorSoftness, n) * saturate(0.35 + height);
+            return smoothstep(_WindColorThreshold, _WindColorThreshold + _WindColorSoftness, n) * saturate(0.35 + height) * near;
         }
 
         // Card base: near the root, vertical streak noise eats into the silhouette so the card does not end in a

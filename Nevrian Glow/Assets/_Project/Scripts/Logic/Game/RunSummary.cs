@@ -12,6 +12,9 @@ namespace NevrianGlowFarm.Logic.Game
 
         public void Record(SettlementReport report) => days[report.Day] = report;
 
+        /// <summary>기록을 비운다 (불러오기 6-1).</summary>
+        public void Clear() => days.Clear();
+
         public int DaysRecorded => days.Count;
         public IEnumerable<SettlementReport> Days => days.Values;
 

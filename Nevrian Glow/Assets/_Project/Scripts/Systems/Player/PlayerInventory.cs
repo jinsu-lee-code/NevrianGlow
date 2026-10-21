@@ -21,6 +21,8 @@ namespace NevrianGlowFarm.Systems.Player
         [SerializeField] private GameStartSettingsData startSettings;
         [Tooltip("아이템 id → 아이템 데이터 (Data/ContentDatabase)")]
         [SerializeField] private ContentDatabase database;
+        [Tooltip("핫바 칸 수 능력치 — 처음 칸 수에 더함, 최대 칸 수까지 (Data/Stats/stat_hotbar_slots, 비우면 그대로)")]
+        [SerializeField] private StatData hotbarSlotsStat;
 
         [Header("디버그")]
         [Tooltip("핫바 내용 (읽기 전용)")]
@@ -87,6 +89,19 @@ namespace NevrianGlowFarm.Systems.Player
         {
             if (instance == this)
                 instance = null;
+        }
+
+        private void OnEnable() => Core.GameEvents.StatsChanged += OnStatsChanged;
+        private void OnDisable() => Core.GameEvents.StatsChanged -= OnStatsChanged;
+
+        // 핫바 확장 스킬 (4-3): 처음 칸 수 + 능력치. 늘어날 때만 — 줄어드는 스킬은 없다(칸의 아이템을 지우지 않게).
+        private void OnStatsChanged()
+        {
+            if (hotbar == null)
+                return;
+            int wanted = Mathf.Clamp(Core.StatSystem.Apply(hotbarSlotsStat, settings.HotbarBaseSlots), 1, settings.HotbarMaxSlots);
+            if (wanted > hotbar.SlotCount)
+                SetHotbarSlotCount(wanted);
         }
 
         // ── 조회 ──
@@ -189,7 +204,7 @@ namespace NevrianGlowFarm.Systems.Player
 
         // ── 칸 수 ──
 
-        /// <summary>핫바 칸 수 (스킬 핫바 확장 4-3 · 디버그). 1 ~ 최대. 줄이면 없어진 칸의 아이템은 사라진다.</summary>
+        /// <summary>핫바 칸 수 (스킬 핫바 확장 4-3 — 능력치가 바뀔 때 · 디버그). 1 ~ 최대. 줄이면 없어진 칸의 아이템은 사라진다.</summary>
         public void SetHotbarSlotCount(int count)
         {
             count = Mathf.Clamp(count, 1, settings.HotbarMaxSlots);
@@ -208,6 +223,33 @@ namespace NevrianGlowFarm.Systems.Player
             bag.Resize(count);
             NotifyChanged();
         }
+
+        // ── 저장 (6-1) ──
+
+        /// <summary>핫바 · 가방을 담는다. 손에 든 묶음은 먼저 돌려놓고(못 돌려놓으면 그 묶음은 저장되지 않음).</summary>
+        public void CaptureTo(Logic.Save.SaveSnapshot into)
+        {
+            if (hotbar == null)
+                return;
+            if (!cursor.IsEmpty && !ReturnCursor())
+                Debug.LogWarning($"[PlayerInventory] 손에 든 {cursor.ItemId} ×{cursor.Count}를 둘 칸이 없어 저장에서 빠짐", this);
+            Logic.Save.SaveState.Capture(hotbar, into.Hotbar);
+            Logic.Save.SaveState.Capture(bag, into.Bag);
+        }
+
+        public void LoadFrom(Logic.Save.SaveSnapshot from)
+        {
+            if (hotbar == null)
+                return;
+            cursor = ItemStack.Empty;
+            int clipped = hotbar.Load(Clamp(from.Hotbar, settings.HotbarMaxSlots)) + bag.Load(Clamp(from.Bag, settings.BagMaxSlots));
+            if (clipped > 0)
+                Debug.LogWarning($"[PlayerInventory] 칸당 최대를 넘는 개수 {clipped}개를 잘라 불러옴 (아이템 데이터의 칸당 개수가 줄었음)", this);
+            NotifyChanged();
+        }
+
+        private static IReadOnlyList<ItemStack> Clamp(List<ItemStack> stacks, int max) =>
+            stacks.Count <= max ? stacks : stacks.GetRange(0, max);
 
         /// <summary>창고 등 다른 시스템이 칸을 직접 바꾼 뒤 알린다.</summary>
         public void NotifyChanged()

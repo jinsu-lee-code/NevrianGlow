@@ -29,6 +29,9 @@ namespace NevrianGlowFarm.Logic.Game
         }
 
         public IReadOnlyDictionary<string, int> All => levels;
+
+        /// <summary>모두 0단계로 (불러오기 6-1).</summary>
+        public void Clear() => levels.Clear();
     }
 
     /// <summary>
@@ -44,5 +47,8 @@ namespace NevrianGlowFarm.Logic.Game
         public bool RecordHarvest(string cropId) => cropId != null && harvested.Add(cropId);
 
         public IEnumerable<string> Harvested => harvested;
+
+        /// <summary>기록을 비운다 (불러오기 6-1).</summary>
+        public void Clear() => harvested.Clear();
     }
 }

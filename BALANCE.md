@@ -364,6 +364,7 @@ fadeOut 0.35초 / hold 0.1초 / fadeIn 0.35초 / BGM 교차 1.5초 / 출발 지�
 
 ### 9-3. 임시 스킬 세트 (시스템 경로 점검용 최소 세트, v1 2026-10-10)
 EffectSO(해금) · Modifier(더하기 · 곱하기) · 단계형 · 선행 조건을 모두 한 번 이상 지나가도록 고른 세트다.
+- 데이터 (4-3, 2026-10-21): 스킬 `Data/Skills/skill_*.asset`, 능력치 `Data/Stats/stat_*.asset` (판매가 `stat_sell_price` · 성장일 `stat_grow_days` · 핫바 칸 `stat_hotbar_slots` · 손님 수 보너스 `stat_customer_bonus`). 해금(EffectSO)은 상품 데이터의 해금 조건이 스킬 id를 가리키는 방식. 단계별 값은 그 단계의 전체 효과. 비옥한 땅은 첫 성장일에만 적용.
 | id | 탭 | 단계 | 효과 | 비용 (SP) | 선행 |
 |---|---|---|---|---|---|
 | skill_unlock_mushroom | 농사 | 1 | 버섯꽃 씨앗 상점 등장 (EffectSO) | 3 | — |

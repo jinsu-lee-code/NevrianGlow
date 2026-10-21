@@ -121,7 +121,8 @@ namespace NevrianGlowFarm.UI
         {
             if (!IsOpen || product == null)
                 return;
-            shop.TryBuy(product, out string message);
+            bool bought = shop.TryBuy(product, out string message);
+            AudioManager.Play(bought ? SoundCues.UiBuySuccess : SoundCues.UiBuyFail);
             messageLabel.text = message;
         }
 

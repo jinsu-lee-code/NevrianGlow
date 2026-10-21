@@ -13,12 +13,20 @@ namespace NevrianGlowFarm.Systems.Farm
         [Header("참조")]
         [Tooltip("흙 표시 (색으로 개간 · 수분 상태)")]
         [SerializeField] private Renderer soilRenderer;
-        [Tooltip("작물 표시 (크기로 성장, 색으로 작물 종류)")]
+        [Tooltip("작물 표시 (크기로 성장, 색으로 작물 종류) — 단계 프리팹이 없을 때의 그레이박스")]
         [SerializeField] private Renderer cropRenderer;
+        [Tooltip("작물 단계 모델을 놓는 자리 (흙 윗면, 칸 중앙)")]
+        [SerializeField] private Transform modelAnchor;
+
+        [Header("조정값")]
+        [Tooltip("칸마다 모델을 돌리는 각도 — 같은 작물이 줄지어 있어도 똑같아 보이지 않게 (°)")]
+        [SerializeField, Range(0f, 180f)] private float yawStep = 137.5f;
 
         private FarmGrid grid;
         private int index;
         private MaterialPropertyBlock block;
+        private GameObject shownPrefab;
+        private GameObject shownModel;
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 
         public int Index => index;
@@ -66,18 +74,45 @@ namespace NevrianGlowFarm.Systems.Farm
         private Coroutine splash;
         private Vector3 soilBaseScale;
 
-        /// <summary>흙 색, 작물 표시 여부 · 색 · 크기(0~1 성장 비율)를 바꾼다. FarmGrid가 상태가 바뀐 칸에만 부른다.</summary>
-        public void Show(Color soilColor, bool hasCrop, Color cropColor, float cropScale)
+        /// <summary>
+        /// 흙 색과 작물 겉모습을 바꾼다. FarmGrid가 상태가 바뀐 칸에만 부른다.
+        /// stagePrefab이 있으면 그 단계 모델(아트), 없으면 그레이박스 상자(색 · 크기 = 성장 비율).
+        /// </summary>
+        public void Show(Color soilColor, bool hasCrop, Color cropColor, float cropScale, GameObject stagePrefab)
         {
             block.SetColor(BaseColorId, soilColor);
             soilRenderer.SetPropertyBlock(block);
 
-            cropRenderer.gameObject.SetActive(hasCrop);
-            if (!hasCrop)
+            GameObject wanted = hasCrop && modelAnchor != null ? stagePrefab : null;
+            SetModel(wanted);
+
+            bool greybox = hasCrop && wanted == null;
+            cropRenderer.gameObject.SetActive(greybox);
+            if (!greybox)
                 return;
             block.SetColor(BaseColorId, cropColor);
             cropRenderer.SetPropertyBlock(block);
             cropRenderer.transform.localScale = Vector3.one * cropScale;
+        }
+
+        // 단계가 바뀔 때만 모델을 바꾼다 (같은 프리팹이면 그대로).
+        private void SetModel(GameObject prefab)
+        {
+            if (prefab == shownPrefab)
+                return;
+            if (shownModel != null)
+                Destroy(shownModel);
+            shownPrefab = prefab;
+            shownModel = null;
+            if (prefab == null)
+                return;
+
+            shownModel = Instantiate(prefab, modelAnchor);
+            shownModel.transform.localPosition = Vector3.zero;
+            shownModel.transform.localRotation = Quaternion.Euler(0f, index * yawStep, 0f);
+            // 작물 모델은 보이기만 한다 — 조준(칸 콜라이더)과 플레이어 이동을 막지 않게
+            foreach (var c in shownModel.GetComponentsInChildren<Collider>(true))
+                c.enabled = false;
         }
     }
 }

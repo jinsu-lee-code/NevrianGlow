@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03a390ed4bbbbfe4c8a6c5761113ca2d, type: 3}
+  m_Name: skill_bag_license
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.SkillData
+  id: skill_bag_license
+  displayName: "\uAC00\uBC29 \uBA74\uD5C8"
+  tab: "\uACF5\uD1B5"
+  order: 1
+  levelDescriptions:
+  - "\uAC00\uBC29 \uD655\uC7A5 1~2\uB2E8\uACC4\uAC00 \uC0C1\uC810\uC5D0 \uB098\uC628\uB2E4"
+  - "\uAC00\uBC29 \uD655\uC7A5 3~5\uB2E8\uACC4\uAC00 \uC0C1\uC810\uC5D0 \uB098\uC628\uB2E4"
+  - "\uAC00\uBC29 \uD655\uC7A5 6~7\uB2E8\uACC4\uAC00 \uC0C1\uC810\uC5D0 \uB098\uC628\uB2E4"
+  costs: 020000000300000004000000
+  prerequisite: {fileID: 0}
+  prerequisiteLevel: 1
+  modifiers: []

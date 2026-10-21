@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07892da8d47091c4b96927b6778ddd42, type: 3}
+  m_Name: stat_customer_bonus
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.StatData
+  id: stat_customer_bonus
+  displayName: "\uC190\uB2D8 \uC218 \uBCF4\uB108\uC2A4"
+  description: "\uC190\uB2D8 \uC218 \uACF5\uC2DD\uC758 \uBCF4\uB108\uC2A4 \uD569
+    (0.1 = +10%)"

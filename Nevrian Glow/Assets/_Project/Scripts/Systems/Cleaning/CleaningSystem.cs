@@ -215,6 +215,17 @@ namespace NevrianGlowFarm.Systems.Cleaning
         public int PreviewTrashCount => previewTrash.Count;
         public int PreviewStainCount => previewStains.Count;
 
+        /// <summary>
+        /// 불러오기 (6-1): 오늘 놓은 얼룩을 치우고 "오늘 배치 안 함"으로 되돌린다 → 청소·진열 단계에 들어가면 다시 놓는다.
+        /// 바닥 쓰레기는 바닥 아이템이라 저장 내용으로 따로 돌아온다.
+        /// </summary>
+        public void ResetForLoad()
+        {
+            ClearStains();
+            spawnedDay = 0;
+            lockedCleanliness = -1f;
+        }
+
         // ── 내부 ────────────────────────────────────────────
 
         private void ClearStains()

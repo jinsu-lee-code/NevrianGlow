@@ -222,6 +222,31 @@ namespace NevrianGlowFarm.Logic.Shop
             return true;
         }
 
+        // ── 저장 (6-1) ──
+
+        public IReadOnlyDictionary<string, int> AllTiersBought => tiersBought;
+        public IReadOnlyDictionary<string, int> AllBoughtToday => boughtToday;
+        public IReadOnlyDictionary<string, int> AllFirstOpenDays => firstOpenDay;
+
+        /// <summary>상태를 통째로 정한다 (불러오기).</summary>
+        public void Load(IReadOnlyDictionary<string, int> tiers, IReadOnlyDictionary<string, int> today, IReadOnlyDictionary<string, int> firstOpen, int spentToday)
+        {
+            Copy(tiers, tiersBought);
+            Copy(today, boughtToday);
+            Copy(firstOpen, firstOpenDay);
+            SpentToday = Math.Max(0, spentToday);
+        }
+
+        private static void Copy(IReadOnlyDictionary<string, int> from, Dictionary<string, int> to)
+        {
+            to.Clear();
+            if (from == null)
+                return;
+            foreach (var pair in from)
+                if (pair.Key != null && pair.Value > 0)
+                    to[pair.Key] = pair.Value;
+        }
+
         /// <summary>단계 수를 정한다 (불러오기 6-1 · 디버그).</summary>
         public void SetTiersBought(string productId, int tiers)
         {

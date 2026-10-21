@@ -120,6 +120,24 @@ namespace NevrianGlowFarm.Systems.Storage
             return true;
         }
 
+        // ── 저장 (6-1) ──
+
+        public void CaptureTo(Logic.Save.SaveSnapshot into)
+        {
+            if (storage != null)
+                Logic.Save.SaveState.Capture(storage, into.Storage);
+        }
+
+        /// <summary>창고를 저장 내용으로 바꾼다 (보관 불가가 된 아이템은 빠진다).</summary>
+        public void LoadFrom(Logic.Save.SaveSnapshot from)
+        {
+            if (storage == null)
+                return;
+            Logic.Save.SaveState.Apply(storage, from.Storage);
+            RefreshDebugView();
+            Changed?.Invoke();
+        }
+
         private void Notify(PlayerInventory inventory)
         {
             RefreshDebugView();

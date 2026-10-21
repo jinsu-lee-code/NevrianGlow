@@ -45,8 +45,20 @@ namespace NevrianGlowFarm.Systems.Player
         [SerializeField, Range(0f, 90f)] private float tiltAngle = 55f;
         [Tooltip("뿌리기 시간 (초)")]
         [SerializeField, Min(0.05f)] private float tossTime = 0.25f;
-        [Tooltip("대걸레 밀기 거리 · 빠르기 (m · 회/초)")]
+        [Tooltip("대걸레 밀기 거리 · 빠르기 — 모델에 Contact 표시점이 없을 때만 (m · 회/초)")]
         [SerializeField] private Vector2 pushStrokeAndRate = new Vector2(0.09f, 3f);
+        [Tooltip("대걸레질 좌우 폭 — 머리가 얼룩 위를 오가는 거리의 절반 (m)")]
+        [SerializeField, Range(0f, 0.6f)] private float scrubWidth = 0.22f;
+        [Tooltip("대걸레질 빠르기 (왕복/초)")]
+        [SerializeField, Range(0.2f, 4f)] private float scrubRate = 1.4f;
+        [Tooltip("대걸레질 중 좌우로 기우는 각도 (°)")]
+        [SerializeField, Range(0f, 30f)] private float scrubLean = 10f;
+        [Tooltip("대걸레질 중 대걸레 크기 배율 — 클수록 머리가 바닥 가까이 닿지만 막대가 굵어 보인다 (배)")]
+        [SerializeField, Range(1f, 3f)] private float scrubSize = 1.8f;
+        [Tooltip("대걸레질 중 손을 내리는 거리 — 바닥을 미는 자세 (m)")]
+        [SerializeField, Range(0f, 0.5f)] private float scrubHandDrop = 0.3f;
+        [Tooltip("들고 있는 자세 ↔ 바닥 대걸레질 자세 전환 시간 (초)")]
+        [SerializeField, Min(0.01f)] private float scrubBlendTime = 0.12f;
 
         [Header("디버그")]
         [Tooltip("지금 동작 (읽기 전용)")]
@@ -60,7 +72,14 @@ namespace NevrianGlowFarm.Systems.Player
         private float useStart = -10f;
         private float useLength;
         private float tiltHold;
+        private Transform contact;
+        private Transform grip;
+        private float scrubBlend;
+        private float scrubPhase;
+        private Vector3 scrubPoint;
         private MaterialPropertyBlock block;
+        private const string ContactName = "Contact";
+        private const string GripName = "Grip";
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 
         private void Awake()
@@ -137,14 +156,81 @@ namespace NevrianGlowFarm.Systems.Player
             pos += Vector3.down * (1f - Smooth(equip)) * 0.25f;
 
             float t = useLength > 0f ? (Time.time - useStart) / useLength : 1f;
-            currentMotion = t < 1f ? motion.ToString() : (motion == Motion.Push && mopTool != null && mopTool.IsMopping ? "Push" : "-");
+            bool mopping = motion == Motion.Push && mopTool != null && mopTool.IsMopping;
+            currentMotion = t < 1f ? motion.ToString() : mopping ? (contact != null ? "Scrub" : "Push") : "-";
             if (t < 1f)
                 Animate(ref pos, ref rot, Mathf.Clamp01(t));
-            else if (motion == Motion.Push && mopTool != null && mopTool.IsMopping)
+            else if (mopping && contact == null)
                 pos += Vector3.forward * Mathf.Sin(Time.time * pushStrokeAndRate.y * Mathf.PI * 2f) * pushStrokeAndRate.x;
 
+            var rotation = Quaternion.Euler(rot);
+            Scrub(mopping, ref pos, ref rotation);
             pivot.localPosition = pos;
-            pivot.localRotation = Quaternion.Euler(rot);
+            pivot.localRotation = rotation;
+        }
+
+        /// <summary>
+        /// 대걸레질: 손잡이(Grip)는 손 자리에 둔 채 대걸레를 기울이고 손에서 바닥까지 닿는 길이로 키워,
+        /// 머리(Contact)가 닦는 바닥 지점(MopTool — 닿는 거리 안) 위를 좌우로 훔친다. 들고 있는 자세와 섞어(scrubBlendTime) 바꾼다.
+        /// </summary>
+        private void Scrub(bool mopping, ref Vector3 pos, ref Quaternion rotation)
+        {
+            if (contact == null)
+            {
+                scrubBlend = 0f;
+                pivot.localScale = Vector3.one;
+                return;
+            }
+            if (mopping && mopTool.HasPoint)
+                scrubPoint = mopTool.Point;
+            scrubBlend = Mathf.MoveTowards(scrubBlend, mopping ? 1f : 0f, Time.deltaTime / scrubBlendTime);
+            if (scrubBlend <= 0f)
+            {
+                scrubPhase = 0f;
+                pivot.localScale = Vector3.one;
+                return;
+            }
+            scrubPhase += Time.deltaTime * scrubRate * Mathf.PI * 2f;
+            float sweep = Mathf.Sin(scrubPhase);
+
+            // 들고 있는 자세에서의 손잡이 · 머리 (피벗 기준 — 피벗 크기 1일 때 값)
+            Vector3 gripLocal = pivot.InverseTransformPoint(grip != null ? grip.position : model.transform.position);
+            Vector3 contactLocal = pivot.InverseTransformPoint(contact.position);
+            // 손은 들고 있는 자리보다 조금 아래 · 앞으로 (바닥을 미는 자세), 훔치는 쪽으로 조금 따라감
+            Vector3 gripCam = pos + rotation * gripLocal + new Vector3(sweep * scrubWidth * 0.2f, -scrubHandDrop, scrubHandDrop * 0.5f);
+
+            // 머리 목표: 닦는 바닥 지점을 좌우로 오가는 점. 머리는 카메라에서 그 점으로 가는 시선 위,
+            // 손잡이에서 (키운) 대걸레 길이만큼 떨어진 곳 → 화면에서 머리가 얼룩과 겹쳐 보인다
+            Vector3 right = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
+            Vector3 dir = transform.InverseTransformPoint(scrubPoint + right * sweep * scrubWidth);
+            float floorDistance = dir.magnitude;
+            dir /= Mathf.Max(0.001f, floorDistance);
+            Vector3 restShaft = rotation * (contactLocal - gripLocal);
+            float size = scrubSize;
+            float length = restShaft.magnitude * size;
+            float b = Vector3.Dot(dir, gripCam);
+            float disc = b * b - gripCam.sqrMagnitude + length * length;
+            float along = disc > 0f ? b + Mathf.Sqrt(disc) : Mathf.Max(0.1f, b);
+            Vector3 headCam = dir * Mathf.Min(along, floorDistance); // 바닥보다 멀리 가지 않게
+            Vector3 shaft = headCam - gripCam;
+
+            // 손잡이를 축으로 대걸레를 돌려 머리를 목표로 — 막대 축 둘레는 모델의 위(+Y)가 실제 위를 보게 맞춰
+            // 머리 밑면이 바닥을 누르는 모양으로, 그다음 훔치는 쪽으로 조금 비튼다
+            Vector3 modelUp = rotation * pivot.InverseTransformDirection(contact.parent != null ? contact.parent.up : pivot.up);
+            Vector3 worldUp = transform.InverseTransformDirection(Vector3.up);
+            Vector3 restUp = Vector3.ProjectOnPlane(modelUp, restShaft);
+            Vector3 wantUp = Vector3.ProjectOnPlane(worldUp, shaft);
+            Quaternion align = restUp.sqrMagnitude > 1e-6f && wantUp.sqrMagnitude > 1e-6f
+                ? Quaternion.LookRotation(shaft, wantUp) * Quaternion.Inverse(Quaternion.LookRotation(restShaft, restUp))
+                : Quaternion.FromToRotation(restShaft, shaft);
+            var scrubRotation = align * rotation;
+            scrubRotation = Quaternion.AngleAxis(-sweep * scrubLean, shaft.normalized) * scrubRotation;
+            Vector3 scrubPos = gripCam - scrubRotation * (gripLocal * size);
+
+            float w = Mathf.SmoothStep(0f, 1f, scrubBlend);
+            pos = Vector3.Lerp(pos, scrubPos, w);
+            rotation = Quaternion.Slerp(rotation, scrubRotation, w);
+            pivot.localScale = Vector3.one * Mathf.Lerp(1f, size, w);
         }
 
         private void Animate(ref Vector3 pos, ref Vector3 rot, float t)
@@ -192,6 +278,17 @@ namespace NevrianGlowFarm.Systems.Player
 
             motion = item is HoeData ? Motion.Swing : item is WateringCanData ? Motion.Tilt : item is MopData ? Motion.Push : Motion.Toss;
             model = item.HeldPrefab != null ? Instantiate(item.HeldPrefab, pivot, false) : BuildGreybox(item);
+            contact = null;
+            grip = null;
+            scrubBlend = 0f;
+            // 쓰는 동작용 표시점 (빈 오브젝트): Contact = 대걸레 머리 밑, Grip = 손잡이 (없으면 모델 원점)
+            foreach (var t in model.GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name == ContactName)
+                    contact = t;
+                else if (t.name == GripName)
+                    grip = t;
+            }
             foreach (var c in model.GetComponentsInChildren<Collider>())
                 Destroy(c);
             foreach (var r in model.GetComponentsInChildren<Renderer>())
