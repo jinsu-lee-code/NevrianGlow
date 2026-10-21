@@ -13,14 +13,17 @@ MonoBehaviour:
   m_Name: skill_watering_license
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.SkillData
   id: skill_watering_license
-  displayName: "\uBB3C\uBFCC\uB9AC\uAC1C \uBA74\uD5C8"
-  tab: "\uB18D\uC0AC"
-  order: 5
+  displayName: "\uBB3C\uBFCC\uB9AC\uAC1C \uB77C\uC774\uC120\uC2A4"
+  tab: "\uB18D\uC7A5 \uC6B4\uC601"
+  tabOrder: 1
+  order: 102
+  hidden: 0
   levelDescriptions:
-  - "\uBB3C\uBFCC\uB9AC\uAC1C 2\uB4F1\uAE09\uC774 \uC0C1\uC810\uC5D0 \uB098\uC628\uB2E4"
-  - "\uBB3C\uBFCC\uB9AC\uAC1C 3\uB4F1\uAE09\uC774 \uC0C1\uC810\uC5D0 \uB098\uC628\uB2E4"
-  - "\uBB3C\uBFCC\uB9AC\uAC1C 4\uB4F1\uAE09\uC774 \uC0C1\uC810\uC5D0 \uB098\uC628\uB2E4"
-  costs: 020000000300000005000000
+  - "\uBB3C\uBFCC\uB9AC\uAC1C \uC5C5\uADF8\uB808\uC774\uB4DC 1\uB2E8\uACC4\uAE4C\uC9C0
+    \uAD6C\uB9E4 \uAC00\uB2A5"
+  - "\uBB3C\uBFCC\uB9AC\uAC1C \uC5C5\uADF8\uB808\uC774\uB4DC 2\uB2E8\uACC4\uAE4C\uC9C0
+    \uAD6C\uB9E4 \uAC00\uB2A5"
+  costs: 0300000005000000
   prerequisite: {fileID: 0}
   prerequisiteLevel: 1
   modifiers: []

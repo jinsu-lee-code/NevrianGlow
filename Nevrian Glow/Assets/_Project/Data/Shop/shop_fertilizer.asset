@@ -14,12 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.ItemProductData
   id: shop_fertilizer
   displayName: "\uBE44\uB8CC"
-  sortOrder: 15
-  category: "\uC18C\uBAA8\uD488"
+  sortOrder: 140
+  category: "\uC18C\uBAA8\uD488 \xB7 \uC7A5\uCE58"
+  hidden: 0
   repeatable: 1
   tiers:
-  - price: 30
-    requirements: []
+  - price: 40
+    requirements:
+    - kind: 1
+      targetId: skill_unlock_fertilizer
+      value: 1
   dailyStock: 
   stockFromNextDay: 0
   item: {fileID: 11400000, guid: 58aee35d100eb6b47bb00648b35a9485, type: 2}

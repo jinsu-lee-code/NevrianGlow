@@ -26,7 +26,10 @@ namespace NevrianGlowFarm.Tests
                 StartPlots = plots,
                 ShelfSlots = 6,
                 ShelfItemsPerSlot = 4,
-                Sales = new SalesSpec(8, 2, 24, 0.6, 30, 0.8, 6, 1, 3),
+                Sales = new SalesSpec(30, 0.8, 6, 1, 3),
+                // 1일차 8명 고정(첫 손님 무작위) · 단골 16명에서 시작 · 무작위 폭 0 — 봇 규칙 검사용 (손님 모델 자체는 CustomerModelTests)
+                CustomerModel = new CustomerModelSpec(8, 0, 16, 40, 0.35, 0.1, 0.5, 7, 1.5, 3, 0.8, 0.35, 0.35, 0.3, 0),
+                FurnitureSpots = 8,
                 Curve = new LevelCurve(1, 40, 40, 3),
                 Cleanliness = 1,
                 Crops = new List<SimCrop>

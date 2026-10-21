@@ -169,7 +169,8 @@ namespace NevrianGlowFarm.UI
                     if (e.Stat != null && e.Stat.Id == m.StatId)
                         name = e.Stat.DisplayName;
                 string value = m.Value.ToString("0.##", CultureInfo.InvariantCulture);
-                parts.Add(m.Op == ModifierOp.Add ? $"{name} {(m.Value >= 0 ? "+" : string.Empty)}{value}" : $"{name} ×{value}");
+                parts.Add(m.Op == ModifierOp.Add ? $"{name} {(m.Value >= 0 ? "+" : string.Empty)}{value}"
+                    : m.Op == ModifierOp.Set ? $"{name} {value}" : $"{name} ×{value}");
             }
             return parts.Count > 0 ? string.Join(", ", parts) : "효과 없음";
         }

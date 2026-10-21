@@ -1,0 +1,4 @@
+﻿processor_id,name_ko,item_id,mode,input_slots,batches_per_day,process_days,placement,note,mvp
+proc_grinder,공명 분쇄석,proc_grinder,per_item,6,6,1,farm_free,재료 1개 → 완성품 1개,phase2
+proc_dryer,포자바람 건조막,proc_dryer,per_item,6,6,1,farm_free,재료 1개 → 완성품 1개,phase2
+proc_distiller,성광 증류관,proc_distiller,combine,2,1,1,farm_free,재료 2개 → 완성품 1개,phase2

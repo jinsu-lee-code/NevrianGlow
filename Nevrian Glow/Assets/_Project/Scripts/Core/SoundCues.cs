@@ -44,5 +44,8 @@ namespace NevrianGlowFarm.Core
         public const string UiLevelUp = "sfx_ui_levelup";
         public const string UiFade = "sfx_ui_fade";
         public const string UiToolSwitch = "sfx_ui_tool_switch";
+
+        // 배경음 (구역 배경음은 ZoneProfileData)
+        public const string TitleMusic = "bgm_title_loop";
     }
 }

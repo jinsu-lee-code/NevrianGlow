@@ -86,7 +86,21 @@ namespace NevrianGlowFarm.Editor
             }
             if (!game.IsStarted)
             {
-                EditorGUILayout.HelpBox("구역 씬을 불러오는 중…", MessageType.None);
+                var title = UI.GameScreen.Current as UI.TitleScreen;
+                if (title == null)
+                {
+                    EditorGUILayout.HelpBox("구역 씬을 불러오는 중…", MessageType.None);
+                    return;
+                }
+                // 타이틀 화면 (5-6): 저장을 건드리지 않고 바로 시작하려면 GameManager의 '타이틀 기다림'을 끈다
+                EditorGUILayout.HelpBox("타이틀 화면 - 아래 버튼 또는 게임 화면에서 시작", MessageType.None);
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("새 게임"))
+                        title.NewGame();
+                    if (GUILayout.Button("이어하기"))
+                        title.ContinueGame();
+                }
                 return;
             }
 
@@ -224,7 +238,7 @@ namespace NevrianGlowFarm.Editor
             var stats = StatSystem.Instance;
             if (stats != null)
                 foreach (var m in stats.Modifiers)
-                    EditorGUILayout.LabelField("  효과", $"{m.StatId} {(m.Op == Logic.Game.ModifierOp.Add ? "+" : "×")}{m.Value:0.###}");
+                    EditorGUILayout.LabelField("  효과", $"{m.StatId} {(m.Op == Logic.Game.ModifierOp.Add ? "+" : m.Op == Logic.Game.ModifierOp.Set ? "=" : "×")}{m.Value:0.###}");
             if (shop != null)
                 EditorGUILayout.LabelField("오늘 상점 지출", $"{shop.SpentToday}달러");
         }

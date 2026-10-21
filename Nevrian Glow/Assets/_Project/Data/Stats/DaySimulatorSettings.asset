@@ -21,7 +21,8 @@ MonoBehaviour:
   baseSeed: 20261011
   days: 6
   cleanliness: 0.9
-  customerBonus: 0
+  tidiness: 1
+  plotBeforeSeeds: 1
   skillPriority:
   - skillId: skill_unlock_mushroom
     costs: 03000000
@@ -31,52 +32,43 @@ MonoBehaviour:
     costs: 06000000
     prerequisiteId: skill_unlock_mushroom
     prerequisiteLevel: 1
-  - skillId: skill_quality
-    costs: 020000000300000004000000
-    prerequisiteId: 
-    prerequisiteLevel: 0
   goals:
   - day: 1
     kind: 0
     crop: {fileID: 0}
     amount: 4
-    label: "\uBC2D 4\uCE78 \uC815\uB3C4 \uAC1C\uAC04\uD558\uACE0 \uC2EC\uAE30"
+    label: "1\uC77C\uCC28 4\uCE78 \uC2EC\uAE30 (\uD29C\uD1A0\uB9AC\uC5BC)"
   - day: 2
     kind: 1
-    crop: {fileID: 0}
+    crop: {fileID: 11400000, guid: a35777c6f4e853649b7821763c65220c, type: 2}
     amount: 1
-    label: "\uCCAB \uC218\uD655"
+    label: "\uCCAB \uC218\uD655 (1\uC77C\uCC28 4\uCE78)"
   - day: 2
     kind: 0
-    crop: {fileID: 0}
+    crop: {fileID: 11400000, guid: a35777c6f4e853649b7821763c65220c, type: 2}
     amount: 10
-    label: "\uBC2D 10\uCE78 \uAC1C\uAC04\uD558\uACE0 \uC2EC\uAE30"
-  - day: 3
+    label: "\uC6D4\uAD11 10\uCE78 \uC2EC\uAE30"
+  - day: 2
     kind: 2
     crop: {fileID: 11400000, guid: 6663b6df60460264eb77e170b21b394d, type: 2}
     amount: 0
-    label: "\uBC84\uC12F\uAF43 \uD574\uAE08"
+    label: "\uBC84\uC12F\uAF43 \uD574\uAE08 (2\uC77C\uCC28 \uC815\uC0B0)"
   - day: 3
     kind: 0
     crop: {fileID: 11400000, guid: 6663b6df60460264eb77e170b21b394d, type: 2}
-    amount: 4
-    label: "\uBC84\uC12F\uAF43 4\uCE78 \uC2EC\uAE30"
-  - day: 3
-    kind: 0
-    crop: {fileID: 11400000, guid: a35777c6f4e853649b7821763c65220c, type: 2}
-    amount: 1
-    label: "\uB0A8\uC740 \uB3C8\uC73C\uB85C \uC6D4\uAD11 \uC2EC\uAE30"
+    amount: 3
+    label: "\uBC84\uC12F\uAF43 3\uCE78 \uC2EC\uAE30"
   - day: 4
-    kind: 3
+    kind: 0
     crop: {fileID: 11400000, guid: 6663b6df60460264eb77e170b21b394d, type: 2}
-    amount: 0
-    label: "\uBC84\uC12F\uAF43\uC744 \uB354 \uB9CE\uC774 \uC2EC\uAE30"
+    amount: 5
+    label: "\uBC84\uC12F\uAF43 5\uCE78 \uC2EC\uAE30"
   - day: 5
     kind: 1
     crop: {fileID: 11400000, guid: 6663b6df60460264eb77e170b21b394d, type: 2}
     amount: 1
     label: "\uBC84\uC12F\uAF43 \uCCAB \uC218\uD655"
-  - day: 6
+  - day: 5
     kind: 2
     crop: {fileID: 11400000, guid: a4a4c84efe1da9c4cba2eb00bf71d748, type: 2}
     amount: 0

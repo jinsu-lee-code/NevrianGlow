@@ -961,6 +961,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Systems.Cleaning.CleaningSystem
   settings: {fileID: 11400000, guid: ebcd753832119694cb88a4db9e09ac00, type: 2}
+  messRateStat: {fileID: 11400000, guid: 5b7159e5370aa2d46b35027d9e52f3e4, type: 2}
   worldItemPrefab: {fileID: 7010890459145888545, guid: d66a91af58026ad4bad88a276632844e, type: 3}
   stainPrefab: {fileID: 8702575058728437731, guid: b27a7a612f43ace488ffb1a023012efd, type: 3}
   forbiddenZones:
@@ -979,6 +980,9 @@ MonoBehaviour:
   initialTrash: 0
   initialStains: 0
   lockedCleanliness: -1
+  initialScattered: 0
+  initialDisordered: 0
+  lockedTidiness: -1
 --- !u!1 &1286044805
 GameObject:
   m_ObjectHideFlags: 0
@@ -1275,7 +1279,8 @@ MonoBehaviour:
   queueStart: {fileID: 815438691}
   skipAction: {fileID: 1675405788361578493, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   sellPriceStat: {fileID: 11400000, guid: 2214fc0dcdc9ee0489de0f73ab987230, type: 2}
-  customerBonusStat: {fileID: 11400000, guid: ce7d95e45b772c24285b1c70889c9798, type: 2}
+  adRateStat: {fileID: 11400000, guid: c2158f9c29cc77b4f9b4b9edf7efea25, type: 2}
+  extraBuyStat: {fileID: 11400000, guid: f749632b3543b084dbdb3e727d8e8f3c, type: 2}
   browseSpread: 4
   overtimeLimit: 20
   seed: 20261011

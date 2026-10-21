@@ -50,7 +50,7 @@ namespace NevrianGlowFarm.Logic.Simulation
             var sb = new StringBuilder();
             sb.AppendLine($"# 측정 봇 리포트 (1~{config.Days}일차 × 시드 {runs.Count})");
             sb.AppendLine();
-            sb.AppendLine($"- 조건: 시작 {config.StartMoney}달러 · 밭 {config.StartPlots}구획({config.StartPlots * config.CellsPerPlot}칸) · 진열 {config.ShelfSlots}칸 × {config.ShelfItemsPerSlot}개 · 청결도 {config.Cleanliness:P0} · 손님 보너스 {config.CustomerBonus:P0}");
+            sb.AppendLine($"- 조건: 시작 {config.StartMoney}달러 · 밭 {config.StartPlots}구획({config.StartPlots * config.CellsPerPlot}칸) · 진열 {config.ShelfSlots}칸 × {config.ShelfItemsPerSlot}개 · 청결도 {config.Cleanliness:P0} · 정돈도 {config.Tidiness:P0} · 입소문 손님 모델(광고 p {config.AdRate:0.###})");
             sb.AppendLine($"- 시작 씨앗: {Counts(config.StartSeeds, Name)} / 시작 수확물: {Counts(config.StartCrops, Name)}");
             sb.AppendLine($"- 작물 (칸당 일일 이익 순): {string.Join(", ", config.Crops.OrderByDescending(c => c.ProfitPerCellPerDay).Select(c => $"{Name(c.Id)} {c.ProfitPerCellPerDay.ToString("0.#", Inv)}"))}");
             sb.AppendLine($"- 스킬 순서: {string.Join(" → ", config.SkillPriority.Select(s => $"{s.Id}({string.Join("/", s.Costs)} SP)"))}");

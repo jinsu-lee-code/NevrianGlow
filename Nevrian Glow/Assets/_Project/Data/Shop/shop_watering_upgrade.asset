@@ -14,29 +14,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.ToolUpgradeProductData
   id: shop_watering_upgrade
   displayName: "\uBB3C\uBFCC\uB9AC\uAC1C \uC5C5\uADF8\uB808\uC774\uB4DC"
-  sortOrder: 22
+  sortOrder: 80
   category: "\uB3C4\uAD6C"
+  hidden: 0
   repeatable: 0
   tiers:
-  - price: 100
+  - price: 400
     requirements:
     - kind: 1
       targetId: skill_watering_license
       value: 1
-  - price: 250
+  - price: 1500
     requirements:
     - kind: 1
       targetId: skill_watering_license
       value: 2
-  - price: 500
-    requirements:
-    - kind: 1
-      targetId: skill_watering_license
-      value: 3
   dailyStock: 
   stockFromNextDay: 0
   baseTool: {fileID: 11400000, guid: dd02b4c4e6393a145b0d53047c05e233, type: 2}
   tierTools:
   - {fileID: 11400000, guid: b7db6aa2704bd5d4289a5405cf37a67f, type: 2}
   - {fileID: 11400000, guid: 483f639557e0c744095f07d623729acb, type: 2}
-  - {fileID: 11400000, guid: d3d5147414c279f4a8a647d213ebe3f4, type: 2}

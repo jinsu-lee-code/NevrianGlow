@@ -84,7 +84,7 @@ namespace NevrianGlowFarm.Core
             modifiers.AddRange(next);
             modifierView.Clear();
             foreach (var m in modifiers)
-                modifierView.Add($"{m.StatId} {(m.Op == ModifierOp.Add ? "+" : "×")}{m.Value:0.###}");
+                modifierView.Add($"{m.StatId} {(m.Op == ModifierOp.Add ? "+" : m.Op == ModifierOp.Set ? "=" : "×")}{m.Value:0.###}");
             GameEvents.RaiseStatsChanged();
         }
 

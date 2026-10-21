@@ -14,6 +14,8 @@ namespace NevrianGlowFarm.Editor
     /// 여러 번 실행해도 결과가 같다: 이미 있는 에셋은 건드리지 않고, "초기값으로 되돌리기"에서만 값을 덮어쓴다.
     /// 필드 이름 · id는 CSV 임포터(2-1)와 같다 → CSV가 오면 같은 에셋의 값만 갱신된다.
     /// 상품 · 스킬은 효과 구조를 정하는 3-3 · 4-3에서 이 메뉴에 추가한다 (결정 2026-10-08).
+    /// 기획 확정(2026-10-21) 이후 수치의 기준은 기획 CSV다 — 이 메뉴는 에셋 뼈대만 만들고, 값은 그다음
+    /// `Glow Farm/Data/Import Plan CSV`가 덮어쓴다 (여기 적힌 숫자는 예전 임시값).
     /// </summary>
     public static class PlaceholderDataSetup
     {
@@ -89,7 +91,7 @@ namespace NevrianGlowFarm.Editor
             ("tool_watering_1", "물뿌리개", 1),
             ("tool_watering_2", "물뿌리개 2등급", 2),
             ("tool_watering_3", "물뿌리개 3등급", 4),
-            ("tool_watering_4", "물뿌리개 4등급", 8),
+            // 4등급은 기획 확정으로 폐기 (회신 #6, 2026-10-21) — 3등급 1 → 4 → 8칸은 기획 CSV 가져오기가 넣는다
         };
 
         private static readonly (string Id, string Name, float Radius, float Speed)[] Mops =
@@ -131,7 +133,7 @@ namespace NevrianGlowFarm.Editor
         private static void ResetMenu()
         {
             if (!EditorUtility.DisplayDialog("초기값으로 되돌리기",
-                    "임시 데이터 에셋의 값을 BALANCE 초기값으로 덮어쓴다. 직접 바꾼 값과 CSV로 가져온 값이 사라진다.",
+                    "임시 데이터 에셋의 값을 예전 BALANCE 임시값으로 덮어쓴다. 직접 바꾼 값과 기획 CSV로 가져온 값이 사라진다 — 되돌린 뒤 Import Plan CSV를 다시 실행할 것.",
                     "되돌리기", "취소"))
                 return;
             Debug.Log("[Setup] 임시 데이터 초기화: " + Run(true));
@@ -298,8 +300,7 @@ namespace NevrianGlowFarm.Editor
             // BALANCE 2-5
             Ensure<CleaningSettingsData>($"{StatsFolder}/CleaningSettings.asset", resetExisting, report, so =>
             {
-                SetDailyCount(so.FindProperty("trash"), 6, 1, 6);
-                SetDailyCount(so.FindProperty("stain"), 4, 2, 4);
+                // 쓰레기 · 얼룩 · 흩어짐 · 흐트러짐 · 등급 값은 기획 CSV 가져오기가 넣는다 (P-3)
                 so.FindProperty("minSpacing").floatValue = 0.8f;
                 so.FindProperty("placementAttempts").intValue = 30;
                 so.FindProperty("trashItem").objectReferenceValue = trashItem;
@@ -308,10 +309,7 @@ namespace NevrianGlowFarm.Editor
             // BALANCE 2-6
             Ensure<SalesSettingsData>($"{StatsFolder}/SalesSettings.asset", resetExisting, report, so =>
             {
-                so.FindProperty("baseCustomers").intValue = 8;
-                so.FindProperty("customerDayDivisor").intValue = 2;
-                so.FindProperty("customerCap").intValue = 24;
-                so.FindProperty("dirtyCustomerMultiplier").floatValue = 0.6f;
+                // 손님 수(입소문 모델) 값은 기획 CSV 가져오기가 넣는다 (P-2)
                 so.FindProperty("salesDuration").floatValue = 30f;
                 so.FindProperty("spawnWindow").floatValue = 0.8f;
                 so.FindProperty("maxConcurrentCustomers").intValue = 6;
@@ -435,8 +433,8 @@ namespace NevrianGlowFarm.Editor
                 new[] { new Tier(150), new Tier(400) }, resetExisting, report);
             EnsureToolUpgrade("shop_mop_upgrade", "대걸레 업그레이드", 21, "tool_mop_1", new[] { "tool_mop_2", "tool_mop_3" },
                 new[] { new Tier(120), new Tier(350) }, resetExisting, report);
-            EnsureToolUpgrade("shop_watering_upgrade", "물뿌리개 업그레이드", 22, "tool_watering_1", new[] { "tool_watering_2", "tool_watering_3", "tool_watering_4" },
-                new[] { new Tier(100, "skill_watering_license", 1), new Tier(250, "skill_watering_license", 2), new Tier(500, "skill_watering_license", 3) }, resetExisting, report);
+            EnsureToolUpgrade("shop_watering_upgrade", "물뿌리개 업그레이드", 22, "tool_watering_1", new[] { "tool_watering_2", "tool_watering_3" },
+                new[] { new Tier(100, "skill_watering_license", 1), new Tier(250, "skill_watering_license", 2) }, resetExisting, report);
 
             Ensure<PlotExpandProductData>($"{ShopFolder}/shop_plot_expand.asset", resetExisting, report, so =>
             {
@@ -478,9 +476,9 @@ namespace NevrianGlowFarm.Editor
                 so.FindProperty("baseSeed").intValue = 20261011;
                 so.FindProperty("days").intValue = 6;
                 so.FindProperty("cleanliness").floatValue = 0.9f;
-                so.FindProperty("customerBonus").floatValue = 0f;
+                so.FindProperty("tidiness").floatValue = 1f;
 
-                // BALANCE 4번 5: 작물 해금 → 고품질 (비용 9-3 임시 — 스킬 데이터 4-3에서 교체)
+                // 작물 해금 순서 (기획 확정 2026-10-21: P0 스킬 = 버섯꽃 3 · 등불 6 SP, 고품질 스킬 폐기)
                 var skills = so.FindProperty("skillPriority");
                 skills.ClearArray();
                 void Skill(string id, int[] costs, string pre, int preLevel)
@@ -500,9 +498,8 @@ namespace NevrianGlowFarm.Editor
                 }
                 Skill("skill_unlock_mushroom", new[] { 3 }, null, 0);
                 Skill("skill_unlock_lantern", new[] { 6 }, "skill_unlock_mushroom", 1);
-                Skill("skill_quality", new[] { 2, 3, 4 }, null, 0);
 
-                // GDD 6장 프로토타입 목표 경험 → 판정 조건 (임시 해석, 기획 확인 대기)
+                // GDD 1페이지 데모 목표 경험 (기획 확정 2026-10-21, 회신 1-1 #1 · #2)
                 var goals = so.FindProperty("goals");
                 goals.ClearArray();
                 void Goal(int day, Logic.Simulation.SimGoalKind kind, string cropId, int amount, string label)
@@ -515,15 +512,14 @@ namespace NevrianGlowFarm.Editor
                     e.FindPropertyRelative("amount").intValue = amount;
                     e.FindPropertyRelative("label").stringValue = label;
                 }
-                Goal(1, Logic.Simulation.SimGoalKind.PlantedAtLeast, null, 4, "밭 4칸 정도 개간하고 심기");
-                Goal(2, Logic.Simulation.SimGoalKind.HarvestedAtLeast, null, 1, "첫 수확");
-                Goal(2, Logic.Simulation.SimGoalKind.PlantedAtLeast, null, 10, "밭 10칸 개간하고 심기");
-                Goal(3, Logic.Simulation.SimGoalKind.CropUnlocked, "crop_mushroomflower", 0, "버섯꽃 해금");
-                Goal(3, Logic.Simulation.SimGoalKind.PlantedAtLeast, "crop_mushroomflower", 4, "버섯꽃 4칸 심기");
-                Goal(3, Logic.Simulation.SimGoalKind.PlantedAtLeast, "crop_moonroot", 1, "남은 돈으로 월광 심기");
-                Goal(4, Logic.Simulation.SimGoalKind.PlantedMoreThanPreviousDay, "crop_mushroomflower", 0, "버섯꽃을 더 많이 심기");
+                Goal(1, Logic.Simulation.SimGoalKind.PlantedAtLeast, null, 4, "1일차 4칸 심기 (튜토리얼)");
+                Goal(2, Logic.Simulation.SimGoalKind.HarvestedAtLeast, "crop_moonroot", 1, "첫 수확 (1일차 4칸)");
+                Goal(2, Logic.Simulation.SimGoalKind.PlantedAtLeast, "crop_moonroot", 10, "월광 10칸 심기");
+                Goal(2, Logic.Simulation.SimGoalKind.CropUnlocked, "crop_mushroomflower", 0, "버섯꽃 해금 (2일차 정산)");
+                Goal(3, Logic.Simulation.SimGoalKind.PlantedAtLeast, "crop_mushroomflower", 3, "버섯꽃 3칸 심기");
+                Goal(4, Logic.Simulation.SimGoalKind.PlantedAtLeast, "crop_mushroomflower", 5, "버섯꽃 5칸 심기");
                 Goal(5, Logic.Simulation.SimGoalKind.HarvestedAtLeast, "crop_mushroomflower", 1, "버섯꽃 첫 수확");
-                Goal(6, Logic.Simulation.SimGoalKind.CropUnlocked, "crop_lanternfruit", 0, "등불 열매 해금");
+                Goal(5, Logic.Simulation.SimGoalKind.CropUnlocked, "crop_lanternfruit", 0, "등불 열매 해금");
                 Goal(6, Logic.Simulation.SimGoalKind.PlantedAtLeast, "crop_lanternfruit", 4, "등불 열매 4칸 심기");
             });
         }
@@ -589,6 +585,9 @@ namespace NevrianGlowFarm.Editor
             ("stat_grow_days", "성장일", "작물 첫 성장일에 더한다 (최소 1일)"),
             ("stat_hotbar_slots", "핫바 칸", "처음 핫바 칸 수에 더한다 (최대 칸 수까지)"),
             ("stat_customer_bonus", "손님 수 보너스", "손님 수 공식의 보너스 합 (0.1 = +10%)"),
+            ("stat_customer_ad_rate", "광고 계수", "입소문 모델 광고 계수 p — 기본값(SalesSettings)에 더한다 (간판, P-2)"),
+            ("stat_extra_buy_chance", "1개 더 살 확률", "손님마다 1개 더 살 확률 (0.1 = 10%, 단골의 장바구니, P-2)"),
+            ("stat_mess_rate", "어지러움 배율", "흩어진 상품 · 흐트러진 진열 · 얼룩 생성 배율 — 기본 1 (청결 유지, P-3)"),
         };
 
         private readonly struct SkillRow
@@ -698,13 +697,6 @@ namespace NevrianGlowFarm.Editor
         {
             so.FindProperty("id").stringValue = id;
             so.FindProperty("displayName").stringValue = displayName;
-        }
-
-        private static void SetDailyCount(SerializedProperty prop, int baseCount, int dayDivisor, int dayBonusCap)
-        {
-            prop.FindPropertyRelative("baseCount").intValue = baseCount;
-            prop.FindPropertyRelative("dayDivisor").intValue = dayDivisor;
-            prop.FindPropertyRelative("dayBonusCap").intValue = dayBonusCap;
         }
 
         private static T Ensure<T>(string path, bool resetExisting, Report report, Action<SerializedObject> apply)

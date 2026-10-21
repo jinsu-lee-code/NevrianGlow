@@ -14,10 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.SkillData
   id: skill_unlock_lantern
   displayName: "\uB4F1\uBD88 \uC5F4\uB9E4 \uD574\uAE08"
-  tab: "\uB18D\uC0AC"
-  order: 2
+  tab: "\uB18D\uC7A5 \uC6B4\uC601"
+  tabOrder: 1
+  order: 201
+  hidden: 0
   levelDescriptions:
-  - "\uB4F1\uBD88 \uC5F4\uB9E4 \uC528\uC557\uC774 \uC0C1\uC810\uC5D0 \uB098\uC628\uB2E4"
+  - "\uB4F1\uBD88 \uC5F4\uB9E4 \uC528\uC557 \uC0C1\uC810\uC5D0 \uB4F1\uC7A5"
   costs: 06000000
   prerequisite: {fileID: 11400000, guid: 6542501caa98a784bb5f40c1601e6680, type: 2}
   prerequisiteLevel: 1

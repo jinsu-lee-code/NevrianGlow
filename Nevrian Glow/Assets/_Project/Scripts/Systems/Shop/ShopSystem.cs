@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using NevrianGlowFarm.Core;
 using NevrianGlowFarm.Data;
@@ -58,7 +59,8 @@ namespace NevrianGlowFarm.Systems.Shop
                 return;
             }
             instance = this;
-            products.AddRange(database.All<ShopProductData>());
+            // 숨긴 상품(기획 phase2 · 연결 전)은 상점에 올리지 않는다 (회신2 2-6)
+            products.AddRange(database.All<ShopProductData>().Where(p => p != null && !p.Hidden));
             products.Sort((a, b) => a.SortOrder != b.SortOrder ? a.SortOrder.CompareTo(b.SortOrder) : string.CompareOrdinal(a.Id, b.Id));
         }
 
@@ -219,7 +221,7 @@ namespace NevrianGlowFarm.Systems.Shop
                     reason = "넣을 칸 없음";
                     return false;
                 case PlotExpandProductData plot:
-                    if (Farm != null && Farm.PlotCount + plot.Plots <= Farm.MaxPlotCount)
+                    if (Farm != null && Farm.PlotCount + plot.PlotsAt(tier) <= Farm.MaxPlotCount)
                         return true;
                     reason = "밭을 더 넓힐 수 없음";
                     return false;
@@ -254,8 +256,8 @@ namespace NevrianGlowFarm.Systems.Shop
                     inventory.TryAdd(next, 1);
                     return $"{next.DisplayName} 삼";
                 case PlotExpandProductData plot:
-                    Farm.TryAddPlots(plot.Plots);
-                    return $"밭 구획 +{plot.Plots} (지금 {Farm.PlotCount}구획)";
+                    Farm.TryAddPlots(plot.PlotsAt(tier));
+                    return $"밭 구획 +{plot.PlotsAt(tier)} (지금 {Farm.PlotCount}구획)";
                 case BagExpandProductData bag:
                     inventory.SetBagSlotCount(inventory.Bag.SlotCount + bag.Slots);
                     return $"가방 +{bag.Slots}칸 (지금 {inventory.Bag.SlotCount}칸)";

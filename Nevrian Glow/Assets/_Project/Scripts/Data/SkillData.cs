@@ -18,7 +18,7 @@ namespace NevrianGlowFarm.Data
         {
             [Tooltip("바꿀 능력치")]
             [SerializeField] private StatData stat;
-            [Tooltip("Add = 기본값에 더함 · Multiply = 곱함")]
+            [Tooltip("Add = 기본값에 더함 · Multiply = 곱함 · Set = 기본값을 바꿈")]
             [SerializeField] private ModifierOp op;
             [Tooltip("단계별 값 — 그 단계의 전체 효과 (1단계 = 첫 칸, 예: 판매가 1.05 / 1.10 / 1.15)")]
             [SerializeField] private List<float> values = new List<float>();
@@ -29,10 +29,14 @@ namespace NevrianGlowFarm.Data
         }
 
         [Header("배치")]
-        [Tooltip("스킬 화면 탭 (예: 농사 · 공통 · 청소 · 장사)")]
+        [Tooltip("스킬 화면 탭 (예: 농장 운영 · 매장 운영 · 공용)")]
         [SerializeField] private string tab;
+        [Tooltip("탭 순서 (작을수록 앞, 기획 skill_tabs.csv order)")]
+        [SerializeField] private int tabOrder;
         [Tooltip("탭 안 순서 (작을수록 위)")]
         [SerializeField] private int order;
+        [Tooltip("스킬 화면에 보이지 않음 — 기획 mvp = phase2 · 효과 연결 전 스킬 (기획 CSV 가져오기가 정한다, ID_MAP.md)")]
+        [SerializeField] private bool hidden;
         [Tooltip("단계별 설명 (1단계 = 첫 줄). 비우면 효과 값으로 대신 적는다")]
         [SerializeField] private List<string> levelDescriptions = new List<string>();
 
@@ -49,7 +53,9 @@ namespace NevrianGlowFarm.Data
         [SerializeField] private List<ModifierEntry> modifiers = new List<ModifierEntry>();
 
         public string Tab => tab;
+        public int TabOrder => tabOrder;
         public int Order => order;
+        public bool Hidden => hidden;
         public IReadOnlyList<int> Costs => costs;
         public int MaxLevel => costs.Count;
         public SkillData Prerequisite => prerequisite;

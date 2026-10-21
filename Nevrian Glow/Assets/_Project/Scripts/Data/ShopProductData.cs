@@ -59,6 +59,8 @@ namespace NevrianGlowFarm.Data
         [SerializeField] private int sortOrder;
         [Tooltip("분류 이름 (상점 목록에 붙는 글자, 예: 씨앗 · 도구 · 확장)")]
         [SerializeField] private string category;
+        [Tooltip("상점에 보이지 않음 — 기획 mvp = phase2 · 시스템 연결 전 상품 (기획 CSV 가져오기가 정한다, ID_MAP.md)")]
+        [SerializeField] private bool hidden;
 
         [Header("단계 · 가격")]
         [Tooltip("켜면 단계 1개를 하루 입고량만큼 여러 번 산다(씨앗 · 소모품). 끄면 단계를 차례로 한 번씩(도구 등급 · 확장)")]
@@ -74,6 +76,7 @@ namespace NevrianGlowFarm.Data
 
         public int SortOrder => sortOrder;
         public string Category => category;
+        public bool Hidden => hidden;
         public bool Repeatable => repeatable;
         public IReadOnlyList<ShopTierEntry> Tiers => tiers;
         public IReadOnlyList<int> DailyStock => dailyStock;

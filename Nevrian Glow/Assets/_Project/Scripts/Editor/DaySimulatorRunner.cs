@@ -83,7 +83,10 @@ namespace NevrianGlowFarm.Editor
                 Sales = settings.Sales.ToSpec(),
                 Curve = settings.Progression.ToCurve(),
                 Cleanliness = settings.Cleanliness,
-                CustomerBonus = settings.CustomerBonus,
+                CustomerModel = settings.Sales.ToCustomerSpec(),
+                AdRate = settings.Sales.AdRate,
+                FurnitureSpots = settings.Sales.FurnitureSpots,
+                Tidiness = settings.Tidiness,
                 PlotBeforeSeeds = settings.PlotBeforeSeeds,
             };
 
@@ -115,7 +118,7 @@ namespace NevrianGlowFarm.Editor
             if (plot != null)
             {
                 config.PlotProduct = plot.ToSpec();
-                config.PlotsPerTier = plot.Plots;
+                config.PlotsPerTier = plot.PlotsAt(0); // 봇은 첫 단계 값만 쓴다 (봇 재측정 때 단계별로)
             }
 
             foreach (var skill in settings.SkillPriority)

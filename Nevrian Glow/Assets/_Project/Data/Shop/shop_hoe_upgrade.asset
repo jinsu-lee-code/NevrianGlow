@@ -14,13 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.ToolUpgradeProductData
   id: shop_hoe_upgrade
   displayName: "\uAD2D\uC774 \uC5C5\uADF8\uB808\uC774\uB4DC"
-  sortOrder: 20
+  sortOrder: 60
   category: "\uB3C4\uAD6C"
+  hidden: 0
   repeatable: 0
   tiers:
-  - price: 150
+  - price: 300
     requirements: []
-  - price: 400
+  - price: 1200
     requirements: []
   dailyStock: 
   stockFromNextDay: 0

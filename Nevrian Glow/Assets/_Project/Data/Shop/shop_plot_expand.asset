@@ -13,17 +13,21 @@ MonoBehaviour:
   m_Name: shop_plot_expand
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.PlotExpandProductData
   id: shop_plot_expand
-  displayName: "\uBC2D \uAD6C\uD68D \uD655\uC7A5"
-  sortOrder: 30
+  displayName: "\uBC2D \uD655\uC7A5\uAD8C"
+  sortOrder: 90
   category: "\uD655\uC7A5"
+  hidden: 1
   repeatable: 0
   tiers:
-  - price: 250
+  - price: 1500
     requirements: []
-  - price: 600
+  - price: 4000
     requirements: []
-  - price: 1400
+  - price: 10000
+    requirements: []
+  - price: 25000
     requirements: []
   dailyStock: 
   stockFromNextDay: 0
   plots: 1
+  plotsPerTier: 01000000020000000400000007000000

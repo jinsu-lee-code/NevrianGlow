@@ -14,19 +14,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.SkillData
   id: skill_clean_keep
   displayName: "\uCCAD\uACB0 \uC720\uC9C0"
-  tab: "\uCCAD\uC18C"
-  order: 1
+  tab: "\uB9E4\uC7A5 \uC6B4\uC601"
+  tabOrder: 2
+  order: 101
+  hidden: 0
   levelDescriptions:
-  - "\uC190\uB2D8 \uC218 +10%"
-  - "\uC190\uB2D8 \uC218 +20%"
-  - "\uC190\uB2D8 \uC218 +30%"
-  costs: 020000000300000004000000
+  - 
+  - 
+  - 
+  - 
+  - 
+  costs: 0200000003000000040000000500000006000000
   prerequisite: {fileID: 0}
   prerequisiteLevel: 1
   modifiers:
-  - stat: {fileID: 11400000, guid: ce7d95e45b772c24285b1c70889c9798, type: 2}
-    op: 0
+  - stat: {fileID: 11400000, guid: 5b7159e5370aa2d46b35027d9e52f3e4, type: 2}
+    op: 1
     values:
-    - 0.1
-    - 0.2
-    - 0.3
+    - 0.9
+    - 0.8
+    - 0.7
+    - 0.6
+    - 0.5
