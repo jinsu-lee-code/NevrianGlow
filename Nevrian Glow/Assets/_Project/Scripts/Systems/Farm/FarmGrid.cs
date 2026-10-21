@@ -25,6 +25,8 @@ namespace NevrianGlowFarm.Systems.Farm
         [SerializeField] private FarmCellView cellPrefab;
         [Tooltip("겹치면 안 되는 구역 (길 · 문 주변) — 겹치면 기즈모 빨강 + 시작 시 경고")]
         [SerializeField] private List<ForbiddenZone> forbiddenZones = new List<ForbiddenZone>();
+        [Tooltip("성장일 능력치 — 작물 첫 성장일에 더함 (Data/Stats/stat_grow_days, 비우면 그대로)")]
+        [SerializeField] private StatData growDaysStat;
 
         [Header("조정값")]
         [Tooltip("칸 하나의 흙 크기 — 겹침 검사에도 쓴다, 칸 프리팹 크기와 같게 (m)")]
@@ -77,8 +79,24 @@ namespace NevrianGlowFarm.Systems.Farm
             WarnForbiddenOverlaps();
         }
 
-        private void OnEnable() => GameEvents.PhaseChanged += OnPhaseChanged;
-        private void OnDisable() => GameEvents.PhaseChanged -= OnPhaseChanged;
+        private void OnEnable()
+        {
+            GameEvents.PhaseChanged += OnPhaseChanged;
+            GameEvents.StatsChanged += OnStatsChanged;
+        }
+
+        private void OnDisable()
+        {
+            GameEvents.PhaseChanged -= OnPhaseChanged;
+            GameEvents.StatsChanged -= OnStatsChanged;
+        }
+
+        // 성장일이 줄면 이미 자란 칸이 바로 다 자람이 될 수 있다 → 겉모습만 다시 (성장 처리는 밤에만)
+        private void OnStatsChanged()
+        {
+            if (state != null && views.Count > 0)
+                RefreshAll();
+        }
 
         private void Start()
         {
@@ -402,7 +420,13 @@ namespace NevrianGlowFarm.Systems.Farm
         // 칸에는 작물 id만 있다 (저장 6-1도 id). 심을 때 데이터베이스에 있는지 확인하므로 여기서는 반드시 찾힌다.
         private CropData CropOf(string cropId) => database.Get<CropData>(cropId);
 
-        private CropSpec SpecOf(string cropId) => CropOf(cropId).ToSpec();
+        // 성장일 능력치(스킬 4-3 — 예: 비옥한 땅 −1)를 건 작물 규칙. 최소 1일은 CropSpec이 지킨다.
+        private CropSpec SpecOf(string cropId)
+        {
+            var s = CropOf(cropId).ToSpec();
+            int grow = StatSystem.Apply(growDaysStat, s.GrowDays);
+            return grow == s.GrowDays ? s : new CropSpec(grow, s.WetDays, s.HarvestYield, s.RegrowDays, s.MaxHarvests);
+        }
 
         // ── 배치 ─────────────────────────────────────────────
 

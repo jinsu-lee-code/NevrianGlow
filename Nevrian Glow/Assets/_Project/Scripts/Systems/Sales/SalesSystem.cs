@@ -74,6 +74,10 @@ namespace NevrianGlowFarm.Systems.Sales
         [SerializeField] private Transform queueStart;
         [Tooltip("장사 건너뛰기 (Player/SkipSales, Space)")]
         [SerializeField] private InputActionReference skipAction;
+        [Tooltip("판매가 능력치 — 작물 판매가에 곱함 (Data/Stats/stat_sell_price, 비우면 그대로)")]
+        [SerializeField] private StatData sellPriceStat;
+        [Tooltip("손님 수 보너스 능력치 — 손님 수 공식의 보너스 합 (Data/Stats/stat_customer_bonus, 비우면 0)")]
+        [SerializeField] private StatData customerBonusStat;
 
         [Header("조정값")]
         [Tooltip("진열대 앞에서 손님이 흩어 서는 폭 (m)")]
@@ -163,9 +167,10 @@ namespace NevrianGlowFarm.Systems.Sales
             ClearCustomers();
             day = today;
             var spec = settings.ToSpec();
-            // 청결도는 장사 시작 때 확정 (CleaningSystem도 같은 순간 같은 값으로 고정한다). 보너스 합 = 스킬 · 매장 효과 4-3, 지금은 0.
+            // 청결도는 장사 시작 때 확정 (CleaningSystem도 같은 순간 같은 값으로 고정한다). 보너스 합 = 스킬 효과 (StatSystem 4-3).
             double clean = CleaningSystem.Instance != null ? CleaningSystem.Instance.CurrentCleanliness() : 1.0;
-            int count = SalesRules.CustomerCount(today, 0, clean, spec);
+            double bonus = StatSystem.Apply(customerBonusStat, 0.0);
+            int count = SalesRules.CustomerCount(today, bonus, clean, spec);
             session = new SalesSession(count, spec);
             purchaseRandom = new SeededRandom(SeededRandom.SeedFor(seed, PurchasePurpose, today));
             customerRandom = new SeededRandom(SeededRandom.SeedFor(seed, CustomerPurpose, today));
@@ -175,7 +180,7 @@ namespace NevrianGlowFarm.Systems.Sales
             spawnedNumber = 0;
             lastResult = null;
             running = true;
-            Debug.Log($"[SalesSystem] {today}일차 장사 시작: 손님 {count}명 (청결도 {clean:P0}) · 진열 {DisplayedCount()}개");
+            Debug.Log($"[SalesSystem] {today}일차 장사 시작: 손님 {count}명 (청결도 {clean:P0} · 보너스 {bonus:P0}) · 진열 {DisplayedCount()}개");
             UpdateDebugView();
         }
 
@@ -369,7 +374,7 @@ namespace NevrianGlowFarm.Systems.Sales
         private int PriceOf(string id)
         {
             var crop = database.Get<CropData>(id);
-            return crop != null ? crop.SellPrice : 0;
+            return crop != null ? StatSystem.Apply(sellPriceStat, crop.SellPrice) : 0; // 고품질 스킬 등 (4-3)
         }
 
         /// <summary>지금 진열대에 놓인 작물 수 (장사 전 안내 — 영업 팻말).</summary>

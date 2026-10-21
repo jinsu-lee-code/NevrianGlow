@@ -524,6 +524,7 @@ MonoBehaviour:
   forbiddenZones:
   - {fileID: 358396347}
   - {fileID: 1214469590}
+  growDaysStat: {fileID: 11400000, guid: 8600518b81c13e04b8cc22cf767f019f, type: 2}
   cellFootprint: 1.6
   untilledColor: {r: 0.024, g: 0.086, b: 0.122, a: 1}
   tilledColor: {r: 0.17, g: 0.33, b: 0.47, a: 1}

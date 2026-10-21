@@ -148,36 +148,51 @@ namespace NevrianGlowFarm.Editor
                 cleaning.DebugCleanAll();
         }
 
-        // 스킬 단계 (SkillSystem 4-3 전 임시) — 상점 상품 해금 조건에 나오는 스킬 id를 모아 단계를 바로 바꾼다 (SP 소비 없음)
+        // 스킬 단계 (SkillSystem 4-3) — SP 없이 단계를 바로 바꾼다(+/-), 효과(StatSystem)는 그대로 따라 바뀐다.
+        // 상점 해금 조건에만 있고 스킬 데이터가 없는 id도 함께 보여 준다 (데이터 누락 확인용).
         private void DrawSkillSection()
         {
-            EditorGUILayout.LabelField("스킬 단계 (4-3 전 임시)", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("스킬 단계 (SP 없이 바꾸기)", EditorStyles.boldLabel);
             var game = GameManager.Instance;
             var shop = Systems.Shop.ShopSystem.Instance;
-            if (!Application.isPlaying || game == null || !game.IsStarted || shop == null)
+            var skills = Systems.Skill.SkillSystem.Instance;
+            if (!Application.isPlaying || game == null || !game.IsStarted)
             {
-                EditorGUILayout.HelpBox("플레이 중일 때 상점 해금 조건의 스킬 단계를 바꿀 수 있다 (SP를 쓰지 않음).", MessageType.None);
+                EditorGUILayout.HelpBox("플레이 중일 때 스킬 단계를 바꿀 수 있다 (SP를 쓰지 않음). 게임에서 배우기는 K 스킬 화면.", MessageType.None);
                 return;
             }
-            var ids = new System.Collections.Generic.SortedSet<string>();
-            foreach (var p in shop.Products)
-                foreach (var t in p.Tiers)
-                    foreach (var r in t.Requirements)
-                        if (r.Kind == Logic.Shop.UnlockKind.SkillLevel && !string.IsNullOrEmpty(r.TargetId))
-                            ids.Add(r.TargetId);
-            foreach (var id in ids)
+            var rows = new System.Collections.Generic.List<(string id, string label, int max)>();
+            var known = new System.Collections.Generic.HashSet<string>();
+            if (skills != null)
+                foreach (var s in skills.Skills)
+                {
+                    rows.Add((s.Id, $"[{s.Tab}] {s.DisplayName}", s.MaxLevel));
+                    known.Add(s.Id);
+                }
+            if (shop != null)
+                foreach (var p in shop.Products)
+                    foreach (var t in p.Tiers)
+                        foreach (var r in t.Requirements)
+                            if (r.Kind == Logic.Shop.UnlockKind.SkillLevel && !string.IsNullOrEmpty(r.TargetId) && known.Add(r.TargetId))
+                                rows.Add((r.TargetId, $"{r.TargetId} (스킬 데이터 없음)", 99));
+            foreach (var (id, label, max) in rows)
             {
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     int level = game.SkillLevel(id);
-                    EditorGUILayout.LabelField(id, $"{level}단계");
+                    EditorGUILayout.LabelField(label, $"{level}/{max}단계");
                     if (GUILayout.Button("-", GUILayout.Width(30)))
                         game.SetSkillLevel(id, level - 1);
-                    if (GUILayout.Button("+", GUILayout.Width(30)))
+                    if (GUILayout.Button("+", GUILayout.Width(30)) && level < max)
                         game.SetSkillLevel(id, level + 1);
                 }
             }
-            EditorGUILayout.LabelField("오늘 상점 지출", $"{shop.SpentToday}달러");
+            var stats = StatSystem.Instance;
+            if (stats != null)
+                foreach (var m in stats.Modifiers)
+                    EditorGUILayout.LabelField("  효과", $"{m.StatId} {(m.Op == Logic.Game.ModifierOp.Add ? "+" : "×")}{m.Value:0.###}");
+            if (shop != null)
+                EditorGUILayout.LabelField("오늘 상점 지출", $"{shop.SpentToday}달러");
         }
 
         // 장사 단계 진행 (SalesSystem 3-2) — 진행 요약 · 건너뛰기(게임의 Space와 같은 함수)

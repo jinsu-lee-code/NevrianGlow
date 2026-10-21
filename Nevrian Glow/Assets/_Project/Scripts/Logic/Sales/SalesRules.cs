@@ -41,7 +41,7 @@ namespace NevrianGlowFarm.Logic.Sales
     {
         /// <summary>
         /// 손님 수 = 반올림(min(상한, 기본 + 일차 ÷ 나눔수(내림)) × (1 + 보너스 합) × (청결 0% 배율 + (1 − 배율) × 청결도)).
-        /// 반올림은 0.5 올림(`Math.Floor(x + 0.5)`, 짝수 반올림 아님 — BALANCE 3-4). 보너스 합 = 스킬 · 매장 효과(4-3), 지금은 0.
+        /// 반올림은 0.5 올림(`Math.Floor(x + 0.5)`, 짝수 반올림 아님 — BALANCE 3-4). 보너스 합 = 스킬 효과(StatSystem 4-3) · 이후 매장 효과.
         /// </summary>
         public static int CustomerCount(int day, double bonusSum, double cleanliness, SalesSpec spec)
         {

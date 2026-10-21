@@ -21,6 +21,8 @@ namespace NevrianGlowFarm.Systems.Player
         [SerializeField] private GameStartSettingsData startSettings;
         [Tooltip("아이템 id → 아이템 데이터 (Data/ContentDatabase)")]
         [SerializeField] private ContentDatabase database;
+        [Tooltip("핫바 칸 수 능력치 — 처음 칸 수에 더함, 최대 칸 수까지 (Data/Stats/stat_hotbar_slots, 비우면 그대로)")]
+        [SerializeField] private StatData hotbarSlotsStat;
 
         [Header("디버그")]
         [Tooltip("핫바 내용 (읽기 전용)")]
@@ -87,6 +89,19 @@ namespace NevrianGlowFarm.Systems.Player
         {
             if (instance == this)
                 instance = null;
+        }
+
+        private void OnEnable() => Core.GameEvents.StatsChanged += OnStatsChanged;
+        private void OnDisable() => Core.GameEvents.StatsChanged -= OnStatsChanged;
+
+        // 핫바 확장 스킬 (4-3): 처음 칸 수 + 능력치. 늘어날 때만 — 줄어드는 스킬은 없다(칸의 아이템을 지우지 않게).
+        private void OnStatsChanged()
+        {
+            if (hotbar == null)
+                return;
+            int wanted = Mathf.Clamp(Core.StatSystem.Apply(hotbarSlotsStat, settings.HotbarBaseSlots), 1, settings.HotbarMaxSlots);
+            if (wanted > hotbar.SlotCount)
+                SetHotbarSlotCount(wanted);
         }
 
         // ── 조회 ──
@@ -189,7 +204,7 @@ namespace NevrianGlowFarm.Systems.Player
 
         // ── 칸 수 ──
 
-        /// <summary>핫바 칸 수 (스킬 핫바 확장 4-3 · 디버그). 1 ~ 최대. 줄이면 없어진 칸의 아이템은 사라진다.</summary>
+        /// <summary>핫바 칸 수 (스킬 핫바 확장 4-3 — 능력치가 바뀔 때 · 디버그). 1 ~ 최대. 줄이면 없어진 칸의 아이템은 사라진다.</summary>
         public void SetHotbarSlotCount(int count)
         {
             count = Mathf.Clamp(count, 1, settings.HotbarMaxSlots);
