@@ -176,6 +176,10 @@ namespace NevrianGlowFarm.Editor
             EditorGUILayout.LabelField("장사 시작 때 확정", locked);
             if (GUILayout.Button("바닥 쓰레기 · 얼룩 모두 치우기"))
                 cleaning.DebugCleanAll();
+            // 대걸레질 동작 확인용 — 대걸레를 들고 조준한 채 켜 두면 좌클릭을 누르고 있는 것과 같다
+            var mop = FindFirstObjectByType<Systems.Cleaning.MopTool>();
+            if (mop != null)
+                mop.DebugHold = EditorGUILayout.Toggle("대걸레 누르고 있기", mop.DebugHold);
         }
 
         // 스킬 단계 (SkillSystem 4-3) — SP 없이 단계를 바로 바꾼다(+/-), 효과(StatSystem)는 그대로 따라 바뀐다.

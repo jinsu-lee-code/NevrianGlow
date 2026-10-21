@@ -25,6 +25,8 @@ namespace NevrianGlowFarm.Systems.Cleaning
         [Header("조정값")]
         [Tooltip("바닥으로 칠 레이어 (Default)")]
         [SerializeField] private LayerMask groundMask = 1;
+        [Tooltip("대걸레가 닿는 수평 거리 — 더 먼 곳을 조준하면 그 방향으로 이 거리의 바닥을 닦는다 (m)")]
+        [SerializeField, Min(0.3f)] private float reach = 1.3f;
 
         [Header("기즈모")]
         [Tooltip("플레이 중 닦는 범위(파랑) 표시")]
@@ -40,6 +42,16 @@ namespace NevrianGlowFarm.Systems.Cleaning
         private int mopLoop;
 
         public bool IsMopping => mopping;
+        /// <summary>조준한 바닥 지점이 있는지 · 그 지점 (손에 든 대걸레가 이 자리를 훔친다 — HeldItemView).</summary>
+        public bool HasPoint => hasPoint;
+        public Vector3 Point => point;
+        /// <summary>지금 든 대걸레의 닦는 반경 (m).</summary>
+        public float Radius => radius;
+
+#if UNITY_EDITOR
+        /// <summary>디버그 창 전용: 좌클릭을 누르고 있는 것으로 친다 (에디터 밖 입력 · 동작 확인용, 빌드에는 없음).</summary>
+        public bool DebugHold { get; set; }
+#endif
 
         private void Awake()
         {
@@ -87,8 +99,14 @@ namespace NevrianGlowFarm.Systems.Cleaning
                 return;
 
             hasPoint = FindGround(out point);
+            if (hasPoint)
+                point = ClampToReach(point);
             radius = mop.Radius;
-            if (!hasPoint || !useAction.action.IsPressed())
+            bool pressed = useAction.action.IsPressed();
+#if UNITY_EDITOR
+            pressed |= DebugHold;
+#endif
+            if (!hasPoint || !pressed)
                 return;
 
             var cleaning = CleaningSystem.Instance;
@@ -97,6 +115,18 @@ namespace NevrianGlowFarm.Systems.Cleaning
                 cleaning.Mop(point, mop.Radius, mop.Speed * Time.deltaTime);
                 mopping = true;
             }
+        }
+
+        // 손에 든 대걸레가 실제로 닿는 곳만 닦는다 (화면의 대걸레 머리 = 닦는 자리, HeldItemView)
+        private Vector3 ClampToReach(Vector3 groundPoint)
+        {
+            Vector3 feet = transform.position;
+            Vector3 flat = new Vector3(groundPoint.x - feet.x, 0f, groundPoint.z - feet.z);
+            if (flat.magnitude <= reach)
+                return groundPoint;
+            Vector3 p = feet + flat.normalized * reach;
+            p.y = groundPoint.y;
+            return p;
         }
 
         /// <summary>조준한 바닥 지점 (자기 몸은 건너뜀).</summary>
