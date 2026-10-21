@@ -51,6 +51,7 @@ Shader "DSEWA/ToonSoft"
         _TexGlowThreshold ("Brightness Where Glow Starts", Range(0, 1)) = 0.5
         _TexGlowSoftness ("Glow Edge Softness", Range(0.01, 0.5)) = 0.2
         _TexGlowPulse ("Glow Min / Max Over The Breath (1, 1 = steady)", Vector) = (1, 1, 0, 0)
+        [NoScaleOffset] _GlowMask ("Texture Glow Mask (optional, white = may glow)", 2D) = "white" {}
         _PulsePeriod ("Breath Period (s)", Range(0.2, 20)) = 4.5
         [Header(Outline)]
         _OutlineColor ("Outline Color", Color) = (0.1, 0.1, 0.26, 1)
@@ -119,6 +120,7 @@ Shader "DSEWA/ToonSoft"
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
             TEXTURE2D(_BumpMap); SAMPLER(sampler_BumpMap);
             TEXTURE2D(_OcclusionMap); SAMPLER(sampler_OcclusionMap);
+            TEXTURE2D(_GlowMask); SAMPLER(sampler_GlowMask);
 
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float4 tangentOS : TANGENT; float2 uv : TEXCOORD0; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct Varyings
@@ -223,7 +225,9 @@ Shader "DSEWA/ToonSoft"
                 float phase = frac(sin(dot(objPos, float3(12.9898, 78.233, 37.719))) * 43758.5453);
                 float breath = 0.5 + 0.5 * sin((_Time.y / max(_PulsePeriod, 0.01) + phase) * TWO_PI);
                 half texLum = max(tex.r, max(tex.g, tex.b));
-                col += tex * smoothstep(_TexGlowThreshold, _TexGlowThreshold + _TexGlowSoftness, texLum)
+                // the optional mask limits the glow to painted strokes (white in the mask); default white = whole map
+                half glowMask = SAMPLE_TEXTURE2D(_GlowMask, sampler_GlowMask, i.uv).r;
+                col += tex * smoothstep(_TexGlowThreshold, _TexGlowThreshold + _TexGlowSoftness, texLum) * glowMask
                        * _TexGlowStrength * lerp(_TexGlowPulse.x, _TexGlowPulse.y, breath);
 
                 col = ApplyGroundFog(col, i.positionWS);
