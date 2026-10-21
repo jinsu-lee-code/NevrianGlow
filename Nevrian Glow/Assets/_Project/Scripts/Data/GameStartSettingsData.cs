@@ -27,6 +27,8 @@ namespace NevrianGlowFarm.Data
         [SerializeField] private List<StartingItem> startingHotbarItems = new List<StartingItem>();
         [Tooltip("시작 창고 — 바로 팔 수 있는 시작 작물, 가게에서 쓸 대걸레 등 (BALANCE 2-3)")]
         [SerializeField] private List<StartingItem> startingStorageItems = new List<StartingItem>();
+        [Tooltip("시작 매장에 놓인 과일 진열대 수 — 가게 배치(Build Shop Layout) · 측정 봇이 읽는다 (대, start_fruit_shelves)")]
+        [SerializeField, Min(0)] private int startFruitShelves = 3;
 
         [Header("밭 구획")]
         [Tooltip("처음 열려 있는 구획 수 (개)")]
@@ -57,6 +59,7 @@ namespace NevrianGlowFarm.Data
         public int StartingMoney => startingMoney;
         public IReadOnlyList<StartingItem> StartingHotbar => startingHotbarItems;
         public IReadOnlyList<StartingItem> StartingStorage => startingStorageItems;
+        public int StartFruitShelves => startFruitShelves;
         public int StartPlotCount => startPlotCount;
         public int MaxPlotCount => maxPlotCount;
         public int CellsPerPlot => cellsPerPlot;

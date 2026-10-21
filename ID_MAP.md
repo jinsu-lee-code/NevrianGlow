@@ -39,13 +39,13 @@
 | 도구 | tool_mop_t2 | tool_mop_2 | 연결 | | |
 | 도구 | tool_mop_t3 | tool_mop_3 | 연결 | | |
 | 장치 | device_sprinkler | - | 없음 | | 스프링클러 (P1) — 설치 시스템 대기 |
-| 가구 | furn_fruit_shelf | - | 없음 | | 과일 진열대 (P0) — 1층 낮은 판매대 · 한 종류 30개 (10/20 개정), 진열 가구 시스템 대기 |
+| 가구 | furn_fruit_shelf | furn_fruit_shelf | 연결 | | 과일 진열대 (P0, P-4) — 1층 낮은 판매대 · 한 종류 · 작물 display_per_slot(30)개. `FurnitureData` |
 
 ## 상점 상품
 | 종류 | 기획 id | 개발 id | 상태 | 변환 | 메모 |
 |---|---|---|---|---|---|
 | 상품 | shop_plot_expand | shop_plot_expand | 숨김 | | 값은 넣음. 밭 배치(2×2 · 시작 8밭) 작업 전까지 숨김 — 지금 구획 배치로는 16구획이 한 줄로 늘어선다 |
-| 상품 | shop_fruit_shelf | - | 없음 | | 진열 가구 시스템 대기 |
+| 상품 | shop_fruit_shelf | - | 없음 | | 과일 진열대 추가 구매 (P1) — 빈 자리에 설치하는 구매 효과 대기 |
 | 상품 | shop_device_sprinkler | - | 없음 | | 스프링클러 시스템 대기 |
 | 상품 | - | shop_shelf_expand | 개발만 | | 진열 칸 확장 → 기획은 과일 진열대 추가 구매로 바뀜 |
 
@@ -107,6 +107,6 @@ P0 = 버섯꽃 · 등불 해금. 나머지 데모 스킬은 P1 — 효과가 연
 | 설정 | buy_min | SalesSettings.purchaseMin | 연결 | | |
 | 설정 | buy_max | SalesSettings.purchaseMax | 연결 | | |
 | 설정 | sale_duration | SalesSettings.salesDuration | 연결 | | |
-| 설정 | start_fruit_shelves | - | 없음 | | 진열 가구 시스템 대기 (store_* · trash_bin_location 포함, 10/20 추가) |
+| 설정 | start_fruit_shelves | GameStartSettings.startFruitShelves | 연결 | | P-4: 가게 배치 메뉴 · 측정 봇이 읽음. store_width · store_depth · store_aisle_width · store_spots_* · trash_bin_location은 가게 배치(Build Shop Layout)의 기준값 — 메뉴가 레벨 배치도 14 좌표로 놓음 |
 | 설정 | day1_customers | SalesSettings (손님 수 — 입소문 모델) | 연결 | | P-2: day1_* · customer_* · satisfaction_* · market_day_* · same_day_clean_min · buy_extra_max · store_spots_fruit + store_spots_shelf(가구 자리) 모두 |
 | 설정 | trash_day1 | CleaningSettings (가게 정리) | 연결 | | P-3: trash_day1 · stain_day1 · trash_daily_* · stain_per_customer · scatter_* · disorder_ratio · grade_* (disorder_buy_mult는 SalesSettings). 매장 확장용 trash_expand_* · stain_expand는 2차 |

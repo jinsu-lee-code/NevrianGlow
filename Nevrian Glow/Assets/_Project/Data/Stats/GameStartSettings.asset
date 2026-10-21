@@ -23,6 +23,7 @@ MonoBehaviour:
   startingStorageItems:
   - item: {fileID: 11400000, guid: a35777c6f4e853649b7821763c65220c, type: 2}
     count: 2
+  startFruitShelves: 3
   startPlotCount: 2
   maxPlotCount: 16
   cellsPerPlot: 16

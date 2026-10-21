@@ -61,6 +61,10 @@ namespace NevrianGlowFarm.Editor
             return file;
         }
 
+        // 과일 진열대 가구 데이터 (종류로 찾는다 — id 분기 없음)
+        private static FurnitureData FruitShelf(ContentDatabase db) =>
+            db.All<FurnitureData>().FirstOrDefault(f => f != null && f.Kind == FurnitureKind.FruitShelf);
+
         /// <summary>데이터 에셋 → 봇 조건. 콘텐츠는 종류(타입)로 찾는다 — id로 분기하지 않는다.</summary>
         public static DaySimConfig BuildConfig(DaySimulatorSettingsData settings, out List<string> notes)
         {
@@ -78,8 +82,9 @@ namespace NevrianGlowFarm.Editor
                 StartMoney = start.StartingMoney,
                 CellsPerPlot = start.CellsPerPlot,
                 StartPlots = start.StartPlotCount,
-                ShelfSlots = settings.Inventory.ShelfBaseSlots,
-                ShelfItemsPerSlot = settings.Inventory.ShelfItemsPerSlot,
+                // 진열 = 시작 과일 진열대 수 × 한 대당 개수 (P-4 — 한 대 = 한 칸 · 한 종류)
+                ShelfSlots = Mathf.Max(1, start.StartFruitShelves),
+                ShelfItemsPerSlot = FruitShelf(db) != null ? FruitShelf(db).ItemsPerLayer : settings.Inventory.ShelfItemsPerSlot,
                 Sales = settings.Sales.ToSpec(),
                 Curve = settings.Progression.ToCurve(),
                 Cleanliness = settings.Cleanliness,

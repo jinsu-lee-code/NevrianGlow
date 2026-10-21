@@ -61,7 +61,7 @@ namespace NevrianGlowFarm.Systems.Sales
         [SerializeField] private SalesSettingsData settings;
         [Tooltip("손님 종류(CustomerData) · 작물 가격 (Data/ContentDatabase)")]
         [SerializeField] private ContentDatabase database;
-        [Tooltip("손님이 파는 진열대들")]
+        [Tooltip("손님이 파는 진열 가구들 (과일 진열대 — Build Shop Layout이 채운다)")]
         [SerializeField] private List<ShelfDisplay> shelves = new List<ShelfDisplay>();
         [Tooltip("손님 입구 · 출구 (BALANCE 9-1: 0, 0, -5)")]
         [SerializeField] private Transform entrance;
@@ -85,6 +85,8 @@ namespace NevrianGlowFarm.Systems.Sales
         [Header("조정값")]
         [Tooltip("진열대 앞에서 손님이 흩어 서는 폭 (m)")]
         [SerializeField, Min(0f)] private float browseSpread = 4f;
+        [Tooltip("진열 가구 가장자리에서 손님이 서는 거리 (m)")]
+        [SerializeField, Min(0f)] private float browseGap = 0.6f;
         [Tooltip("장사 시간이 지난 뒤 남은 손님을 기다리는 최대 시간 — 지나면 남은 손님을 바로 처리 (초, 임시)")]
         [SerializeField, Min(0f)] private float overtimeLimit = 20f;
         [Tooltip("손님 구매 · 종류 난수 시드 — 같은 시드 · 같은 일차면 같은 장사")]
@@ -381,15 +383,71 @@ namespace NevrianGlowFarm.Systems.Sales
         public Vector3 BasketStandPosition => basketStand.position;
         public Vector3 CounterPosition => counter.position;
 
-        /// <summary>진열대 앞 둘러볼 자리 — 손님마다 폭 안에서 흩어진다.</summary>
+        /// <summary>
+        /// 둘러볼 자리 (P-4): 진열 가구가 여럿이면 재고 비례로 한 대를 골라 그 앞(손님 쪽 = 가구 로컬 +Z, 아래 통로 쪽)에서 폭 안에 흩어 선다.
+        /// 진열이 모두 비었으면 아무 진열대나. 진열대가 없으면 예전처럼 shelfFront 줄.
+        /// </summary>
         public Vector3 BrowsePoint(int number)
         {
             float x = ((float)customerRandom.NextDouble() - 0.5f) * browseSpread;
-            return shelfFront.TransformPoint(new Vector3(x, 0f, 0f));
+            var shelf = PickBrowseShelf();
+            if (shelf == null)
+                return shelfFront.TransformPoint(new Vector3(x, 0f, 0f));
+            var box = shelf.GetComponent<BoxCollider>();
+            float front = (box != null ? box.size.z * 0.5f : 0.5f) + browseGap;
+            Vector3 p = shelf.transform.TransformPoint(new Vector3(x * 0.5f, 0f, front));
+            p.y = shelf.transform.position.y;
+            return p;
         }
 
-        /// <summary>둘러볼 때 바라보는 점 (진열대 쪽 = shelfFront 로컬 +Z).</summary>
-        public Vector3 ShelfLookPoint(Vector3 from) => from + shelfFront.forward;
+        /// <summary>둘러볼 때 바라보는 점 — 가장 가까운 진열대 (없으면 shelfFront 앞).</summary>
+        public Vector3 ShelfLookPoint(Vector3 from)
+        {
+            ShelfDisplay nearest = null;
+            float best = float.MaxValue;
+            foreach (var s in shelves)
+            {
+                if (s == null)
+                    continue;
+                float d = (s.transform.position - from).sqrMagnitude;
+                if (d < best)
+                {
+                    best = d;
+                    nearest = s;
+                }
+            }
+            return nearest != null ? nearest.transform.position : from + shelfFront.forward;
+        }
+
+        private ShelfDisplay PickBrowseShelf()
+        {
+            int total = 0, count = 0;
+            foreach (var s in shelves)
+                if (s != null)
+                {
+                    total += s.State.TotalCount;
+                    count++;
+                }
+            if (count == 0)
+                return null;
+            if (total <= 0)
+            {
+                int k = customerRandom.NextInt(0, count);
+                foreach (var s in shelves)
+                    if (s != null && k-- == 0)
+                        return s;
+            }
+            int pick = customerRandom.NextInt(0, total);
+            foreach (var s in shelves)
+            {
+                if (s == null)
+                    continue;
+                if (pick < s.State.TotalCount)
+                    return s;
+                pick -= s.State.TotalCount;
+            }
+            return null;
+        }
 
         public Vector3 QueueSlotPosition(int slot) => queueStart.position + queueStart.forward * (settings.QueueSpacing * Mathf.Max(0, slot));
 

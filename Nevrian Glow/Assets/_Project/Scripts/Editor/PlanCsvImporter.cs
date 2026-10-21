@@ -153,6 +153,11 @@ namespace NevrianGlowFarm.Editor
 
                 switch (table.Get(r, "item_type"))
                 {
+                    case "furniture":
+                        // 과일 진열대 한 대에 놓는 개수 = 작물의 진열 칸당 개수 (items.csv display_per_slot — 10/20 개정 30)
+                        if (item is FurnitureData && TryCropDisplayPerSlot(table, out int perShelf))
+                            so.FindProperty("itemsPerLayer").intValue = perShelf;
+                        break;
                     case "crop":
                         if (CsvValue.TryInt(table.Get(r, "sell_price"), out int sell))
                             Set(so, "sellPrice", sell, report, planId);
@@ -174,6 +179,16 @@ namespace NevrianGlowFarm.Editor
                 }
                 Apply(so, item, $"아이템 {planId} → {devId}", report);
             }
+        }
+
+        // 데모 작물(phase2 제외)의 display_per_slot — 모두 같아야 한다 (과일 진열대 한 대 = 한 종류)
+        private static bool TryCropDisplayPerSlot(CsvTable items, out int value)
+        {
+            value = 0;
+            for (int r = 0; r < items.RowCount; r++)
+                if (items.Get(r, "item_type") == "crop" && !IsPhase2(items, r) && CsvValue.TryInt(items.Get(r, "display_per_slot"), out int v))
+                    value = Mathf.Max(value, v);
+            return value > 0;
         }
 
         // ── 작물 (crops.csv) ────────────────────────────
@@ -656,6 +671,8 @@ namespace NevrianGlowFarm.Editor
                 var so = new SerializedObject(start);
                 if (CsvValue.TryInt(V("start_money"), out int money))
                     so.FindProperty("startingMoney").intValue = money;
+                if (CsvValue.TryInt(V("start_fruit_shelves"), out int shelvesAtStart))
+                    so.FindProperty("startFruitShelves").intValue = Mathf.Max(0, shelvesAtStart);
                 SetStartingItems(so.FindProperty("startingHotbarItems"), V("start_hotbar"), map, byId, report, "시작 핫바");
                 SetStartingItems(so.FindProperty("startingStorageItems"), V("start_storage"), map, byId, report, "시작 창고");
                 if (PlanCsv.SplitList(V("start_bag")).Count > 0)

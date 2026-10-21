@@ -17,8 +17,10 @@ namespace NevrianGlowFarm.Systems.Shop
     public class ShelfDisplay : MonoBehaviour, IItemUseTarget, ISecondaryUseTarget, IAimPointTarget
     {
         [Header("참조")]
-        [Tooltip("칸 수 · 칸당 개수 · 달라붙는 거리 · 놓기 시간 (Data/Stats/InventorySettings)")]
+        [Tooltip("달라붙는 거리 · 놓기 시간 (Data/Stats/InventorySettings) — 가구 데이터가 없으면 칸 수 · 칸당 개수도")]
         [SerializeField] private InventorySettingsData settings;
+        [Tooltip("진열 가구 종류 (Data/Items/furn_fruit_shelf) — 층 수 · 층당 개수를 정한다 (P-4)")]
+        [SerializeField] private FurnitureData furniture;
         [Tooltip("작물 id → 작물 데이터 (Data/ContentDatabase)")]
         [SerializeField] private ContentDatabase database;
         [Tooltip("진열대 몸체 — 칸 수에 맞춰 가로 길이를 바꾼다")]
@@ -71,6 +73,13 @@ namespace NevrianGlowFarm.Systems.Shop
 
         public ShelfState State => state;
         public int AimedSlot => aimedSlot;
+        public FurnitureData Furniture => furniture;
+
+        // 가구 데이터가 있으면 그 값 (과일 진열대 1층 × 30), 없으면 예전 진열대 설정
+        private int BaseSlots => furniture != null ? furniture.Layers : settings.ShelfBaseSlots;
+        private int ItemsPerSlot => furniture != null ? furniture.ItemsPerLayer : settings.ShelfItemsPerSlot;
+        // 칸이 넓으면(과일 진열대 한 대 = 한 칸) 칸 어디를 조준해도 그 칸
+        private float SnapDistance => Mathf.Max(settings.ShelfSnapDistance, slotPitch * 0.5f);
 
         private void Awake()
         {
@@ -81,7 +90,7 @@ namespace NevrianGlowFarm.Systems.Shop
                 return;
             }
             block = new MaterialPropertyBlock();
-            state = new ShelfState(settings.ShelfBaseSlots, settings.ShelfItemsPerSlot);
+            state = new ShelfState(BaseSlots, ItemsPerSlot);
             hologram.gameObject.SetActive(false);
             FitBody();
             RefreshAll();
@@ -108,7 +117,7 @@ namespace NevrianGlowFarm.Systems.Shop
 
         public bool UpdateAim(Vector3 point, ItemData held)
         {
-            int slot = ShelfLayout.NearestSlot(transform.InverseTransformPoint(point).x, state.SlotCount, slotPitch, settings.ShelfSnapDistance);
+            int slot = ShelfLayout.NearestSlot(transform.InverseTransformPoint(point).x, state.SlotCount, slotPitch, SnapDistance);
             var crop = held as CropData;
             var check = crop != null ? state.CanPlace(slot, crop.Id) : PlaceCheck.NoSlot;
             bool changed = slot != aimedSlot || crop != aimedCrop || check != aimedCheck;
@@ -271,9 +280,17 @@ namespace NevrianGlowFarm.Systems.Shop
         /// <summary>저장 내용(칸 수 · 칸마다 작물)으로 바꾼다 (6-1). 칸이 줄면 남는 칸의 겉모습을 지운다.</summary>
         public void LoadSlots(IReadOnlyList<Logic.Inventory.ItemStack> stacks)
         {
+            // 가구는 층 수가 정해져 있다 — 그보다 많은 칸(예전 6칸 진열대 저장)은 앞 칸만
+            if (furniture != null && stacks != null && stacks.Count > BaseSlots)
+            {
+                var trimmed = new List<Logic.Inventory.ItemStack>();
+                for (int i = 0; i < BaseSlots; i++)
+                    trimmed.Add(stacks[i]);
+                stacks = trimmed;
+            }
             state.Load(stacks);
-            if (state.SlotCount < settings.ShelfBaseSlots)
-                state.SetSlotCount(settings.ShelfBaseSlots);
+            if (state.SlotCount < BaseSlots)
+                state.SetSlotCount(BaseSlots);
             for (int slot = state.SlotCount; slot < views.Count; slot++)
             {
                 foreach (var r in views[slot])
@@ -389,7 +406,7 @@ namespace NevrianGlowFarm.Systems.Shop
         {
             if (!drawSlots || settings == null)
                 return;
-            int slots = state != null ? state.SlotCount : settings.ShelfBaseSlots;
+            int slots = state != null ? state.SlotCount : BaseSlots;
             Gizmos.matrix = transform.localToWorldMatrix;
             for (int s = 0; s < slots; s++)
             {

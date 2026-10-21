@@ -214,6 +214,16 @@ namespace NevrianGlowFarm.Editor
                 so.FindProperty("growDaysReduction").intValue = 1;
             }));
 
+            // 과일 진열대 가구 (P-4): 1층 · 한 종류 · 30개 — 값은 기획 CSV 가져오기가 덮어씀
+            Ensure<FurnitureData>($"{ItemsFolder}/furn_fruit_shelf.asset", resetExisting, report, so =>
+            {
+                SetIdentity(so, "furn_fruit_shelf", "과일 진열대");
+                so.FindProperty("maxStack").intValue = 1;
+                so.FindProperty("kind").enumValueIndex = (int)FurnitureKind.FruitShelf;
+                so.FindProperty("layers").intValue = 1;
+                so.FindProperty("itemsPerLayer").intValue = 30;
+            });
+
             // BALANCE 2-10 지역 (임시 분위기 — 5-1 조명 · 후처리에서 확정). 농장 = 농사 단계 · 하루 시작, 가게 = 청소·진열 · 장사 · 정산.
             Ensure<ZoneProfileData>($"{ZonesFolder}/zone_farm.asset", resetExisting, report, so =>
             {
