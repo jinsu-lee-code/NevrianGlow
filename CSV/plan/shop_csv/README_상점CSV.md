@@ -15,9 +15,10 @@
 | grant_kind | 문자 | 구매 시 주는 것: item 아이템 / tool_tier 도구 등급 +1 / plot_cells 밭 칸 / bag_slots 가방 칸 / store_size 매장 가구 자리 | plot_cells |
 | grant_target | 문자 | 대상 아이템 · 도구 id | farm |
 | grant_value_per_step | `;` 목록 | 구매할 때마다 주는 양 (개수는 max_purchases와 같음, 무제한이면 1개) | `16;32;64;112` |
-| stock_base / stock_max | 정수 | 씨앗 일일 입고량 기본 · 최대 (씨앗만) | 10 / 24 |
+| stock_base / stock_max | 정수 | 씨앗 일일 입고량 기본 · 최대 (씨앗만) | 10 / 40 |
 | unlock | `스킬id:단계;…` | 상점에 나타나는 조건. 비우면 처음부터 | skill_unlock_lantern:1 |
-| scope | demo · phase2 | 데모 포함 여부 | demo |
+| scope | demo · phase2 | 데모 빌드에 들어갈 수 있는지 (예전 열, mvp 열이 우선) | demo |
+| mvp | P0 · P1 · phase2 | **MVP 우선순위. phase2는 상점에 표시하지 않음** | P0 |
 
 ## 코드가 읽는 방법
 1. SkillCsvLoader와 같은 파서로 행을 읽고, `price_per_step` · `grant_value_per_step`을 배열로 바꾼다.

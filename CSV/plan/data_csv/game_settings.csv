@@ -36,11 +36,17 @@ trash_expand_per_spot,2,개,,
 stain_per_customer,0.3,개,얼룩 = 손님 수 × 이 값,청소 v2
 scatter_unsold_ratio,0.15,,흩어진 상품 = 안 팔린 진열 × 이 값 + 손님 수 ÷ scatter_per_customers,청소 v2
 scatter_per_customers,3,명,,
-disorder_ratio,0.20,,상품이 있는 층 중 흐트러지는 비율,청소 v2
+disorder_ratio,0.20,,"상품이 있는 진열 칸 중 흐트러지는 비율 (과일 진열대 1대 = 1칸, 일반 진열대 1층 = 1칸)",청소 v2
 disorder_buy_mult,0.5,배,흐트러진 층의 구매 확률 배율,회신 #18
 sale_duration,30,초,자동 장사 시간,GDD
-customer_random,0.10,,오늘 손님 ±10% (데모 사용),회신3 2
-stain_expand,4,개,매장 확장 직후 얼룩 (2차),회신3 2
-grade_s_min,0.95,,청결 · 정돈 등급 S 기준 (이상),회신3 1-1
-grade_a_min,0.80,,등급 A 기준 (이상),회신3 1-1
-grade_b_min,0.60,,등급 B 기준 (이상) · 미만은 C,회신3 1-1
+grade_s_min,0.95,,청결도 · 정돈도 등급 S 하한 (청결 · 정돈 같은 기준),회신3 1-1
+grade_a_min,0.80,,등급 A 하한,회신3 1-1
+grade_b_min,0.60,,등급 B 하한 (미만은 C),회신3 1-1
+customer_random,0.10,,오늘 손님 수 ±무작위 폭 (±10%),회신3 2-5
+stain_expand,4,개,매장 확장 직후 새 구역 얼룩 (2차),회신3 2-5
+store_width,40,m,기본 매장 가로 (2026-10-20),레벨배치
+store_depth,30,m,기본 매장 세로,레벨배치
+store_aisle_width,3.4,m,통로 폭 (위 · 아래 2줄),레벨배치
+trash_bin_location,storage_side,,쓰레기통 위치: 창고 구역 옆(농장 문 쪽),레벨배치
+store_spots_fruit,4,자리,기본 매장 과일 진열대 자리 (가운데),회신 10/20
+store_spots_shelf,4,자리,"기본 매장 일반 진열대 자리 (벽 쪽, 2차)",회신 10/20

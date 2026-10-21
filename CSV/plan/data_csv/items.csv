@@ -4,11 +4,11 @@ seed_mushroomflower,버섯꽃 씨앗,seed,0,10,,false,,,,,,,icon_seed_mushroomfl
 seed_lanternfruit,등불 열매 씨앗,seed,0,10,,false,,,,,,,icon_seed_lanternfruit,판매 불가,P0
 seed_spiralbloom,나선층꽃 씨앗,seed,0,10,,false,,,,,,,icon_seed_spiralbloom,판매 불가,phase2
 seed_pearlcore,진주핵꽃 씨앗,seed,0,10,,false,,,,,,,icon_seed_pearlcore,판매 불가,phase2
-item_moonroot,월광 뿌리,crop,18,10,8,true,,,,,,,icon_item_moonroot,,P0
-item_mushroomflower,버섯꽃,crop,50,10,8,false,,,,,,,icon_item_mushroomflower,1개 = 1묶음,P0
-item_lanternfruit,등불 열매,crop,110,10,8,true,,,,,,,icon_item_lanternfruit,,P0
-item_spiral_petal,나선층 꽃잎,crop,90,10,8,true,,,,,,,icon_item_spiral_petal,1개 = 1묶음,phase2
-item_pearlcore,진주핵,crop,450,10,8,false,,,,,,,icon_item_pearlcore,진주핵꽃 수확물,phase2
+item_moonroot,월광 뿌리,crop,18,10,30,true,,,,,,,icon_item_moonroot,,P0
+item_mushroomflower,버섯꽃,crop,50,10,30,false,,,,,,,icon_item_mushroomflower,1개 = 1묶음,P0
+item_lanternfruit,등불 열매,crop,110,10,30,true,,,,,,,icon_item_lanternfruit,,P0
+item_spiral_petal,나선층 꽃잎,crop,90,10,30,true,,,,,,,icon_item_spiral_petal,1개 = 1묶음,phase2
+item_pearlcore,진주핵,crop,450,10,30,false,,,,,,,icon_item_pearlcore,진주핵꽃 수확물,phase2
 item_dried_mushroom,말린 버섯꽃,processed,65,10,30,false,bundle,,,,,,icon_item_dried_mushroom,작은 가공품 30개,phase2
 item_dried_spiral_petal,말린 나선층꽃잎,processed,105,10,30,false,bundle,,,,,,icon_item_dried_spiral_petal,작은 가공품 30개,phase2
 item_moonroot_juice,월광뿌리즙,processed,30,10,30,false,glass_bottle,,,,,,icon_item_moonroot_juice,작은 가공품 30개,phase2
@@ -34,5 +34,5 @@ device_sprinkler,스프링클러,device,0,1,,false,,,,,,,icon_device_sprinkler,"
 proc_grinder,공명 분쇄석,processor,0,1,,false,,,,,,,icon_proc_grinder,"밭 바깥 빈 땅 설치, 여러 대 가능",phase2
 proc_dryer,포자바람 건조막,processor,0,1,,false,,,,,,,icon_proc_dryer,"밭 바깥 빈 땅 설치, 여러 대 가능",phase2
 proc_distiller,성광 증류관,processor,0,1,,false,,,,,,,icon_proc_distiller,"밭 바깥 빈 땅 설치, 여러 대 가능",phase2
-furn_fruit_shelf,과일 진열대,furniture,0,1,,false,,,,,,,icon_furn_fruit_shelf,작물 전용 · 3층 · 층마다 한 종류 · 층당 작물 8개 · 가구 자리에 설치,P0
-furn_goods_shelf,진열대,furniture,0,1,,false,,,,,,,icon_furn_goods_shelf,가공품 전용 · 3층 · 층마다 한 종류 · 층당 아이템의 display_per_slot(12 / 30),phase2
+furn_fruit_shelf,과일 진열대,furniture,0,1,,false,,,,,,,icon_furn_fruit_shelf,작물 전용 · 1층 낮은 판매대 · 한 종류만 · 작물 30개 · 매장 가운데 과일 진열대 자리에 설치,P0
+furn_goods_shelf,일반 진열대,furniture,0,1,,false,,,,,,,icon_furn_goods_shelf,가공품 전용 · 3층 높은 선반 · 층마다 다른 종류 가능(층 안은 한 종류) · 층당 큰 12 / 작은 30 · 벽 쪽 일반 진열대 자리에 설치,phase2

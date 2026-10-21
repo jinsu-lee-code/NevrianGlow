@@ -9,8 +9,8 @@ shop_mop_upgrade,tool,대걸레 업그레이드,닦는 속도와 반경 증가,2
 shop_watering_upgrade,tool,물뿌리개 업그레이드,한 번에 1 → 4 → 8칸,400;1500,2,tool_tier,tool_watering_can,1;1,,,skill_watering_license:1,demo,P1
 shop_plot_expand,expand,밭 확장권,밭 +4 → +8 → +16 → +28밭 (최대 8×8밭 = 256칸),1500;4000;10000;25000,4,plot_cells,farm,16;32;64;112,,,,demo,P1
 shop_bag_expand,expand,가방 확장,가방 +4칸,100;200;300;500;800;1200;1600,7,bag_slots,inventory,4;4;4;4;4;4;4,,,skill_bag_license:1,demo,P1
-shop_fruit_shelf,furniture,과일 진열대,"수확한 작물만. 3층, 층마다 한 종류 · 층당 8개",500,0,item,furn_fruit_shelf,1,,,,demo,P1
-shop_goods_shelf,furniture,진열대,"가공품만 (작물 불가). 3층, 층마다 한 종류 · 층당 큰 12 / 작은 30",1200,0,item,furn_goods_shelf,1,,,skill_unlock_grinder:1,phase2,phase2
+shop_fruit_shelf,furniture,과일 진열대,"수확한 작물만. 1층 낮은 판매대, 한 종류를 30개까지",500,0,item,furn_fruit_shelf,1,,,,demo,P1
+shop_goods_shelf,furniture,일반 진열대,"가공품만 (작물 불가). 3층, 층마다 다른 종류 가능 · 층당 큰 12 / 작은 30",1200,0,item,furn_goods_shelf,1,,,skill_unlock_grinder:1,phase2,phase2
 shop_store_expand,expand,매장 확장,"가구 자리 +4 → +6 → +8 → +10 → +12 (최대 48), 시장 크기 M +20씩",2500;6000;12000;22000;36000,5,store_size,store,4;6;8;10;12,,,,phase2,phase2
 shop_fertilizer,consumable,비료,심은 칸 성장일 −1 (작물당 1회),40,0,item,item_fertilizer,1,,,skill_unlock_fertilizer:1,demo,P1
 shop_device_sprinkler,device,스프링클러,범위 안 심은 칸에 밤마다 자동 물주기,500,0,item,device_sprinkler,1,,,skill_unlock_sprinkler:1,demo,P1

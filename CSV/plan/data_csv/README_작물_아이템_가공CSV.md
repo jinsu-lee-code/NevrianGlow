@@ -10,8 +10,15 @@
 | 해금 SP · 선행 | skill_csv/skills.csv |
 | 성장 · 물 · 수확 · 먹이 · 거대 작물 | **crops.csv** |
 | 가공 기구 · 레시피 | **processors.csv**, **recipes.csv** |
+| 손님 모델 · 레벨 공식 · 시작 상태 · 정리 수치 · 등급 기준 | **game_settings.csv** (key · value · unit · desc · source) |
 
 같은 숫자를 두 파일에 두지 않으므로 하나만 고치면 된다.
+
+## 공통 열: mvp
+crops · items · processors · recipes의 마지막 열 `mvp` = P0 · P1 · phase2 (MVP 우선순위, phase2는 데모에서 숨김).
+
+## game_settings.csv — 설정 값 1개 = 1행
+`key` 이름으로 읽는다. 손님 모델(customer_*), 레벨(level_*), 시작 상태(start_*), 쓰레기 · 얼룩 · 흩어짐(trash_* · stain_* · scatter_* · disorder_*), 구매 개수(buy_*), 등급 기준(grade_*), 장사 시간 등.
 
 ## items.csv — 아이템 1개 = 1행 (37종)
 | 열 | 설명 |
@@ -20,7 +27,7 @@
 | item_type | seed · crop · processed · tool · consumable · trash · device · processor · furniture |
 | sell_price | 판매가. 0 = 팔 수 없음 |
 | stack_size | 칸당 개수 (도구 · 기구 1, 나머지 10) |
-| display_per_slot | 진열 칸당 개수: 작물 8 · 큰 가공품(포대 · 호리한 병) 12 · 작은 가공품(둥근 유리병 · 말린 다발) 30 |
+| display_per_slot | 진열 칸당 개수: 작물 30(과일 진열대 한 대) · 큰 가공품(포대 · 호리한 병) 12 · 작은 가공품(둥근 유리병 · 말린 다발) 30(일반 진열대 한 층) |
 | feed_ok | 진주핵꽃 먹이 가능 여부 (월광 뿌리 · 등불 열매 · 나선층 꽃잎) |
 | container | 가공품 용기: glass_bottle · sack · bundle · slender_flask |
 | tool_kind / tool_tier / tool_power / tool_radius / tool_speed | 도구만. 괭이 power = 1회 작업량(1 · 2 · 3), 물뿌리개 power = 칸 수(1 · 4 · 8), 대걸레 radius · speed |
@@ -64,7 +71,7 @@
 2. **crops.csv** → 씨앗 · 수확물 아이템 연결
 3. **processors.csv** → **recipes.csv** (재료 · 완성품 아이템, 기구 연결)
 4. **skill_csv**, **shop_csv** (해금 대상: 상점 상품 · 레시피 id)
-5. **상호 검증**: 모든 id 참조가 존재하는지, 해금 대상이 실제로 있는지 확인 → 현재 6개 CSV 전체 **오류 없음**
+5. **상호 검증**: 모든 id 참조가 존재하는지, 해금 대상이 실제로 있는지 확인 → 현재 CSV 9개 전체 **오류 없음** (validate_plan.py로 검사)
 
 ## 미정 · 임시
 - item_type · container · mode · feed_rule 같은 종류 이름은 임시 — 개발과 맞출 때 CSV와 코드 목록을 함께 바꾼다

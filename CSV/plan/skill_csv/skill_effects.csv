@@ -54,8 +54,8 @@ skill_fresh_premium,1,stat,sell_price_raw,add,0.05,
 skill_fresh_premium,2,stat,sell_price_raw,add,0.1,
 skill_fresh_premium,3,stat,sell_price_raw,add,0.15,
 skill_sparkling_store,1,stat,perfect_tidy_sales,add,0.05,
-skill_full_shelf,1,stat,display_stack,set,10,furn_fruit_shelf
-skill_full_shelf,2,stat,display_stack,set,12,furn_fruit_shelf
+skill_full_shelf,1,stat,display_stack,set,36,furn_fruit_shelf
+skill_full_shelf,2,stat,display_stack,set,42,furn_fruit_shelf
 skill_artisan_goods,1,stat,sell_price_processed,add,0.1,
 skill_artisan_goods,2,stat,sell_price_processed,add,0.2,
 skill_artisan_goods,3,stat,sell_price_processed,add,0.3,

@@ -19,10 +19,10 @@ skill_unlock_sprinkler,tab_farm,스프링클러 해금,상점에 스프링클러
 skill_clean_keep,tab_store,청결 유지,흩어진 상품 · 흐트러진 진열 · 얼룩 생성이 단계마다 10%씩 줄어든다,5,2;3;4;5;6,,1,1,demo,P1
 skill_signboard,tab_store,간판,광고 계수 p가 단계마다 +0.01 (소문 없이 찾아오는 손님 증가),5,2;3;4;5;6,,1,2,demo,P1
 skill_trash_compact,tab_store,쓰레기 압축,쓰레기를 한 칸에 더 많이 담는다,1,2,skill_clean_keep:1,2,1,demo,P1
-skill_regular_basket,tab_store,단골의 장바구니,손님마다 단계 × 10% 확률로 1개 더 산다 (최대 4개),5,3;4;5;6;7,skill_signboard:1,2,2,demo,P1
+skill_regular_basket,tab_store,단골의 장바구니,손님마다 단계 × 10% 확률로 1개 더 산다 (1~3개 → 최대 4개),5,3;4;5;6;7,skill_signboard:1,2,2,demo,P1
 skill_fresh_premium,tab_store,신선 작물 프리미엄,가공하지 않은 작물의 판매가가 오른다,3,3;5;7,skill_signboard:2,2,3,demo,P1
 skill_sparkling_store,tab_store,반짝이는 가게,청결 · 정돈 등급이 모두 S로 장사를 시작하면 그날 매출 +5%,1,4,skill_clean_keep:3,3,1,phase2,phase2
-skill_full_shelf,tab_store,가득 찬 진열대,과일 진열대 층당 작물 8 → 10 → 12개,2,5;8,skill_regular_basket:1,3,2,phase2,phase2
+skill_full_shelf,tab_store,가득 찬 진열대,과일 진열대 한 대에 작물 30 → 36 → 42개,2,5;8,skill_regular_basket:1,3,2,phase2,phase2
 skill_artisan_goods,tab_store,장인의 가공품,가공품 판매가가 오른다,4,4;6;8;10,skill_fresh_premium:1;skill_unlock_grinder:1,4,3,phase2,phase2
 skill_invite_wanderer,tab_store,떠돌이 상인 초대,가공품을 선호하는 루미안 손님이 등장한다,1,8,skill_artisan_goods:1,5,3,phase2,phase2
 skill_hotbar,tab_common,분주한 손,핫바 칸이 늘어난다,4,2;3;4;5,,1,1,demo,P1

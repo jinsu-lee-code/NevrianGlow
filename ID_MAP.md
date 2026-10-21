@@ -39,7 +39,7 @@
 | 도구 | tool_mop_t2 | tool_mop_2 | 연결 | | |
 | 도구 | tool_mop_t3 | tool_mop_3 | 연결 | | |
 | 장치 | device_sprinkler | - | 없음 | | 스프링클러 (P1) — 설치 시스템 대기 |
-| 가구 | furn_fruit_shelf | - | 없음 | | 과일 진열대 (P0) — 3층 진열 가구 시스템 대기 |
+| 가구 | furn_fruit_shelf | - | 없음 | | 과일 진열대 (P0) — 1층 낮은 판매대 · 한 종류 30개 (10/20 개정), 진열 가구 시스템 대기 |
 
 ## 상점 상품
 | 종류 | 기획 id | 개발 id | 상태 | 변환 | 메모 |
@@ -107,7 +107,7 @@ P0 = 버섯꽃 · 등불 해금. 나머지 데모 스킬은 P1 — 효과가 연
 | 설정 | buy_min | SalesSettings.purchaseMin | 연결 | | |
 | 설정 | buy_max | SalesSettings.purchaseMax | 연결 | | |
 | 설정 | sale_duration | SalesSettings.salesDuration | 연결 | | |
-| 설정 | start_fruit_shelves | - | 없음 | | 진열 가구 시스템 대기 |
+| 설정 | start_fruit_shelves | - | 없음 | | 진열 가구 시스템 대기 (store_* · trash_bin_location 포함, 10/20 추가) |
 | 설정 | day1_customers | - | 없음 | | 입소문 손님 모델 대기 (아래 customer_* · satisfaction_* · market_day_* 모두) |
 | 설정 | trash_day1 | - | 없음 | | 가게 정리 시스템 대기 (trash_* · stain_* · scatter_* · disorder_* 모두) |
 | 설정 | grade_s_min | - | 없음 | | 정산 등급 표시 대기 (grade_*) |

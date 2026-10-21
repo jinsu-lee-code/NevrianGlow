@@ -23,7 +23,8 @@
 | cost_per_level | `;` 목록 | 단계별 SP. 개수 = max_level | `2;3;5` |
 | prerequisites | `id:단계;id:단계` | 선행 조건. 전부 만족해야 열림(AND). 비우면 처음부터 열림 | `skill_unlock_grinder:1;skill_unlock_mushroom:1` |
 | node_col / node_row | 정수 | 스킬트리 화면 격자 위치 (열 = 해금 순서, 행 = 줄) | 3 / 1 |
-| scope | demo / phase2 | 데모 포함 여부 | demo |
+| scope | demo / phase2 | 데모 빌드에 들어갈 수 있는지 (예전 열, mvp 열이 우선) | demo |
+| mvp | P0 / P1 / phase2 | **MVP 우선순위. phase2는 상점 · 스킬트리에 표시하지 않음** | P0 |
 
 **트리 형태**: 선행 조건이 곧 트리의 선입니다. `B의 prerequisites = A:2`이면 화면에 A → B 선을 긋고, A를 2단계까지 올려야 B가 열립니다. 여러 개면 여러 선이 모입니다.
 
@@ -57,10 +58,10 @@ value를 누적값으로 둔 이유: 단계를 올릴 때 "이전 단계 효과�
 | processor_slots | 기구별 | 기구 처리 칸 · 증류관 하루 조합 수 (target_id = 기구) | 가공 숙련 |
 | mess_rate | 1.0 | 흩어진 상품 · 흐트러진 진열 · 얼룩 생성 비율 | 청결 유지 |
 | customer_ad_rate | 0.02 | 손님 모델 광고 계수 p | 간판 |
-| purchase_count | 0 | 손님 구매 개수 보너스 | 단골의 장바구니 |
+| extra_buy_chance | 0 | 손님마다 1개 더 살 **확률** (0.1 = 10%), 최대 game_settings.buy_extra_max개 | 단골의 장바구니 |
 | sell_price_raw / sell_price_processed | 0 | 원재료 · 가공품 판매가 보너스 | 신선 작물 프리미엄 · 장인의 가공품 |
 | perfect_tidy_sales | 0 | 청결 · 정돈 모두 S로 시작 시 매출 보너스 | 반짝이는 가게 |
-| display_stack | 8 | 과일 진열대 층당 작물 개수 (target_id = furn_fruit_shelf) | 가득 찬 진열대 |
+| display_stack | 30 | 과일 진열대 한 대의 작물 개수 (target_id = furn_fruit_shelf) | 가득 찬 진열대 |
 | stack_size | 아이템별 | 칸당 개수 (target_id = 아이템) | 쓰레기 압축 |
 | hotbar_slots | 4 | 핫바 칸 수 | 분주한 손 |
 | move_speed / interact_range | 0 | 이동 속도 보너스 · 상호작용 거리 추가(m) | 가벼운 발걸음 · 긴 팔 |
