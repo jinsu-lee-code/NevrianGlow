@@ -16,5 +16,5 @@ MonoBehaviour:
   displayName: "\uBE44\uB8CC"
   maxStack: 10
   canStore: 1
-  heldPrefab: {fileID: 0}
+  heldPrefab: {fileID: 3949658059559800661, guid: e8a54fdf4c4812f4b8ff640248bd9e8b, type: 3}
   growDaysReduction: 1
