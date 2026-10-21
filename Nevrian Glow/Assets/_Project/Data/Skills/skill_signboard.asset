@@ -14,19 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.SkillData
   id: skill_signboard
   displayName: "\uAC04\uD310"
-  tab: "\uC7A5\uC0AC"
-  order: 1
+  tab: "\uB9E4\uC7A5 \uC6B4\uC601"
+  tabOrder: 2
+  order: 102
+  hidden: 1
   levelDescriptions:
-  - "\uC190\uB2D8 \uC218 +10%"
-  - "\uC190\uB2D8 \uC218 +20%"
-  - "\uC190\uB2D8 \uC218 +30%"
-  costs: 020000000300000004000000
+  - 
+  - 
+  - 
+  - 
+  - 
+  costs: 0200000003000000040000000500000006000000
   prerequisite: {fileID: 0}
   prerequisiteLevel: 1
-  modifiers:
-  - stat: {fileID: 11400000, guid: ce7d95e45b772c24285b1c70889c9798, type: 2}
-    op: 0
-    values:
-    - 0.1
-    - 0.2
-    - 0.3
+  modifiers: []

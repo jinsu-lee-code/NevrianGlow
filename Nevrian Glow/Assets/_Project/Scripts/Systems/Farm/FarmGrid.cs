@@ -270,7 +270,7 @@ namespace NevrianGlowFarm.Systems.Farm
             foreach (int i in WateringPattern.Cells(index, can.CellCount, state.Cells.Count, pair))
             {
                 var c = state.Cells[i];
-                if (c.HasCrop && state.StatusOf(i) == FarmCellStatus.Growing && c.WetDaysLeft < SpecOf(c.CropId).WetDays)
+                if (c.HasCrop && FarmRules.NeedsWatering(c, SpecOf(c.CropId)))
                     count++;
             }
             return count;
@@ -476,7 +476,7 @@ namespace NevrianGlowFarm.Systems.Farm
         {
             var s = CropOf(cropId).ToSpec();
             int grow = StatSystem.Apply(growDaysStat, s.GrowDays);
-            return grow == s.GrowDays ? s : new CropSpec(grow, s.WetDays, s.HarvestYield, s.RegrowDays, s.MaxHarvests);
+            return grow == s.GrowDays ? s : new CropSpec(grow, s.WetDays, s.HarvestYield, s.RegrowDays, s.MaxHarvests, s.NeedsWater);
         }
 
         // ── 배치 ─────────────────────────────────────────────

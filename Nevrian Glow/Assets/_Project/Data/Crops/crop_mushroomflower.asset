@@ -22,10 +22,11 @@ MonoBehaviour:
   - {fileID: 6492855999298447309, guid: 31666e8d0b5f8804aaa72bdde3f9bbbd, type: 3}
   - {fileID: 0}
   - {fileID: 0}
-  seedPrice: 20
-  sellPrice: 40
+  seedPrice: 30
+  sellPrice: 50
   growDays: 2
-  wetDays: 2
+  needsWater: 0
+  wetDays: 1
   harvestYield: 2
   regrowDays: 0
   maxHarvests: 1

@@ -14,10 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.SkillData
   id: skill_unlock_mushroom
   displayName: "\uBC84\uC12F\uAF43 \uD574\uAE08"
-  tab: "\uB18D\uC0AC"
-  order: 1
+  tab: "\uB18D\uC7A5 \uC6B4\uC601"
+  tabOrder: 1
+  order: 101
+  hidden: 0
   levelDescriptions:
-  - "\uBC84\uC12F\uAF43 \uC528\uC557\uC774 \uC0C1\uC810\uC5D0 \uB098\uC628\uB2E4"
+  - "\uBC84\uC12F\uAF43 \uC528\uC557 \uC0C1\uC810\uC5D0 \uB4F1\uC7A5"
   costs: 03000000
   prerequisite: {fileID: 0}
   prerequisiteLevel: 1

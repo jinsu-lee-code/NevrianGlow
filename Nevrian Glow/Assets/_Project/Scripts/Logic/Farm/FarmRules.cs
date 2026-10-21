@@ -90,10 +90,14 @@ namespace NevrianGlowFarm.Logic.Farm
             return true;
         }
 
-        /// <summary>자라는 중인 작물에 물. 수분이 작물의 wetDays로 채워진다. 이미 가득이거나 다 자랐으면 false.</summary>
+        /// <summary>물이 필요한지: 물을 먹는 작물이 자라는 중이고 수분이 가득 차지 않음.</summary>
+        public static bool NeedsWatering(FarmCell cell, CropSpec spec) =>
+            cell.HasCrop && spec.NeedsWater && !IsReady(cell, spec) && cell.WetDaysLeft < spec.WetDays;
+
+        /// <summary>자라는 중인 작물에 물. 수분이 작물의 wetDays로 채워진다. 물이 필요 없는 작물 · 이미 가득 · 다 자랐으면 false.</summary>
         public static bool TryWater(FarmCell cell, CropSpec spec)
         {
-            if (!cell.HasCrop || IsReady(cell, spec) || cell.WetDaysLeft >= spec.WetDays)
+            if (!NeedsWatering(cell, spec))
                 return false;
             cell.WetDaysLeft = spec.WetDays;
             return true;
@@ -121,7 +125,9 @@ namespace NevrianGlowFarm.Logic.Farm
             return new HarvestResult(cropId, spec.HarvestYield, true);
         }
 
-        /// <summary>밤 성장 1회: 오늘 준 비료가 먼저 효과를 내고, 젖어 있는 자라는 중인 작물만 하루 자란다. 수분은 하루 줄어든다.</summary>
+        /// <summary>
+        /// 밤 성장 1회: 오늘 준 비료가 먼저 효과를 내고, 젖어 있는(물이 필요 없는 작물은 언제나) 자라는 중인 작물만 하루 자란다. 수분은 하루 줄어든다.
+        /// </summary>
         public static void GrowOneNight(FarmCell cell, CropSpec spec)
         {
             if (!cell.HasCrop)
@@ -131,7 +137,7 @@ namespace NevrianGlowFarm.Logic.Farm
                 cell.FertilizerBonus = cell.PendingFertilizer;
                 cell.PendingFertilizer = 0;
             }
-            if (cell.WetDaysLeft > 0 && !IsReady(cell, spec))
+            if ((cell.WetDaysLeft > 0 || !spec.NeedsWater) && !IsReady(cell, spec))
                 cell.Age++;
             if (cell.WetDaysLeft > 0)
                 cell.WetDaysLeft--;

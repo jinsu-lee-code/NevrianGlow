@@ -115,7 +115,7 @@ namespace NevrianGlowFarm.Editor
             if (plot != null)
             {
                 config.PlotProduct = plot.ToSpec();
-                config.PlotsPerTier = plot.Plots;
+                config.PlotsPerTier = plot.PlotsAt(0); // 봇은 첫 단계 값만 쓴다 (봇 재측정 때 단계별로)
             }
 
             foreach (var skill in settings.SkillPriority)

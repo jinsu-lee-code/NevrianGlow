@@ -1,0 +1,32 @@
+﻿skill_id,tab_id,name_ko,description,max_level,cost_per_level,prerequisites,node_col,node_row,scope,mvp
+skill_unlock_mushroom,tab_farm,버섯꽃 해금,상점에 버섯꽃 씨앗이 등장한다,1,3,,1,1,demo,P0
+skill_watering_license,tab_farm,물뿌리개 라이선스,단계마다 다음 물뿌리개 등급(4칸 → 8칸)이 상점에 등장한다,2,3;5,,1,2,demo,P1
+skill_unlock_fertilizer,tab_farm,비료 해금,상점에 비료가 등장한다,1,3,skill_unlock_mushroom:1,2,3,demo,P1
+skill_unlock_lantern,tab_farm,등불 열매 해금,상점에 등불 열매 씨앗이 등장한다,1,6,skill_unlock_mushroom:1,2,1,demo,P0
+skill_giant_dream,tab_farm,거대한 꿈,거대 작물 확률이 오른다,3,2;3;4,skill_unlock_mushroom:1,2,4,demo,P1
+skill_seed_stock,tab_farm,풍성한 입고,씨앗 일일 입고량이 단계마다 기본 → 최대(shop.csv stock_max) 쪽으로 1/4씩 증가,4,2;3;4;5,skill_unlock_mushroom:1,2,6,demo,P1
+skill_seed_return,tab_farm,씨앗 되받기,수확할 때 확률로 씨앗 1개를 돌려받는다,3,3;4;5,skill_unlock_lantern:1,3,4,phase2,phase2
+skill_unlock_spiralbloom,tab_farm,나선층꽃 해금,상점에 나선층꽃 씨앗이 등장한다,1,9,skill_unlock_lantern:1,3,1,phase2,phase2
+skill_unlock_grinder,tab_farm,공명 분쇄석 해금,상점에 공명 분쇄석이 등장한다,1,6,skill_unlock_lantern:1,3,5,phase2,phase2
+skill_fertile,tab_farm,비옥한 땅,재수확 · 소화 일수가 1일 줄어든다 (최소 1),1,8,skill_unlock_lantern:1,3,3,phase2,phase2
+skill_unlock_dryer,tab_farm,포자바람 건조막 해금,상점에 포자바람 건조막이 등장한다,1,4,skill_unlock_grinder:1;skill_unlock_mushroom:1,4,5,phase2,phase2
+skill_unlock_pearlcore,tab_farm,진주핵꽃 해금,상점에 진주핵꽃 씨앗이 등장한다,1,12,skill_unlock_spiralbloom:1,4,1,phase2,phase2
+skill_unlock_distiller,tab_farm,성광 증류관 해금,상점에 성광 증류관이 등장하고 향유를 만들 수 있다,1,10,skill_unlock_grinder:1;skill_unlock_dryer:1,5,5,phase2,phase2
+skill_recipe_nutrient_juice,tab_farm,영양 주스 조합법,증류관에서 영양 주스를 만들 수 있다,1,6,skill_unlock_distiller:1;skill_unlock_spiralbloom:1,6,5,phase2,phase2
+skill_processing_mastery,tab_farm,가공 숙련,가공 기구의 일일 처리량이 늘어난다,3,6;8;10,skill_unlock_grinder:1;skill_unlock_dryer:1;skill_unlock_distiller:1,6,6,phase2,phase2
+skill_recipe_pearlcore_elixir,tab_farm,진주핵 영양주 조합법,증류관에서 진주핵 영양주를 만들 수 있다,1,10,skill_recipe_nutrient_juice:1;skill_unlock_pearlcore:1,7,5,phase2,phase2
+skill_unlock_sprinkler,tab_farm,스프링클러 해금,상점에 스프링클러가 등장한다,1,5,skill_watering_license:1,2,2,demo,P1
+skill_clean_keep,tab_store,청결 유지,흩어진 상품 · 흐트러진 진열 · 얼룩 생성이 단계마다 10%씩 줄어든다,5,2;3;4;5;6,,1,1,demo,P1
+skill_signboard,tab_store,간판,광고 계수 p가 단계마다 +0.01 (소문 없이 찾아오는 손님 증가),5,2;3;4;5;6,,1,2,demo,P1
+skill_trash_compact,tab_store,쓰레기 압축,쓰레기를 한 칸에 더 많이 담는다,1,2,skill_clean_keep:1,2,1,demo,P1
+skill_regular_basket,tab_store,단골의 장바구니,손님마다 단계 × 10% 확률로 1개 더 산다 (최대 4개),5,3;4;5;6;7,skill_signboard:1,2,2,demo,P1
+skill_fresh_premium,tab_store,신선 작물 프리미엄,가공하지 않은 작물의 판매가가 오른다,3,3;5;7,skill_signboard:2,2,3,demo,P1
+skill_sparkling_store,tab_store,반짝이는 가게,청결 · 정돈 등급이 모두 S로 장사를 시작하면 그날 매출 +5%,1,4,skill_clean_keep:3,3,1,phase2,phase2
+skill_full_shelf,tab_store,가득 찬 진열대,과일 진열대 층당 작물 8 → 10 → 12개,2,5;8,skill_regular_basket:1,3,2,phase2,phase2
+skill_artisan_goods,tab_store,장인의 가공품,가공품 판매가가 오른다,4,4;6;8;10,skill_fresh_premium:1;skill_unlock_grinder:1,4,3,phase2,phase2
+skill_invite_wanderer,tab_store,떠돌이 상인 초대,가공품을 선호하는 루미안 손님이 등장한다,1,8,skill_artisan_goods:1,5,3,phase2,phase2
+skill_hotbar,tab_common,분주한 손,핫바 칸이 늘어난다,4,2;3;4;5,,1,1,demo,P1
+skill_bag_license,tab_common,가방 라이선스,상점에서 살 수 있는 가방 확장 단계가 늘어난다,3,3;5;8,,1,2,demo,P1
+skill_light_steps,tab_common,가벼운 발걸음,기본 이동 속도가 오른다,2,3;5,,1,3,demo,P1
+skill_long_reach,tab_common,긴 팔,상호작용 · 내려놓기 거리가 늘어난다,2,3;5,skill_light_steps:1,2,3,phase2,phase2
+skill_resonance_storage,tab_common,공명 보관함,어디서든 창고를 열 수 있다,1,12,skill_bag_license:2,2,2,phase2,phase2

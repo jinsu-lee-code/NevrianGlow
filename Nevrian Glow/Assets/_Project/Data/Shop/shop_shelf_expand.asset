@@ -16,6 +16,7 @@ MonoBehaviour:
   displayName: "\uC9C4\uC5F4\uB300 \uD655\uC7A5"
   sortOrder: 32
   category: "\uD655\uC7A5"
+  hidden: 1
   repeatable: 0
   tiers:
   - price: 150

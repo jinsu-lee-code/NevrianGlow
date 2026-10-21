@@ -238,7 +238,7 @@ namespace NevrianGlowFarm.Editor
             var stats = StatSystem.Instance;
             if (stats != null)
                 foreach (var m in stats.Modifiers)
-                    EditorGUILayout.LabelField("  효과", $"{m.StatId} {(m.Op == Logic.Game.ModifierOp.Add ? "+" : "×")}{m.Value:0.###}");
+                    EditorGUILayout.LabelField("  효과", $"{m.StatId} {(m.Op == Logic.Game.ModifierOp.Add ? "+" : m.Op == Logic.Game.ModifierOp.Set ? "=" : "×")}{m.Value:0.###}");
             if (shop != null)
                 EditorGUILayout.LabelField("오늘 상점 지출", $"{shop.SpentToday}달러");
         }

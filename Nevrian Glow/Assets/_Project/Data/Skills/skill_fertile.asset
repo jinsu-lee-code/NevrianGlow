@@ -15,7 +15,9 @@ MonoBehaviour:
   id: skill_fertile
   displayName: "\uBE44\uC625\uD55C \uB545"
   tab: "\uB18D\uC0AC"
+  tabOrder: 0
   order: 4
+  hidden: 1
   levelDescriptions:
   - "\uBAA8\uB4E0 \uC791\uBB3C \uC131\uC7A5\uC77C -1 (\uCD5C\uC18C 1\uC77C)"
   costs: 0a000000

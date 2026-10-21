@@ -24,12 +24,13 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 40168802638353787, guid: b984b51ec6abe1748bba54fc1a3ee5bc, type: 3}
   seedPrice: 70
-  sellPrice: 80
-  growDays: 8
+  sellPrice: 110
+  growDays: 6
+  needsWater: 1
   wetDays: 1
   harvestYield: 2
-  regrowDays: 4
-  maxHarvests: 3
+  regrowDays: 3
+  maxHarvests: 5
   giantChance: 0
   giantYieldMultiplier: 1
   giantScale: 1
