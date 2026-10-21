@@ -67,6 +67,8 @@ namespace NevrianGlowFarm.Data
         [SerializeField, Min(1)] private int purchaseMax = 1;
         [Tooltip("단골의 장바구니로 늘어날 수 있는 최대 개수 (개, buy_extra_max)")]
         [SerializeField, Min(1)] private int purchaseExtraMax = 4;
+        [Tooltip("흐트러진 진열 칸의 구매 확률 배율 (배, disorder_buy_mult — 가게 정리 P-3)")]
+        [SerializeField, Range(0f, 1f)] private float disorderBuyMultiplier = 0.5f;
         [Tooltip("목표 지점 정지 거리 (m)")]
         [SerializeField, Min(0f)] private float stopDistance;
         [Tooltip("계산대 줄 간격 (m)")]
@@ -91,7 +93,7 @@ namespace NevrianGlowFarm.Data
         public float WalkClipSpeed => walkClipSpeed;
 
         /// <summary>Logic 장사 규칙 값 (SalesRules · SalesSession).</summary>
-        public SalesSpec ToSpec() => new SalesSpec(salesDuration, spawnWindow, maxConcurrentCustomers, purchaseMin, purchaseMax);
+        public SalesSpec ToSpec() => new SalesSpec(salesDuration, spawnWindow, maxConcurrentCustomers, purchaseMin, purchaseMax, disorderBuyMultiplier);
 
         /// <summary>Logic 입소문 손님 모델 값 (CustomerModel).</summary>
         public CustomerModelSpec ToCustomerSpec() => new CustomerModelSpec(day1Customers, day1FirstBuy, regularsAfterDay1, marketSize, wordOfMouth,

@@ -45,6 +45,10 @@ namespace NevrianGlowFarm.Systems.Shop
         [SerializeField] private Color okColor = new Color(0.38f, 0.95f, 0.88f, 0.35f);
         [Tooltip("놓을 수 없을 때 홀로그램 색 (빨강)")]
         [SerializeField] private Color blockedColor = new Color(1f, 0.25f, 0.25f, 0.35f);
+        [Tooltip("흐트러진 칸의 작물 기울기 (도) — 가게 정리 P-3")]
+        [SerializeField, Range(0f, 60f)] private float disorderTilt = 28f;
+        [Tooltip("흐트러진 칸의 작물이 제자리에서 벗어나는 정도 (m)")]
+        [SerializeField, Range(0f, 0.3f)] private float disorderOffset = 0.08f;
 
         [Header("기즈모")]
         [Tooltip("칸 자리(노랑) 표시")]
@@ -147,11 +151,14 @@ namespace NevrianGlowFarm.Systems.Shop
         {
             if (!(held is CropData crop) || aimedSlot < 0)
                 return null;
+            bool messy = state.IsDisordered(aimedSlot);
             switch (state.CanPlace(aimedSlot, crop.Id))
             {
-                case PlaceCheck.Ok: return $"{crop.DisplayName} 진열 ({state[aimedSlot].Count}/{state.ItemsPerSlot})";
+                case PlaceCheck.Ok: return messy
+                    ? $"{crop.DisplayName} 다시 진열 - 흐트러진 칸 바로잡기 ({state[aimedSlot].Count}/{state.ItemsPerSlot})"
+                    : $"{crop.DisplayName} 진열 ({state[aimedSlot].Count}/{state.ItemsPerSlot})";
                 case PlaceCheck.OtherItem: return $"진열 불가 - 다른 작물 칸 ({NameOf(state[aimedSlot].ItemId)})";
-                case PlaceCheck.Full: return "진열 불가 - 칸이 가득 참";
+                case PlaceCheck.Full: return messy ? "흐트러진 칸 - 우클릭으로 1개 회수한 뒤 다시 진열" : "진열 불가 - 칸이 가득 참";
                 default: return null;
             }
         }
@@ -164,6 +171,7 @@ namespace NevrianGlowFarm.Systems.Shop
             if (hotbar == null || !hotbar.TryConsumeSelected(1))
                 return;
             state.TryPlace(aimedSlot, crop.Id);
+            state.Straighten(aimedSlot); // 다시 진열하면 그 칸은 반듯해진다 (청소 v2 — 홀로그램 스냅)
             RefreshSlot(aimedSlot, animateLast: true);
             AudioManager.Play(SoundCues.ShelfPlace);
             // 홀로그램은 다음 자리로 (가득 차면 빨강). 마지막 1개를 놓아 손이 비면 다음 프레임 UpdateAim이 숨긴다.
@@ -179,8 +187,9 @@ namespace NevrianGlowFarm.Systems.Shop
                 return null;
             var item = database.Get<ItemData>(state[aimedSlot].ItemId);
             var inventory = PlayerInventory.Instance;
+            string messy = state.IsDisordered(aimedSlot) ? " (흐트러짐 - 회수 뒤 다시 진열하면 바로잡힘)" : string.Empty;
             return inventory != null && inventory.CanAdd(item, 1)
-                ? $"{NameOf(state[aimedSlot].ItemId)} 1개 회수"
+                ? $"{NameOf(state[aimedSlot].ItemId)} 1개 회수{messy}"
                 : $"{NameOf(state[aimedSlot].ItemId)} 회수 불가 - 넣을 칸 없음";
         }
 
@@ -210,6 +219,45 @@ namespace NevrianGlowFarm.Systems.Shop
                 return null;
             RefreshSlot(slot, animateLast: false);
             return database.Get<CropData>(id);
+        }
+
+        // ── 가게 정리 (P-3) ─────────────────────────────
+
+        /// <summary>칸을 흐트러뜨린다 (상품이 있는 칸만). 흐트러졌으면 true.</summary>
+        public bool SetDisordered(int slot)
+        {
+            state.SetDisordered(slot);
+            if (!state.IsDisordered(slot))
+                return false;
+            RefreshSlot(slot, animateLast: false);
+            return true;
+        }
+
+        /// <summary>흐트러짐을 모두 지운다 (새 날 배치 전).</summary>
+        public void ClearDisorder()
+        {
+            if (state.DisorderedCount == 0)
+                return;
+            state.ClearDisorder();
+            RefreshAll();
+        }
+
+        /// <summary>작물 1개를 놓을 수 있는 칸에 되돌린다 (같은 작물 칸 → 빈 칸 순). 놓았으면 true.</summary>
+        public bool TryReturn(CropData crop)
+        {
+            if (crop == null)
+                return false;
+            for (int pass = 0; pass < 2; pass++)
+                for (int slot = 0; slot < state.SlotCount; slot++)
+                {
+                    bool same = state[slot].ItemId == crop.Id;
+                    if ((pass == 0) != same || state.CanPlace(slot, crop.Id) != PlaceCheck.Ok)
+                        continue;
+                    state.TryPlace(slot, crop.Id);
+                    RefreshSlot(slot, animateLast: false);
+                    return true;
+                }
+            return false;
         }
 
         /// <summary>진열 칸을 늘린다 (진열대 확장 상품). 몸체도 길어진다.</summary>
@@ -277,10 +325,15 @@ namespace NevrianGlowFarm.Systems.Shop
                     Destroy(last.gameObject);
             }
 
+            bool messy = state.IsDisordered(slot);
             for (int i = 0; i < list.Count; i++)
             {
                 var r = list[i];
-                r.transform.localPosition = StackPoint(slot, i);
+                r.transform.localPosition = StackPoint(slot, i) + (messy ? MessOffset(slot, i) : Vector3.zero);
+                // 흐트러진 칸은 작물이 기울고 자리에서 벗어난다 (칸 · 순서로 정해 같은 칸이면 같은 모습)
+                r.transform.localRotation = messy
+                    ? Quaternion.Euler(((slot * 3 + i) % 2 == 0 ? 1f : -1f) * disorderTilt, (slot * 53 + i * 71) % 360, ((i % 3) - 1) * disorderTilt * 0.6f)
+                    : Quaternion.identity;
                 r.transform.localScale = Vector3.one * itemSize;
                 block.Clear();
                 block.SetColor(BaseColorId, crop != null ? crop.GreyboxColor : Color.white);
@@ -302,6 +355,12 @@ namespace NevrianGlowFarm.Systems.Shop
             float x = (float)ShelfLayout.SlotCenterX(slot, state.SlotCount, slotPitch) + (col - (columns - 1) * 0.5f) * stackSpacing;
             float z = ((rows - 1) * 0.5f - row) * stackSpacing;
             return new Vector3(x, topHeight + itemSize * 0.5f, z);
+        }
+
+        private Vector3 MessOffset(int slot, int index)
+        {
+            float a = (slot * 2.399f + index * 1.7f) % (2f * Mathf.PI);
+            return new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * disorderOffset;
         }
 
         private string NameOf(string itemId)

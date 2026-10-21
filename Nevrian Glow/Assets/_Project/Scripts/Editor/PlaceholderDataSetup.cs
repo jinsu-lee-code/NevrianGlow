@@ -300,8 +300,7 @@ namespace NevrianGlowFarm.Editor
             // BALANCE 2-5
             Ensure<CleaningSettingsData>($"{StatsFolder}/CleaningSettings.asset", resetExisting, report, so =>
             {
-                SetDailyCount(so.FindProperty("trash"), 6, 1, 6);
-                SetDailyCount(so.FindProperty("stain"), 4, 2, 4);
+                // 쓰레기 · 얼룩 · 흩어짐 · 흐트러짐 · 등급 값은 기획 CSV 가져오기가 넣는다 (P-3)
                 so.FindProperty("minSpacing").floatValue = 0.8f;
                 so.FindProperty("placementAttempts").intValue = 30;
                 so.FindProperty("trashItem").objectReferenceValue = trashItem;
@@ -588,6 +587,7 @@ namespace NevrianGlowFarm.Editor
             ("stat_customer_bonus", "손님 수 보너스", "손님 수 공식의 보너스 합 (0.1 = +10%)"),
             ("stat_customer_ad_rate", "광고 계수", "입소문 모델 광고 계수 p — 기본값(SalesSettings)에 더한다 (간판, P-2)"),
             ("stat_extra_buy_chance", "1개 더 살 확률", "손님마다 1개 더 살 확률 (0.1 = 10%, 단골의 장바구니, P-2)"),
+            ("stat_mess_rate", "어지러움 배율", "흩어진 상품 · 흐트러진 진열 · 얼룩 생성 배율 — 기본 1 (청결 유지, P-3)"),
         };
 
         private readonly struct SkillRow
@@ -697,13 +697,6 @@ namespace NevrianGlowFarm.Editor
         {
             so.FindProperty("id").stringValue = id;
             so.FindProperty("displayName").stringValue = displayName;
-        }
-
-        private static void SetDailyCount(SerializedProperty prop, int baseCount, int dayDivisor, int dayBonusCap)
-        {
-            prop.FindPropertyRelative("baseCount").intValue = baseCount;
-            prop.FindPropertyRelative("dayDivisor").intValue = dayDivisor;
-            prop.FindPropertyRelative("dayBonusCap").intValue = dayBonusCap;
         }
 
         private static T Ensure<T>(string path, bool resetExisting, Report report, Action<SerializedObject> apply)

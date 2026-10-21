@@ -726,7 +726,29 @@ namespace NevrianGlowFarm.Editor
                 // 가구 자리 = 과일 진열대 자리 + 일반 진열대 자리 (진열 가구 P-4 전까지 손님 상한에만 씀)
                 if (CsvValue.TryInt(V("store_spots_fruit"), out int fruitSpots) && CsvValue.TryInt(V("store_spots_shelf"), out int shelfSpots))
                     so.FindProperty("furnitureSpots").intValue = fruitSpots + shelfSpots;
+                Float("disorder_buy_mult", "disorderBuyMultiplier"); // 흐트러진 칸 구매 확률 (P-3)
                 Apply(so, sales, "설정 SalesSettings", report);
+            }
+
+            // 가게 정리 (P-3, 청소 v2 설정안)
+            var cleaning = LoadSettings<CleaningSettingsData>("CleaningSettings");
+            if (cleaning != null)
+            {
+                var so = new SerializedObject(cleaning);
+                void Int(string key, string field) { if (CsvValue.TryInt(V(key), out int v)) so.FindProperty(field).intValue = v; }
+                void Float(string key, string field) { if (CsvValue.TryFloat(V(key), out float v)) so.FindProperty(field).floatValue = v; }
+                Int("trash_day1", "trashDay1");
+                Int("stain_day1", "stainDay1");
+                Int("trash_daily_min", "trashDailyMin");
+                Int("trash_daily_max", "trashDailyMax");
+                Float("stain_per_customer", "stainPerCustomer");
+                Float("scatter_unsold_ratio", "scatterUnsoldRatio");
+                Float("scatter_per_customers", "scatterPerCustomers");
+                Float("disorder_ratio", "disorderRatio");
+                Float("grade_s_min", "gradeS");
+                Float("grade_a_min", "gradeA");
+                Float("grade_b_min", "gradeB");
+                Apply(so, cleaning, "설정 CleaningSettings", report);
             }
 
             foreach (var key in values.Keys)

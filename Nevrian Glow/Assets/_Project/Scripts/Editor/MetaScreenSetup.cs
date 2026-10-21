@@ -74,6 +74,46 @@ namespace NevrianGlowFarm.Editor
             Debug.Log("[Setup] 메타 화면: " + result);
         }
 
+        // ── 가게 HUD '오늘의 정리' (P-3) ──
+
+        [MenuItem("Glow Farm/Setup/Create Tidy HUD")]
+        private static void CreateTidyHudMenu()
+        {
+            var canvas = GameObject.Find("UICanvas");
+            if (canvas == null)
+            {
+                Debug.LogError("[Setup] UICanvas가 없음 - Core 씬을 연다");
+                return;
+            }
+            if (canvas.transform.Find("TidyHud") != null)
+            {
+                Debug.Log("[Setup] 오늘의 정리 HUD: 유지");
+                return;
+            }
+            font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FontPath);
+            var root = new GameObject("TidyHud", typeof(RectTransform));
+            var rt = root.GetComponent<RectTransform>();
+            rt.SetParent(canvas.transform, false);
+            Place(rt, new Vector2(1f, 1f), new Vector2(-24f, -24f), new Vector2(460f, 150f), new Vector2(1f, 1f));
+            var panel = NewImage("Panel", rt, PanelColor);
+            Stretch(panel, rt);
+            var label = MakeText("Label", panel, "오늘의 정리", 22, Color.white, TextAlignmentOptions.TopLeft);
+            Stretch(label.rectTransform, panel);
+            label.rectTransform.offsetMin = new Vector2(18f, 10f);
+            label.rectTransform.offsetMax = new Vector2(-12f, -10f);
+            var view = root.AddComponent<TidyHudView>();
+            var so = new SerializedObject(view);
+            so.FindProperty("panel").objectReferenceValue = panel.gameObject;
+            so.FindProperty("label").objectReferenceValue = label;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            var fader = canvas.transform.Find("ScreenFader");
+            if (fader != null)
+                fader.SetAsLastSibling();
+            Undo.RegisterCreatedObjectUndo(root, "Create TidyHud");
+            EditorSceneManager.MarkSceneDirty(canvas.scene);
+            Debug.Log("[Setup] 오늘의 정리 HUD: 생성");
+        }
+
         // ── 타이틀 ──
 
         private static void BuildTitle(Transform canvas, SceneBootstrapper boot, SaveSystem save, InputActionReference cancel)

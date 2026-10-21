@@ -12,14 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7439d21109951f4f9c12599c1c4dc1a, type: 3}
   m_Name: CleaningSettings
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.CleaningSettingsData
-  trash:
-    baseCount: 6
-    dayDivisor: 1
-    dayBonusCap: 6
-  stain:
-    baseCount: 4
-    dayDivisor: 2
-    dayBonusCap: 4
+  trashDay1: 30
+  stainDay1: 12
+  trashDailyMin: 1
+  trashDailyMax: 3
+  stainPerCustomer: 0.3
+  scatterUnsoldRatio: 0.15
+  scatterPerCustomers: 3
+  disorderRatio: 0.2
+  gradeS: 0.95
+  gradeA: 0.8
+  gradeB: 0.6
   minSpacing: 0.8
   placementAttempts: 30
   trashItem: {fileID: 11400000, guid: b7b18517e808ae845bcd66da214a0a8f, type: 2}

@@ -113,7 +113,7 @@ namespace NevrianGlowFarm.Logic.Sales
             while (Spawned < Total)
             {
                 Spawned++;
-                Pay(SalesRules.FillBasket(shelves, random, NextWanted(random), take), priceOf);
+                Pay(SalesRules.FillBasket(shelves, random, NextWanted(random), take, spec.DisorderBuyMultiplier), priceOf);
                 handled++;
             }
             return handled;

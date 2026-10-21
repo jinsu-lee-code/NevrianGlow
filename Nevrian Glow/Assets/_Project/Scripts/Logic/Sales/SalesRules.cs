@@ -14,9 +14,12 @@ namespace NevrianGlowFarm.Logic.Sales
         public int MaxConcurrent { get; }
         public int PurchaseMin { get; }
         public int PurchaseMax { get; }
+        /// <summary>흐트러진 진열 칸의 구매 확률 배율 (가게 정리 P-3, 기획 disorder_buy_mult 0.5).</summary>
+        public double DisorderBuyMultiplier { get; }
 
-        public SalesSpec(double duration, double spawnWindow, int maxConcurrent, int purchaseMin, int purchaseMax)
+        public SalesSpec(double duration, double spawnWindow, int maxConcurrent, int purchaseMin, int purchaseMax, double disorderBuyMultiplier = 1.0)
         {
+            DisorderBuyMultiplier = Clamp01(disorderBuyMultiplier);
             Duration = Math.Max(0.0, duration);
             SpawnWindow = Clamp01(spawnWindow);
             MaxConcurrent = Math.Max(1, maxConcurrent);
@@ -84,10 +87,13 @@ namespace NevrianGlowFarm.Logic.Sales
         /// 진열된 것 하나를 고른다: 모든 진열대에 놓인 개수 전체 중 하나를 균등하게 → 작물이 뽑힐 확률은 진열 재고에 비례 (가중 무작위).
         /// 진열이 비었으면 false.
         /// </summary>
-        public static bool TryPickUnit(IReadOnlyList<ShelfState> shelves, IRandomSource random, out int shelf, out int slot)
+        public static bool TryPickUnit(IReadOnlyList<ShelfState> shelves, IRandomSource random, out int shelf, out int slot, double disorderMultiplier = 1.0)
         {
             shelf = -1;
             slot = -1;
+            // 흐트러진 칸이 있으면 그 칸의 무게만 배율만큼 (구매 확률 절반 — 청소 v2). 없으면 예전과 같은 난수 흐름.
+            if (disorderMultiplier < 1.0 && AnyDisordered(shelves))
+                return TryPickWeighted(shelves, random, disorderMultiplier, out shelf, out slot);
             int total = 0;
             for (int s = 0; s < shelves.Count; s++)
                 total += shelves[s].TotalCount;
@@ -112,21 +118,59 @@ namespace NevrianGlowFarm.Logic.Sales
             return false;
         }
 
+        private static bool AnyDisordered(IReadOnlyList<ShelfState> shelves)
+        {
+            foreach (var s in shelves)
+                if (s.DisorderedCount > 0)
+                    return true;
+            return false;
+        }
+
+        // 개수 × (흐트러진 칸이면 배율) 무게로 한 개 고르기
+        private static bool TryPickWeighted(IReadOnlyList<ShelfState> shelves, IRandomSource random, double multiplier, out int shelf, out int slot)
+        {
+            shelf = -1;
+            slot = -1;
+            double total = 0;
+            foreach (var s in shelves)
+                for (int i = 0; i < s.SlotCount; i++)
+                    total += s[i].Count * (s.IsDisordered(i) ? multiplier : 1.0);
+            if (total <= 0)
+                return false;
+            double pick = random.NextDouble() * total;
+            for (int sh = 0; sh < shelves.Count; sh++)
+            {
+                var state = shelves[sh];
+                for (int i = 0; i < state.SlotCount; i++)
+                {
+                    double w = state[i].Count * (state.IsDisordered(i) ? multiplier : 1.0);
+                    if (w <= 0)
+                        continue;
+                    shelf = sh;
+                    slot = i;
+                    if (pick < w)
+                        return true;
+                    pick -= w;
+                }
+            }
+            return shelf >= 0; // 부동소수 끝자리 오차 → 마지막 칸
+        }
+
         /// <summary>
         /// 손님 한 명의 장바구니: 사려는 개수만큼 매번 재고 비례로 골라 진열대에서 뺀다. 진열이 비면 거기서 멈춘다(0개면 빈손 퇴장).
         /// take = 진열대에서 실제로 빼는 일(겉모습 갱신 포함, 뺀 아이템 id) — 비우면 ShelfState.TakeOne.
         /// </summary>
         public static List<string> FillBasket(IReadOnlyList<ShelfState> shelves, IRandomSource random, SalesSpec spec, Func<int, int, string> take = null) =>
-            FillBasket(shelves, random, WantedCount(random, spec), take);
+            FillBasket(shelves, random, WantedCount(random, spec), take, spec.DisorderBuyMultiplier);
 
         /// <summary>사려는 개수를 정해 둔 장바구니 (1일차 첫 손님 고정 · 단골의 장바구니 — SalesSession.NextWanted).</summary>
-        public static List<string> FillBasket(IReadOnlyList<ShelfState> shelves, IRandomSource random, int wanted, Func<int, int, string> take = null)
+        public static List<string> FillBasket(IReadOnlyList<ShelfState> shelves, IRandomSource random, int wanted, Func<int, int, string> take = null, double disorderMultiplier = 1.0)
         {
             wanted = Math.Max(0, wanted);
             var basket = new List<string>(wanted);
             for (int n = 0; n < wanted; n++)
             {
-                if (!TryPickUnit(shelves, random, out int shelf, out int slot))
+                if (!TryPickUnit(shelves, random, out int shelf, out int slot, disorderMultiplier))
                     break;
                 string id = take != null ? take(shelf, slot) : shelves[shelf].TakeOne(slot);
                 if (id != null)

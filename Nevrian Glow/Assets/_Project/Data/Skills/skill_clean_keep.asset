@@ -17,7 +17,7 @@ MonoBehaviour:
   tab: "\uB9E4\uC7A5 \uC6B4\uC601"
   tabOrder: 2
   order: 101
-  hidden: 1
+  hidden: 0
   levelDescriptions:
   - 
   - 
@@ -27,4 +27,12 @@ MonoBehaviour:
   costs: 0200000003000000040000000500000006000000
   prerequisite: {fileID: 0}
   prerequisiteLevel: 1
-  modifiers: []
+  modifiers:
+  - stat: {fileID: 11400000, guid: 5b7159e5370aa2d46b35027d9e52f3e4, type: 2}
+    op: 1
+    values:
+    - 0.9
+    - 0.8
+    - 0.7
+    - 0.6
+    - 0.5

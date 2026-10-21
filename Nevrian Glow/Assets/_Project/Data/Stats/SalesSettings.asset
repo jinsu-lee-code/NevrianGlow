@@ -38,6 +38,7 @@ MonoBehaviour:
   purchaseMin: 1
   purchaseMax: 3
   purchaseExtraMax: 4
+  disorderBuyMultiplier: 0.5
   stopDistance: 0.3
   queueSpacing: 0.8
   walkClipSpeed: 1.62

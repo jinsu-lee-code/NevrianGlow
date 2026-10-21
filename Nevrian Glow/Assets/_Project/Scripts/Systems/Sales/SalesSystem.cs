@@ -108,6 +108,7 @@ namespace NevrianGlowFarm.Systems.Sales
         private readonly CustomerModel model = new CustomerModel();
         private SalesSession session;
         private double todayCleanliness = 1.0;
+        private double todayTidiness = 1.0;
         private readonly CheckoutLine line = new CheckoutLine();
         private readonly List<CustomerAI> customers = new List<CustomerAI>();
         private readonly List<CustomerData> types = new List<CustomerData>();
@@ -200,6 +201,7 @@ namespace NevrianGlowFarm.Systems.Sales
             // 청결도는 장사 시작 때 확정 (CleaningSystem도 같은 순간 같은 값으로 고정한다) → 당일 청결 반응 · 오늘 만족도
             double clean = CleaningSystem.Instance != null ? CleaningSystem.Instance.CurrentCleanliness() : 1.0;
             todayCleanliness = clean;
+            todayTidiness = CleaningSystem.Instance != null ? CleaningSystem.Instance.CurrentTidiness() : 1.0;
             var countRandom = new SeededRandom(SeededRandom.SeedFor(seed, CountPurpose, today));
             int count = model.TodayCount(today, clean, settings.FurnitureSpots, countRandom.NextDouble(), customerSpec);
             double extra = StatSystem.Apply(extraBuyStat, 0.0); // 단골의 장바구니
@@ -274,8 +276,8 @@ namespace NevrianGlowFarm.Systems.Sales
             var gain = GameManager.Instance != null && session.Revenue > 0 ? GameManager.Instance.AddRevenueExp(session.Revenue) : default;
             var result = new SalesResult(day, session, skipped, gain);
             lastResult = result;
-            // 오늘 만족도 → 다음 밤 입소문 · 이탈. 정돈도는 가게 정리(P-3) 전까지 1 (흐트러짐이 아직 없음)
-            model.RecordSales(todayCleanliness, 1.0, session.Total, session.Buyers, settings.ToCustomerSpec());
+            // 오늘 만족도 → 다음 밤 입소문 · 이탈 (청결도 · 정돈도는 장사 시작 때 확정한 값)
+            model.RecordSales(todayCleanliness, todayTidiness, session.Total, session.Buyers, settings.ToCustomerSpec());
             Debug.Log($"[SalesSystem] {day}일차 장사 끝{(skipped ? " (건너뛰기)" : "")}: 손님 {result.Customers}명 (구매 {result.Buyers} · 빈손 {result.EmptyHanded}) · 판매 {result.ItemsSold}개 · 매출 {result.Revenue}달러 · 만족도 {model.Satisfaction:P0}");
             UpdateDebugView();
             Finished?.Invoke(result);
@@ -399,7 +401,7 @@ namespace NevrianGlowFarm.Systems.Sales
         /// <summary>진열대에서 장바구니를 채운다 (재고 비례 무작위 · 1~3개 · 마지막에 놓은 것부터).</summary>
         public List<CropData> FillBasket()
         {
-            var ids = SalesRules.FillBasket(shelfStates, purchaseRandom, session.NextWanted(purchaseRandom), TakeForSaleId);
+            var ids = SalesRules.FillBasket(shelfStates, purchaseRandom, session.NextWanted(purchaseRandom), TakeForSaleId, session.Spec.DisorderBuyMultiplier);
             var crops = new List<CropData>(ids.Count);
             foreach (var id in ids)
                 crops.Add(database.Get<CropData>(id));
