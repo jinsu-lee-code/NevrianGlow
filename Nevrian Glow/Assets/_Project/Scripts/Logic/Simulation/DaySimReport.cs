@@ -52,6 +52,10 @@ namespace NevrianGlowFarm.Logic.Simulation
             sb.AppendLine();
             sb.AppendLine($"- 조건: 시작 {config.StartMoney}달러 · 밭 {config.StartPlots}구획({config.StartPlots * config.CellsPerPlot}칸) · 진열 {config.ShelfSlots}칸 × {config.ShelfItemsPerSlot}개 · 청결도 {config.Cleanliness:P0} · 정돈도 {config.Tidiness:P0} · 입소문 손님 모델(광고 p {config.AdRate:0.###})");
             sb.AppendLine($"- 시작 씨앗: {Counts(config.StartSeeds, Name)} / 시작 수확물: {Counts(config.StartCrops, Name)}");
+            if (config.FirstDayCells > 0)
+                sb.AppendLine($"- 실험: 1일차는 {config.FirstDayCells}칸만 심음 (튜토리얼대로)");
+            string hoePrices = config.HoeProduct.Id != null && config.HoeProduct.Tiers != null ? string.Join(" / ", config.HoeProduct.Tiers.Select(t => t.Price)) : "없음";
+            sb.AppendLine($"- 개간: 칸당 작업량 {F(config.TillWorkRequired)}, 괭이 1회 작업량(등급 1 → …) {string.Join(" → ", (config.HoeWorkPerTier ?? new double[0]).Select(F))}, 괭이 등급 가격 {hoePrices} (봇 규칙 7)");
             sb.AppendLine($"- 작물 (칸당 일일 이익 순): {string.Join(", ", config.Crops.OrderByDescending(c => c.ProfitPerCellPerDay).Select(c => $"{Name(c.Id)} {c.ProfitPerCellPerDay.ToString("0.#", Inv)}"))}");
             sb.AppendLine($"- 스킬 순서: {string.Join(" → ", config.SkillPriority.Select(s => $"{s.Id}({string.Join("/", s.Costs)} SP)"))}");
             if (notes != null)
@@ -78,7 +82,38 @@ namespace NevrianGlowFarm.Logic.Simulation
             }
             sb.AppendLine();
 
-            sb.AppendLine("## GDD 6장 일차별 목표 달성률");
+            sb.AppendLine("## 클릭 수 (시드 평균, 괄호는 최소 ~ 최대)");
+            sb.AppendLine("농사 = 괭이질 + 심기 + 물주기 + 수확, 정리 = 청소(쓰레기 줍기 · 얼룩 닦기, 청결도 가정만큼) + 정돈(흩어진 상품 줍기 · 다시 진열 2회 + 흐트러진 칸 1회), 진열 = 상품 하나 1회. 이동 · 창고 · 쓰레기통 비우기 · 대걸레를 누르고 있는 시간은 세지 않는다.");
+            sb.AppendLine();
+            sb.AppendLine("| 일차 | 괭이 등급 | 괭이질 | 심기 | 물주기 | 수확 | **농사 합** | 쓰레기 · 얼룩 | 흩어진 상품 · 흐트러진 칸 | 청소 | 정돈 | **정리 합** | 진열 |");
+            sb.AppendLine("|---|---|---|---|---|---|---|---|---|---|---|---|---|");
+            for (int i = 0; i < config.Days; i++)
+            {
+                var days = runs.Where(r => r.Days.Count > i).Select(r => r.Days[i]).ToList();
+                if (days.Count == 0)
+                    break;
+                sb.AppendLine($"| {i + 1} | {Stat(days, d => d.HoeTier + 1)} | {Stat(days, d => d.TillClicks)} | {Stat(days, d => d.PlantClicks)} | {Stat(days, d => d.WaterClicks)} | {Stat(days, d => d.HarvestClicks)} | **{Stat(days, d => d.FarmClicks)}** | {Stat(days, d => d.Trash)} · {Stat(days, d => d.Stains)} | {Stat(days, d => d.Scattered)} · {Stat(days, d => d.Disordered)} | {Stat(days, d => d.CleanClicks)} | {Stat(days, d => d.TidyClicks)} | **{Stat(days, d => d.ShopTidyClicks)}** | {Stat(days, d => d.DisplayClicks)} |");
+            }
+            sb.AppendLine();
+
+            // 봇 규칙 8: GDD 1페이지 데모 목표 경험과 일차별 비교
+            sb.AppendLine("## GDD 1페이지 데모 목표와 일차별 비교");
+            sb.AppendLine("| 일차 | 목표 경험 | 봇 (시드 평균) | 그날 목표 모두 달성 시드 |");
+            sb.AppendLine("|---|---|---|---|");
+            for (int i = 0; i < config.Days; i++)
+            {
+                int day = i + 1;
+                var days = runs.Where(r => r.Days.Count > i).Select(r => r.Days[i]).ToList();
+                if (days.Count == 0)
+                    break;
+                var dayGoals = config.Goals.Where(g => g.Day == day).ToList();
+                string target = dayGoals.Count == 0 ? "-" : string.Join(" · ", dayGoals.Select(g => g.Label));
+                string allMet = dayGoals.Count == 0 ? "-" : $"{days.Count(d => d.Goals.Count > 0 && d.AllGoalsMet)} / {days.Count}";
+                sb.AppendLine($"| {day} | {target} | {BotDay(days, Name)} | {allMet} |");
+            }
+            sb.AppendLine();
+
+            sb.AppendLine("## 목표별 달성률");
             sb.AppendLine("| 일차 | 목표 | 판정 | 달성 시드 |");
             sb.AppendLine("|---|---|---|---|");
             foreach (var goal in config.Goals.OrderBy(g => g.Day))
@@ -92,12 +127,13 @@ namespace NevrianGlowFarm.Logic.Simulation
             {
                 var first = runs[0];
                 sb.AppendLine($"## 한 판 자세히 (시드 {first.Seed})");
-                sb.AppendLine("| 일차 | 상점 지출 | 심음 | 수확 | 매출 | 보유 달러 | 레벨 · SP | 배운 스킬 | 해금 작물 | 목표 |");
-                sb.AppendLine("|---|---|---|---|---|---|---|---|---|---|");
+                sb.AppendLine("| 일차 | 상점 지출 | 괭이 | 심음 | 수확 | 매출 | 보유 달러 | 레벨 · SP | 배운 스킬 | 해금 작물 | 목표 |");
+                sb.AppendLine("|---|---|---|---|---|---|---|---|---|---|---|");
                 foreach (var d in first.Days)
                 {
                     string goals = d.Goals.Count == 0 ? "-" : (d.AllGoalsMet ? "달성" : "미달: " + string.Join(", ", d.Goals.Where(g => !g.Value).Select(g => g.Key.Label)));
-                    sb.AppendLine($"| {d.Day} | {d.Spent} | {Counts(d.Planted, Name)} | {Counts(d.Harvested, Name)} | {d.Revenue} | {d.Money} | Lv {d.Level} · {d.SkillPoints} | {(d.SkillsLearned.Count == 0 ? "-" : string.Join(", ", d.SkillsLearned))} | {(d.Unlocked.Count == 0 ? "-" : string.Join(", ", d.Unlocked.OrderBy(x => x, StringComparer.Ordinal).Select(Name)))} | {goals} |");
+                    string hoe = d.HoeBought > 0 ? $"{d.HoeTier + 1}등급 삼" : $"{d.HoeTier + 1}등급";
+                    sb.AppendLine($"| {d.Day} | {d.Spent} | {hoe} | {Counts(d.Planted, Name)} | {Counts(d.Harvested, Name)} | {d.Revenue} | {d.Money} | Lv {d.Level} · {d.SkillPoints} | {(d.SkillsLearned.Count == 0 ? "-" : string.Join(", ", d.SkillsLearned))} | {(d.Unlocked.Count == 0 ? "-" : string.Join(", ", d.Unlocked.OrderBy(x => x, StringComparer.Ordinal).Select(Name)))} | {goals} |");
                 }
             }
             return sb.ToString();
@@ -111,8 +147,36 @@ namespace NevrianGlowFarm.Logic.Simulation
                 case SimGoalKind.HarvestedAtLeast: return $"{name(goal.CropId)} 수확 ≥ {goal.Amount}개";
                 case SimGoalKind.CropUnlocked: return $"{name(goal.CropId)} 씨앗이 상점에 보임";
                 case SimGoalKind.PlantedMoreThanPreviousDay: return $"{name(goal.CropId)} 새로 심은 칸 > 전날";
+                case SimGoalKind.CustomersAtLeast: return $"손님 ≥ {goal.Amount}명";
+                case SimGoalKind.ScatteredAtLeast: return $"흩어진 상품 ≥ {goal.Amount}개";
+                case SimGoalKind.CropUnlockedAtDayEnd: return $"그날 정산 · 스킬 뒤 {name(goal.CropId)} 해금";
                 default: return goal.Kind.ToString();
             }
+        }
+
+        // 그날 봇이 한 일 요약: 손님 · 심음 · 수확 (작물별 평균) · 그날 끝 해금
+        private static string BotDay(List<SimDay> days, Func<string, string> name)
+        {
+            var parts = new List<string> { $"손님 {F(days.Average(d => d.Customers))}" };
+            string Crops(Func<SimDay, Dictionary<string, int>> pick)
+            {
+                var ids = days.SelectMany(d => pick(d).Keys).Distinct().OrderBy(x => x, StringComparer.Ordinal);
+                return string.Join(", ", ids.Select(id => $"{name(id)} {F(days.Average(d => pick(d).TryGetValue(id, out int n) ? n : 0))}"));
+            }
+            string planted = Crops(d => d.Planted);
+            string harvested = Crops(d => d.Harvested);
+            if (planted.Length > 0)
+                parts.Add("심음 " + planted);
+            if (harvested.Length > 0)
+                parts.Add("수확 " + harvested);
+            if (days.Average(d => d.Scattered) > 0)
+                parts.Add($"흩어진 상품 {F(days.Average(d => d.Scattered))}");
+            var unlocked = days.SelectMany(d => d.UnlockedAtEnd).Distinct().OrderBy(x => x, StringComparer.Ordinal)
+                .Select(id => $"{name(id)} {days.Count(d => d.UnlockedAtEnd.Contains(id))}/{days.Count}");
+            string u = string.Join(", ", unlocked);
+            if (u.Length > 0)
+                parts.Add("그날 끝 해금 " + u);
+            return string.Join(" · ", parts);
         }
 
         private static string Stat(List<SimDay> days, Func<SimDay, int> pick)

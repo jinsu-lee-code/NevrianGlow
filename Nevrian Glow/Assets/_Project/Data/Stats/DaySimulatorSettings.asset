@@ -17,6 +17,7 @@ MonoBehaviour:
   progression: {fileID: 11400000, guid: 5a8aabf3c52cb114cab2cf8c246a4924, type: 2}
   inventory: {fileID: 11400000, guid: 30bb7898390762747a0dbf9e3d696a57, type: 2}
   database: {fileID: 11400000, guid: 56581527d44eb5145b820af02e243a9c, type: 2}
+  cleaning: {fileID: 11400000, guid: ebcd753832119694cb88a4db9e09ac00, type: 2}
   seedCount: 20
   baseSeed: 20261011
   days: 6
@@ -24,20 +25,19 @@ MonoBehaviour:
   tidiness: 1
   plotBeforeSeeds: 1
   skillPriority:
-  - skillId: skill_unlock_mushroom
-    costs: 03000000
-    prerequisiteId: 
-    prerequisiteLevel: 0
-  - skillId: skill_unlock_lantern
-    costs: 06000000
-    prerequisiteId: skill_unlock_mushroom
-    prerequisiteLevel: 1
+  - skill: {fileID: 11400000, guid: 6542501caa98a784bb5f40c1601e6680, type: 2}
+  - skill: {fileID: 11400000, guid: c526e280f4c041244965afb5d4dc514e, type: 2}
   goals:
   - day: 1
     kind: 0
     crop: {fileID: 0}
     amount: 4
     label: "1\uC77C\uCC28 4\uCE78 \uC2EC\uAE30 (\uD29C\uD1A0\uB9AC\uC5BC)"
+  - day: 1
+    kind: 4
+    crop: {fileID: 0}
+    amount: 1
+    label: "\uCCAB \uC190\uB2D8 1\uBA85"
   - day: 2
     kind: 1
     crop: {fileID: 11400000, guid: a35777c6f4e853649b7821763c65220c, type: 2}
@@ -49,7 +49,7 @@ MonoBehaviour:
     amount: 10
     label: "\uC6D4\uAD11 10\uCE78 \uC2EC\uAE30"
   - day: 2
-    kind: 2
+    kind: 6
     crop: {fileID: 11400000, guid: 6663b6df60460264eb77e170b21b394d, type: 2}
     amount: 0
     label: "\uBC84\uC12F\uAF43 \uD574\uAE08 (2\uC77C\uCC28 \uC815\uC0B0)"
@@ -63,16 +63,21 @@ MonoBehaviour:
     crop: {fileID: 11400000, guid: 6663b6df60460264eb77e170b21b394d, type: 2}
     amount: 5
     label: "\uBC84\uC12F\uAF43 5\uCE78 \uC2EC\uAE30"
+  - day: 4
+    kind: 5
+    crop: {fileID: 0}
+    amount: 1
+    label: "\uD769\uC5B4\uC9C4 \uC0C1\uD488 \uC815\uB9AC \uC2DC\uC791"
   - day: 5
     kind: 1
     crop: {fileID: 11400000, guid: 6663b6df60460264eb77e170b21b394d, type: 2}
     amount: 1
     label: "\uBC84\uC12F\uAF43 \uCCAB \uC218\uD655"
   - day: 5
-    kind: 2
+    kind: 6
     crop: {fileID: 11400000, guid: a4a4c84efe1da9c4cba2eb00bf71d748, type: 2}
     amount: 0
-    label: "\uB4F1\uBD88 \uC5F4\uB9E4 \uD574\uAE08"
+    label: "\uB4F1\uBD88 \uC5F4\uB9E4 \uD574\uAE08 (5\uC77C\uCC28 \uC815\uC0B0)"
   - day: 6
     kind: 0
     crop: {fileID: 11400000, guid: a4a4c84efe1da9c4cba2eb00bf71d748, type: 2}

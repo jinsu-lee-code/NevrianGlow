@@ -182,6 +182,106 @@ namespace NevrianGlowFarm.Tests
             Assert.AreEqual(4, DaySimulator.FreeCellsToday(farm, crops), "다 자란 칸은 오늘 수확하면 빔");
         }
 
+        // ── P-6 재측정: 봇 규칙 7 (괭이) · 클릭 수 · 새 목표 판정 ──
+
+        private static ProductSpec Hoe() => new ProductSpec("shop_hoe", new[] { new TierSpec(300), new TierSpec(1200) }, false);
+
+        [Test]
+        public void Rule7_HoeBought_OnlyWithMoneyLeftAfterSeeds()
+        {
+            var config = Config(money: 400);
+            config.PlotProduct = default; // 구획 없이 괭이 규칙만
+            config.HoeProduct = Hoe();
+            var d1 = DaySimulator.Run(config, 1).Days[0];
+            Assert.AreEqual(12, d1.Planted["crop_a"], "씨앗 먼저 (입고 12 = 120달러)");
+            Assert.AreEqual(280, d1.Money, "400 − 씨앗 120");
+            Assert.AreEqual(0, d1.HoeBought, "280 < 300 → 괭이 안 삼");
+            Assert.AreEqual(0, d1.HoeTier);
+
+            config.StartMoney = 420;
+            var bought = DaySimulator.Run(config, 1).Days[0];
+            Assert.AreEqual(1, bought.HoeBought, "420 − 120 = 300 ≥ 300 → 다음 등급");
+            Assert.AreEqual(1, bought.HoeTier);
+            Assert.AreEqual(0, bought.Money);
+            Assert.AreEqual(420, bought.Spent);
+        }
+
+        [Test]
+        public void TillClicks_FollowHoeWork()
+        {
+            var config = Config(money: 40); // 씨앗 4개
+            config.PlotProduct = default;
+            config.TillWorkRequired = 3;
+            config.HoeWorkPerTier = new double[] { 1 };
+            var d1 = DaySimulator.Run(config, 1).Days[0];
+            Assert.AreEqual(4, d1.PlantClicks);
+            Assert.AreEqual(12, d1.TillClicks, "낡은 괭이(1) × 작업량 3 = 칸당 3번");
+            Assert.AreEqual(4, d1.WaterClicks, "물뿌리개 1칸");
+            Assert.AreEqual(0, d1.HarvestClicks);
+            Assert.AreEqual(20, d1.FarmClicks, "개간 12 + 심기 4 + 물 4");
+
+            config.HoeWorkPerTier = new double[] { 2 };
+            config.WateringCells = 4;
+            var fast = DaySimulator.Run(config, 1).Days[0];
+            Assert.AreEqual(8, fast.TillClicks, "작업량 2 → 칸당 2번 (3 ÷ 2 올림)");
+            Assert.AreEqual(1, fast.WaterClicks, "4칸 물뿌리개 → 1번");
+
+            var d2 = DaySimulator.Run(config, 1).Days[1];
+            Assert.AreEqual(4, d2.HarvestClicks, "다음 날 4칸 수확");
+        }
+
+        [Test]
+        public void CleaningClicks_FromMessRules()
+        {
+            var config = Config(money: 100);
+            config.PlotProduct = default;
+            // 1일차 쓰레기 30 · 얼룩 12, 평소 쓰레기 1~1, 얼룩 = 어제 손님 × 0.5, 흩어짐 = 안 팔린 진열 × 0.5 + 손님 ÷ 4, 흐트러짐 = 찬 칸 × 0.5
+            config.Mess = new Logic.Cleaning.MessSpec(30, 12, 1, 1, 0.5, 0.5, 4, 0.5, 0.95, 0.8, 0.6);
+            config.Cleanliness = 1;
+            var run = DaySimulator.Run(config, 1);
+            var d1 = run.Days[0];
+            Assert.AreEqual(30, d1.Trash);
+            Assert.AreEqual(12, d1.Stains);
+            Assert.AreEqual(42, d1.CleanClicks, "모두 치움 (청결도 1)");
+            Assert.AreEqual(0, d1.TidyClicks, "1일차는 흩어짐 · 흐트러짐 없음");
+
+            var d2 = run.Days[1];
+            Assert.AreEqual(1, d2.Trash);
+            Assert.AreEqual(4, d2.Stains, "어제 손님 8 × 0.5");
+            Assert.AreEqual(2, d2.Scattered, "안 팔린 진열 0 × 0.5 + 8 ÷ 4");
+            Assert.AreEqual(d2.Scattered * 2 + d2.Disordered, d2.TidyClicks, "줍기 + 다시 진열 2번 · 흐트러진 칸 1번");
+            Assert.AreEqual(10, d2.DisplayClicks, "수확 10개 진열");
+        }
+
+        [Test]
+        public void NewGoals_Customers_Scattered_UnlockAtDayEnd()
+        {
+            var config = Config(money: 0);
+            config.StartCrops["crop_a"] = 6; // 1일차 매출 90 → Lv2 · SP 3
+            config.SkillPriority.Add(new SimSkill { Id = "skill_b", Costs = new[] { 3 } });
+            config.Mess = new Logic.Cleaning.MessSpec(0, 0, 0, 0, 0, 0, 3, 0, 0.95, 0.8, 0.6);
+            config.Goals.Add(new SimGoal { Day = 1, Kind = SimGoalKind.CustomersAtLeast, Amount = 1, Label = "첫 손님" });
+            config.Goals.Add(new SimGoal { Day = 1, Kind = SimGoalKind.CropUnlocked, CropId = "crop_b", Label = "아침 해금" });
+            config.Goals.Add(new SimGoal { Day = 1, Kind = SimGoalKind.CropUnlockedAtDayEnd, CropId = "crop_b", Label = "정산 해금" });
+            config.Goals.Add(new SimGoal { Day = 2, Kind = SimGoalKind.ScatteredAtLeast, Amount = 1, Label = "흩어짐" });
+            var run = DaySimulator.Run(config, 1);
+            CollectionAssert.AreEqual(new[] { true, false, true }, run.Days[0].Goals.Select(g => g.Value).ToArray(), "1일차 정산 뒤 스킬로 해금 = 그날 끝 해금");
+            Assert.IsTrue(run.Days[1].Goals[0].Value, "어제 손님 8 ÷ 3 → 흩어진 상품 3");
+        }
+
+        [Test]
+        public void StockFromNextDay_CountsFromSkillDay_LikeGame()
+        {
+            // 1일차 정산 뒤 스킬로 해금 → 게임은 그 순간 열린 날 = 1일차 → 2일차부터 입고 (ShopSystem.OnSkillChanged)
+            var config = Config(money: 0);
+            config.StartCrops["crop_a"] = 6;
+            config.Crops[1].SeedProduct = new ProductSpec("shop_b",
+                new[] { new TierSpec(20, new[] { new UnlockRequirement(UnlockKind.SkillLevel, "skill_b", 1) }) }, true, new[] { 8 }, stockFromNextDay: true);
+            config.SkillPriority.Add(new SimSkill { Id = "skill_b", Costs = new[] { 3 } });
+            var d2 = DaySimulator.Run(config, 1).Days[1];
+            Assert.IsTrue(d2.Planted.ContainsKey("crop_b") && d2.Planted["crop_b"] > 0, "배운 다음 날 바로 입고 → 심음");
+        }
+
         [Test]
         public void Report_HasSectionsAndSummary()
         {

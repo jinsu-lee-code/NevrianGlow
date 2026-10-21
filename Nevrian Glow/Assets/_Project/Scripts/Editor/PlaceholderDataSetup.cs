@@ -489,26 +489,19 @@ namespace NevrianGlowFarm.Editor
                 so.FindProperty("cleanliness").floatValue = 0.9f;
                 so.FindProperty("tidiness").floatValue = 1f;
 
-                // 작물 해금 순서 (기획 확정 2026-10-21: P0 스킬 = 버섯꽃 3 · 등불 6 SP, 고품질 스킬 폐기)
+                so.FindProperty("cleaning").objectReferenceValue = AssetDatabase.LoadAssetAtPath<CleaningSettingsData>($"{StatsFolder}/CleaningSettings.asset");
+
+                // 작물 해금 순서 (기획 확정 2026-10-21: P0 스킬 = 버섯꽃 · 등불 해금, 고품질 스킬 폐기). 비용 · 선행은 스킬 데이터에서 (P-6)
                 var skills = so.FindProperty("skillPriority");
                 skills.ClearArray();
-                void Skill(string id, int[] costs, string pre, int preLevel)
+                void Skill(string id)
                 {
                     skills.InsertArrayElementAtIndex(skills.arraySize);
-                    var e = skills.GetArrayElementAtIndex(skills.arraySize - 1);
-                    e.FindPropertyRelative("skillId").stringValue = id;
-                    var list = e.FindPropertyRelative("costs");
-                    list.ClearArray();
-                    for (int i = 0; i < costs.Length; i++)
-                    {
-                        list.InsertArrayElementAtIndex(i);
-                        list.GetArrayElementAtIndex(i).intValue = costs[i];
-                    }
-                    e.FindPropertyRelative("prerequisiteId").stringValue = pre ?? string.Empty;
-                    e.FindPropertyRelative("prerequisiteLevel").intValue = preLevel;
+                    skills.GetArrayElementAtIndex(skills.arraySize - 1).FindPropertyRelative("skill").objectReferenceValue =
+                        AssetDatabase.LoadAssetAtPath<SkillData>($"{SkillsFolder}/{id}.asset");
                 }
-                Skill("skill_unlock_mushroom", new[] { 3 }, null, 0);
-                Skill("skill_unlock_lantern", new[] { 6 }, "skill_unlock_mushroom", 1);
+                Skill("skill_unlock_mushroom");
+                Skill("skill_unlock_lantern");
 
                 // GDD 1페이지 데모 목표 경험 (기획 확정 2026-10-21, 회신 1-1 #1 · #2)
                 var goals = so.FindProperty("goals");
@@ -523,14 +516,17 @@ namespace NevrianGlowFarm.Editor
                     e.FindPropertyRelative("amount").intValue = amount;
                     e.FindPropertyRelative("label").stringValue = label;
                 }
+                // P-6 (2026-10-21): GDD 1페이지 문장 전부 — 첫 손님 · 흩어진 상품 정리 시작 추가, "해금"은 그날 정산 · 스킬 뒤 판정
                 Goal(1, Logic.Simulation.SimGoalKind.PlantedAtLeast, null, 4, "1일차 4칸 심기 (튜토리얼)");
+                Goal(1, Logic.Simulation.SimGoalKind.CustomersAtLeast, null, 1, "첫 손님 1명");
                 Goal(2, Logic.Simulation.SimGoalKind.HarvestedAtLeast, "crop_moonroot", 1, "첫 수확 (1일차 4칸)");
                 Goal(2, Logic.Simulation.SimGoalKind.PlantedAtLeast, "crop_moonroot", 10, "월광 10칸 심기");
-                Goal(2, Logic.Simulation.SimGoalKind.CropUnlocked, "crop_mushroomflower", 0, "버섯꽃 해금 (2일차 정산)");
+                Goal(2, Logic.Simulation.SimGoalKind.CropUnlockedAtDayEnd, "crop_mushroomflower", 0, "버섯꽃 해금 (2일차 정산)");
                 Goal(3, Logic.Simulation.SimGoalKind.PlantedAtLeast, "crop_mushroomflower", 3, "버섯꽃 3칸 심기");
                 Goal(4, Logic.Simulation.SimGoalKind.PlantedAtLeast, "crop_mushroomflower", 5, "버섯꽃 5칸 심기");
+                Goal(4, Logic.Simulation.SimGoalKind.ScatteredAtLeast, null, 1, "흩어진 상품 정리 시작");
                 Goal(5, Logic.Simulation.SimGoalKind.HarvestedAtLeast, "crop_mushroomflower", 1, "버섯꽃 첫 수확");
-                Goal(5, Logic.Simulation.SimGoalKind.CropUnlocked, "crop_lanternfruit", 0, "등불 열매 해금");
+                Goal(5, Logic.Simulation.SimGoalKind.CropUnlockedAtDayEnd, "crop_lanternfruit", 0, "등불 열매 해금 (5일차 정산)");
                 Goal(6, Logic.Simulation.SimGoalKind.PlantedAtLeast, "crop_lanternfruit", 4, "등불 열매 4칸 심기");
             });
         }

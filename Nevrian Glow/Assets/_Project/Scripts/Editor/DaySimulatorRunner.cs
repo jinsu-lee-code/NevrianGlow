@@ -93,6 +93,7 @@ namespace NevrianGlowFarm.Editor
                 FurnitureSpots = settings.Sales.FurnitureSpots,
                 Tidiness = settings.Tidiness,
                 PlotBeforeSeeds = settings.PlotBeforeSeeds,
+                FirstDayCells = settings.FirstDayCells,
             };
 
             // 시작 소지품: 씨앗은 심을 씨앗, 작물은 바로 팔 수확물 (핫바 · 창고 모두)
@@ -104,7 +105,18 @@ namespace NevrianGlowFarm.Editor
                     Add(config.StartCrops, crop.Id, row.Count);
             }
 
-            var itemProducts = db.All<ItemProductData>().ToList();
+            // 개간 · 물주기 (클릭 수, P-6): 시작 소지품의 괭이 · 물뿌리개
+            config.TillWorkRequired = start.TillWorkRequired;
+            var startTools = start.StartingHotbar.Concat(start.StartingStorage).Select(r => r.Item).ToList();
+            var startCan = startTools.OfType<WateringCanData>().FirstOrDefault();
+            config.WateringCells = startCan != null ? Mathf.Max(1, startCan.CellCount) : 1;
+            if (settings.Cleaning != null)
+                config.Mess = settings.Cleaning.ToMessSpec();
+            else
+                notes.Add("CleaningSettings 참조 없음 - 정리 클릭 수 0");
+
+            // 숨김 상품(기획 mvp 밖 · 시스템 대기)은 게임 상점에 안 보이므로 봇도 사지 않는다
+            var itemProducts = db.All<ItemProductData>().Where(p => p != null && !p.Hidden).ToList();
             foreach (var crop in db.All<CropData>())
             {
                 var sim = new SimCrop { Id = crop.Id, Spec = crop.ToSpec(), SellPrice = crop.SellPrice };
@@ -119,20 +131,46 @@ namespace NevrianGlowFarm.Editor
                 config.Crops.Add(sim);
             }
 
-            var plot = db.All<PlotExpandProductData>().FirstOrDefault();
-            if (plot != null)
+            var plot = db.All<PlotExpandProductData>().FirstOrDefault(p => p != null);
+            if (plot != null && !plot.Hidden)
             {
                 config.PlotProduct = plot.ToSpec();
-                config.PlotsPerTier = plot.PlotsAt(0); // 봇은 첫 단계 값만 쓴다 (봇 재측정 때 단계별로)
+                config.PlotsPerTier = plot.PlotsAt(0); // 봇은 첫 단계 값만 쓴다
             }
+            else if (plot != null)
+                notes.Add($"{plot.DisplayName}: 숨김(밭 확장 배열 P1) - 봇도 사지 않음");
 
-            foreach (var skill in settings.SkillPriority)
-                config.SkillPriority.Add(skill.ToLogic());
+            // 봇 규칙 7: 괭이 등급 (종류로 찾는다 — 처음 등급이 괭이인 도구 등급 상품)
+            var hoe = db.All<ToolUpgradeProductData>().FirstOrDefault(p => p != null && !p.Hidden && p.BaseTool is HoeData);
+            var startHoe = startTools.OfType<HoeData>().FirstOrDefault();
+            var work = new List<double> { startHoe != null ? startHoe.WorkPerUse : hoe != null && hoe.BaseTool is HoeData b ? b.WorkPerUse : 1 };
+            if (hoe != null)
+            {
+                config.HoeProduct = hoe.ToSpec();
+                foreach (var tool in hoe.TierTools)
+                    work.Add(tool is HoeData h ? h.WorkPerUse : work[work.Count - 1]);
+            }
+            else
+                notes.Add("괭이 등급 상품 없음 - 봇이 괭이를 사지 않음");
+            config.HoeWorkPerTier = work.ToArray();
+
+            // 스킬: 비용 · 선행은 스킬 데이터에서 (P-6). 숨김 스킬은 게임 스킬 화면에 없으므로 건너뜀
+            foreach (var entry in settings.SkillPriority)
+            {
+                if (entry.Skill == null)
+                    continue;
+                if (entry.Skill.Hidden)
+                {
+                    notes.Add($"{entry.Skill.DisplayName}: 숨김 스킬 - 봇도 배우지 않음");
+                    continue;
+                }
+                config.SkillPriority.Add(entry.ToLogic());
+            }
             foreach (var goal in settings.Goals)
                 config.Goals.Add(goal.ToLogic());
 
-            notes.Add("봇 가정: 시간 · 이동 · 핫바/가방 칸 수는 보지 않음(창고를 오가며 다 처리), 도구 등급 · 가방 · 진열대 확장은 사지 않음");
-            notes.Add("스킬은 단계만 배움 - 효과(고품질 판매가 배율 등)는 StatSystem(4-3) 전이라 반영 안 됨, 비용은 BALANCE 9-3 임시");
+            notes.Add($"봇 가정: 시간 · 이동 · 핫바/가방 칸 수는 보지 않음(창고를 오가며 다 처리). 괭이는 규칙 7(씨앗 뒤 남은 돈 ≥ 다음 등급 가격)로 삼, 물뿌리개 · 대걸레 · 가방 · 진열대는 사지 않음(물뿌리개 {config.WateringCells}칸)");
+            notes.Add("스킬은 상점 해금 효과만 반영 (능력치 효과는 봇에 없음 - 데모 P0 스킬은 작물 해금 2개뿐)");
             return config;
         }
 
