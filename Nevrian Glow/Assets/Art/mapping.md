@@ -19,7 +19,7 @@
 | `prop_counter` | `Props/counter/pf_prop_counter.prefab`, `Models/prop_counter.fbx` | 1.60 × 0.61 × 1.14 m (ㄱ자) | **계산대 탁자** (10/20 저녁 교체). Varco 원본을 다시 모델링 — 판자 상판 · 청록 틀, 안쪽은 서랍 없이 뚫린 선반. 위에 자식으로 등록기 `Register`(= `pf_prop_counter_register`)와 종 `Bell`(= `pf_prop_counter_bell`)이 얹혀 있음. 요청서 크기 1.4 × 1.0 × 0.7 m와 다름(원본 비율 유지). 장식 보석은 나중에 수정(크리스탈)으로 추가 예정 |
 | (계산대 소품 · 돈통) | `Props/counter/pf_prop_counter_register.prefab`, `Models/prop_counter_register.fbx` | 약 0.41 × 0.40 × 0.39 m | 금전등록기(서랍 = 돈통, `Model/CashRegister_Drawer`). 10/20 오전까지 `pf_prop_counter`였던 것 — **이름만 바뀜, GUID 그대로**라 이미 끼운 곳은 그대로 등록기가 보임. 재질 5개 `mat_prop_counter_*` |
 | `prop_basket_customer` | `Props/basket_customer/pf_prop_basket_customer.prefab`, `Models/prop_basket_customer.fbx` | 지름 0.53 m | **열매 87개가 담긴 상태**(요청서는 빈 바구니 0.35 m). 손잡이 위치 = 자식 `GripSocket`. 크기 · 빈 바구니 여부 알려 주시면 맞춤 |
-| `env_farm_door` | `Environment/farm_door/Models/env_farm_door.fbx` (씬 `Shop_Door`, (22, 0, −9)) | — | 프리팹 없음(씬 배치). 재질 3개 `mat_env_farm_door_*` — 사용자가 편 UV에 Varco 원본(상점 입구1) 색을 구운 텍스처 `Textures/tex_env_farm_door_{frame,door,stairs}_albedo` 연결 |
+| `env_farm_door` | `Environment/farm_door/pf_env_farm_door.prefab` (10/21 새로), `Models/env_farm_door.fbx` | — | **프리팹 = `Model`(FBX) + `Portal`(포탈 VFX, 문짝 뒤) + Animator `Animations/ac_env_farm_door`**. Bool `IsOpen` 켜면 `anim_env_farm_door_open`(0.9초, 문짝 80° 안쪽(계단 반대)으로 열리고 포탈이 0.25 → 1배로 커짐), 끄면 `_close`, 기본 상태 `Closed`. 배경 씬의 장식용 `Shop_Door`는 지움. 재질 3개 `mat_env_farm_door_*` — 사용자가 편 UV에 Varco 원본(상점 입구1) 색을 구운 텍스처 `Textures/tex_env_farm_door_{frame,door,stairs}_albedo` 연결 |
 | `env_ground_tile` | `Environment/Ground/Textures/tex_env_ground_tile_*`, `Environment/DeepBlue/Textures/tex_env_ground_tile_deepblue_*` | 1024 타일 | 여러 벌(보라 A/B/C · 길 · 딥블루 A/B/C) — 지형 레이어 `TL_*`가 사용 중 |
 | `env_shop_floor` | `Environment/shop_floor/Materials/mat_env_shop_floor.mat`, `Textures/tex_env_shop_floor_{albedo,normal,ao}.png` | 1024 타일 | 가게 바닥 나무 판자. 바닥 12 × 10 m 평면에 쓸 때 타일링 5 × 4.17(재질에 들어 있음) |
 | `env_plot` | `Environment/plot/pf_env_plot.prefab`, `Models/env_plot.fbx` | 4.0 × 0.2 × 4.0 m · 192 tris | 두둑 테두리(2×2칸 = 4 × 4 m). 판자 + 청록 기둥 + 칸 사이 낮은 칸막이 + 바닥 흙. 칸 흙은 따로(아래). 두둑 가운데가 피벗 — 칸 중심은 (±1, 0, ±1) |
@@ -42,7 +42,7 @@
 | 파일 | 내용 |
 |---|---|
 | `Environment/` 하늘(`Sky/`), 구름, 달 · 행성 · 별, 오로라 텍스처 | `env_sky`는 그림 한 장 대신 셰이더 하늘(`DeepBlue/M_Sky_DeepBlue.mat`)로 구현 |
-| `Environment/FX/portal/pf_vfx_portal` (+ `mat_vfx_portal`) | 포탈 VFX(파티클): `Portal_Swirl` 시안 · 보라 빛 알갱이가 반지름 1.15 m 고리에서 돌며 안으로, `Portal_Core` 가운데 은은한 빛. 반복 재생, 콜라이더 없음. 가게 입구 `Portal` 안과 배경 씬 `ShopGate_Portal`(게임 농장 문 (7, 0, 0) 아치 바로 뒤, 0.65배)에서 씀 |
+| `Environment/FX/portal/pf_vfx_portal` (+ `mat_vfx_portal`) | 포탈 VFX(파티클): `Portal_Swirl` 시안 · 보라 빛 알갱이가 반지름 1.15 m 고리에서 돌며 안으로, `Portal_Core` 가운데 은은한 빛. 반복 재생, 콜라이더 없음. 가게 입구 `Portal` 안과 농장 문 프리팹 `pf_env_farm_door`의 `Portal`에서 씀 |
 | `Environment/Crystal/` | 수정 무리 + 빛 웅덩이(배경 장식) |
 | `Environment/Grass/`, `DeepBlue/` 풀 프리팹 | 지형 위 풀 |
 | `Environment/FX/` `tex_vfx_*` | 배경 먼지 · 빛줄기 (요청서 H의 `vfx_*`와는 별개) |
