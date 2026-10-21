@@ -76,6 +76,16 @@ namespace NevrianGlowFarm.Logic.Shop
             return s.ItemId;
         }
 
+        /// <summary>칸 수와 내용을 통째로 정한다 (불러오기 6-1). 칸당 개수를 넘으면 자른다.</summary>
+        public void Load(IReadOnlyList<ItemStack> stacks)
+        {
+            slots.Clear();
+            if (stacks == null)
+                return;
+            foreach (var s in stacks)
+                slots.Add(s.IsEmpty ? ItemStack.Empty : new ItemStack(s.ItemId, Math.Min(s.Count, ItemsPerSlot)));
+        }
+
         /// <summary>칸 수를 늘린다 (진열대 확장 상품 3-3). 줄이지 않는다.</summary>
         public void SetSlotCount(int slotCount)
         {

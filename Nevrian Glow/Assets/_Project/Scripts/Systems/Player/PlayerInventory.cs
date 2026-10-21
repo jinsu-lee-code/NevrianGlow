@@ -224,6 +224,33 @@ namespace NevrianGlowFarm.Systems.Player
             NotifyChanged();
         }
 
+        // ── 저장 (6-1) ──
+
+        /// <summary>핫바 · 가방을 담는다. 손에 든 묶음은 먼저 돌려놓고(못 돌려놓으면 그 묶음은 저장되지 않음).</summary>
+        public void CaptureTo(Logic.Save.SaveSnapshot into)
+        {
+            if (hotbar == null)
+                return;
+            if (!cursor.IsEmpty && !ReturnCursor())
+                Debug.LogWarning($"[PlayerInventory] 손에 든 {cursor.ItemId} ×{cursor.Count}를 둘 칸이 없어 저장에서 빠짐", this);
+            Logic.Save.SaveState.Capture(hotbar, into.Hotbar);
+            Logic.Save.SaveState.Capture(bag, into.Bag);
+        }
+
+        public void LoadFrom(Logic.Save.SaveSnapshot from)
+        {
+            if (hotbar == null)
+                return;
+            cursor = ItemStack.Empty;
+            int clipped = hotbar.Load(Clamp(from.Hotbar, settings.HotbarMaxSlots)) + bag.Load(Clamp(from.Bag, settings.BagMaxSlots));
+            if (clipped > 0)
+                Debug.LogWarning($"[PlayerInventory] 칸당 최대를 넘는 개수 {clipped}개를 잘라 불러옴 (아이템 데이터의 칸당 개수가 줄었음)", this);
+            NotifyChanged();
+        }
+
+        private static IReadOnlyList<ItemStack> Clamp(List<ItemStack> stacks, int max) =>
+            stacks.Count <= max ? stacks : stacks.GetRange(0, max);
+
         /// <summary>창고 등 다른 시스템이 칸을 직접 바꾼 뒤 알린다.</summary>
         public void NotifyChanged()
         {

@@ -31,6 +31,8 @@ namespace NevrianGlowFarm.Editor
         {
             DrawGameSection();
             EditorGUILayout.Space();
+            DrawSaveSection();
+            EditorGUILayout.Space();
             DrawFarmSection();
             EditorGUILayout.Space();
             DrawCleaningSection();
@@ -42,6 +44,34 @@ namespace NevrianGlowFarm.Editor
             DrawHotbarSection();
             EditorGUILayout.Space();
             DrawLogSection();
+        }
+
+        // 저장 (SaveSystem 6-1) — 타이틀 "이어하기"(5-6) 전까지 불러오기는 여기서. 자동 저장은 다음 날 아침마다.
+        private void DrawSaveSection()
+        {
+            EditorGUILayout.LabelField("저장 (SaveSystem)", EditorStyles.boldLabel);
+            var save = Systems.Save.SaveSystem.Instance;
+            if (!Application.isPlaying || save == null)
+            {
+                EditorGUILayout.HelpBox("플레이 중일 때 저장 · 불러오기 · 삭제 버튼이 보인다. 자동 저장은 다음 날 아침마다.", MessageType.None);
+                return;
+            }
+            EditorGUILayout.LabelField("파일", save.HasSave ? File.GetLastWriteTime(save.FilePath).ToString("MM-dd HH:mm:ss") : "없음");
+            EditorGUILayout.LabelField("마지막 결과", save.LastResult ?? "-");
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("지금 저장"))
+                    save.Save(out _);
+                using (new EditorGUI.DisabledScope(!save.HasSave))
+                {
+                    if (GUILayout.Button("불러오기"))
+                        save.Load(out _);
+                    if (GUILayout.Button("삭제") && EditorUtility.DisplayDialog("저장 삭제", "저장 파일(.bak 포함)을 지운다.", "지우기", "취소"))
+                        save.DeleteSave();
+                }
+                if (GUILayout.Button("폴더 열기"))
+                    EditorUtility.RevealInFinder(save.FilePath);
+            }
         }
 
         private void DrawGameSection()

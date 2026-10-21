@@ -151,6 +151,28 @@ namespace NevrianGlowFarm.Systems.Zones
             transitioning = false;
         }
 
+        /// <summary>
+        /// 불러오기 (6-1): 하루 시작 지역의 출발 지점에 바로 세운다 (페이드 없음).
+        /// 이동 중이었으면 그 이동을 멈추고 화면 · 입력 잠금을 푼 뒤 세운다.
+        /// </summary>
+        public bool ArriveAtDayStart()
+        {
+            if (!enabled || rules == null)
+                return false;
+            if (transitioning)
+            {
+                StopAllCoroutines();
+                fader.Set(0f);
+                PlayerInputGate.Release(this);
+                transitioning = false;
+            }
+            var start = Find(ZoneRules.DayStartZone(rules));
+            if (start == null)
+                return false;
+            Arrive(start);
+            return true;
+        }
+
         private void Arrive(ZoneProfileData zone)
         {
             if (spawns.TryGetValue(zone.Id, out var spawn))

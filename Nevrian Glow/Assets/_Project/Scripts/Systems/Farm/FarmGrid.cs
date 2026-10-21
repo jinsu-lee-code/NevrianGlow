@@ -313,6 +313,28 @@ namespace NevrianGlowFarm.Systems.Farm
             return count;
         }
 
+        // ── 저장 (6-1) ──
+
+        public void CaptureTo(Logic.Save.SaveSnapshot into)
+        {
+            if (state != null)
+                Logic.Save.SaveState.CaptureFarm(state, into);
+        }
+
+        /// <summary>저장 내용으로 칸을 바꾼다 (구획 수 늘리기 + 칸 값). 밤 처리는 하지 않는다.</summary>
+        public void LoadFrom(Logic.Save.SaveSnapshot from)
+        {
+            if (state == null)
+                return;
+            int plots = Mathf.Clamp(from.PlotCount, state.PlotCount, settings.MaxPlotCount);
+            if (plots != from.PlotCount)
+                Debug.LogWarning($"[FarmGrid] 저장된 구획 {from.PlotCount}개를 {plots}개로 맞춤 (현재 {state.PlotCount} ~ 최대 {settings.MaxPlotCount})", this);
+            from.PlotCount = plots;
+            Logic.Save.SaveState.ApplyFarm(state, from);
+            SpawnMissingViews();
+            RefreshAll();
+        }
+
         /// <summary>디버그: 자라는 칸에 모두 물을 준다. 바뀐 칸 수를 돌려준다.</summary>
         public int DebugWaterAll()
         {

@@ -298,6 +298,16 @@ namespace NevrianGlowFarm.Systems.Sales
                 shelfStates.Add(s != null ? s.State : new ShelfState(0, 1));
         }
 
+        /// <summary>불러오기 (6-1): 진행 중인 장사를 계산 없이 멈추고 손님을 지운다 (불러온 상태에 매출이 더해지지 않게).</summary>
+        public void CancelForLoad()
+        {
+            running = false;
+            ClearCustomers();
+            session = null;
+            lastResult = null;
+            UpdateDebugView();
+        }
+
         private void ClearCustomers()
         {
             foreach (var c in customers)

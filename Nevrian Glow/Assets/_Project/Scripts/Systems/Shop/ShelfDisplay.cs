@@ -220,6 +220,24 @@ namespace NevrianGlowFarm.Systems.Shop
             RefreshAll();
         }
 
+        /// <summary>저장 내용(칸 수 · 칸마다 작물)으로 바꾼다 (6-1). 칸이 줄면 남는 칸의 겉모습을 지운다.</summary>
+        public void LoadSlots(IReadOnlyList<Logic.Inventory.ItemStack> stacks)
+        {
+            state.Load(stacks);
+            if (state.SlotCount < settings.ShelfBaseSlots)
+                state.SetSlotCount(settings.ShelfBaseSlots);
+            for (int slot = state.SlotCount; slot < views.Count; slot++)
+            {
+                foreach (var r in views[slot])
+                    if (r != null)
+                        Destroy(r.gameObject);
+                views[slot].Clear();
+            }
+            placing.Clear();
+            FitBody();
+            RefreshAll();
+        }
+
         // ── 표시 ─────────────────────────────────────────
 
         private void FitBody()
