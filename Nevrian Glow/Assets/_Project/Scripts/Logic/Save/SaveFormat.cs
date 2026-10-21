@@ -40,7 +40,7 @@ namespace NevrianGlowFarm.Logic.Save
             for (int i = 0; i < s.Cells.Count; i++)
             {
                 var c = s.Cells[i];
-                Line(sb, "cell", i, c.IsTilled ? 1 : 0, F(c.TillProgress), Id(c.CropId), c.Age, c.WetDaysLeft, c.HarvestCount, c.FertilizerBonus);
+                Line(sb, "cell", i, c.IsTilled ? 1 : 0, F(c.TillProgress), Id(c.CropId), c.Age, c.WetDaysLeft, c.HarvestCount, c.FertilizerBonus, c.PendingFertilizer);
             }
 
             Slots(sb, "hotbar", s.Hotbar);
@@ -139,6 +139,7 @@ namespace NevrianGlowFarm.Logic.Save
                                 WetDaysLeft = I(t[6]),
                                 HarvestCount = I(t[7]),
                                 FertilizerBonus = I(t[8]),
+                                PendingFertilizer = t.Length > 9 ? I(t[9]) : 0, // 4-6에서 추가 — 그 전 파일에는 없음
                             };
                             break;
                         case "hotbar_size": hotbarSize = I(t[1]); break;

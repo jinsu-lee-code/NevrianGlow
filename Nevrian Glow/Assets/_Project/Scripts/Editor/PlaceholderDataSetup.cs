@@ -72,6 +72,7 @@ namespace NevrianGlowFarm.Editor
         };
 
         private const int ItemStackSize = 10; // BALANCE 2-4: 도구 · 장치 외 칸당 10개
+        private const string FertilizerId = "item_fertilizer";
 
         // BALANCE 2-11 도구 등급 (v1 2026-10-10). 등급 하나 = 에셋 하나.
         private static readonly (string Id, string Name, float WorkPerUse)[] Hoes =
@@ -203,6 +204,13 @@ namespace NevrianGlowFarm.Editor
                     so.FindProperty("speed").floatValue = mop.Speed;
                 }));
             }
+            // BALANCE 2-12 · 9-2 비료 (4-6, 2026-10-21): 칸당 10, 필요 성장일 −1
+            items.Add(Ensure<FertilizerData>($"{ItemsFolder}/{FertilizerId}.asset", resetExisting, report, so =>
+            {
+                SetIdentity(so, FertilizerId, "비료");
+                so.FindProperty("maxStack").intValue = ItemStackSize;
+                so.FindProperty("growDaysReduction").intValue = 1;
+            }));
 
             // BALANCE 2-10 지역 (임시 분위기 — 5-1 조명 · 후처리에서 확정). 농장 = 농사 단계 · 하루 시작, 가게 = 청소·진열 · 장사 · 정산.
             Ensure<ZoneProfileData>($"{ZonesFolder}/zone_farm.asset", resetExisting, report, so =>
@@ -414,6 +422,14 @@ namespace NevrianGlowFarm.Editor
                     so.FindProperty("count").intValue = 1;
                 });
             }
+
+            // 비료: 반복 상품, 입고 무제한, 해금 없음 (BALANCE 9-2 임시 — GDD 열린 항목 19)
+            Ensure<ItemProductData>($"{ShopFolder}/shop_fertilizer.asset", resetExisting, report, so =>
+            {
+                SetProduct(so, "shop_fertilizer", "비료", 15, "소모품", true, new[] { new Tier(30) }, null);
+                so.FindProperty("item").objectReferenceValue = AssetDatabase.LoadAssetAtPath<ItemData>($"{ItemsFolder}/{FertilizerId}.asset");
+                so.FindProperty("count").intValue = 1;
+            });
 
             EnsureToolUpgrade("shop_hoe_upgrade", "괭이 업그레이드", 20, "tool_hoe_1", new[] { "tool_hoe_2", "tool_hoe_3" },
                 new[] { new Tier(150), new Tier(400) }, resetExisting, report);

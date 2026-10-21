@@ -37,6 +37,10 @@ namespace NevrianGlowFarm.Systems.Farm
         [SerializeField] private Color tilledColor = new Color(0.17f, 0.33f, 0.47f);
         [Tooltip("젖은 흙 색 (심은 칸에 물을 줬을 때)")]
         [SerializeField] private Color wetColor = new Color(0.08f, 0.22f, 0.42f);
+        [Tooltip("비료를 준 칸의 흙 색 (BALANCE 9-5 임시 — 보라 발광 쪽)")]
+        [SerializeField] private Color fertilizedColor = new Color(0.63f, 0.55f, 1f);
+        [Tooltip("비료 색이 흙 색에 섞이는 정도 (0~1)")]
+        [SerializeField, Range(0f, 1f)] private float fertilizedTint = 0.35f;
         [Tooltip("갓 심은 작물 크기 (배)")]
         [SerializeField, Range(0.05f, 1f)] private float seedlingScale = 0.25f;
         [Tooltip("다 자란 작물 크기 (배)")]
@@ -130,6 +134,16 @@ namespace NevrianGlowFarm.Systems.Farm
             }
             if (held is SeedData seed && seed.Crop != null && status == FarmCellStatus.Tilled && hotbar != null)
                 return $"{seed.Crop.DisplayName} 심기 (씨앗 {hotbar.SelectedCount}개)";
+            if (held is FertilizerData fertilizer && cell.HasCrop)
+            {
+                // 게임 화면 글자 — "—" 대신 "-" (글꼴에 없음)
+                if (status == FarmCellStatus.Ready)
+                    return null;
+                if (cell.IsFertilized)
+                    return "비료 - 이미 줬음 (작물당 1번)";
+                int have = hotbar != null ? hotbar.SelectedCount : 0;
+                return $"{held.DisplayName} 주기 - 성장 {fertilizer.GrowDaysReduction}일 단축, 내일부터 ({have}개)";
+            }
             if (held is WateringCanData can)
             {
                 // 범위(등급 칸 수) 안에서 물이 필요한 칸이 하나라도 있으면 (조준한 칸이 아니어도)
@@ -231,6 +245,17 @@ namespace NevrianGlowFarm.Systems.Farm
                     changed = FarmRules.TryPlant(cell, seed.Crop.Id);
                     if (changed)
                         AudioManager.Play(SoundCues.SeedPlant, CellPosition(index));
+                }
+            }
+
+            else if (held is FertilizerData fertilizer && cell.HasCrop && FarmRules.CanFertilize(cell, SpecOf(cell.CropId)))
+            {
+                // 비료를 먼저 쓰고 준다 — 비료가 없으면 주지 않는다
+                if (hotbar != null && hotbar.TryConsumeSelected(1))
+                {
+                    changed = FarmRules.TryFertilize(cell, SpecOf(cell.CropId), fertilizer.GrowDaysReduction);
+                    if (changed)
+                        AudioManager.Play(SoundCues.FertilizerSparkle, CellPosition(index));
                 }
             }
 
@@ -395,6 +420,10 @@ namespace NevrianGlowFarm.Systems.Farm
                 FarmCellStatus.Tilling => Color.Lerp(untilledColor, tilledColor, cell.TillProgress / settings.TillWorkRequired),
                 _ => cell.IsWet ? wetColor : tilledColor,
             };
+
+            // 비료를 준 작물은 흙이 비료 색으로 물든다 (작물당 1회라 다시 줄 수 없음을 보여 줌)
+            if (cell.IsFertilized)
+                soil = Color.Lerp(soil, fertilizedColor, fertilizedTint);
 
             if (!cell.HasCrop)
             {

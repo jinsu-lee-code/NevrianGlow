@@ -16,6 +16,7 @@ namespace NevrianGlowFarm.Logic.Save
         public int WetDaysLeft;
         public int HarvestCount;
         public int FertilizerBonus;
+        public int PendingFertilizer;
     }
 
     /// <summary>바닥 아이템 한 묶음 (GDD 4-8: id · 개수 · 구역 · 위치 · 회전).</summary>
@@ -85,6 +86,7 @@ namespace NevrianGlowFarm.Logic.Save
                     WetDaysLeft = c.WetDaysLeft,
                     HarvestCount = c.HarvestCount,
                     FertilizerBonus = c.FertilizerBonus,
+                    PendingFertilizer = c.PendingFertilizer,
                 });
         }
 
@@ -104,6 +106,7 @@ namespace NevrianGlowFarm.Logic.Save
                 cell.WetDaysLeft = s.WetDaysLeft;
                 cell.HarvestCount = s.HarvestCount;
                 cell.FertilizerBonus = s.FertilizerBonus;
+                cell.PendingFertilizer = s.PendingFertilizer;
             }
         }
 
