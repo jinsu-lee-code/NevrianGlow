@@ -435,7 +435,7 @@ namespace NevrianGlowFarm.Editor
             // 비료: 반복 상품, 입고 무제한, 해금 없음 (BALANCE 9-2 임시 — GDD 열린 항목 19)
             Ensure<ItemProductData>($"{ShopFolder}/shop_fertilizer.asset", resetExisting, report, so =>
             {
-                SetProduct(so, "shop_fertilizer", "비료", 15, "소모품", true, new[] { new Tier(30) }, null);
+                SetProduct(so, "shop_fertilizer", "비료", 15, "소모품 · 장치", true, new[] { new Tier(30) }, null);
                 so.FindProperty("item").objectReferenceValue = AssetDatabase.LoadAssetAtPath<ItemData>($"{ItemsFolder}/{FertilizerId}.asset");
                 so.FindProperty("count").intValue = 1;
             });

@@ -169,6 +169,7 @@ namespace NevrianGlowFarm.Systems.Sales
         {
             GameEvents.PhaseChanged -= OnPhaseChanged;
             GameEvents.DayChanged -= OnDayChanged;
+            PlayerInputGate.ReleaseWorld(this);
         }
 
         // 새 게임(1일차 알림)이면 모델을 처음으로. 불러오기는 이 다음 LoadFrom이 덮는다.
@@ -216,6 +217,7 @@ namespace NevrianGlowFarm.Systems.Sales
             spawnedNumber = 0;
             lastResult = null;
             running = true;
+            PlayerInputGate.BlockWorld(this); // 장사 중 이동 · 시점만 (P-7, 결정 2026-10-21) — 화면(B · Tab · K)은 열 수 있음
             Debug.Log($"[SalesSystem] {today}일차 장사 시작: 손님 {count}명 (기대 {model.Expected(today, customerSpec):0.0} · 청결도 {clean:P0} · 단골 {model.Regulars:0.0}) · 진열 {DisplayedCount()}개");
             UpdateDebugView();
         }
@@ -273,6 +275,7 @@ namespace NevrianGlowFarm.Systems.Sales
         private void Complete(bool skipped, bool advancePhase)
         {
             running = false;
+            PlayerInputGate.ReleaseWorld(this);
             ClearCustomers();
             // 경험치 = 매출 × 1 (정산 화면 3-3b는 이 결과를 보여 준다)
             var gain = GameManager.Instance != null && session.Revenue > 0 ? GameManager.Instance.AddRevenueExp(session.Revenue) : default;
@@ -362,6 +365,7 @@ namespace NevrianGlowFarm.Systems.Sales
         public void CancelForLoad()
         {
             running = false;
+            PlayerInputGate.ReleaseWorld(this);
             ClearCustomers();
             session = null;
             lastResult = null;

@@ -205,6 +205,8 @@ namespace NevrianGlowFarm.Systems.Cleaning
             Debug.Log($"[CleaningSystem] {day}일차 가게 정리: 쓰레기 {trashPoints.Count} · 얼룩 {stainPoints.Count} · 흩어진 상품 {initialScattered - carryProducts} · 흐트러진 칸 {disordered} (어제 손님 {CustomersYesterday(day)})");
             if (trashPoints.Count < mess.Trash)
                 Debug.LogWarning($"[CleaningSystem] {day}일차 쓰레기 {mess.Trash}개 중 {trashPoints.Count}개만 놓음 — 생성 구역이 좁거나 금지 구역 · 바닥 아이템이 많음", this);
+            if (stainPoints.Count < mess.Stains)
+                Debug.LogWarning($"[CleaningSystem] {day}일차 얼룩 {mess.Stains}개 중 {stainPoints.Count}개만 놓음 — 생성 구역이 좁거나 쓰레기 · 바닥 아이템이 자리를 차지함", this);
         }
 
         /// <summary>그날 생길 양을 계산만 한다 (배치 · 미리보기 공통).</summary>

@@ -22,6 +22,27 @@ namespace NevrianGlowFarm.Systems.Zones
         [Tooltip("문을 쓰면 다음 단계로 넘긴다 (농사 끝내기)")]
         [SerializeField] private bool advancesPhase = true;
 
+        // 켜져 있는 문 (HUD '농사 끝내기' 단축키가 문과 같은 길로 넘기게 — P-7). 문은 Farm 씬이라 씬 사이 참조 대신 목록.
+        private static readonly System.Collections.Generic.List<ZoneDoor> active = new System.Collections.Generic.List<ZoneDoor>();
+
+        private void OnEnable() => active.Add(this);
+        private void OnDisable() => active.Remove(this);
+
+        /// <summary>
+        /// 그 단계를 끝내는 문을 어디서든 바로 쓴다 (회신2 4절 #1: 농사 끝내기 = 버튼 + 문, 확인 없이). 쓸 문이 없거나 이동 중이면 false.
+        /// </summary>
+        public static bool TryUseFor(DayPhase phase)
+        {
+            var game = GameManager.Instance;
+            var transition = ZoneTransition.Instance;
+            if (game == null || !game.IsStarted || game.Phase != phase || transition == null || transition.IsTransitioning)
+                return false;
+            foreach (var door in active)
+                if (door != null && door.advancesPhase && door.usablePhase == phase && door.destination != null)
+                    return transition.Request(door.destination, game.AdvancePhase);
+            return false;
+        }
+
         public string GetHandPrompt()
         {
             var game = GameManager.Instance;

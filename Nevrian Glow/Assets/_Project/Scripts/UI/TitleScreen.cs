@@ -40,6 +40,8 @@ namespace NevrianGlowFarm.UI
         [SerializeField] private InputActionReference cancelAction;
         [Tooltip("타이틀이 떠 있는 동안 숨길 게임 화면 요소 (HUD · 핫바 · 조준점)")]
         [SerializeField] private GameObject[] hideWhileOpen = new GameObject[0];
+        [Tooltip("새 게임 때 한 번 띄울 오프닝 편지 (P-7) — 비우면 바로 상점")]
+        [SerializeField] private OpeningLetterScreen openingLetter;
 
         private bool starting;
         private bool hasSave;
@@ -169,6 +171,9 @@ namespace NevrianGlowFarm.UI
             GameManager.Instance.StartNewGame();
             saveSystem.RequestSave(); // 1일차 아침 저장 (이전 파일은 .bak)
             Begin();
+            // 새 게임만 오프닝 편지 → 닫으면 1일차 상점 (상점은 화면이 비면 열린다)
+            if (openingLetter != null)
+                openingLetter.Open();
         }
 
         private void OpenSettings()

@@ -53,7 +53,7 @@ namespace NevrianGlowFarm.Systems.Items
 
         private void Update()
         {
-            if (PlayerInputGate.IsBlocked || !dropAction.action.WasPressedThisFrame())
+            if (PlayerInputGate.IsWorldBlocked || !dropAction.action.WasPressedThisFrame())
                 return;
             TryDropSelected(stackModifierAction.action.IsPressed());
         }

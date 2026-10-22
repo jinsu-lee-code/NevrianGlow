@@ -29,6 +29,12 @@ namespace NevrianGlowFarm.Systems.Shop
         [Tooltip("도구 교체 때 같이 찾는 창고 (Core Storage)")]
         [SerializeField] private StorageSystem storage;
 
+        [Header("조정값")]
+        [Tooltip("살 수 있는 단계 — 그 밖의 단계에서는 상점을 보기만 (회신2 4절 #2: 상점 · 농사 단계에서만 구매)")]
+        [SerializeField] private List<DayPhase> buyPhases = new List<DayPhase> { DayPhase.Shop, DayPhase.Farming };
+        [Tooltip("보기만 할 때 안내 (게임 화면 글자 — '—' 쓰지 않음)")]
+        [SerializeField] private string viewOnlyMessage = "농사 단계에서 살 수 있어요";
+
         [Header("디버그")]
         [Tooltip("상품 상태 (읽기 전용)")]
         [SerializeField] private List<string> offersView = new List<string>();
@@ -168,6 +174,18 @@ namespace NevrianGlowFarm.Systems.Shop
 
         // ── 구매 ─────────────────────────────────────────
 
+        /// <summary>지금 단계에서 살 수 있는지 (아니면 상점은 보기만).</summary>
+        public bool CanBuyNow
+        {
+            get
+            {
+                var game = GameManager.Instance;
+                return game != null && game.IsStarted && buyPhases.Contains(game.Phase);
+            }
+        }
+
+        public string ViewOnlyMessage => viewOnlyMessage;
+
         /// <summary>산다. 결과 문구(화면 안내 한 줄)를 돌려준다.</summary>
         public bool TryBuy(ShopProductData product, out string message)
         {
@@ -175,6 +193,11 @@ namespace NevrianGlowFarm.Systems.Shop
             if (product == null || game == null || !game.IsStarted)
             {
                 message = "지금은 살 수 없음";
+                return false;
+            }
+            if (!CanBuyNow)
+            {
+                message = viewOnlyMessage;
                 return false;
             }
             var spec = product.ToSpec();

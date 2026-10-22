@@ -114,6 +114,192 @@ namespace NevrianGlowFarm.Editor
             Debug.Log("[Setup] 오늘의 정리 HUD: 생성");
         }
 
+        // ── P-7 화면 · 조작: 상점 탭 · 단계 넘기기 HUD 버튼 · 오프닝 편지 ──
+
+        [MenuItem("Glow Farm/Setup/Create P-7 UI")]
+        private static void CreateP7Menu()
+        {
+            var canvas = GameObject.Find("UICanvas");
+            if (canvas == null)
+            {
+                Debug.LogError("[Setup] UICanvas가 없음 - Core 씬을 연다");
+                return;
+            }
+            font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FontPath);
+            var refs = AssetDatabase.LoadAllAssetsAtPath(InputPath).OfType<InputActionReference>().ToList();
+            InputActionReference Ref(string map, string action) => refs.FirstOrDefault(r => r.action != null && r.action.actionMap.name == map && r.action.name == action);
+            var endPhase = Ref("Player", "EndPhase");
+            var cancel = Ref("UI", "Cancel");
+            if (endPhase == null || cancel == null)
+            {
+                Debug.LogError($"[Setup] 입력을 찾지 못함 - Player/EndPhase {endPhase != null} · UI/Cancel {cancel != null}");
+                return;
+            }
+
+            var notes = new System.Collections.Generic.List<string>();
+            notes.Add(BuildShopTabs(canvas.transform));
+            notes.Add(BuildPhaseActionHud(canvas.transform, endPhase));
+            notes.Add(BuildOpeningLetter(canvas.transform, endPhase, cancel));
+
+            var fader = canvas.transform.Find("ScreenFader");
+            if (fader != null)
+                fader.SetAsLastSibling();
+            EditorSceneManager.MarkSceneDirty(canvas.scene);
+            Debug.Log("[Setup] P-7 UI: " + string.Join(" · ", notes));
+        }
+
+        // 상점 탭 줄: 제목 아래에 탭 버튼(상품 줄 원본을 복제한 모양), 상품 목록은 그 아래로 내린다
+        private static string BuildShopTabs(Transform canvas)
+        {
+            var screen = canvas.Find("ShopScreen")?.GetComponent<ShopScreen>();
+            var panel = canvas.Find("ShopScreen/Panel") as RectTransform;
+            var list = canvas.Find("ShopScreen/Panel/EntryList") as RectTransform;
+            var entry = canvas.Find("ShopScreen/Panel/EntryList/EntryTemplate");
+            if (screen == null || panel == null || list == null || entry == null)
+                return "상점 화면 구조를 찾지 못함 (ShopScreen/Panel/EntryList/EntryTemplate)";
+            // 제목이 두 줄로 넘쳐 탭 줄과 겹치지 않게 패널 폭만큼 (P-7 확인 2026-10-22)
+            if (panel.Find("Title") is RectTransform titleRt)
+                titleRt.sizeDelta = new Vector2(1184f, titleRt.sizeDelta.y);
+            if (panel.Find("TabBar") != null)
+                return "상점 탭 유지";
+
+            var bar = new GameObject("TabBar", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+            var barRt = bar.GetComponent<RectTransform>();
+            barRt.SetParent(panel, false);
+            Place(barRt, new Vector2(0f, 1f), new Vector2(28f, -66f), new Vector2(1184f, 48f), new Vector2(0f, 1f));
+            var layout = bar.GetComponent<HorizontalLayoutGroup>();
+            layout.spacing = 8f;
+            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+
+            var tab = Object.Instantiate(entry.gameObject, barRt);
+            tab.name = "TabTemplate";
+            var le = tab.GetComponent<LayoutElement>();
+            if (le == null)
+                le = tab.AddComponent<LayoutElement>();
+            le.preferredWidth = 224f;
+            le.preferredHeight = 48f;
+            le.flexibleWidth = 0f;
+            tab.SetActive(false);
+
+            // 상품 목록을 탭 줄 아래로
+            list.anchoredPosition = new Vector2(list.anchoredPosition.x, -126f);
+            list.sizeDelta = new Vector2(list.sizeDelta.x, 366f);
+
+            var empty = MakeText("EmptyTab", panel, "데모버전에서는 해금되지 않은 컨텐츠입니다.", 26, new Color(0.75f, 0.85f, 0.9f), TextAlignmentOptions.Center);
+            Place(empty.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -30f), new Vector2(1000f, 60f));
+            empty.gameObject.SetActive(false);
+
+            var so = new SerializedObject(screen);
+            so.FindProperty("tabTemplate").objectReferenceValue = tab.GetComponent<HotbarSlotView>();
+            so.FindProperty("tabParent").objectReferenceValue = barRt;
+            so.FindProperty("emptyLabel").objectReferenceValue = empty;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            Undo.RegisterCreatedObjectUndo(bar, "Create Shop Tabs");
+            return "상점 탭 생성";
+        }
+
+        // 화면 오른쪽 아래 단계 버튼: 농사 "농사 끝내기 [Enter]"(문과 같은 길) · 장사 "장사 건너뛰기 [Space]"(키는 SalesSystem)
+        private static string BuildPhaseActionHud(Transform canvas, InputActionReference endPhase)
+        {
+            if (canvas.Find("PhaseActionHud") != null)
+                return "단계 버튼 유지";
+            var root = new GameObject("PhaseActionHud", typeof(RectTransform));
+            var rt = root.GetComponent<RectTransform>();
+            rt.SetParent(canvas, false);
+            Place(rt, new Vector2(1f, 0f), new Vector2(-24f, 24f), new Vector2(380f, 60f), new Vector2(1f, 0f));
+            var button = MakeButton("Button", rt, "농사 끝내기 [Enter]");
+            Stretch(button.GetComponent<RectTransform>(), rt);
+
+            var hud = root.AddComponent<PhaseActionHud>();
+            var so = new SerializedObject(hud);
+            so.FindProperty("button").objectReferenceValue = button;
+            so.FindProperty("label").objectReferenceValue = button.GetComponentInChildren<TMP_Text>();
+            var entries = so.FindProperty("entries");
+            entries.arraySize = 2;
+            void Entry(int i, Logic.Game.DayPhase phase, string label, string key, PhaseActionHud.ActionKind action, InputActionReference input)
+            {
+                var e = entries.GetArrayElementAtIndex(i);
+                e.FindPropertyRelative("phase").enumValueIndex = (int)phase;
+                e.FindPropertyRelative("label").stringValue = label;
+                e.FindPropertyRelative("keyHint").stringValue = key;
+                e.FindPropertyRelative("action").enumValueIndex = (int)action;
+                e.FindPropertyRelative("key").objectReferenceValue = input;
+            }
+            Entry(0, Logic.Game.DayPhase.Farming, "농사 끝내기", "Enter", PhaseActionHud.ActionKind.UseDoor, endPhase);
+            Entry(1, Logic.Game.DayPhase.Sales, "장사 건너뛰기", "Space", PhaseActionHud.ActionKind.SkipSales, null);
+            so.ApplyModifiedPropertiesWithoutUndo();
+            FillTitleHide(canvas, root);
+            Undo.RegisterCreatedObjectUndo(root, "Create PhaseActionHud");
+            return "단계 버튼 생성";
+        }
+
+        // 타이틀이 떠 있는 동안 숨길 목록에 더한다 (이미 있으면 그대로)
+        private static void FillTitleHide(Transform canvas, GameObject target)
+        {
+            var title = canvas.Find("TitleScreen")?.GetComponent<TitleScreen>();
+            if (title == null)
+                return;
+            var so = new SerializedObject(title);
+            var arr = so.FindProperty("hideWhileOpen");
+            for (int i = 0; i < arr.arraySize; i++)
+                if (arr.GetArrayElementAtIndex(i).objectReferenceValue == target)
+                    return;
+            arr.arraySize++;
+            arr.GetArrayElementAtIndex(arr.arraySize - 1).objectReferenceValue = target;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static string BuildOpeningLetter(Transform canvas, InputActionReference endPhase, InputActionReference cancel)
+        {
+            var existing = canvas.Find("OpeningLetterScreen")?.GetComponent<OpeningLetterScreen>();
+            string note = "오프닝 편지 유지";
+            if (existing == null)
+            {
+                var root = Stretch(new GameObject("OpeningLetterScreen", typeof(RectTransform)), canvas);
+                var panel = Stretch(NewImage("Panel", root, new Color(0.01f, 0.03f, 0.05f, 0.75f)), root);
+                var paper = NewImage("Paper", panel, new Color(0.06f, 0.12f, 0.16f, 0.96f));
+                Place(paper, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(960f, 700f));
+                var title = MakeText("Title", paper, string.Empty, 38, TitleGlow, TextAlignmentOptions.Center);
+                Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -36f), new Vector2(860f, 56f), new Vector2(0.5f, 1f));
+                var body = MakeText("Body", paper, string.Empty, 25, new Color(0.9f, 0.93f, 0.95f), TextAlignmentOptions.TopLeft);
+                Place(body.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -116f), new Vector2(840f, 470f), new Vector2(0.5f, 1f));
+                body.lineSpacing = 10f;
+                var start = MakeButton("Start", paper, "농장 시작하기");
+                Place(start.GetComponent<RectTransform>(), new Vector2(0.5f, 0f), new Vector2(0f, 34f), new Vector2(380f, 60f), new Vector2(0.5f, 0f));
+
+                existing = root.gameObject.AddComponent<OpeningLetterScreen>();
+                var so = new SerializedObject(existing);
+                so.FindProperty("panel").objectReferenceValue = panel.gameObject;
+                so.FindProperty("titleLabel").objectReferenceValue = title;
+                so.FindProperty("bodyLabel").objectReferenceValue = body;
+                so.FindProperty("startButton").objectReferenceValue = start;
+                var keys = so.FindProperty("closeActions");
+                keys.arraySize = 2;
+                keys.GetArrayElementAtIndex(0).objectReferenceValue = endPhase;
+                keys.GetArrayElementAtIndex(1).objectReferenceValue = cancel;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                Undo.RegisterCreatedObjectUndo(root.gameObject, "Create OpeningLetterScreen");
+                note = "오프닝 편지 생성";
+            }
+            var titleScreen = canvas.Find("TitleScreen")?.GetComponent<TitleScreen>();
+            if (titleScreen != null)
+            {
+                var tso = new SerializedObject(titleScreen);
+                var prop = tso.FindProperty("openingLetter");
+                if (prop.objectReferenceValue == null)
+                {
+                    prop.objectReferenceValue = existing;
+                    tso.ApplyModifiedPropertiesWithoutUndo();
+                    note += " · 타이틀 연결";
+                }
+            }
+            return note;
+        }
+
         // ── 타이틀 ──
 
         private static void BuildTitle(Transform canvas, SceneBootstrapper boot, SaveSystem save, InputActionReference cancel)

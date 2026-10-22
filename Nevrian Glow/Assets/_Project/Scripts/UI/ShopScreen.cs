@@ -10,7 +10,8 @@ using UnityEngine.InputSystem;
 namespace NevrianGlowFarm.UI
 {
     /// <summary>
-    /// 상점 화면 (B, 어디서나 — GDD 3장 화면 표). 보이는 상품을 한 줄씩: 분류 · 이름(단계) · 가격 · 오늘 남은 입고 · 상태.
+    /// 상점 화면 (B, 어디서나 — GDD 3장 화면 표). 분류별 탭(P-7, 와이어프레임 4) 안에 보이는 상품을 한 줄씩: 이름(단계) · 가격 · 오늘 남은 입고 · 상태.
+    /// 상점 · 농사 단계가 아니면 보기만 (회신2 4절 #2 — ShopSystem.CanBuyNow).
     /// 줄을 누르면 산다. 잠긴 단계는 조건을 함께 적는다. B · Esc로 닫는다. 모양은 UI를 몰아서 다듬을 때까지 그레이박스.
     /// 하루 시작(상점 단계)에는 저절로 열리고, 그때 닫으면 농사 단계로 넘어간다 (3-4).
     /// </summary>
@@ -31,15 +32,31 @@ namespace NevrianGlowFarm.UI
         [SerializeField] private InputActionReference toggleAction;
         [Tooltip("닫기 입력 (UI/Cancel, Esc)")]
         [SerializeField] private InputActionReference cancelAction;
+        [Tooltip("탭 버튼 원본 — 비활성 자식으로 두면 탭 수만큼 복제한다 (P-7)")]
+        [SerializeField] private HotbarSlotView tabTemplate;
+        [Tooltip("탭 버튼을 늘어놓을 부모")]
+        [SerializeField] private Transform tabParent;
+        [Tooltip("탭에 상품이 없을 때 보이는 글자")]
+        [SerializeField] private TMP_Text emptyLabel;
 
         [Header("조정값")]
+        [Tooltip("탭 = 상품 분류(ShopProductData.category) 순서 (와이어프레임 4: 씨앗 · 도구 · 확장 · 가구 · 소모품 · 장치). 목록에 없는 분류는 마지막 탭에")]
+        [SerializeField] private List<string> tabs = new List<string> { "씨앗", "도구", "확장", "가구", "소모품 · 장치" };
+        [Tooltip("탭에 보이는 상품이 없을 때 안내 (결정 2026-10-21, 사용자)")]
+        [SerializeField] private string emptyTabMessage = "데모버전에서는 해금되지 않은 컨텐츠입니다.";
         [Tooltip("살 수 있는 줄 색")]
         [SerializeField] private Color availableColor = new Color(0.05f, 0.25f, 0.3f, 0.9f);
-        [Tooltip("살 수 없는 줄 색 (잠김 · 품절 · 달러 부족 · 최대)")]
+        [Tooltip("살 수 없는 줄 색 (잠김 · 품절 · 달러 부족 · 최대 · 보기만)")]
         [SerializeField] private Color unavailableColor = new Color(0.12f, 0.12f, 0.16f, 0.85f);
+        [Tooltip("고른 탭 색")]
+        [SerializeField] private Color tabSelectedColor = new Color(0.15f, 0.45f, 0.5f, 0.95f);
+        [Tooltip("고르지 않은 탭 색")]
+        [SerializeField] private Color tabNormalColor = new Color(0.08f, 0.14f, 0.18f, 0.9f);
 
         private readonly List<HotbarSlotView> entries = new List<HotbarSlotView>();
         private readonly List<ShopProductData> rowProducts = new List<ShopProductData>();
+        private readonly List<HotbarSlotView> tabViews = new List<HotbarSlotView>();
+        private int tabIndex;
 
         public static ShopScreen Instance { get; private set; }
 
@@ -54,6 +71,44 @@ namespace NevrianGlowFarm.UI
             }
             Instance = this;
             entryTemplate.gameObject.SetActive(false);
+            BuildTabs();
+        }
+
+        // 탭 버튼은 한 번만 만든다 (탭 목록은 조정값). 탭 UI가 없으면 예전처럼 한 목록.
+        private void BuildTabs()
+        {
+            if (tabTemplate == null || tabParent == null || tabs.Count == 0)
+                return;
+            tabTemplate.gameObject.SetActive(false);
+            for (int i = 0; i < tabs.Count; i++)
+            {
+                int index = i;
+                var view = Instantiate(tabTemplate, tabParent);
+                view.name = $"Tab{i + 1}";
+                view.gameObject.SetActive(true);
+                view.SetContent(0, tabs[i]);
+                view.Clicked += () => SelectTab(index);
+                tabViews.Add(view);
+            }
+        }
+
+        public int TabCount => tabViews.Count;
+
+        /// <summary>탭을 고른다 (탭 클릭 · 디버그).</summary>
+        public void SelectTab(int index)
+        {
+            if (index < 0 || index >= tabViews.Count)
+                return;
+            tabIndex = index;
+            messageLabel.text = string.Empty;
+            Rebuild();
+        }
+
+        // 상품의 탭 = 분류가 같은 탭, 목록에 없는 분류는 마지막 탭
+        private int TabOf(ShopProductData product)
+        {
+            int i = tabs.IndexOf(product.Category ?? string.Empty);
+            return i >= 0 ? i : tabs.Count - 1;
         }
 
         protected override void OnDestroy()
@@ -105,7 +160,7 @@ namespace NevrianGlowFarm.UI
 
         protected override void OnOpened()
         {
-            messageLabel.text = string.Empty;
+            messageLabel.text = shop.CanBuyNow ? string.Empty : shop.ViewOnlyMessage;
             Rebuild();
         }
 
@@ -131,14 +186,25 @@ namespace NevrianGlowFarm.UI
             if (!IsOpen)
                 return;
             var game = GameManager.Instance;
+            bool canBuy = shop.CanBuyNow;
             titleLabel.text = game == null ? "상점"
                 : game.Phase == Logic.Game.DayPhase.Shop ? $"{game.Day}일차 상점 - 보유 {game.Money:N0}달러 · 닫으면 농사 시작"
-                : $"상점 - 보유 {game.Money:N0}달러";
+                : canBuy ? $"상점 - 보유 {game.Money:N0}달러"
+                : $"상점 (보기만) - 보유 {game.Money:N0}달러";
+
+            bool useTabs = tabViews.Count > 0;
+            for (int i = 0; i < tabViews.Count; i++)
+                tabViews[i].SetSelected(i == tabIndex, tabNormalColor, tabSelectedColor);
 
             rowProducts.Clear();
             foreach (var p in shop.Products)
-                if (shop.OfferOf(p).Visible)
+                if (shop.OfferOf(p).Visible && (!useTabs || TabOf(p) == tabIndex))
                     rowProducts.Add(p);
+            if (emptyLabel != null)
+            {
+                emptyLabel.gameObject.SetActive(rowProducts.Count == 0);
+                emptyLabel.text = emptyTabMessage;
+            }
 
             while (entries.Count < rowProducts.Count)
             {
@@ -156,16 +222,17 @@ namespace NevrianGlowFarm.UI
                     continue;
                 var product = rowProducts[i];
                 var offer = shop.OfferOf(product);
-                entries[i].SetContent(0, RowText(product, offer));
-                var color = offer.Status == OfferStatus.Available ? availableColor : unavailableColor;
+                entries[i].SetContent(0, RowText(product, offer, useTabs));
+                var color = offer.Status == OfferStatus.Available && canBuy ? availableColor : unavailableColor;
                 entries[i].SetSelected(false, color, color);
             }
         }
 
         // 게임 화면 글자에는 "—"를 쓰지 않는다 (글꼴에 없음, TASKS 트러블슈팅)
-        private string RowText(ShopProductData product, ProductOffer offer)
+        private string RowText(ShopProductData product, ProductOffer offer, bool tabbed)
         {
-            string head = string.IsNullOrEmpty(product.Category) ? string.Empty : $"[{product.Category}] ";
+            // 탭이 있으면 분류는 탭이 보여 준다
+            string head = tabbed || string.IsNullOrEmpty(product.Category) ? string.Empty : $"[{product.Category}] ";
             if (offer.Status == OfferStatus.MaxedOut)
                 return $"{head}{product.DisplayName} - 최대 단계";
             string stock = offer.StockLeft < 0 ? string.Empty : $" · 오늘 {offer.StockLeft}개";
