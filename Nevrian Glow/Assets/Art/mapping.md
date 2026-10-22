@@ -51,12 +51,15 @@
 | `trash_bottle` | `Props/trash/pf_trash_bottle.prefab`, `Models/trash_bottle.fbx`, `mat_trash_bottle_glass` (수정 셰이더) · `_cork` | 높이 0.25 m · 824 tris | 10/22. 받은 FBX는 코르크가 입구 위에 떠 있고 텍스처가 빠져 있었음 → 코르크를 입구에 끼우고 0.25 m로 맞춤, 텍스처 없이 유리 + 코르크 색 |
 | `trash_paper` · `trash_peel` · `trash_spore_clump` · `trash_leaf` | `Props/trash/pf_trash_<id>.prefab`, `Models/trash_<id>.fbx`, `mat_trash_<id>` | 0.15 / 0.15 / 0.20 / 0.20 m · 각 1천 tris 이하 | 10/22. 낙엽은 잎맥만 발광(`tex_trash_leaf_glow_mask`). 클릭 판정용 콜라이더는 넣지 않음(개발) |
 | `env_farm_path` | `Environment/farm_path/pf_env_farm_path.prefab`, `Models/env_farm_path.fbx`, `mat_env_farm_path` (`tex_env_farm_path_albedo`, 이음새 없는 512) | 1.5 × 0.03 × 4.0 m · 28 tris | 10/22. 받은 것은 텍스처뿐 → 길 조각을 직접 만듦: 폭 = 개발 `FarmLayoutSetup.PathWidth` 1.5 m, 길이 방향 = Z, 끝을 맞대어 이어 붙임(무늬도 이어짐) |
+| `chr_customer_pipi` | `Characters/Customer/Pipi/pf_chr_customer_pipi.prefab` (`chr_customer_pipi.fbx`, `Materials/mat_chr_customer_pipi_*` 11, `Textures/tex_chr_customer_pipi_mouth` · `_mouth_happy`) | 키 1.19 m · 15,372 tris | 10/22. 1차 평가 손님(Cunsumer) 리그 · 웨이트를 그대로 써서 몸 전체를 고르게 줄이고 더듬이 · 귀 · 리본, 짧은 재킷 + 니트 목도리로 바꿈. 같은 21뼈 Humanoid라 `ac_customer`(손님 애니메이션 5종)를 그대로 씀 — 프리팹 `Model`에 Animator(`ac_customer`, 자체 아바타, 루트 모션 끔). 눈은 `ToonAlienEye`, 나머지는 `ToonCharacter`(가게 씬 조명에서 색 맞춤), 부츠 · 눈썹은 Cunsumer 재질 공용. **실제 키로 만든 모델이라 `bodySize` 등으로 크기를 다시 바꾸지 않아도 됨**(`CustomerAI.modelHeight`는 1.19). 입은 얼굴 텍스처에 그림 — 표정은 `CustomerFace.SetHappy(true/false)`. **예산 8천보다 많음**(목도리만 3,888) — 줄여야 하면 알려 주세요 |
+| `chr_customer_or` | `Characters/Customer/Or/pf_chr_customer_or.prefab` (`chr_customer_or.fbx`, `Materials/mat_chr_customer_or_*` 12, `Textures/tex_chr_customer_or_mouth` · `_mouth_happy`) | 키 1.98 m · 12,160 tris | 10/22. 피피와 같은 방식(같은 리그 · `ac_customer`), 키만 2 m로 고르게 키움. 라벤더 피부, 어깨 망토 + 허리띠, 목걸이 · 펜던트(분홍 발광), 긴 더듬이 · 귀. `CustomerAI.modelHeight`는 1.98. 표정은 `CustomerFace`. **예산 8천보다 많음** — 줄여야 하면 알려 주세요 |
 
 ## 요청서에 없는 것 (배경 · 추가분)
 
 | 파일 | 내용 |
 |---|---|
 | `UI/Icons/icon_tool_hoe.png` | 10/22. 괭이 아이콘 — 요청서 G의 아이콘 15종 밖(괭이는 10/21 개발 추가 요청). 다른 아이콘과 같은 128 · 알파 |
+| `Characters/Customer/Scripts/CustomerFace.cs` | 10/22. 손님 표정 스크립트(피피 · 오르 프리팹의 `Model`에 붙어 있음). `SetHappy(true)` = 얼굴 텍스처를 벌린 웃음(`_mouth_happy`)으로 바꾸고 더듬이 발광을 조금(×1.15) 밝게, `SetHappy(false)` = 원래 미소. MaterialPropertyBlock만 써서 공용 재질은 안 바뀜. `CustomerAI`의 Happy 상태에서 부르면 됨 |
 | `Environment/` 하늘(`Sky/`), 구름, 달 · 행성 · 별, 오로라 텍스처 | `env_sky`는 그림 한 장 대신 셰이더 하늘(`DeepBlue/M_Sky_DeepBlue.mat`)로 구현 |
 | `Environment/FX/portal/pf_vfx_portal` (+ `mat_vfx_portal`) | 포탈 VFX(파티클): `Portal_Swirl` 시안 · 보라 빛 알갱이가 반지름 1.15 m 고리에서 돌며 안으로, `Portal_Core` 가운데 은은한 빛. 반복 재생, 콜라이더 없음. 가게 입구 `Portal` 안과 농장 문 프리팹 `pf_env_farm_door`의 `Portal`에서 씀 |
 | `Environment/Crystal/` | 수정 무리 + 빛 웅덩이(배경 장식) |
