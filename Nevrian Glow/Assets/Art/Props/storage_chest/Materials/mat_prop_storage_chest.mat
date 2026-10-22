@@ -1,0 +1,79 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: mat_prop_storage_chest
+  m_Shader: {fileID: 4800000, guid: 1d8ca68ec0b67f647a7eda28f5ea0e83, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 2800000, guid: e0e23d4d27bd8c740a614663206cffaf, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BumpMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _GlowMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AmbientStrength: 0.16
+    - _BumpScale: 1
+    - _GlossSize: 0.06
+    - _GlossSoftness: 0.04
+    - _GlossStrength: 0.3
+    - _LightColorAmount: 0.3
+    - _OcclusionDirect: 0.8
+    - _OcclusionStrength: 1
+    - _OutlineWidth: 0.006
+    - _Pastel: 0
+    - _PointLightStrength: 1
+    - _PulsePeriod: 4.5
+    - _ReceiveShadows: 1
+    - _RimPower: 3
+    - _RimStrength: 0.25
+    - _SceneAmbient: 0
+    - _ShadowBlur: 1.5
+    - _ShadowSaturation: 1.5
+    - _Softness: 0.08
+    - _TexGlowSoftness: 0.2
+    - _TexGlowStrength: 0
+    - _TexGlowThreshold: 0.3
+    - _ViewGloss: 0.12
+    - _Wrap: 0.05
+    m_Colors:
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _GlossColor: {r: 1, g: 1, b: 1, a: 1}
+    - _GroundColor: {r: 0.35, g: 0.3, b: 0.4, a: 1}
+    - _OutlineColor: {r: 0.09999997, g: 0.09999997, b: 0.25999996, a: 1}
+    - _RimColor: {r: 1, g: 0.82, b: 0.6, a: 1}
+    - _ShadowTint: {r: 0.42, g: 0.38, b: 0.64, a: 1}
+    - _SkyColor: {r: 0.88, g: 0.9, b: 1, a: 1}
+    - _TexGlowPulse: {r: 0.7, g: 1.2, b: 0, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
