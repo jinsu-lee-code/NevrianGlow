@@ -62,8 +62,8 @@ MonoBehaviour:
   - day: 4
     kind: 0
     crop: {fileID: 11400000, guid: 6663b6df60460264eb77e170b21b394d, type: 2}
-    amount: 5
-    label: "\uBC84\uC12F\uAF43 5\uCE78 \uC2EC\uAE30"
+    amount: 4
+    label: "\uBC84\uC12F\uAF43 4\uCE78 \uC774\uC0C1 \uC2EC\uAE30"
   - day: 4
     kind: 5
     crop: {fileID: 0}

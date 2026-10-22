@@ -179,8 +179,9 @@ namespace NevrianGlowFarm.Editor
             Zone(root, "ForbiddenZone_TrashBin", new Vector3(-3.1f, 0f, -4.3f), new Vector2(1.2f, 1.2f));
             Zone(root, "ForbiddenZone_Storage", new Vector3(-4.7f, 0f, -4.1f), new Vector2(2.0f, 1.6f));
             Zone(root, "ForbiddenZone_ShopSpawn", new Vector3(-5.2f, 0f, FarmDoorZ), new Vector2(1.6f, FarmDoorGap));
-            Zone(root, "ForbiddenZone_ShelfFront", new Vector3(0f, 0f, LowerAisleZ), new Vector2(Width, LowerAisleWidth)); // 아래 통로
-            Zone(root, "ForbiddenZone_UpperAisle", new Vector3(0f, 0f, UpperAisleZ), new Vector2(Width, UpperAisleWidth));
+            // 통로 2줄: 쓰레기 · 흩어진 상품은 막고 얼룩 · 발자국은 허용 (기획 회신 10/22 A2)
+            Zone(root, "ForbiddenZone_ShelfFront", new Vector3(0f, 0f, LowerAisleZ), new Vector2(Width, LowerAisleWidth), allowStains: true); // 아래 통로
+            Zone(root, "ForbiddenZone_UpperAisle", new Vector3(0f, 0f, UpperAisleZ), new Vector2(Width, UpperAisleWidth), allowStains: true);
             Zone(root, "ForbiddenZone_BasketStand", new Vector3(-0.9f, 0f, -4.3f), new Vector2(1.2f, 1.0f));
             foreach (Transform spot in spots)
             {
@@ -302,7 +303,7 @@ namespace NevrianGlowFarm.Editor
             return t;
         }
 
-        private static void Zone(Transform root, string name, Vector3 pos, Vector2 size)
+        private static void Zone(Transform root, string name, Vector3 pos, Vector2 size, bool allowStains = false)
         {
             var t = Child(root, name);
             t.localPosition = pos;
@@ -311,6 +312,7 @@ namespace NevrianGlowFarm.Editor
             var so = new SerializedObject(zone);
             so.FindProperty("radius").floatValue = 0f;
             so.FindProperty("boxSize").vector2Value = size;
+            so.FindProperty("allowsStains").boolValue = allowStains;
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 

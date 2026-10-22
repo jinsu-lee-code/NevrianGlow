@@ -196,10 +196,14 @@ namespace NevrianGlowFarm.UI
             for (int i = 0; i < tabViews.Count; i++)
                 tabViews[i].SetSelected(i == tabIndex, tabNormalColor, tabSelectedColor);
 
+            // 잠긴 상품도 "잠김 · 무엇이 필요"로 보인다 (기획 회신 10/22 A6) — 숨김 상품(2차 · 연결 전)은 ShopSystem이 이미 뺐다
             rowProducts.Clear();
             foreach (var p in shop.Products)
-                if (shop.OfferOf(p).Visible && (!useTabs || TabOf(p) == tabIndex))
+            {
+                var offer = shop.OfferOf(p);
+                if ((offer.Visible || offer.Status == OfferStatus.Locked) && (!useTabs || TabOf(p) == tabIndex))
                     rowProducts.Add(p);
+            }
             if (emptyLabel != null)
             {
                 emptyLabel.gameObject.SetActive(rowProducts.Count == 0);
@@ -235,7 +239,8 @@ namespace NevrianGlowFarm.UI
             string head = tabbed || string.IsNullOrEmpty(product.Category) ? string.Empty : $"[{product.Category}] ";
             if (offer.Status == OfferStatus.MaxedOut)
                 return $"{head}{product.DisplayName} - 최대 단계";
-            string stock = offer.StockLeft < 0 ? string.Empty : $" · 오늘 {offer.StockLeft}개";
+            // 잠긴 상품은 입고 수를 적지 않는다 (해금 전이라 0개로 보여 헷갈림)
+            string stock = offer.StockLeft < 0 || offer.Status == OfferStatus.Locked ? string.Empty : $" · 오늘 {offer.StockLeft}개";
             string text = $"{head}{product.TierLabel(offer.Tier)} - {offer.Price:N0}달러{stock}";
             switch (offer.Status)
             {

@@ -237,7 +237,7 @@ namespace NevrianGlowFarm.Systems.Cleaning
             var random = new SeededRandom(SeededRandom.SeedFor(seed, ScatterPurpose, day));
             var trash = CleaningRules.Scatter(trashCount, areaMin.x, areaMin.y, areaMax.x, areaMax.y, settings.MinSpacing, settings.PlacementAttempts, random, Allowed, occupied);
             occupied.AddRange(trash);
-            var stain = CleaningRules.Scatter(stainCount, areaMin.x, areaMin.y, areaMax.x, areaMax.y, settings.MinSpacing, settings.PlacementAttempts, random, Allowed, occupied);
+            var stain = CleaningRules.Scatter(stainCount, areaMin.x, areaMin.y, areaMax.x, areaMax.y, settings.MinSpacing, settings.PlacementAttempts, random, AllowedForStain, occupied);
             occupied.AddRange(stain);
             var products = CleaningRules.Scatter(productCount, areaMin.x, areaMin.y, areaMax.x, areaMax.y, settings.MinSpacing, settings.PlacementAttempts, random, Allowed, occupied);
             return (trash.ConvertAll(ToWorld), stain.ConvertAll(ToWorld), products.ConvertAll(ToWorld));
@@ -409,11 +409,16 @@ namespace NevrianGlowFarm.Systems.Cleaning
             stains.Clear();
         }
 
-        private bool Allowed(FloorPoint local)
+        private bool Allowed(FloorPoint local) => Allowed(local, false);
+
+        // 얼룩 · 발자국: 통로처럼 '얼룩은 허용'인 금지 구역에는 생겨도 된다 (기획 회신 10/22 A2 — 통로를 걸은 발자국)
+        private bool AllowedForStain(FloorPoint local) => Allowed(local, true);
+
+        private bool Allowed(FloorPoint local, bool stain)
         {
             Vector3 world = ToWorld(local);
             foreach (var zone in forbiddenZones)
-                if (zone != null && zone.Overlaps(world, itemHalfSize, itemHalfSize))
+                if (zone != null && !(stain && zone.AllowsStains) && zone.Overlaps(world, itemHalfSize, itemHalfSize))
                     return false;
             return true;
         }

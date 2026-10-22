@@ -161,7 +161,12 @@ namespace NevrianGlowFarm.Systems.Shop
                     text.Append(", ");
                 switch (r.Kind)
                 {
-                    case UnlockKind.SkillLevel: text.Append($"스킬 {r.TargetId} {Mathf.Max(1, r.Value)}단계"); break;
+                    case UnlockKind.SkillLevel:
+                        // 스킬 이름으로 (상점에 잠긴 상품이 보이므로 — 기획 회신 10/22 A6). 한 단계짜리 스킬은 단계를 적지 않는다
+                        var skill = database.Get<SkillData>(r.TargetId);
+                        string skillName = skill != null ? skill.DisplayName : r.TargetId;
+                        text.Append(skill != null && skill.MaxLevel <= 1 ? $"스킬 '{skillName}'" : $"스킬 '{skillName}' {Mathf.Max(1, r.Value)}단계");
+                        break;
                     case UnlockKind.DayAtLeast: text.Append($"{r.Value}일차부터"); break;
                     case UnlockKind.FirstHarvest:
                         var crop = database.Get<CropData>(r.TargetId);

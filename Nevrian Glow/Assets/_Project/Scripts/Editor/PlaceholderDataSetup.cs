@@ -330,7 +330,7 @@ namespace NevrianGlowFarm.Editor
                 so.FindProperty("maxConcurrentCustomers").intValue = 6;
                 so.FindProperty("walkSpeed").floatValue = 2.1f;
                 so.FindProperty("browseDuration").floatValue = 1.2f;
-                so.FindProperty("checkoutDuration").floatValue = 1f;
+                so.FindProperty("checkoutDuration").floatValue = 0.5f; // 기획 회신 10/22 A3: 1.0 → 0.5초 (손님 10명 장사 44초 → 30초 가까이)
                 so.FindProperty("purchaseMin").intValue = 1;
                 so.FindProperty("purchaseMax").intValue = 3;
                 so.FindProperty("stopDistance").floatValue = 0.3f;
@@ -528,7 +528,7 @@ namespace NevrianGlowFarm.Editor
                 Goal(2, Logic.Simulation.SimGoalKind.PlantedAtLeast, "crop_moonroot", 10, "월광 10칸 심기");
                 Goal(2, Logic.Simulation.SimGoalKind.CropUnlockedAtDayEnd, "crop_mushroomflower", 0, "버섯꽃 해금 (2일차 정산)");
                 Goal(3, Logic.Simulation.SimGoalKind.PlantedAtLeast, "crop_mushroomflower", 3, "버섯꽃 3칸 심기");
-                Goal(4, Logic.Simulation.SimGoalKind.PlantedAtLeast, "crop_mushroomflower", 5, "버섯꽃 5칸 심기");
+                Goal(4, Logic.Simulation.SimGoalKind.PlantedAtLeast, "crop_mushroomflower", 4, "버섯꽃 4칸 이상 심기"); // 기획 회신 10/22 A4: 5칸 → 4칸 이상
                 Goal(4, Logic.Simulation.SimGoalKind.ScatteredAtLeast, null, 1, "흩어진 상품 정리 시작");
                 Goal(5, Logic.Simulation.SimGoalKind.HarvestedAtLeast, "crop_mushroomflower", 1, "버섯꽃 첫 수확");
                 Goal(5, Logic.Simulation.SimGoalKind.CropUnlockedAtDayEnd, "crop_lanternfruit", 0, "등불 열매 해금 (5일차 정산)");

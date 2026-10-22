@@ -34,7 +34,7 @@ MonoBehaviour:
   maxConcurrentCustomers: 6
   walkSpeed: 2.1
   browseDuration: 1.2
-  checkoutDuration: 1
+  checkoutDuration: 0.5
   purchaseMin: 1
   purchaseMax: 3
   purchaseExtraMax: 4

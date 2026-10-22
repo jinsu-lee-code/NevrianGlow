@@ -19,7 +19,7 @@ MonoBehaviour:
   hidden: 0
   repeatable: 0
   tiers:
-  - price: 300
+  - price: 150
     requirements: []
   - price: 1200
     requirements: []
