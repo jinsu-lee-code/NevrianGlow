@@ -104,6 +104,70 @@ namespace NevrianGlowFarm.Editor
             }
         }
 
+        // ── 4. 농장 문 ──
+
+        private const string ZoneDoorPrefab = "Assets/_Project/Prefabs/Zones/zone_door.prefab";
+        private const string FarmDoorArt = "Assets/Art/Environment/farm_door/pf_env_farm_door.prefab";
+
+        [MenuItem("Glow Farm/Setup/Connect Art (2) Farm Door")]
+        private static void FarmDoorMenu()
+        {
+            var note = ReplaceModel(ZoneDoorPrefab, FarmDoorArt, root =>
+            {
+                // 문 열기 연출: 아트 문 루트의 Animator (Bool IsOpen) — ZoneDoor가 쓸 때 켠다
+                var door = root.GetComponent<Systems.Zones.ZoneDoor>();
+                var model = root.transform.Find("Model");
+                var animator = model != null ? model.GetComponent<Animator>() : null;
+                if (door == null || animator == null)
+                    return "ZoneDoor 또는 문 Animator 없음";
+                var so = new SerializedObject(door);
+                so.FindProperty("doorAnimator").objectReferenceValue = animator;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                return "Animator 연결";
+            });
+            Debug.Log("[Setup] 농장 문: " + note);
+        }
+
+        /// <summary>
+        /// 프리팹의 'Model' 자식을 아트 프리팹 인스턴스로 바꾼다 (위치 · 회전 · 크기는 그대로). 이미 그 아트면 그대로 두고 after만 실행.
+        /// </summary>
+        private static string ReplaceModel(string prefabPath, string artPath, System.Func<GameObject, string> after)
+        {
+            var art = AssetDatabase.LoadAssetAtPath<GameObject>(artPath);
+            if (art == null || AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath) == null)
+                return $"프리팹 또는 아트 없음 ({prefabPath} · {artPath})";
+            var root = PrefabUtility.LoadPrefabContents(prefabPath);
+            try
+            {
+                var old = root.transform.Find("Model");
+                if (old == null)
+                    return $"{prefabPath}에 Model 자식 없음";
+                string note;
+                bool already = PrefabUtility.IsAnyPrefabInstanceRoot(old.gameObject) && PrefabUtility.GetCorrespondingObjectFromSource(old.gameObject) == art;
+                if (already)
+                    note = "Model 유지";
+                else
+                {
+                    var model = (GameObject)PrefabUtility.InstantiatePrefab(art, root.transform);
+                    model.name = "Model";
+                    model.transform.SetSiblingIndex(old.GetSiblingIndex());
+                    model.transform.localPosition = old.localPosition;
+                    model.transform.localRotation = old.localRotation;
+                    model.transform.localScale = old.localScale;
+                    Object.DestroyImmediate(old.gameObject);
+                    note = $"Model → {art.name}";
+                }
+                if (after != null)
+                    note += " · " + after(root);
+                PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
+                return note;
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
         private static string Link(string toolId, string heldPath)
         {
             var tool = AssetDatabase.LoadAssetAtPath<ItemData>($"{ToolsFolder}/{toolId}.asset");
