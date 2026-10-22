@@ -116,8 +116,8 @@ namespace NevrianGlowFarm.Systems.Interaction
 
         private void Update()
         {
-            // 화면(가방 · 창고)이 열려 조작이 잠기면 프롬프트 · 홀로그램을 숨기고 입력을 받지 않는다. 닫히면 다시 받는다.
-            if (PlayerInputGate.IsBlocked)
+            // 화면(가방 · 창고)이 열려 조작이 잠기거나 장사 중(세상 조작 잠금, P-7)이면 프롬프트 · 홀로그램을 숨기고 입력을 받지 않는다. 풀리면 다시 받는다.
+            if (PlayerInputGate.IsWorldBlocked)
             {
                 ClearAimTarget();
                 lastCollider = null;

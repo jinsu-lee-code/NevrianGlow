@@ -27,6 +27,7 @@ Shader "DSEWA/ToonSoft"
         _ShadowTint ("Shadow Tint", Color) = (0.62, 0.6, 0.9, 1)
         _ShadowSaturation ("Shadow Saturation", Range(0.5, 2)) = 1.3
         _LightColorAmount ("Light Color Influence", Range(0, 1)) = 0.5
+        _PointLightStrength ("Point / Spot Light Strength (0 = main light only)", Range(0, 2)) = 1
         [ToggleUI] _ReceiveShadows ("Receive Shadows (cast + cloud)", Float) = 1
         _ShadowBlur ("Cast Shadow Smoothing (texels)", Range(0, 4)) = 1.5
         [Header(Sky and Ground Ambient)]
@@ -50,10 +51,11 @@ Shader "DSEWA/ToonSoft"
         _TexGlowThreshold ("Brightness Where Glow Starts", Range(0, 1)) = 0.5
         _TexGlowSoftness ("Glow Edge Softness", Range(0.01, 0.5)) = 0.2
         _TexGlowPulse ("Glow Min / Max Over The Breath (1, 1 = steady)", Vector) = (1, 1, 0, 0)
+        [NoScaleOffset] _GlowMask ("Texture Glow Mask (optional, white = may glow)", 2D) = "white" {}
         _PulsePeriod ("Breath Period (s)", Range(0.2, 20)) = 4.5
         [Header(Outline)]
         _OutlineColor ("Outline Color", Color) = (0.1, 0.1, 0.26, 1)
-        _OutlineWidth ("Outline Width (m, 0 = off)", Float) = 0.004
+        _OutlineWidth ("Outline Width (m at the model's own size, 0 = off)", Float) = 0.004
     }
 
     SubShader
@@ -70,6 +72,7 @@ Shader "DSEWA/ToonSoft"
             half _BumpScale, _OcclusionStrength, _OcclusionDirect;
             half4 _ShadowTint;
             half _ShadowSaturation, _LightColorAmount, _ReceiveShadows, _ShadowBlur;
+            half _PointLightStrength;
             half4 _SkyColor, _GroundColor;
             half _AmbientStrength;
             half _SceneAmbient;
@@ -84,6 +87,13 @@ Shader "DSEWA/ToonSoft"
             half4 _OutlineColor;
             float _OutlineWidth;
         CBUFFER_END
+                // outline width is in metres at the model's own size: a prefab scaled to 0.18 gets a 0.18x line
+        // (geometric mean of the object scale, so non-uniform boxes do not blow up)
+        float OutlineObjectScale()
+        {
+            float3x3 m = (float3x3)GetObjectToWorldMatrix();
+            return pow(abs(determinant(m)), 1.0 / 3.0);
+        }
         ENDHLSL
 
         Pass
@@ -97,6 +107,8 @@ Shader "DSEWA/ToonSoft"
             #pragma fragment frag
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
             #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -108,6 +120,7 @@ Shader "DSEWA/ToonSoft"
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
             TEXTURE2D(_BumpMap); SAMPLER(sampler_BumpMap);
             TEXTURE2D(_OcclusionMap); SAMPLER(sampler_OcclusionMap);
+            TEXTURE2D(_GlowMask); SAMPLER(sampler_GlowMask);
 
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float4 tangentOS : TANGENT; float2 uv : TEXCOORD0; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct Varyings
@@ -172,6 +185,24 @@ Shader "DSEWA/ToonSoft"
                 half3 col = lerp(shadowCol, base, lit);
                 col *= lerp(half3(1, 1, 1), light.color, _LightColorAmount);
 
+                // point / spot lights (shop lamps): the same soft wrapped terminator, added in the light's own colour
+                #if defined(_ADDITIONAL_LIGHTS) || defined(_ADDITIONAL_LIGHTS_VERTEX)
+                {
+                    InputData inputData = (InputData)0;
+                    inputData.positionWS = i.positionWS;
+                    inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(i.positionCS);
+                    half3 addCol = 0;
+                    uint pixelLightCount = GetAdditionalLightsCount();
+                    LIGHT_LOOP_BEGIN(pixelLightCount)
+                        Light al = GetAdditionalLight(lightIndex, i.positionWS);
+                        half aw = (dot(N, al.direction) + _Wrap) / (1.0 + _Wrap);
+                        half alit = smoothstep(0.5 - _Softness, 0.5 + _Softness, aw) * lerp(1.0h, occ, _OcclusionDirect);
+                        addCol += base * al.color * (al.distanceAttenuation * al.shadowAttenuation * alit);
+                    LIGHT_LOOP_END
+                    col += addCol * _PointLightStrength;
+                }
+                #endif
+
                 // sky above, ground below
                 half3 hemi = lerp(_GroundColor.rgb, _SkyColor.rgb, N.y * 0.5 + 0.5);
                 // or the scene's own ambient (spherical harmonics), so a prop dropped into another scene (the shop)
@@ -194,7 +225,9 @@ Shader "DSEWA/ToonSoft"
                 float phase = frac(sin(dot(objPos, float3(12.9898, 78.233, 37.719))) * 43758.5453);
                 float breath = 0.5 + 0.5 * sin((_Time.y / max(_PulsePeriod, 0.01) + phase) * TWO_PI);
                 half texLum = max(tex.r, max(tex.g, tex.b));
-                col += tex * smoothstep(_TexGlowThreshold, _TexGlowThreshold + _TexGlowSoftness, texLum)
+                // the optional mask limits the glow to painted strokes (white in the mask); default white = whole map
+                half glowMask = SAMPLE_TEXTURE2D(_GlowMask, sampler_GlowMask, i.uv).r;
+                col += tex * smoothstep(_TexGlowThreshold, _TexGlowThreshold + _TexGlowSoftness, texLum) * glowMask
                        * _TexGlowStrength * lerp(_TexGlowPulse.x, _TexGlowPulse.y, breath);
 
                 col = ApplyGroundFog(col, i.positionWS);
@@ -223,7 +256,7 @@ Shader "DSEWA/ToonSoft"
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_TRANSFER_INSTANCE_ID(input, o);
                 float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
-                positionWS += TransformObjectToWorldNormal(input.normalOS) * _OutlineWidth;
+                positionWS += TransformObjectToWorldNormal(input.normalOS) * _OutlineWidth * OutlineObjectScale();
                 o.positionCS = TransformWorldToHClip(positionWS);
                 o.fogFactor = ComputeFogFactor(o.positionCS.z);
                 return o;

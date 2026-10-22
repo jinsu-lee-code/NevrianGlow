@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using NevrianGlowFarm.Core;
 using NevrianGlowFarm.Data;
@@ -27,6 +28,12 @@ namespace NevrianGlowFarm.Systems.Shop
         [SerializeField] private PlayerInventory inventory;
         [Tooltip("도구 교체 때 같이 찾는 창고 (Core Storage)")]
         [SerializeField] private StorageSystem storage;
+
+        [Header("조정값")]
+        [Tooltip("살 수 있는 단계 — 그 밖의 단계에서는 상점을 보기만 (회신2 4절 #2: 상점 · 농사 단계에서만 구매)")]
+        [SerializeField] private List<DayPhase> buyPhases = new List<DayPhase> { DayPhase.Shop, DayPhase.Farming };
+        [Tooltip("보기만 할 때 안내 (게임 화면 글자 — '—' 쓰지 않음)")]
+        [SerializeField] private string viewOnlyMessage = "농사 단계에서 살 수 있어요";
 
         [Header("디버그")]
         [Tooltip("상품 상태 (읽기 전용)")]
@@ -58,7 +65,8 @@ namespace NevrianGlowFarm.Systems.Shop
                 return;
             }
             instance = this;
-            products.AddRange(database.All<ShopProductData>());
+            // 숨긴 상품(기획 phase2 · 연결 전)은 상점에 올리지 않는다 (회신2 2-6)
+            products.AddRange(database.All<ShopProductData>().Where(p => p != null && !p.Hidden));
             products.Sort((a, b) => a.SortOrder != b.SortOrder ? a.SortOrder.CompareTo(b.SortOrder) : string.CompareOrdinal(a.Id, b.Id));
         }
 
@@ -153,7 +161,12 @@ namespace NevrianGlowFarm.Systems.Shop
                     text.Append(", ");
                 switch (r.Kind)
                 {
-                    case UnlockKind.SkillLevel: text.Append($"스킬 {r.TargetId} {Mathf.Max(1, r.Value)}단계"); break;
+                    case UnlockKind.SkillLevel:
+                        // 스킬 이름으로 (상점에 잠긴 상품이 보이므로 — 기획 회신 10/22 A6). 한 단계짜리 스킬은 단계를 적지 않는다
+                        var skill = database.Get<SkillData>(r.TargetId);
+                        string skillName = skill != null ? skill.DisplayName : r.TargetId;
+                        text.Append(skill != null && skill.MaxLevel <= 1 ? $"스킬 '{skillName}'" : $"스킬 '{skillName}' {Mathf.Max(1, r.Value)}단계");
+                        break;
                     case UnlockKind.DayAtLeast: text.Append($"{r.Value}일차부터"); break;
                     case UnlockKind.FirstHarvest:
                         var crop = database.Get<CropData>(r.TargetId);
@@ -166,6 +179,18 @@ namespace NevrianGlowFarm.Systems.Shop
 
         // ── 구매 ─────────────────────────────────────────
 
+        /// <summary>지금 단계에서 살 수 있는지 (아니면 상점은 보기만).</summary>
+        public bool CanBuyNow
+        {
+            get
+            {
+                var game = GameManager.Instance;
+                return game != null && game.IsStarted && buyPhases.Contains(game.Phase);
+            }
+        }
+
+        public string ViewOnlyMessage => viewOnlyMessage;
+
         /// <summary>산다. 결과 문구(화면 안내 한 줄)를 돌려준다.</summary>
         public bool TryBuy(ShopProductData product, out string message)
         {
@@ -173,6 +198,11 @@ namespace NevrianGlowFarm.Systems.Shop
             if (product == null || game == null || !game.IsStarted)
             {
                 message = "지금은 살 수 없음";
+                return false;
+            }
+            if (!CanBuyNow)
+            {
+                message = viewOnlyMessage;
                 return false;
             }
             var spec = product.ToSpec();
@@ -219,7 +249,7 @@ namespace NevrianGlowFarm.Systems.Shop
                     reason = "넣을 칸 없음";
                     return false;
                 case PlotExpandProductData plot:
-                    if (Farm != null && Farm.PlotCount + plot.Plots <= Farm.MaxPlotCount)
+                    if (Farm != null && Farm.PlotCount + plot.PlotsAt(tier) <= Farm.MaxPlotCount)
                         return true;
                     reason = "밭을 더 넓힐 수 없음";
                     return false;
@@ -254,8 +284,8 @@ namespace NevrianGlowFarm.Systems.Shop
                     inventory.TryAdd(next, 1);
                     return $"{next.DisplayName} 삼";
                 case PlotExpandProductData plot:
-                    Farm.TryAddPlots(plot.Plots);
-                    return $"밭 구획 +{plot.Plots} (지금 {Farm.PlotCount}구획)";
+                    Farm.TryAddPlots(plot.PlotsAt(tier));
+                    return $"밭 구획 +{plot.PlotsAt(tier)} (지금 {Farm.PlotCount}구획)";
                 case BagExpandProductData bag:
                     inventory.SetBagSlotCount(inventory.Bag.SlotCount + bag.Slots);
                     return $"가방 +{bag.Slots}칸 (지금 {inventory.Bag.SlotCount}칸)";

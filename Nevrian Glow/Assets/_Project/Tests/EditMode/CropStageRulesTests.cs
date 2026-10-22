@@ -42,5 +42,15 @@ namespace NevrianGlowFarm.Tests
             Assert.AreEqual(0, CropStageRules.StageIndex(2, 0.6f, false));
             Assert.AreEqual(1, CropStageRules.StageIndex(2, 0.6f, true));
         }
+
+        [Test]
+        public void Regrowing_KeepsMatureStage()
+        {
+            // 등불 열매(0 둔덕 · 1 묘목 · 2 줄기 · 3 완성): 한 번 거둔 뒤 다시 열리는 중이면 나무(완성)를 유지 — 열매만 모델 애니메이션으로
+            Assert.AreEqual(3, CropStageRules.StageIndex(4, 0f, false, regrowing: true));
+            Assert.AreEqual(3, CropStageRules.StageIndex(4, 0.5f, false, regrowing: true));
+            Assert.AreEqual(0, CropStageRules.StageIndex(4, 0f, false, regrowing: false), "처음 자랄 때는 그대로");
+            Assert.AreEqual(-1, CropStageRules.StageIndex(0, 0f, false, regrowing: true));
+        }
     }
 }

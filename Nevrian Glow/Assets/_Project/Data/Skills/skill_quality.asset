@@ -15,7 +15,9 @@ MonoBehaviour:
   id: skill_quality
   displayName: "\uACE0\uD488\uC9C8 \uC791\uBB3C"
   tab: "\uB18D\uC0AC"
+  tabOrder: 0
   order: 3
+  hidden: 1
   levelDescriptions:
   - "\uD310\uB9E4\uAC00 \xD71.05"
   - "\uD310\uB9E4\uAC00 \xD71.10"

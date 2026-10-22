@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.BagExpandProductData
   id: shop_bag_expand
   displayName: "\uAC00\uBC29 \uD655\uC7A5"
-  sortOrder: 31
+  sortOrder: 100
   category: "\uD655\uC7A5"
+  hidden: 0
   repeatable: 0
   tiers:
   - price: 100
@@ -42,7 +43,7 @@ MonoBehaviour:
     requirements:
     - kind: 1
       targetId: skill_bag_license
-      value: 2
+      value: 3
   - price: 1200
     requirements:
     - kind: 1

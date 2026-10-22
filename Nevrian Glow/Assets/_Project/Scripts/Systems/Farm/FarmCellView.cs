@@ -21,12 +21,18 @@ namespace NevrianGlowFarm.Systems.Farm
         [Header("조정값")]
         [Tooltip("칸마다 모델을 돌리는 각도 — 같은 작물이 줄지어 있어도 똑같아 보이지 않게 (°)")]
         [SerializeField, Range(0f, 180f)] private float yawStep = 137.5f;
+        [Tooltip("재수확 작물 모델 Animator의 '거둠' 트리거 — 열매 → 봉오리 (아트 ac_crop_lanternfruit_mature)")]
+        [SerializeField] private string harvestTrigger = "Harvest";
+        [Tooltip("재수확 작물 모델 Animator의 '다시 열림' 트리거 — 봉오리 → 열매")]
+        [SerializeField] private string regrowTrigger = "Regrow";
 
         private FarmGrid grid;
         private int index;
         private MaterialPropertyBlock block;
         private GameObject shownPrefab;
         private GameObject shownModel;
+        private Animator fruitAnimator;   // 지금 모델이 열매 트리거를 가진 경우만
+        private bool fruitShown;          // 지금 모델에 열매가 보이는지 (새로 만든 완성 모델은 열매가 달려 있음)
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 
         public int Index => index;
@@ -104,6 +110,7 @@ namespace NevrianGlowFarm.Systems.Farm
                 Destroy(shownModel);
             shownPrefab = prefab;
             shownModel = null;
+            fruitAnimator = null;
             if (prefab == null)
                 return;
 
@@ -113,6 +120,36 @@ namespace NevrianGlowFarm.Systems.Farm
             // 작물 모델은 보이기만 한다 — 조준(칸 콜라이더)과 플레이어 이동을 막지 않게
             foreach (var c in shownModel.GetComponentsInChildren<Collider>(true))
                 c.enabled = false;
+            // 열매 트리거(거둠 · 다시 열림)가 둘 다 있는 Animator만 쓴다 — 단계가 바뀔 때 한 번만 찾는다
+            var animator = shownModel.GetComponentInChildren<Animator>();
+            if (animator != null && HasTrigger(animator, harvestTrigger) && HasTrigger(animator, regrowTrigger))
+                fruitAnimator = animator;
+            fruitShown = true;
+        }
+
+        /// <summary>
+        /// 재수확 작물의 열매 (FarmGrid가 Show 다음에 부른다). ready = 거둘 수 있음, regrowing = 한 번 이상 거두고 다시 열리는 중.
+        /// 열매가 보여야 하는데 숨어 있으면 다시 열림, 반대면 거둠 트리거 — 불러온 직후 다시 열리는 중인 나무는 거둠으로 봉오리 상태가 된다.
+        /// </summary>
+        public void SetFruit(bool ready, bool regrowing)
+        {
+            if (fruitAnimator == null)
+                return;
+            bool wanted = ready || !regrowing;
+            if (wanted == fruitShown)
+                return;
+            fruitAnimator.SetTrigger(wanted ? regrowTrigger : harvestTrigger);
+            fruitShown = wanted;
+        }
+
+        private static bool HasTrigger(Animator animator, string name)
+        {
+            if (string.IsNullOrEmpty(name) || animator.runtimeAnimatorController == null)
+                return false;
+            foreach (var p in animator.parameters)
+                if (p.type == AnimatorControllerParameterType.Trigger && p.name == name)
+                    return true;
+            return false;
         }
     }
 }

@@ -62,6 +62,8 @@ namespace NevrianGlowFarm.Logic.Save
             foreach (var pair in Sorted(s.ShopFirstOpen))
                 Line(sb, "shop_open", pair.Key, pair.Value);
             Line(sb, "shop_spent", s.ShopSpentToday);
+            if (s.HasCustomerModel)
+                Line(sb, "customers", D(s.CustomerRegulars), D(s.CustomerNewToday), D(s.CustomerSatisfaction)); // P-2 입소문 모델 — 그 전 파일에는 없음
 
             foreach (var w in s.WorldItems)
                 Line(sb, "world", w.ItemId, w.Count, w.Zone, F(w.X), F(w.Y), F(w.Z), F(w.Yaw));
@@ -153,6 +155,12 @@ namespace NevrianGlowFarm.Logic.Save
                         case "shop_today": s.ShopBoughtToday[t[1]] = I(t[2]); break;
                         case "shop_open": s.ShopFirstOpen[t[1]] = I(t[2]); break;
                         case "shop_spent": s.ShopSpentToday = I(t[1]); break;
+                        case "customers":
+                            s.HasCustomerModel = true;
+                            s.CustomerRegulars = Dl(t[1]);
+                            s.CustomerNewToday = Dl(t[2]);
+                            s.CustomerSatisfaction = Dl(t[3]);
+                            break;
                         case "world":
                             s.WorldItems.Add(new WorldItemSave { ItemId = t[1], Count = I(t[2]), Zone = t[3], X = Fl(t[4]), Y = Fl(t[5]), Z = Fl(t[6]), Yaw = Fl(t[7]) });
                             break;
@@ -270,5 +278,7 @@ namespace NevrianGlowFarm.Logic.Save
         private static string F(float v) => v.ToString("R", CultureInfo.InvariantCulture);
         private static int I(string s) => int.Parse(s, NumberStyles.Integer, CultureInfo.InvariantCulture);
         private static float Fl(string s) => float.Parse(s, NumberStyles.Float, CultureInfo.InvariantCulture);
+        private static string D(double v) => v.ToString("R", CultureInfo.InvariantCulture);
+        private static double Dl(string s) => double.Parse(s, NumberStyles.Float, CultureInfo.InvariantCulture);
     }
 }

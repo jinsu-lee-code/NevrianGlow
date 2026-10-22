@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: tool_watering_1
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.WateringCanData
   id: tool_watering_1
-  displayName: "\uBB3C\uBFCC\uB9AC\uAC1C"
+  displayName: "\uBB3C\uBFCC\uB9AC\uAC1C 1\uB4F1\uAE09"
   maxStack: 1
   canStore: 1
   heldPrefab: {fileID: 1978704013072494628, guid: b6e994026b3f3484fa80b467236acb4c, type: 3}

@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Progression
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.ProgressionData
   expPerRevenue: 1
-  levelUpBase: 40
-  levelUpPerLevel: 40
+  levelUpBase: 50
+  levelUpPerLevel: 50
   skillPointsPerLevel: 3

@@ -48,6 +48,8 @@ namespace NevrianGlowFarm.Systems.Sales
         [SerializeField] private Transform basketContents;
         [Tooltip("장바구니에 담긴 상품 하나의 겉모습 (Prefabs/Shop/shelf_item)")]
         [SerializeField] private Renderer basketItemPrefab;
+        [Tooltip("살 게 없어 빈손으로 나갈 때 머리 위에 켜는 실망 아이콘 (회신 #7 — 신규 모션 대신, 비우면 없음)")]
+        [SerializeField] private GameObject disappointedIcon;
 
         [Header("조정값")]
         [Tooltip("모델 원래 키 — 체형 키 ÷ 이 값으로 크기를 바꾼다 (m)")]
@@ -149,7 +151,19 @@ namespace NevrianGlowFarm.Systems.Sales
                 basket.localPosition = type.BasketSocketOffset;
                 basket.gameObject.SetActive(false);
             }
+            if (disappointedIcon != null)
+                disappointedIcon.SetActive(false);
             StartCoroutine(Run(settings));
+        }
+
+        // 실망 아이콘은 늘 카메라를 본다 (켜져 있을 때만)
+        private void LateUpdate()
+        {
+            if (disappointedIcon == null || !disappointedIcon.activeSelf)
+                return;
+            var cam = Camera.main;
+            if (cam != null)
+                disappointedIcon.transform.rotation = Quaternion.LookRotation(disappointedIcon.transform.position - cam.transform.position, Vector3.up);
         }
 
         private void Update()
@@ -221,7 +235,9 @@ namespace NevrianGlowFarm.Systems.Sales
 
             if (items.Count == 0)
             {
-                // 못 사면 계산을 건너뛰고 바로 퇴장
+                // 못 사면 계산을 건너뛰고 바로 퇴장 — 머리 위 실망 아이콘 (구매 실패는 만족도로 다음 날 손님에 반영)
+                if (disappointedIcon != null)
+                    disappointedIcon.SetActive(true);
                 PayOnce();
                 yield return LeaveStore();
                 yield break;

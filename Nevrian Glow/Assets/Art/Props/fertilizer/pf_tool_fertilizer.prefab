@@ -115,10 +115,36 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5597929189200300261, guid: 222003f51e958fd429c9724210360d6c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5364651303982026284}
   m_SourcePrefab: {fileID: 100100000, guid: 222003f51e958fd429c9724210360d6c, type: 3}
 --- !u!4 &3264898438727245751 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 222003f51e958fd429c9724210360d6c, type: 3}
   m_PrefabInstance: {fileID: 3082017582739224668}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &7451856880021729465 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5597929189200300261, guid: 222003f51e958fd429c9724210360d6c, type: 3}
+  m_PrefabInstance: {fileID: 3082017582739224668}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5364651303982026284
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7451856880021729465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6a32e1a0c273b54f9692db1ef24c8c3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LiquidWobble
+  Fill: 0.75
+  MaxWobble: 0.6
+  MoveResponse: 0.25
+  TurnResponse: 0.0025
+  WobbleSpeed: 2.2
+  Recovery: 2.5

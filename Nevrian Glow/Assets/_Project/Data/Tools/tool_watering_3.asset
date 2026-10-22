@@ -18,4 +18,4 @@ MonoBehaviour:
   canStore: 1
   heldPrefab: {fileID: 5992792221094518829, guid: 173ca37afc0b3c944974e990ffc736bd, type: 3}
   useDelay: 0.3
-  cellCount: 4
+  cellCount: 8

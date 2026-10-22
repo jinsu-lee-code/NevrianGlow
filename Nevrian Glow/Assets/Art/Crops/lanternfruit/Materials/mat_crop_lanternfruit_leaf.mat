@@ -27,6 +27,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _PaintMap:
+        m_Texture: {fileID: 2800000, guid: b3dc93157c87b2642a96143d4cf52f37, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _AmbientShade: 0.105
@@ -50,6 +54,7 @@ Material:
     - _GroundBlendHeight: 0.35
     - _HueShift: 0
     - _NormalUp: 0.5
+    - _PaintStrength: 1
     - _PatchAmount: 0.5
     - _PatchScale: 0.25
     - _PushStrength: 0.6

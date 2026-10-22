@@ -15,6 +15,15 @@ Shader "DSEWA/ToonStem"
         _AmbientShade ("Ambient Shade", Range(0, 1)) = 0.105
         _ShadowFormLift ("Lit Side Lift In Shadow", Range(0, 1)) = 0.45
         _LightColorAmount ("Light Color Influence", Range(0, 1)) = 0
+        [Header(Paint Detail)]
+        _PaintMap ("Paint Detail (linear grey, 0.5 = none)", 2D) = "grey" {}
+        _PaintStrength ("Paint Strength (0 = off)", Range(0, 2)) = 0
+        [Header(Glow Lines)]
+        _GlowMap ("Glow Lines (stem uv, r = line)", 2D) = "black" {}
+        [HDR] _GlowColor ("Glow Color", Color) = (0.55, 0.75, 1.0, 1)
+        _GlowStrength ("Glow Strength (0 = off)", Range(0, 4)) = 0
+        _GlowFlowSpeed ("Glow Flow Speed (pulses up the stem)", Float) = 0.35
+        _GlowFlowAmount ("Glow Flow Amount", Range(0, 1)) = 0.45
         [Header(Length Gradient)]
         _BaseTint ("Base Tint (multiply at uv.y 0)", Color) = (0.55, 0.50, 0.80, 1)
         _GradientEnd ("Gradient End (uv.y)", Range(0.01, 1)) = 0.35
@@ -44,7 +53,9 @@ Shader "DSEWA/ToonStem"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
         CBUFFER_START(UnityPerMaterial)
-            float4 _BaseMap_ST;
+            float4 _BaseMap_ST, _PaintMap_ST;
+            half _PaintStrength;
+            float4 _GlowMap_ST; half4 _GlowColor; half _GlowStrength, _GlowFlowSpeed, _GlowFlowAmount;
             half4 _LitColor, _ShadowColor;
             half _Threshold, _Softness, _ShadowBlur, _AmbientShade, _ShadowFormLift, _LightColorAmount;
             half4 _BaseTint, _TipTint;
@@ -55,6 +66,13 @@ Shader "DSEWA/ToonStem"
             half4 _OutlineColor;
             float _OutlineWidth;
         CBUFFER_END
+                // outline width is in metres at the model's own size: a prefab scaled to 0.18 gets a 0.18x line
+        // (geometric mean of the object scale, so non-uniform boxes do not blow up)
+        float OutlineObjectScale()
+        {
+            float3x3 m = (float3x3)GetObjectToWorldMatrix();
+            return pow(abs(determinant(m)), 1.0 / 3.0);
+        }
         ENDHLSL
 
         Pass
@@ -74,6 +92,8 @@ Shader "DSEWA/ToonStem"
             #include "Assets/Art/Environment/Shaders/ToonShadow.hlsl"
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
+            TEXTURE2D(_PaintMap); SAMPLER(sampler_PaintMap);
+            TEXTURE2D(_GlowMap); SAMPLER(sampler_GlowMap);
 
             struct Attributes
             {
@@ -129,12 +149,19 @@ Shader "DSEWA/ToonStem"
                 // Length gradient: darker, duller base; a touch lighter toward the tips.
                 color *= lerp(_BaseTint.rgb, half3(1, 1, 1), smoothstep(0.0, _GradientEnd, i.uv.y));
                 color *= lerp(half3(1, 1, 1), _TipTint.rgb, smoothstep(_TipStart, 1.0, i.uv.y));
+                // Hand-painted detail (bark strokes): grey 0.5 leaves the colour alone
+                half3 paint = SAMPLE_TEXTURE2D(_PaintMap, sampler_PaintMap, i.uv * _PaintMap_ST.xy + _PaintMap_ST.zw).rgb;
+                color *= lerp(half3(1, 1, 1), paint * 2.0h, _PaintStrength);
                 // Ridge shading on the colour as well (flat multiply, so it shows in the shadow side too)
                 color *= 1.0 - (1.0 - ridge) * _RidgeAmount;
 
                 float facing = 1.0 - abs(dot(N, V));
                 color += _RimColor.rgb * smoothstep(_RimMin, _RimMax, facing) * _RimStrength * lerp(_RimInShadow, 1, lit);
                 color *= lerp(half3(1, 1, 1), light.color, _LightColorAmount);
+                // Glow lines: thin light streaks along the stem; a soft pulse travels from the root to the tips
+                half glow = SAMPLE_TEXTURE2D(_GlowMap, sampler_GlowMap, i.uv * _GlowMap_ST.xy + _GlowMap_ST.zw).r;
+                half flow = 1.0 - _GlowFlowAmount * (0.5 + 0.5 * sin((i.uv.y * 3.0 - _Time.y * _GlowFlowSpeed) * 6.2831853));
+                color += _GlowColor.rgb * glow * flow * _GlowStrength;
                 color = MixFog(color, i.fogFactor);
                 return half4(color, 1);
             }
@@ -174,7 +201,7 @@ Shader "DSEWA/ToonStem"
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
                 float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
                 float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
-                positionWS += normalWS * _OutlineWidth;
+                positionWS += normalWS * _OutlineWidth * OutlineObjectScale();
                 o.positionCS = TransformWorldToHClip(positionWS);
                 o.fogFactor = ComputeFogFactor(o.positionCS.z);
                 return o;

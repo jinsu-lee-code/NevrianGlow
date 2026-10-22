@@ -97,17 +97,11 @@ namespace NevrianGlowFarm.UI
                 GameManager.Instance.AdvanceToNextDay();
         }
 
-        /// <summary>'게임 종료'. 저장(6-1)이 생기면 먼저 저장한다.</summary>
+        /// <summary>'게임 종료'. 진행은 그날 아침 자동 저장까지 남아 있다 (6-1).</summary>
         public void Quit()
         {
-            if (!IsOpen)
-                return;
-            Debug.Log("[DemoEndScreen] 게임 종료");
-#if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-#else
-            Application.Quit();
-#endif
+            if (IsOpen)
+                GameFlow.Quit();
         }
 
         private void ForceClose()

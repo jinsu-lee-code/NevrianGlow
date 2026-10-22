@@ -127,9 +127,10 @@ namespace NevrianGlowFarm.Systems.Zones
 
         private void OnPhaseChanged(PhaseChange change)
         {
-            // 문이 요청한 이동 중이면 그 이동이 끝까지 맡는다.
+            // 문이 요청한 이동 중이면 그 이동이 끝까지 맡는다 (도착할 때 음악도).
             if (transitioning || current == null)
                 return;
+            UpdateMusic();
             var target = Find(ZoneRules.TargetZone(change, current.Id, rules));
             if (target != null && target != current)
                 StartCoroutine(Run(target, null));
@@ -186,7 +187,19 @@ namespace NevrianGlowFarm.Systems.Zones
             currentZoneId = zone.Id;
             if (LogCollector.Instance != null)
                 LogCollector.Instance.SetZone(zone.Id);
+            UpdateMusic();
             ZoneChanged?.Invoke(zone);
+        }
+
+        /// <summary>
+        /// 지금 지역 · 단계의 배경음 (같은 곡이면 그대로 — AudioManager 교차 페이드). 게임 시작 전(타이틀)에는 타이틀 음악을 두고 건드리지 않는다.
+        /// </summary>
+        public void UpdateMusic()
+        {
+            var game = GameManager.Instance;
+            if (current == null || game == null || !game.IsStarted)
+                return;
+            AudioManager.PlayMusic(current.BgmFor(game.Phase));
         }
 
         private static void Apply(ZoneProfileData zone)

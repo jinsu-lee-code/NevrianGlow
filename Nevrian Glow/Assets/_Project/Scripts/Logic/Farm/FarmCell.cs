@@ -10,14 +10,17 @@ namespace NevrianGlowFarm.Logic.Farm
         public int RegrowDays { get; }
         /// <summary>한 포기 총 수확 횟수.</summary>
         public int MaxHarvests { get; }
+        /// <summary>물을 줘야 자라는지. false면 물 없이 밤마다 자란다 (버섯꽃 — 기획 crops.csv needs_water, 회신 #30).</summary>
+        public bool NeedsWater { get; }
 
-        public CropSpec(int growDays, int wetDays, int harvestYield, int regrowDays, int maxHarvests)
+        public CropSpec(int growDays, int wetDays, int harvestYield, int regrowDays, int maxHarvests, bool needsWater = true)
         {
             GrowDays = growDays < 1 ? 1 : growDays;
             WetDays = wetDays < 1 ? 1 : wetDays;
             HarvestYield = harvestYield < 1 ? 1 : harvestYield;
             RegrowDays = regrowDays < 0 ? 0 : regrowDays;
             MaxHarvests = maxHarvests < 1 ? 1 : maxHarvests;
+            NeedsWater = needsWater;
         }
     }
 

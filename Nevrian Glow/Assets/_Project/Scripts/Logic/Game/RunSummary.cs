@@ -16,6 +16,9 @@ namespace NevrianGlowFarm.Logic.Game
         public void Clear() => days.Clear();
 
         public int DaysRecorded => days.Count;
+
+        /// <summary>그날 정산 (가게 정리 P-3: 어제 손님 수). 없으면 false.</summary>
+        public bool TryGet(int day, out SettlementReport report) => days.TryGetValue(day, out report);
         public IEnumerable<SettlementReport> Days => days.Values;
 
         public int TotalCustomers => Sum(r => r.Customers);

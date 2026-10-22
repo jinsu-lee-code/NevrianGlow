@@ -107,6 +107,8 @@ namespace NevrianGlowFarm.Systems.Save
                 s.Shelves.Add(SaveState.Capture(shelf.State));
             if (ShopSystem.Instance != null)
                 ShopSystem.Instance.CaptureTo(s);
+            if (SalesSystem.Instance != null)
+                SalesSystem.Instance.CaptureTo(s);
             foreach (var w in WorldItem.All)
             {
                 if (w == null || string.IsNullOrEmpty(w.ItemId) || w.Count <= 0)
@@ -150,7 +152,37 @@ namespace NevrianGlowFarm.Systems.Save
             }
         }
 
+        /// <summary>이 프레임 끝에 저장한다 (새 게임 시작: 1일차 아침 — 시작 알림을 받은 시스템이 다 준비된 뒤).</summary>
+        public void RequestSave() => savePending = true;
+
         // ── 불러오기 ─────────────────────────────────────
+
+        /// <summary>저장 파일을 바꾸지 않고 읽어 본다 (타이틀 '이어하기' 안내). 없거나 깨졌으면 false와 이유.</summary>
+        public bool TryPeek(out int day, out string message)
+        {
+            day = 0;
+            if (!HasSave)
+            {
+                message = "저장 없음";
+                return false;
+            }
+            try
+            {
+                if (!SaveFormat.TryRead(File.ReadAllText(FilePath), out var snapshot, out string error, null))
+                {
+                    message = "저장 파일이 깨졌음: " + error;
+                    return false;
+                }
+                day = snapshot.Day;
+                message = $"{snapshot.Day}일차 아침";
+                return true;
+            }
+            catch (Exception e)
+            {
+                message = "저장 파일을 읽지 못함: " + e.Message;
+                return false;
+            }
+        }
 
         /// <summary>파일을 읽어 지금 게임을 그 상태로 바꾼다. 깨진 파일이면 아무것도 바꾸지 않는다.</summary>
         public bool Load(out string message)
@@ -230,6 +262,8 @@ namespace NevrianGlowFarm.Systems.Save
                     shelves[i].LoadSlots(s.Shelves[i]);
             if (ShopSystem.Instance != null)
                 ShopSystem.Instance.LoadFrom(s);
+            if (SalesSystem.Instance != null)
+                SalesSystem.Instance.LoadFrom(s);
             foreach (var w in s.WorldItems)
                 SpawnWorldItem(w);
 

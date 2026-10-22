@@ -13,18 +13,24 @@ MonoBehaviour:
   m_Name: skill_hotbar
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.SkillData
   id: skill_hotbar
-  displayName: "\uD56B\uBC14 \uD655\uC7A5"
-  tab: "\uACF5\uD1B5"
-  order: 2
+  displayName: "\uBD84\uC8FC\uD55C \uC190"
+  tab: "\uACF5\uC6A9"
+  tabOrder: 3
+  order: 101
+  hidden: 0
   levelDescriptions:
-  - "\uD56B\uBC14 +2\uCE78 (6\uCE78)"
-  - "\uD56B\uBC14 +2\uCE78 (8\uCE78)"
-  costs: 0200000004000000
+  - 
+  - 
+  - 
+  - 
+  costs: 02000000030000000400000005000000
   prerequisite: {fileID: 0}
   prerequisiteLevel: 1
   modifiers:
   - stat: {fileID: 11400000, guid: c11ce7e6c8fe8d74eb134e7168225b08, type: 2}
-    op: 0
+    op: 2
     values:
-    - 2
-    - 4
+    - 5
+    - 6
+    - 7
+    - 8

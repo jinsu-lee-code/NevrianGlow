@@ -22,17 +22,9 @@ namespace NevrianGlowFarm.Logic.Cleaning
         }
     }
 
-    /// <summary>청소 규칙 (GDD 4-4, BALANCE 2-5 · 3-7). 엔진 의존 없음.</summary>
+    /// <summary>청소 규칙 (GDD 4-4). 하루에 생기는 양은 가게 정리 v2(TidyRules, P-3). 엔진 의존 없음.</summary>
     public static class CleaningRules
     {
-        /// <summary>그날 생기는 개수 = 기본 + min(일차 ÷ 나눔수(내림), 상한). 쓰레기 6 + min(일차, 6) / 얼룩 4 + min(일차 ÷ 2, 4).</summary>
-        public static int DailyCount(int baseCount, int day, int dayDivisor, int dayBonusCap)
-        {
-            int divisor = Math.Max(1, dayDivisor);
-            int bonus = Math.Min(Math.Max(0, day) / divisor, Math.Max(0, dayBonusCap));
-            return Math.Max(0, baseCount) + bonus;
-        }
-
         /// <summary>
         /// 청결도 = 1 − (가게 바닥 쓰레기 수 + 남은 얼룩 양 합) ÷ (그날 처음 쓰레기 수 + 처음 얼룩 수), 0~1.
         /// 처음 개수가 0이면 1 (치울 것이 없음, 임시 규칙 2026-10-10).

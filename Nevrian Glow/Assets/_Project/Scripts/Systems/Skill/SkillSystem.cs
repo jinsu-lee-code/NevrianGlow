@@ -40,8 +40,9 @@ namespace NevrianGlowFarm.Systems.Skill
             }
             instance = this;
             skills.AddRange(database.All<SkillData>()
-                .Where(s => s != null && !string.IsNullOrEmpty(s.Id))
-                .OrderBy(s => s.Tab ?? string.Empty, StringComparer.Ordinal)
+                .Where(s => s != null && !string.IsNullOrEmpty(s.Id) && !s.Hidden) // 숨긴 스킬(기획 phase2 · 연결 전)은 화면에 없다
+                .OrderBy(s => s.TabOrder)
+                .ThenBy(s => s.Tab ?? string.Empty, StringComparer.Ordinal)
                 .ThenBy(s => s.Order)
                 .ThenBy(s => s.Id, StringComparer.Ordinal));
         }

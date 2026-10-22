@@ -1,0 +1,19 @@
+﻿shop_id,category,name_ko,description,price_per_step,max_purchases,grant_kind,grant_target,grant_value_per_step,stock_base,stock_max,unlock,scope,mvp
+shop_seed_moonroot,seed,월광 뿌리 씨앗,심은 다음 날 수확하는 기본 작물,10,0,item,seed_moonroot,1,10,40,,demo,P0
+shop_seed_mushroomflower,seed,버섯꽃 씨앗,물 없이 2일 뒤 2묶음,30,0,item,seed_mushroomflower,1,5,20,skill_unlock_mushroom:1,demo,P0
+shop_seed_lanternfruit,seed,등불 열매 씨앗,"6일 뒤 첫 수확, 3일마다 총 5회",70,0,item,seed_lanternfruit,1,4,12,skill_unlock_lantern:1,demo,P0
+shop_seed_spiralbloom,seed,나선층꽃 씨앗,"4일 뒤 수확, 기다릴수록 수확량 증가",90,0,item,seed_spiralbloom,1,2,10,skill_unlock_spiralbloom:1,phase2,phase2
+shop_seed_pearlcore,seed,진주핵꽃 씨앗,"먹이를 주면 진주핵을 키움, 3회 수확",150,0,item,seed_pearlcore,1,1,8,skill_unlock_pearlcore:1,phase2,phase2
+shop_hoe_upgrade,tool,괭이 업그레이드,개간 횟수 3 → 2 → 1회,150;1200,2,tool_tier,tool_hoe,1;1,,,,demo,P1
+shop_mop_upgrade,tool,대걸레 업그레이드,닦는 속도와 반경 증가,200;800,2,tool_tier,tool_mop,1;1,,,,demo,P1
+shop_watering_upgrade,tool,물뿌리개 업그레이드,한 번에 1 → 4 → 8칸,400;1500,2,tool_tier,tool_watering_can,1;1,,,skill_watering_license:1,demo,P1
+shop_plot_expand,expand,밭 확장권,밭 +4 → +8 → +16 → +28밭 (최대 8×8밭 = 256칸),1500;4000;10000;25000,4,plot_cells,farm,16;32;64;112,,,,demo,P1
+shop_bag_expand,expand,가방 확장,가방 +4칸,100;200;300;500;800;1200;1600,7,bag_slots,inventory,4;4;4;4;4;4;4,,,skill_bag_license:1,demo,P1
+shop_fruit_shelf,furniture,과일 진열대,"수확한 작물만. 1층 낮은 판매대, 한 종류를 30개까지",500,0,item,furn_fruit_shelf,1,,,,demo,P1
+shop_goods_shelf,furniture,일반 진열대,"가공품만 (작물 불가). 3층, 층마다 다른 종류 가능 · 층당 큰 12 / 작은 30",1200,0,item,furn_goods_shelf,1,,,skill_unlock_grinder:1,phase2,phase2
+shop_store_expand,expand,매장 확장,"가구 자리 +4 → +6 → +8 → +10 → +12 (최대 48), 시장 크기 M +20씩",2500;6000;12000;22000;36000,5,store_size,store,4;6;8;10;12,,,,phase2,phase2
+shop_fertilizer,consumable,비료,심은 칸 성장일 −1 (작물당 1회),40,0,item,item_fertilizer,1,,,skill_unlock_fertilizer:1,demo,P1
+shop_device_sprinkler,device,스프링클러,범위 안 심은 칸에 밤마다 자동 물주기,500,0,item,device_sprinkler,1,,,skill_unlock_sprinkler:1,demo,P1
+shop_processor_grinder,processor,공명 분쇄석,즙 · 가루 가공 (6칸),1000,0,item,proc_grinder,1,,,skill_unlock_grinder:1,phase2,phase2
+shop_processor_dryer,processor,포자바람 건조막,건조 가공 (6칸),600,0,item,proc_dryer,1,,,skill_unlock_dryer:1,phase2,phase2
+shop_processor_distiller,processor,성광 증류관,재료 2개 증류 (하루 1조합),3000,0,item,proc_distiller,1,,,skill_unlock_distiller:1,phase2,phase2

@@ -31,6 +31,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _GlowMask:
+        m_Texture: {fileID: 2800000, guid: 4ed8eceda1b50c548aae673c933f1a4f, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -47,6 +51,7 @@ Material:
     - _OcclusionStrength: 1
     - _OutlineWidth: 0.004
     - _Pastel: 0.1
+    - _PointLightStrength: 1
     - _PulsePeriod: 4.5
     - _ReceiveShadows: 1
     - _RimPower: 2.2
@@ -55,9 +60,9 @@ Material:
     - _ShadowBlur: 1.5
     - _ShadowSaturation: 1.35
     - _Softness: 0.3
-    - _TexGlowSoftness: 0.15
-    - _TexGlowStrength: 0.35
-    - _TexGlowThreshold: 0.8
+    - _TexGlowSoftness: 0.2
+    - _TexGlowStrength: 2.2
+    - _TexGlowThreshold: 0.25
     - _ViewGloss: 0.7
     - _Wrap: 0.5
     m_Colors:
@@ -69,6 +74,6 @@ Material:
     - _RimColor: {r: 0.55, g: 0.95, b: 1, a: 1}
     - _ShadowTint: {r: 0.72, g: 0.7, b: 0.82, a: 1}
     - _SkyColor: {r: 0.88, g: 0.9, b: 1, a: 1}
-    - _TexGlowPulse: {r: 1, g: 1, b: 0, a: 0}
+    - _TexGlowPulse: {r: 0.7, g: 1.2, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

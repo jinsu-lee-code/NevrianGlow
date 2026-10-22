@@ -270,7 +270,7 @@ namespace NevrianGlowFarm.Systems.Farm
             foreach (int i in WateringPattern.Cells(index, can.CellCount, state.Cells.Count, pair))
             {
                 var c = state.Cells[i];
-                if (c.HasCrop && state.StatusOf(i) == FarmCellStatus.Growing && c.WetDaysLeft < SpecOf(c.CropId).WetDays)
+                if (c.HasCrop && FarmRules.NeedsWatering(c, SpecOf(c.CropId)))
                     count++;
             }
             return count;
@@ -440,9 +440,12 @@ namespace NevrianGlowFarm.Systems.Farm
                     color = Color.Lerp(color, Color.white, readyBrighten);
                 // 단계 프리팹(5-2): 칸이 비어 있는 단계는 null → 그레이박스
                 var stages = crop.StagePrefabs;
-                int stage = CropStageRules.StageIndex(stages.Count, growth, ready);
+                // 재수확 작물을 거둔 뒤에는 나무를 유지한다 (열매만 모델 애니메이션으로 — Harvest · Regrow)
+                bool regrowing = cell.HarvestCount > 0 && spec.RegrowDays > 0;
+                int stage = CropStageRules.StageIndex(stages.Count, growth, ready, regrowing);
                 var stagePrefab = stage >= 0 ? stages[stage] : null;
                 views[index].Show(soil, true, color, Mathf.Lerp(seedlingScale, grownScale, growth), stagePrefab);
+                views[index].SetFruit(ready, regrowing);
             }
 
             if (updateSummary)
@@ -476,7 +479,7 @@ namespace NevrianGlowFarm.Systems.Farm
         {
             var s = CropOf(cropId).ToSpec();
             int grow = StatSystem.Apply(growDaysStat, s.GrowDays);
-            return grow == s.GrowDays ? s : new CropSpec(grow, s.WetDays, s.HarvestYield, s.RegrowDays, s.MaxHarvests);
+            return grow == s.GrowDays ? s : new CropSpec(grow, s.WetDays, s.HarvestYield, s.RegrowDays, s.MaxHarvests, s.NeedsWater);
         }
 
         // ── 배치 ─────────────────────────────────────────────
@@ -501,16 +504,17 @@ namespace NevrianGlowFarm.Systems.Farm
             return false;
         }
 
-        // 최대 구획까지 모든 칸 자리를 검사해, 레벨 배치가 바뀌어 길 · 문과 겹치면 바로 알린다.
+        // 시작 구획의 칸 자리를 검사해, 레벨 배치가 바뀌어 길 · 문과 겹치면 바로 알린다.
+        // 확장 배열(밭 확장권)은 P1이라 시작 밭만 본다 (P-5, 2026-10-21) — 확장 자리는 기즈모 빨강 점선으로만.
         private void WarnForbiddenOverlaps()
         {
-            int total = settings.MaxPlotCount * settings.CellsPerPlot;
+            int total = settings.StartPlotCount * settings.CellsPerPlot;
             int overlaps = 0;
             for (int i = 0; i < total; i++)
                 if (OverlapsForbidden(CellPosition(i)))
                     overlaps++;
             if (overlaps > 0)
-                Debug.LogWarning($"[FarmGrid] 최대 {settings.MaxPlotCount}구획 중 {overlaps}칸이 금지 구역(길 · 문)과 겹침 — 씬 기즈모(빨강) 확인 후 밭 원점 · 간격 조정", this);
+                Debug.LogWarning($"[FarmGrid] 시작 {settings.StartPlotCount}구획 중 {overlaps}칸이 금지 구역(길 · 문)과 겹침 — 씬 기즈모(빨강) 확인 후 Glow Farm/Setup/Build Farm Layout 다시 실행", this);
         }
 
         private void OnDrawGizmos()

@@ -59,6 +59,8 @@ namespace NevrianGlowFarm.Core
         private string ambienceId;
         private int nextLoopHandle = 1;
         private IRandomSource random;
+        // 계속 나는 소리(루프 · 음악 · 환경음)의 원래 볼륨 — 설정 볼륨이 바뀌면 다시 곱한다
+        private readonly Dictionary<AudioSource, (float volume, SoundBus bus)> sustained = new Dictionary<AudioSource, (float, SoundBus)>();
 
         public static AudioManager Instance => instance;
 
@@ -142,6 +144,7 @@ namespace NevrianGlowFarm.Core
             GameEvents.LeveledUp += OnLeveledUp;
             GameEvents.SkillLevelChanged += OnSkillLevelChanged;
             GameEvents.DayChanged += OnDayChanged;
+            SettingsStore.Changed += OnSettingsChanged;
         }
 
         private void OnDisable()
@@ -149,6 +152,15 @@ namespace NevrianGlowFarm.Core
             GameEvents.LeveledUp -= OnLeveledUp;
             GameEvents.SkillLevelChanged -= OnSkillLevelChanged;
             GameEvents.DayChanged -= OnDayChanged;
+            SettingsStore.Changed -= OnSettingsChanged;
+        }
+
+        // 설정 화면에서 볼륨을 바꾸면 지금 나는 루프 · 음악에도 바로 (짧은 효과음은 다음 소리부터)
+        private void OnSettingsChanged(Logic.Settings.GameSettings settings)
+        {
+            foreach (var pair in sustained)
+                if (pair.Key != null && pair.Key.isPlaying)
+                    pair.Key.volume = pair.Value.volume * BusVolume(pair.Value.bus);
         }
 
         private readonly Dictionary<string, int> skillLevels = new Dictionary<string, int>();
@@ -222,6 +234,7 @@ namespace NevrianGlowFarm.Core
             source.pitch = 1f;
             source.volume = entry.Volume * BusVolume(entry.Bus);
             source.Play();
+            sustained[source] = (entry.Volume, entry.Bus);
             int handle = nextLoopHandle++;
             loops[handle] = source;
             loopSources.Add(source);
@@ -234,6 +247,7 @@ namespace NevrianGlowFarm.Core
             if (!loops.TryGetValue(handle, out var source))
                 return;
             loops.Remove(handle);
+            sustained.Remove(source);
             StartCoroutine(FadeOutAndRelease(source, loopFadeOut));
         }
 
@@ -277,21 +291,26 @@ namespace NevrianGlowFarm.Core
                 to.spatialBlend = 0f;
                 to.volume = 0f;
                 to.Play();
-                StartCoroutine(FadeTo(to, entry.Volume * BusVolume(bus), musicCrossfade, false));
+                sustained[to] = (entry.Volume, bus);
+                StartCoroutine(FadeTo(to, entry.Volume, bus, musicCrossfade, false));
             }
             if (from.isPlaying && from != to)
-                StartCoroutine(FadeTo(from, 0f, musicCrossfade, true));
+            {
+                sustained.Remove(from);
+                StartCoroutine(FadeTo(from, 0f, bus, musicCrossfade, true));
+            }
         }
 
-        private static IEnumerator FadeTo(AudioSource source, float target, float duration, bool stopAtEnd)
+        // 목표 볼륨은 매 프레임 버스 볼륨을 곱해 다시 구한다 (교차 중 설정을 바꿔도 맞게)
+        private IEnumerator FadeTo(AudioSource source, float target, SoundBus bus, float duration, bool stopAtEnd)
         {
             float start = source.volume;
             for (float t = 0f; t < duration; t += Time.unscaledDeltaTime)
             {
-                source.volume = Mathf.Lerp(start, target, t / duration);
+                source.volume = Mathf.Lerp(start, target * BusVolume(bus), t / duration);
                 yield return null;
             }
-            source.volume = target;
+            source.volume = target * BusVolume(bus);
             if (stopAtEnd)
                 source.Stop();
         }
@@ -317,14 +336,17 @@ namespace NevrianGlowFarm.Core
             return clip != null;
         }
 
+        // 기본 믹스(조정값) × 플레이어 설정 (전체 · 음악 = 배경음 · 환경음 · 효과음 = 효과음 · UI)
         private float BusVolume(SoundBus bus)
         {
+            var player = SettingsStore.Current;
+            float master = masterVolume * player.MasterVolume;
             switch (bus)
             {
-                case SoundBus.Ui: return masterVolume * uiVolume;
-                case SoundBus.Bgm: return masterVolume * bgmVolume;
-                case SoundBus.Ambience: return masterVolume * ambienceVolume;
-                default: return masterVolume * sfxVolume;
+                case SoundBus.Ui: return master * uiVolume * player.SfxVolume;
+                case SoundBus.Bgm: return master * bgmVolume * player.MusicVolume;
+                case SoundBus.Ambience: return master * ambienceVolume * player.MusicVolume;
+                default: return master * sfxVolume * player.SfxVolume;
             }
         }
     }

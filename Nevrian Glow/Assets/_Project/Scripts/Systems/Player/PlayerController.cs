@@ -150,7 +150,8 @@ namespace NevrianGlowFarm.Systems.Player
         private void UpdateLook()
         {
             Vector2 delta = lookAction.action.ReadValue<Vector2>();
-            FirstPersonMath.ApplyLook(ref yaw, ref pitch, delta.x, delta.y, settings.LookSensitivity, settings.PitchLimit);
+            float sensitivity = settings.LookSensitivity * SettingsStore.Current.SensitivityScale; // 설정 화면 감도 배율 (5-6)
+            FirstPersonMath.ApplyLook(ref yaw, ref pitch, delta.x, delta.y, sensitivity, settings.PitchLimit);
 
             transform.rotation = Quaternion.Euler(0f, yaw, 0f);
             cameraPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);

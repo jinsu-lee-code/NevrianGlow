@@ -18,19 +18,18 @@ MonoBehaviour:
     count: 1
   - item: {fileID: 11400000, guid: dd02b4c4e6393a145b0d53047c05e233, type: 2}
     count: 1
-  - item: {fileID: 11400000, guid: 951abf54dedae774fa34f4dbea44d508, type: 2}
-    count: 10
+  - item: {fileID: 11400000, guid: e59d00e08fdcfa743a80da95306d1217, type: 2}
+    count: 1
   startingStorageItems:
   - item: {fileID: 11400000, guid: a35777c6f4e853649b7821763c65220c, type: 2}
     count: 2
-  - item: {fileID: 11400000, guid: e59d00e08fdcfa743a80da95306d1217, type: 2}
-    count: 1
+  startFruitShelves: 3
   startPlotCount: 2
-  maxPlotCount: 5
+  maxPlotCount: 16
   cellsPerPlot: 16
   tillWorkRequired: 3
   cellPitch: 2
-  bedPitch: 5.6
-  plotPitch: 11.2
-  plotExpandDirection: {x: -1, y: 0, z: 0}
+  bedPitch: 4
+  plotPitch: 8
+  plotExpandDirection: {x: 0, y: 0, z: -1}
   demoLastDay: 6

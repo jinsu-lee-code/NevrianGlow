@@ -23,10 +23,12 @@ namespace NevrianGlowFarm.Systems.Sales
                 return null;
             if (game.Phase != usablePhase)
                 return $"영업 팻말 - {DayPhaseNames.ToKorean(usablePhase)} 단계에 사용 (지금 {DayPhaseNames.ToKorean(game.Phase)})";
-            float clean = CleaningSystem.Instance != null ? CleaningSystem.Instance.CurrentCleanliness() : 1f;
+            var cleaning = CleaningSystem.Instance;
+            float clean = cleaning != null ? cleaning.CurrentCleanliness() : 1f;
+            float tidy = cleaning != null ? cleaning.CurrentTidiness() : 1f;
             int shown = SalesSystem.Instance != null ? SalesSystem.Instance.DisplayedNow() : 0;
             string empty = shown == 0 ? " - 팔 작물 없음" : string.Empty;
-            return $"가게 열고 장사 시작 (청결도 {clean:P0} · 진열 {shown}개{empty})";
+            return $"가게 열고 장사 시작 (청결도 {clean:P0} · 정돈도 {tidy:P0} · 진열 {shown}개{empty})";
         }
 
         public void InteractHand()

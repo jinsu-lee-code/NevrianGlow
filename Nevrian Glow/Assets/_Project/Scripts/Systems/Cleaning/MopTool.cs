@@ -95,7 +95,7 @@ namespace NevrianGlowFarm.Systems.Cleaning
         {
             mopping = false;
             hasPoint = false;
-            if (PlayerInputGate.IsBlocked || !(hotbar.SelectedItem is MopData mop))
+            if (PlayerInputGate.IsWorldBlocked || !(hotbar.SelectedItem is MopData mop))
                 return;
 
             hasPoint = FindGround(out point);

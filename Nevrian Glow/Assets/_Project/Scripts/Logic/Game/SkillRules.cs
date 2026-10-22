@@ -63,6 +63,8 @@ namespace NevrianGlowFarm.Logic.Game
         Add,
         /// <summary>(기본값 + 더하기 합)에 곱한다.</summary>
         Multiply,
+        /// <summary>기본값을 이 값으로 바꾼다 (기획 skill_effects op = set, 예: 핫바 칸 5). 여럿이면 가장 큰 값.</summary>
+        Set,
     }
 
     /// <summary>능력치 하나에 거는 변경 (스킬 단계 효과 등).</summary>
@@ -81,27 +83,30 @@ namespace NevrianGlowFarm.Logic.Game
     }
 
     /// <summary>
-    /// 능력치 계산 (노션 GDD 12장 StatSystem · Modifier): 결과 = (기본값 + 더하기 합) × 곱하기 곱.
-    /// 같은 능력치를 여러 스킬이 바꾸면 더하기는 더하고 곱하기는 곱한다. 엔진 의존 없음.
+    /// 능력치 계산 (노션 GDD 12장 StatSystem · Modifier): 결과 = (기본값 또는 Set 값 + 더하기 합) × 곱하기 곱.
+    /// 같은 능력치를 여러 스킬이 바꾸면 더하기는 더하고 곱하기는 곱하고, Set은 가장 큰 값이 기본값을 대신한다. 엔진 의존 없음.
     /// </summary>
     public static class StatCalculator
     {
         public static double Apply(string statId, double baseValue, IEnumerable<StatModifier> modifiers)
         {
             double add = 0.0, mul = 1.0;
+            double? set = null;
             if (modifiers != null && statId != null)
             {
                 foreach (var m in modifiers)
                 {
                     if (m.StatId != statId)
                         continue;
-                    if (m.Op == ModifierOp.Add)
-                        add += m.Value;
-                    else
-                        mul *= m.Value;
+                    switch (m.Op)
+                    {
+                        case ModifierOp.Add: add += m.Value; break;
+                        case ModifierOp.Multiply: mul *= m.Value; break;
+                        case ModifierOp.Set: set = set.HasValue ? Math.Max(set.Value, m.Value) : m.Value; break;
+                    }
                 }
             }
-            return (baseValue + add) * mul;
+            return ((set ?? baseValue) + add) * mul;
         }
 
         /// <summary>정수 결과 (판매가 · 칸 수 · 성장일). 0.5 올림 (BALANCE 3-4와 같은 반올림).</summary>

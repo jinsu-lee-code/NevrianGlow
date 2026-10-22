@@ -11,6 +11,24 @@ namespace NevrianGlowFarm.Data
     [CreateAssetMenu(menuName = "Glow Farm/Data/Zone Profile", fileName = "zone_new")]
     public class ZoneProfileData : ContentData
     {
+        [System.Serializable]
+        public struct PhaseBgm
+        {
+            [Tooltip("이 단계일 때")]
+            [SerializeField] private DayPhase phase;
+            [Tooltip("이 배경음 id (예: 가게 청소·진열 = bgm_clean_loop)")]
+            [SerializeField] private string bgmId;
+
+            public PhaseBgm(DayPhase phase, string bgmId)
+            {
+                this.phase = phase;
+                this.bgmId = bgmId;
+            }
+
+            public DayPhase Phase => phase;
+            public string BgmId => bgmId;
+        }
+
         [Header("이동 규칙")]
         [Tooltip("이 단계일 때 플레이어가 이 지역에 있어야 한다 — 단계가 바뀌면 자동으로 옮긴다")]
         [SerializeField] private List<DayPhase> phases = new List<DayPhase>();
@@ -32,6 +50,17 @@ namespace NevrianGlowFarm.Data
         [SerializeField] private Material skybox;
         [Tooltip("배경음 id — AudioManager(5-5)가 재생, 비우면 바꾸지 않는다")]
         [SerializeField] private string bgmId;
+        [Tooltip("단계마다 다른 배경음 — 목록에 없는 단계는 위 배경음 (사운드 납품 10.21: 가게 청소·진열 bgm_clean_loop · 장사 bgm_market_loop)")]
+        [SerializeField] private List<PhaseBgm> phaseBgm = new List<PhaseBgm>();
+
+        /// <summary>그 단계에 이 지역에서 나는 배경음 id.</summary>
+        public string BgmFor(DayPhase phase)
+        {
+            foreach (var p in phaseBgm)
+                if (p.Phase == phase && !string.IsNullOrEmpty(p.BgmId))
+                    return p.BgmId;
+            return bgmId;
+        }
 
         public IReadOnlyList<DayPhase> Phases => phases;
         public bool IsDayStart => isDayStart;
