@@ -225,5 +225,50 @@ MonoBehaviour:
     loop: 0
     pitchJitter: 0.05
     cooldown: 0.05
+  - id: bgm_clean_loop
+    clips:
+    - {fileID: 8300000, guid: 2fff4fa07023fee41aa8de46b6224dac, type: 3}
+    bus: 2
+    volume: 1
+    spatial: 0
+    loop: 1
+    pitchJitter: 0
+    cooldown: 0
+  - id: bgm_farm_loop
+    clips:
+    - {fileID: 8300000, guid: a7879d3d92be27547a0ec781d9be573b, type: 3}
+    bus: 2
+    volume: 1
+    spatial: 0
+    loop: 1
+    pitchJitter: 0
+    cooldown: 0
+  - id: bgm_market_loop
+    clips:
+    - {fileID: 8300000, guid: 6325bf1f7c81a6f47a12d77a64f1f8a8, type: 3}
+    bus: 2
+    volume: 1
+    spatial: 0
+    loop: 1
+    pitchJitter: 0
+    cooldown: 0
+  - id: bgm_title_loop
+    clips:
+    - {fileID: 8300000, guid: 79cb67153a5cfcf4897ae99b75323ce7, type: 3}
+    bus: 2
+    volume: 1
+    spatial: 0
+    loop: 1
+    pitchJitter: 0
+    cooldown: 0
+  - id: sfx_ui_tool_switch
+    clips:
+    - {fileID: 8300000, guid: f118e3ec204d6e14f8c1cb1deb918e8d, type: 3}
+    bus: 1
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0
+    cooldown: 0.05
   minDistance: 1
   maxDistance: 15

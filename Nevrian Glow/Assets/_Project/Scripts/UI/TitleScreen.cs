@@ -121,9 +121,9 @@ namespace NevrianGlowFarm.UI
         protected override void OnClosed()
         {
             SetGameHudVisible(true);
-            // 타이틀 음악 → 지금 있는 구역의 배경음
-            var zone = ZoneTransition.Instance != null ? ZoneTransition.Instance.Current : null;
-            AudioManager.PlayMusic(zone != null ? zone.BgmId : null);
+            // 타이틀 음악 → 지금 있는 구역 · 단계의 배경음
+            if (ZoneTransition.Instance != null)
+                ZoneTransition.Instance.UpdateMusic();
         }
 
         private void RefreshSave()
