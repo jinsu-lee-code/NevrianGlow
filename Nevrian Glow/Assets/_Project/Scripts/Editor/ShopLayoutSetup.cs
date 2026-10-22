@@ -143,8 +143,8 @@ namespace NevrianGlowFarm.Editor
             Place(root, "StorageAccessPoint_Shop", new Vector3(-4.7f, 0f, -4.1f), 0f);
             Place(root, "TrashBin", new Vector3(-3.1f, 0f, -4.3f), 0f);
             Place(root, "ShopSpawn", new Vector3(-5.2f, 0f, FarmDoorZ), 90f);
-            // 계산기 화면 · 종이 점원 쪽(오른쪽 벽)을 보게 — 손님은 왼쪽 줄에서 온다 (2026-10-22 사용자: 90° → 270°)
-            Place(root, "Counter", new Vector3(4.7f, 0f, -4.0f), 270f);
+            // 수납장 방향은 그대로 — 계산기(Register)만 점원 쪽을 보게 counter 프리팹에서 돌림 (2026-10-22 사용자)
+            Place(root, "Counter", new Vector3(4.7f, 0f, -4.0f), 90f);
             Place(root, "BasketStand", new Vector3(-0.9f, 0f, -4.3f), 90f);
             Place(root, "OpenSign", new Vector3(-1.7f, 0f, -4.5f), 0f);
             Place(root, "Lamp_Counter", new Vector3(5.5f, 0f, -4.6f), 0f);
