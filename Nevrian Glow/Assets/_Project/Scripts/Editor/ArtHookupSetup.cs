@@ -190,6 +190,32 @@ namespace NevrianGlowFarm.Editor
             Debug.Log("[Setup] 농장 문: " + note);
         }
 
+        // ── 8. 창고 선반 ──
+
+        private const string StoragePrefab = "Assets/_Project/Prefabs/Storage/storage_point.prefab";
+        private const string StorageShelfArt = "Assets/Art/Props/storage_shelf/pf_prop_storage_shelf.prefab";
+        private static readonly Vector3 StorageShelfSize = new Vector3(1.6f, 2.0f, 0.5f); // mapping.md — 피벗 바닥 중앙, 앞면 +Z
+
+        [MenuItem("Glow Farm/Setup/Connect Art (4) Storage Shelf")]
+        private static void StorageShelfMenu()
+        {
+            var note = ReplaceModel(StoragePrefab, StorageShelfArt, root =>
+            {
+                // 그레이박스 상자는 가운데 피벗 · 크기 배율이었다 → 아트는 바닥 피벗 · 실제 크기라 원점 · 1배로
+                var model = root.transform.Find("Model");
+                model.localPosition = Vector3.zero;
+                model.localRotation = Quaternion.identity;
+                model.localScale = Vector3.one;
+                // 조준 · 접근 콜라이더를 선반 크기로
+                if (!root.TryGetComponent<BoxCollider>(out var box))
+                    return "BoxCollider 없음";
+                box.center = new Vector3(0f, StorageShelfSize.y * 0.5f, 0f);
+                box.size = StorageShelfSize;
+                return "콜라이더 1.6 × 2.0 × 0.5 m";
+            });
+            Debug.Log("[Setup] 창고 선반: " + note + " — 농장 창고 방향은 Build Farm Layout");
+        }
+
         /// <summary>
         /// 프리팹의 'Model' 자식을 아트 프리팹 인스턴스로 바꾼다 (위치 · 회전 · 크기는 그대로). 이미 그 아트면 그대로 두고 after만 실행.
         /// </summary>

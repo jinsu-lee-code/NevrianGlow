@@ -92,7 +92,8 @@ namespace NevrianGlowFarm.Editor
 
             // 문 옆 출발 지점 · 창고
             Place(root, "FarmSpawn", doorPos + inward * SpawnFromDoor, inward);
-            Place(root, "StorageAccessPoint_Farm", doorPos + inward * StorageFromDoor - along * StorageSide, null);
+            // 창고 선반 앞면(+Z)이 문 앞 길 쪽을 보게 (아트 창고 선반, 2026-10-22)
+            Place(root, "StorageAccessPoint_Farm", doorPos + inward * StorageFromDoor - along * StorageSide, along);
 
             // 길 (둘레 4줄 + 문에서 들어오는 길) — 회색 바닥 + 금지 구역
             var notes = new List<string>();
