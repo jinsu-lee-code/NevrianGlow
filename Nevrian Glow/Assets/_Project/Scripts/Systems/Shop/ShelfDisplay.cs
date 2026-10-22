@@ -43,6 +43,8 @@ namespace NevrianGlowFarm.Systems.Shop
         [SerializeField, Min(1)] private int stackColumns = 2;
         [Tooltip("진열된 작물 크기 (m)")]
         [SerializeField, Min(0.05f)] private float itemSize = 0.24f;
+        [Tooltip("줄마다 (놓는 면 높이, 앞뒤 위치 z) — 0번 = 앞줄(손님 쪽). 층 · 경사 진열대(아트 2026-10-22)용, 비우면 topHeight 한 면에 stackSpacing 간격 (m)")]
+        [SerializeField] private List<Vector2> rowLayout = new List<Vector2>();
         [Tooltip("놓을 수 있을 때 홀로그램 색 — 알파 = 투명도, 밝기는 재질의 Emission Scale (시안 #62F2E1)")]
         [SerializeField] private Color okColor = new Color(0.38f, 0.95f, 0.88f, 0.35f);
         [Tooltip("놓을 수 없을 때 홀로그램 색 (빨강)")]
@@ -370,6 +372,11 @@ namespace NevrianGlowFarm.Systems.Shop
             int col = index % columns;
             int row = index / columns;
             float x = (float)ShelfLayout.SlotCenterX(slot, state.SlotCount, slotPitch) + (col - (columns - 1) * 0.5f) * stackSpacing;
+            if (rowLayout.Count > 0)
+            {
+                var r = rowLayout[Mathf.Min(row, rowLayout.Count - 1)];
+                return new Vector3(x, r.x + itemSize * 0.5f, r.y);
+            }
             float z = ((rows - 1) * 0.5f - row) * stackSpacing;
             return new Vector3(x, topHeight + itemSize * 0.5f, z);
         }

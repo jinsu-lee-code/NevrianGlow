@@ -106,11 +106,22 @@ namespace NevrianGlowFarm.Editor
                 var fruit = Spot(spots, $"FruitSpot_{i + 1}", new Vector3(SpotX[i], 0f, FruitRowZ), FurnitureKind.FruitShelf, FruitSpotSize);
                 Spot(spots, $"WallSpot_{i + 1}", new Vector3(SpotX[i], 0f, WallRowZ), FurnitureKind.GoodsShelf, WallSpotSize);
                 var existing = fruit.GetComponentInChildren<ShelfDisplay>();
+                // 아트 진열대 2종을 섞어 놓는다 (진열대 · 판매대 · 진열대 …, BRANCH_ART 10.21) — Variant가 없으면 그레이박스 fruit_shelf
+                var wanted = ArtShelfFor(i) ?? prefab;
                 if (i < startShelves && existing == null)
                 {
-                    var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, fruit);
+                    var go = (GameObject)PrefabUtility.InstantiatePrefab(wanted, fruit);
                     go.name = $"FruitShelf_{i + 1}";
                     existing = go.GetComponent<ShelfDisplay>();
+                }
+                else if (existing != null && PrefabUtility.IsAnyPrefabInstanceRoot(existing.gameObject)
+                    && PrefabUtility.GetCorrespondingObjectFromSource(existing.gameObject) != wanted)
+                {
+                    // 이름(저장 순서) · 진열 상태는 그대로 두고 프리팹만 바꾼다
+                    string keep = existing.name;
+                    PrefabUtility.ReplacePrefabAssetOfPrefabInstance(existing.gameObject, wanted, InteractionMode.AutomatedAction);
+                    existing.name = keep;
+                    notes.Add($"{keep} → {wanted.name}");
                 }
                 if (existing != null)
                 {
@@ -200,6 +211,10 @@ namespace NevrianGlowFarm.Editor
             }
             return string.Join(" · ", notes);
         }
+
+        // 짝수 자리 = 3층 경사 진열대, 홀수 자리 = 낮은 판매대 (Connect Art (5) Produce Shelves가 만든 Variant)
+        private static GameObject ArtShelfFor(int spot) =>
+            AssetDatabase.LoadAssetAtPath<GameObject>(spot % 2 == 0 ? ArtHookupSetup.FruitShelfTiered : ArtHookupSetup.FruitShelfCounter);
 
         // ── 부품 ──
 

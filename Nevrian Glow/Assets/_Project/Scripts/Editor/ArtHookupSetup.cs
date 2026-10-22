@@ -190,6 +190,86 @@ namespace NevrianGlowFarm.Editor
             Debug.Log("[Setup] 농장 문: " + note);
         }
 
+        // ── 7. 과일 진열대 2종 ──
+
+        public const string FruitShelfBase = "Assets/_Project/Prefabs/Shop/fruit_shelf.prefab";
+        public const string FruitShelfTiered = "Assets/_Project/Prefabs/Shop/fruit_shelf_tiered.prefab";
+        public const string FruitShelfCounter = "Assets/_Project/Prefabs/Shop/fruit_shelf_counter.prefab";
+
+        // 줄(앞 = 손님 쪽 +Z부터)의 (놓는 면 높이, z) — 아트 모델 위에서 레이로 잰 값 (2026-10-22)
+        // 3층 경사 진열대(1.8 × 1.4 × 0.9 m): 낮은 층 0.17 · 가운데 0.60 · 높은 층 1.04 (나무 상자 바닥)
+        private static readonly Vector2[] TieredRows = { new Vector2(0.17f, 0.33f), new Vector2(0.60f, 0.16f), new Vector2(1.04f, -0.12f) };
+        // 낮은 판매대(1.8 × 0.9 × 1.4 m): 가운데가 솟은 경사 윗면 — 앞쪽 경사면 세 줄
+        private static readonly Vector2[] CounterRows = { new Vector2(0.71f, 0.45f), new Vector2(0.76f, 0.25f), new Vector2(0.80f, 0.05f) };
+
+        [MenuItem("Glow Farm/Setup/Connect Art (5) Produce Shelves")]
+        private static void ProduceShelvesMenu()
+        {
+            var notes = new List<string>
+            {
+                ShelfVariant(FruitShelfTiered, "Assets/Art/Props/shelf_produce/pf_prop_shelf_produce.prefab", TieredRows, new Vector3(1.8f, 1.4f, 0.9f)),
+                ShelfVariant(FruitShelfCounter, "Assets/Art/Props/shelf_produce/pf_prop_shelf_produce_2.prefab", CounterRows, new Vector3(1.8f, 0.9f, 1.4f)),
+            };
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] 과일 진열대: " + string.Join(" · ", notes) + " — 다음: Build Shop Layout(섞어 배치) → Bake Shop NavMesh");
+        }
+
+        // fruit_shelf(ShelfDisplay · 홀로그램 · 설정 참조)의 Variant: 회색 몸체는 숨기고 아트 모델을 자식으로, 진열 줄 · 조준 상자를 모델에 맞춘다
+        private static string ShelfVariant(string path, string artPath, Vector2[] rows, Vector3 size)
+        {
+            var art = AssetDatabase.LoadAssetAtPath<GameObject>(artPath);
+            var baseShelf = AssetDatabase.LoadAssetAtPath<GameObject>(FruitShelfBase);
+            if (art == null || baseShelf == null)
+                return $"{System.IO.Path.GetFileNameWithoutExtension(path)}: 아트 또는 fruit_shelf 없음";
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(path) == null)
+            {
+                var instance = (GameObject)PrefabUtility.InstantiatePrefab(baseShelf);
+                PrefabUtility.SaveAsPrefabAsset(instance, path);
+                Object.DestroyImmediate(instance);
+            }
+            var root = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                root.name = System.IO.Path.GetFileNameWithoutExtension(path);
+                var model = root.transform.Find("Art");
+                if (model == null)
+                {
+                    model = ((GameObject)PrefabUtility.InstantiatePrefab(art, root.transform)).transform;
+                    model.name = "Art";
+                }
+                model.localPosition = Vector3.zero;
+                model.localRotation = Quaternion.identity; // 아트 앞면 +Z = ShelfDisplay 손님 쪽 +Z
+                model.localScale = Vector3.one;
+                var body = root.transform.Find("Body");
+                if (body != null && body.TryGetComponent<Renderer>(out var bodyRenderer))
+                    bodyRenderer.enabled = false;
+
+                var shelf = root.GetComponent<Systems.Shop.ShelfDisplay>();
+                var so = new SerializedObject(shelf);
+                so.FindProperty("slotPitch").floatValue = size.x - 0.2f; // 몸체 · 조준 상자 폭 = 칸 × 간격 + 0.2 → 모델 폭
+                so.FindProperty("stackColumns").intValue = 10;
+                so.FindProperty("stackSpacing").floatValue = 0.15f;
+                so.FindProperty("itemSize").floatValue = 0.15f;
+                so.FindProperty("topHeight").floatValue = rows[0].x;
+                var list = so.FindProperty("rowLayout");
+                list.arraySize = rows.Length;
+                for (int i = 0; i < rows.Length; i++)
+                    list.GetArrayElementAtIndex(i).vector2Value = rows[i];
+                so.ApplyModifiedPropertiesWithoutUndo();
+                if (root.TryGetComponent<BoxCollider>(out var box))
+                {
+                    box.center = new Vector3(0f, size.y * 0.5f, 0f);
+                    box.size = size;
+                }
+                PrefabUtility.SaveAsPrefabAsset(root, path);
+                return $"{root.name} ← {art.name}";
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
         // ── 8. 창고 선반 ──
 
         private const string StoragePrefab = "Assets/_Project/Prefabs/Storage/storage_point.prefab";
