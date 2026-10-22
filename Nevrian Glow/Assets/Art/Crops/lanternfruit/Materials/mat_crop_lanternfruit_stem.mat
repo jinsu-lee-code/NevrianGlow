@@ -31,6 +31,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _PaintMap:
+        m_Texture: {fileID: 2800000, guid: c0e30209171632f4d8a2e41ddd5629e5, type: 3}
+        m_Scale: {x: 1, y: 4}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _AmbientShade: 0.105
@@ -43,6 +47,7 @@ Material:
     - _MouthSize: 0
     - _MouthSmile: 0
     - _OutlineWidth: 0.006
+    - _PaintStrength: 1
     - _RidgeAmount: 0.18
     - _RidgeCount: 4
     - _RidgeSharpness: 1.5

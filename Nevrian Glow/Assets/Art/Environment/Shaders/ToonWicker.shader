@@ -83,6 +83,13 @@ Shader "DSEWA/ToonWicker"
             positionWS.xz += offset;
             return positionWS;
         }
+                // outline width is in metres at the model's own size: a prefab scaled to 0.18 gets a 0.18x line
+        // (geometric mean of the object scale, so non-uniform boxes do not blow up)
+        float OutlineObjectScale()
+        {
+            float3x3 m = (float3x3)GetObjectToWorldMatrix();
+            return pow(abs(determinant(m)), 1.0 / 3.0);
+        }
         ENDHLSL
 
         Pass
@@ -221,7 +228,7 @@ Shader "DSEWA/ToonWicker"
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
                 float3 positionWS = PropWindBend(TransformObjectToWorld(input.positionOS.xyz), input.color);
                 float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
-                positionWS += normalWS * _OutlineWidth;
+                positionWS += normalWS * _OutlineWidth * OutlineObjectScale();
                 o.positionCS = TransformWorldToHClip(positionWS);
                 o.fogFactor = ComputeFogFactor(o.positionCS.z);
                 return o;

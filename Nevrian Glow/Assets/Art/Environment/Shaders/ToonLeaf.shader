@@ -20,6 +20,9 @@ Shader "DSEWA/ToonLeaf"
         [Header(Two Sided)]
         _BackFaceDarken ("Back Face Darken", Range(0, 1)) = 0.35
         _NormalUp ("Normal Toward Up (canopy shading)", Range(0, 1)) = 0.5
+        [Header(Paint Detail)]
+        _PaintMap ("Paint Detail (leaf uv, linear grey, 0.5 = none)", 2D) = "grey" {}
+        _PaintStrength ("Paint Strength (0 = off)", Range(0, 2)) = 0
         [Header(Vein)]
         _VeinColor ("Midrib Color (multiply)", Color) = (0.55, 0.60, 0.95, 1)
         _VeinWidth ("Midrib Half Width (uv)", Range(0, 0.1)) = 0.028
@@ -56,7 +59,7 @@ Shader "DSEWA/ToonLeaf"
 
         CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
-            half _Cutoff;
+            half _Cutoff, _PaintStrength;
             half4 _RootColor, _TipColor, _ShadowTint;
             half _Threshold, _Softness, _ShadowBlur, _AmbientShade, _ReceiveShadowBias;
             half _BackFaceDarken, _NormalUp;
@@ -73,6 +76,7 @@ Shader "DSEWA/ToonLeaf"
         CBUFFER_END
 
         TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
+        TEXTURE2D(_PaintMap); SAMPLER(sampler_PaintMap);
 
         // Whole-leaf sway about the pivot (the leaf base), stronger toward the tip, plus a small up/down flutter.
         float3 LeafBend(float3 positionWS, float4 color)
@@ -176,6 +180,9 @@ Shader "DSEWA/ToonLeaf"
                 half3 base = lerp(_RootColor.rgb, _TipColor.rgb, h);
                 half3 color = lerp(base * _ShadowTint.rgb, base, lit);
                 if (!isFront) color = lerp(color, color * _ShadowTint.rgb, _BackFaceDarken);
+                // Hand-painted detail (side veins, brush strokes) in leaf uv: grey 0.5 leaves the colour alone
+                half3 paint = SAMPLE_TEXTURE2D(_PaintMap, sampler_PaintMap, i.uv).rgb;
+                color *= lerp(half3(1, 1, 1), paint * 2.0h, _PaintStrength);
 
                 // Midrib: a line down u = 0.5, narrowing toward the tip, one-pixel anti-aliased.
                 float d = abs(i.uv.x - 0.5);

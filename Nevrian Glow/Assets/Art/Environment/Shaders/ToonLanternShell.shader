@@ -47,6 +47,13 @@ Shader "DSEWA/ToonLanternShell"
         _RimLineMin ("Edge Line Start", Range(0, 1)) = 0.80
         _RimLineMax ("Edge Line End", Range(0, 1)) = 0.86
         _RimLineStrength ("Edge Line Strength", Range(0, 1)) = 0.85
+        [Header(Iridescent Rim)]
+        [HDR] _IriColorA ("Rim Color A (cyan side)", Color) = (0.45, 1.0, 0.95, 1)
+        [HDR] _IriColorB ("Rim Color B (pink side)", Color) = (1.0, 0.45, 0.85, 1)
+        _IriStrength ("Rim Glow Strength (0 = off)", Range(0, 4)) = 0
+        _IriMin ("Rim Start (fresnel)", Range(0, 1)) = 0.45
+        _IriMax ("Rim End (fresnel)", Range(0, 1)) = 0.95
+        _IriBands ("Colour Bands Around", Float) = 1.0
     }
 
     SubShader
@@ -69,6 +76,8 @@ Shader "DSEWA/ToonLanternShell"
             half _AlphaCentre, _AlphaEdge, _AlphaPower;
             half4 _RimLineColor;
             half _RimLineMin, _RimLineMax, _RimLineStrength;
+            half4 _IriColorA, _IriColorB;
+            half _IriStrength, _IriMin, _IriMax, _IriBands;
         CBUFFER_END
 
         // Per-object breathing: each fruit pulses out of phase (phase from its world position).
@@ -243,6 +252,13 @@ Shader "DSEWA/ToonLanternShell"
                 float fres = 1.0 - facing;
                 float edgeLine = smoothstep(_RimLineMin, _RimLineMax, fres) * _RimLineStrength;
                 color = lerp(color, _RimLineColor.rgb, edgeLine);
+
+                // Iridescent rim: a soft emissive fresnel band whose colour slides from cyan to pink around the
+                // fruit (by the screen-side direction of the normal and the height), like a soap-film edge.
+                float iri = smoothstep(_IriMin, _IriMax, fres) * _IriStrength;
+                float3 Vr = normalize(cross(float3(0, 1, 0), V) + 1e-4);
+                float hue = 0.5 + 0.5 * sin((dot(N, Vr) * 1.6 + i.positionOS.y * 0.8) * 3.14159 * _IriBands);
+                color += lerp(_IriColorA.rgb, _IriColorB.rgb, hue) * iri * pulse;
 
                 // Translucent toward the centre so the glow sphere shows, solid at the silhouette.
                 half alpha = lerp(_AlphaCentre, _AlphaEdge, pow(fres, _AlphaPower));

@@ -102,7 +102,7 @@ Shader "DSEWA/ToonCrystal"
         _LightColorAmount ("Light Color Influence", Range(0, 1)) = 0
         [Header(Outline)]
         _OutlineColor ("Outline Color", Color) = (0.2, 0.25, 0.5, 1)
-        _OutlineWidth ("Outline Width (m, 0 = off)", Float) = 0
+        _OutlineWidth ("Outline Width (m at the model's own size, 0 = off)", Float) = 0
     }
 
     SubShader
@@ -149,6 +149,13 @@ Shader "DSEWA/ToonCrystal"
             half4 _OutlineColor;
             float _OutlineWidth;
         CBUFFER_END
+                // outline width is in metres at the model's own size: a prefab scaled to 0.18 gets a 0.18x line
+        // (geometric mean of the object scale, so non-uniform boxes do not blow up)
+        float OutlineObjectScale()
+        {
+            float3x3 m = (float3x3)GetObjectToWorldMatrix();
+            return pow(abs(determinant(m)), 1.0 / 3.0);
+        }
         ENDHLSL
 
         // back faces first (URP draws SRPDefaultUnlit before UniversalForward for the same object)
@@ -211,7 +218,7 @@ Shader "DSEWA/ToonCrystal"
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
                 float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
-                positionWS += TransformObjectToWorldNormal(input.normalOS) * _OutlineWidth;
+                positionWS += TransformObjectToWorldNormal(input.normalOS) * _OutlineWidth * OutlineObjectScale();
                 o.positionCS = TransformWorldToHClip(positionWS);
                 o.fogFactor = ComputeFogFactor(o.positionCS.z);
                 return o;
