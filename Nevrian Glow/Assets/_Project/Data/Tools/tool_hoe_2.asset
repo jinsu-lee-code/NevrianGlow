@@ -16,6 +16,6 @@ MonoBehaviour:
   displayName: "\uCCA0 \uAD2D\uC774"
   maxStack: 1
   canStore: 1
-  heldPrefab: {fileID: 0}
+  heldPrefab: {fileID: 345275002101877966, guid: 736a6ed56a5321a4fbe5058ea854f75d, type: 3}
   useDelay: 0
   workPerUse: 2

@@ -16,4 +16,6 @@ MonoBehaviour:
   displayName: "\uB0A1\uC740 \uAD2D\uC774"
   maxStack: 1
   canStore: 1
+  heldPrefab: {fileID: 2825230906745664993, guid: 938172b9d5de91c4b8d32efe5d37d062, type: 3}
+  useDelay: 0
   workPerUse: 1
