@@ -20,9 +20,9 @@ MonoBehaviour:
   greyboxColor: {r: 1, g: 0.8235294, b: 0.47843137, a: 1}
   stagePrefabs:
   - {fileID: 6492855999298447309, guid: 31666e8d0b5f8804aaa72bdde3f9bbbd, type: 3}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 40168802638353787, guid: b984b51ec6abe1748bba54fc1a3ee5bc, type: 3}
+  - {fileID: 968485363519860326, guid: e4344ef0487ceb644890191b9b6de82e, type: 3}
+  - {fileID: 8912540618261724665, guid: f7147c0a18e8d5c46a1e0ca72a7d1988, type: 3}
+  - {fileID: 296768963799598503, guid: b984b51ec6abe1748bba54fc1a3ee5bc, type: 3}
   seedPrice: 70
   sellPrice: 110
   growDays: 6

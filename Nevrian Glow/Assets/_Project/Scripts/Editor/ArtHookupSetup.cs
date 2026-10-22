@@ -104,6 +104,68 @@ namespace NevrianGlowFarm.Editor
             }
         }
 
+        // ── 5 · 6. 작물 단계 ──
+
+        private const string CropPrefabFolder = "Assets/_Project/Prefabs/Farm/Crops";
+        private const string CropDataFolder = "Assets/_Project/Data/Crops";
+        private const string ArtCrops = "Assets/Art/Crops";
+
+        [MenuItem("Glow Farm/Setup/Connect Art (3) Crop Stages")]
+        private static void CropStagesMenu()
+        {
+            var notes = new List<string>();
+            // 버섯꽃: [0] 공용 둔덕 · [1] small · [2] mature. 거대(giant)는 거대 작물(4-4, P1)용으로 Variant만 — 완성 4칸 한가운데에 놓을 것
+            var mushSmall = CropVariant("crop_mushroomflower_small", $"{ArtCrops}/mushroomflower/pf_crop_mushroomflower_small.prefab", notes);
+            var mushMature = CropVariant("crop_mushroomflower_mature", $"{ArtCrops}/mushroomflower/pf_crop_mushroomflower_mature.prefab", notes);
+            CropVariant("crop_mushroomflower_giant", $"{ArtCrops}/mushroomflower/pf_crop_mushroomflower_giant.prefab", notes);
+            notes.Add(SetStages("crop_mushroomflower", new[] { (1, mushSmall), (2, mushMature) }, 3));
+            // 등불 열매: [0] 공용 둔덕 · [1] sapling · [2] stem · [3] mature (재수확: Harvest · Regrow 트리거 — FarmCellView)
+            var lanSapling = CropVariant("crop_lanternfruit_sapling", $"{ArtCrops}/lanternfruit/pf_crop_lanternfruit_sapling.prefab", notes);
+            var lanStem = CropVariant("crop_lanternfruit_stem", $"{ArtCrops}/lanternfruit/pf_crop_lanternfruit_stem.prefab", notes);
+            var lanMature = CropVariant("crop_lanternfruit_mature", $"{ArtCrops}/lanternfruit/pf_crop_lanternfruit_mature.prefab", notes);
+            notes.Add(SetStages("crop_lanternfruit", new[] { (1, lanSapling), (2, lanStem), (3, lanMature) }, 4));
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] 작물 단계: " + string.Join(" · ", notes));
+        }
+
+        // 아트 프리팹의 Prefab Variant (_Project 쪽 — 아트 원본은 그대로). 같은 경로에 다른 것이 있으면 덮어쓴다(GUID 유지)
+        private static GameObject CropVariant(string name, string artPath, List<string> notes)
+        {
+            string path = $"{CropPrefabFolder}/{name}.prefab";
+            var art = AssetDatabase.LoadAssetAtPath<GameObject>(artPath);
+            if (art == null)
+            {
+                notes.Add($"{name}: 아트 없음");
+                return null;
+            }
+            var existing = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (existing != null && PrefabUtility.GetPrefabAssetType(existing) == PrefabAssetType.Variant
+                && PrefabUtility.GetCorrespondingObjectFromSource(existing) == art)
+                return existing;
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(art);
+            instance.name = name;
+            var saved = PrefabUtility.SaveAsPrefabAsset(instance, path);
+            Object.DestroyImmediate(instance);
+            notes.Add(existing != null ? $"{name} 바꿈" : $"{name} 만듦");
+            return saved;
+        }
+
+        private static string SetStages(string cropId, (int Slot, GameObject Prefab)[] slots, int count)
+        {
+            var crop = AssetDatabase.LoadAssetAtPath<CropData>($"{CropDataFolder}/{cropId}.asset");
+            if (crop == null)
+                return $"{cropId} 없음";
+            var so = new SerializedObject(crop);
+            var list = so.FindProperty("stagePrefabs");
+            if (list.arraySize < count)
+                list.arraySize = count;
+            foreach (var (slot, prefab) in slots)
+                if (prefab != null)
+                    list.GetArrayElementAtIndex(slot).objectReferenceValue = prefab;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return $"{cropId} 단계 {list.arraySize}칸";
+        }
+
         // ── 4. 농장 문 ──
 
         private const string ZoneDoorPrefab = "Assets/_Project/Prefabs/Zones/zone_door.prefab";

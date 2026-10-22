@@ -440,9 +440,12 @@ namespace NevrianGlowFarm.Systems.Farm
                     color = Color.Lerp(color, Color.white, readyBrighten);
                 // 단계 프리팹(5-2): 칸이 비어 있는 단계는 null → 그레이박스
                 var stages = crop.StagePrefabs;
-                int stage = CropStageRules.StageIndex(stages.Count, growth, ready);
+                // 재수확 작물을 거둔 뒤에는 나무를 유지한다 (열매만 모델 애니메이션으로 — Harvest · Regrow)
+                bool regrowing = cell.HarvestCount > 0 && spec.RegrowDays > 0;
+                int stage = CropStageRules.StageIndex(stages.Count, growth, ready, regrowing);
                 var stagePrefab = stage >= 0 ? stages[stage] : null;
                 views[index].Show(soil, true, color, Mathf.Lerp(seedlingScale, grownScale, growth), stagePrefab);
+                views[index].SetFruit(ready, regrowing);
             }
 
             if (updateSummary)
