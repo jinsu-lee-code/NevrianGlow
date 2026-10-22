@@ -81,6 +81,10 @@
 
 | 요청서 id | 파일 | 메모 |
 |---|---|---|
+| UI 패널 · 버튼 (요청서 G) | `UI/Panels/ui_panel_base` (9-slice 32 px), `ui_button_normal` · `_hover` · `_pressed` · `_disabled` (256 × 64, 9-slice 좌우 28 · 위아래 20), `ui_slot_inventory` · `_selected` (96, 9-slice 16), `ui_letter_bg` (1024 × 512, 9-slice 150/130/150/120) | 10/22. 모두 Sprite · 밉맵 끔 · 압축 없음. Image Type = Sliced로 쓰면 모서리 장식이 늘어나지 않음 |
+| `ui_bar_xp_bg` · `_fill` | `UI/Panels/ui_bar_xp_bg.png` · `ui_bar_xp_fill.png` (둘 다 512 × 39, 같은 위치) | 10/22. 받은 fill은 테두리 + 75 % 채움이 한 장에 구워져 있어서, **끝까지 꽉 찬 채움만** 따로 만듦. bg 위에 fill을 같은 크기로 겹치고 Image Type = Filled(Horizontal)로 경험치 비율만큼. 받은 원본 2172 × 724에서 바 부분만 잘라 512로 |
+| `ui_title_bg` | (그림 없음) | 10/22 결정: 타이틀 배경은 1920 × 1080 그림 대신 **3D 장면**(게임 배경 씬을 카메라로 보여 줌)으로 한다 |
+| `app_icon` | `UI/app_icon.png` (1024, 알파) | 10/22. 받은 것은 둥근 아이콘 바깥 네 귀퉁이가 검정 → 투명으로. Player Settings의 Default Icon에 넣으면 됨 |
 | `decal_stain_02` · `_03` | `Environment/decals/Textures/decal_stain_02.png` · `_03.png`, 재질 `Materials/mat_decal_stain_02` · `_03` (01 재질 복사, 텍스처만 바꿈) | 10/22. 512 알파. 01과 같은 방식(Decal Projector) |
 | 아이콘 15종 (`icon_*`) | `UI/Icons/icon_*.png` | 10/22. 128 × 128 알파, Sprite (2D and UI) · 밉맵 끔 · 압축 없음 |
 | `ui_crosshair` | `UI/ui_crosshair.png` | 10/22. 64 × 64 알파, Sprite. 처음 받은 것(원 + 십자)이 FPS 같아서 **네 개의 호 + 가운데 별** 디자인으로 다시 받아 교체(같은 파일) |
