@@ -28,15 +28,22 @@ namespace NevrianGlowFarm.Editor
         private const string FruitShelfDataPath = "Assets/_Project/Data/Items/furn_fruit_shelf.asset";
         private const string GameStartPath = "Assets/_Project/Data/Stats/GameStartSettings.asset";
 
-        private const float Width = 12f, Depth = 10f, WallHeight = 3f, WallThickness = 0.2f;
+        // 벽 높이 3.6 m = 아트 가게 벽(pf_env_shop_wall, 2026-10-21) — 그레이박스 벽은 보이지 않는 콜라이더로만 남는다
+        private const float Width = 12f, Depth = 10f, WallHeight = 3.6f, WallThickness = 0.2f;
         private const float UpperAisleZ = 3.3f, UpperAisleWidth = 1.2f;
         private const float LowerAisleZ = 0f, LowerAisleWidth = 1.6f;
         private const float FruitRowZ = 1.6f, WallRowZ = 4.3f;
         private static readonly float[] SpotX = { -4.35f, -1.45f, 1.45f, 4.35f };
         private static readonly Vector2 FruitSpotSize = new Vector2(2.6f, 1.3f);
         private static readonly Vector2 WallSpotSize = new Vector2(2.6f, 0.8f);
-        private const float EntranceX = 0.3f, EntranceGap = 1.8f;             // 앞 벽(z = −5) 가운데
-        private const float FarmDoorZ = -2.3f, FarmDoorGap = 1.6f;            // 왼쪽 벽(x = −6)
+        private const float EntranceX = 0f, EntranceGap = 1.6f;               // 앞 벽(z = −5) 가운데 — 아트 벽의 문 구멍 1.6 × 2.4 m (x 0)
+        private const float FarmDoorZ = -2.3f, FarmDoorGap = 1.6f;            // 왼쪽 벽(x = −6) 출발 지점 — 아트 벽엔 농장 문 구멍이 없어 벽은 막힘(순간이동)
+
+        // 아트 가게 껍데기 (BRANCH_ART 10.21): 벽 · 천장 피벗 = 바닥 중앙(ShopRoot), 입구 피벗 = 통로 바닥 중앙. 콜라이더 없음
+        private const string ShopWallArt = "Assets/Art/Environment/shop_wall/pf_env_shop_wall.prefab";
+        private const string ShopCeilingArt = "Assets/Art/Environment/shop_ceiling/pf_env_shop_ceiling.prefab";
+        private const string ShopEntranceArt = "Assets/Art/Environment/shop_entrance/pf_env_shop_entrance.prefab";
+        private const float EntranceArtZ = -5.1f;
 
         [MenuItem("Glow Farm/Setup/Build Shop Layout")]
         private static void BuildMenu()
@@ -206,10 +213,45 @@ namespace NevrianGlowFarm.Editor
             float entranceLeft = EntranceX - EntranceGap * 0.5f, entranceRight = EntranceX + EntranceGap * 0.5f;
             Wall(walls, "Wall_FrontLeft", new Vector3((-hw + entranceLeft) * 0.5f, 0f, -hd), new Vector3(entranceLeft + hw, WallHeight, WallThickness), material);
             Wall(walls, "Wall_FrontRight", new Vector3((entranceRight + hw) * 0.5f, 0f, -hd), new Vector3(hw - entranceRight, WallHeight, WallThickness), material);
-            // 왼쪽 벽: 농장 문 자리를 비운다
-            float doorBack = FarmDoorZ + FarmDoorGap * 0.5f, doorFront = FarmDoorZ - FarmDoorGap * 0.5f;
-            Wall(walls, "Wall_LeftBack", new Vector3(-hw, 0f, (hd + doorBack) * 0.5f), new Vector3(WallThickness, WallHeight, hd - doorBack), material);
-            Wall(walls, "Wall_LeftFront", new Vector3(-hw, 0f, (doorFront - hd) * 0.5f), new Vector3(WallThickness, WallHeight, doorFront + hd), material);
+            // 왼쪽 벽: 아트 벽에 농장 문 구멍이 없으므로 한 장 (예전 두 조각 중 앞 조각은 지움)
+            Wall(walls, "Wall_LeftBack", new Vector3(-hw, 0f, 0f), new Vector3(WallThickness, WallHeight, Depth), material);
+            var leftFront = walls.Find("Wall_LeftFront");
+            if (leftFront != null)
+                Undo.DestroyObjectImmediate(leftFront.gameObject);
+
+            // 아트 껍데기가 있으면 그레이박스 벽은 보이지 않는 콜라이더로만
+            bool art = BuildShell(root);
+            foreach (Transform w in walls)
+                if (w.TryGetComponent<Renderer>(out var r))
+                    r.enabled = !art;
+        }
+
+        // 아트 벽 · 천장 · 입구 (없으면 만들고, 있으면 위치만)
+        private static bool BuildShell(Transform root)
+        {
+            bool any = false;
+            any |= ArtPiece(root, "Shell_Wall", ShopWallArt, Vector3.zero);
+            any |= ArtPiece(root, "Shell_Ceiling", ShopCeilingArt, Vector3.zero);
+            any |= ArtPiece(root, "Shell_Entrance", ShopEntranceArt, new Vector3(EntranceX, 0f, EntranceArtZ));
+            return any;
+        }
+
+        private static bool ArtPiece(Transform root, string name, string path, Vector3 localPos)
+        {
+            var t = root.Find(name);
+            if (t == null)
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+                if (prefab == null)
+                    return false;
+                var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, root);
+                go.name = name;
+                t = go.transform;
+            }
+            t.localPosition = localPos;
+            t.localRotation = Quaternion.identity;
+            t.localScale = Vector3.one;
+            return true;
         }
 
         private static void Wall(Transform parent, string name, Vector3 basePos, Vector3 size, Material material)
