@@ -151,8 +151,15 @@ namespace NevrianGlowFarm.UI
 
         private void SetFill(float ratio)
         {
+            ratio = Mathf.Clamp01(ratio);
+            // 채움 그림(Image Type = Filled, 아트 ui_bar_xp_fill)이면 그림을 자르고, 아니면 가로 앵커로 줄인다 (그레이박스)
+            if (expFill.TryGetComponent<UnityEngine.UI.Image>(out var image) && image.type == UnityEngine.UI.Image.Type.Filled)
+            {
+                image.fillAmount = ratio;
+                ratio = 1f;
+            }
             expFill.anchorMin = new Vector2(0f, 0f);
-            expFill.anchorMax = new Vector2(Mathf.Clamp01(ratio), 1f);
+            expFill.anchorMax = new Vector2(ratio, 1f);
             expFill.offsetMin = Vector2.zero;
             expFill.offsetMax = Vector2.zero;
         }

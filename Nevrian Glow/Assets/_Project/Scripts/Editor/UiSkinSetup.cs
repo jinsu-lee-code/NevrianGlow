@@ -1,0 +1,246 @@
+#if UNITY_EDITOR
+using System.Collections.Generic;
+using NevrianGlowFarm.UI;
+using TMPro;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace NevrianGlowFarm.Editor
+{
+    /// <summary>
+    /// 5-4a UI 스킨 1차 (2026-10-23): 아트 패널 · 버튼 · 칸 · 편지지 · 경험치 막대 그림(요청서 G, `Assets/Art/UI/Panels`)을
+    /// Core 씬 UICanvas의 그레이박스 Image에 입힌다. 그림은 색이 칠해진 9-slice라 Image 색은 흰색(상태 구분만 회색 틴트).
+    /// 배치 · 크기 · 글자는 그대로(경험치 막대 높이만 그림에 맞춤). 여러 번 실행해도 결과가 같다.
+    /// </summary>
+    public static class UiSkinSetup
+    {
+        private const string CorePath = "Assets/_Project/Scenes/Core.unity";
+        private const string Panels = "Assets/Art/UI/Panels";
+
+        // 그레이박스 창 패널 (UICanvas 아래 경로) — 화면 전체를 어둡게 덮는 판(TitleScreen/Panel 등)은 빼고
+        private static readonly string[] PanelPaths =
+        {
+            "HUD", "InteractionPrompt/Panel", "TidyHud/Panel",
+            "InventoryScreen/Panel", "StorageScreen/Panel", "ShopScreen/Panel", "SkillScreen/Panel",
+            "SettlementScreen/Panel", "DemoEndScreen/Panel",
+            "TitleScreen/Panel/Settings", "TitleScreen/Panel/Confirm", "PauseScreen/Panel/Settings", "PauseScreen/Panel/Confirm",
+        };
+        // 작은 패널은 모서리 장식을 반으로 (테두리 32 px이 높이를 넘지 않게)
+        private static readonly HashSet<string> SmallPanels = new HashSet<string> { "HUD", "InteractionPrompt/Panel", "TidyHud/Panel" };
+
+        private const float RowBorder = 2f; // 목록 줄은 높이가 낮아(줄 높이 < 그림 테두리 40 px) 테두리를 반으로
+        private static readonly Color Unavailable = new Color(0.6f, 0.6f, 0.66f, 1f);
+        private static readonly Color Maxed = new Color(0.8f, 0.72f, 1f, 1f);
+        private static readonly Color LetterInk = new Color(0.07f, 0.14f, 0.2f, 1f);
+
+        [MenuItem("Glow Farm/Setup/Apply UI Skin (5-4a)")]
+        private static void ApplyMenu()
+        {
+            var panel = Load("ui_panel_base");
+            var normal = Load("ui_button_normal");
+            var hover = Load("ui_button_hover");
+            var pressed = Load("ui_button_pressed");
+            var disabled = Load("ui_button_disabled");
+            var slot = Load("ui_slot_inventory");
+            var slotSelected = Load("ui_slot_inventory_selected");
+            var letter = Load("ui_letter_bg");
+            var barBg = Load("ui_bar_xp_bg");
+            var barFill = Load("ui_bar_xp_fill");
+            if (panel == null || normal == null || slot == null)
+            {
+                Debug.LogError($"[Setup] UI 스킨: 아트 그림이 없음 ({Panels})");
+                return;
+            }
+
+            var scene = EditorSceneManager.GetSceneByPath(CorePath);
+            bool opened = false;
+            if (!scene.isLoaded)
+            {
+                scene = EditorSceneManager.OpenScene(CorePath, OpenSceneMode.Additive);
+                opened = true;
+            }
+            Transform canvas = null;
+            foreach (var root in scene.GetRootGameObjects())
+                foreach (var c in root.GetComponentsInChildren<Canvas>(true))
+                    if (c.name == "UICanvas")
+                        canvas = c.transform;
+            if (canvas == null)
+            {
+                Debug.LogError("[Setup] UI 스킨: Core 씬에 UICanvas가 없음");
+                return;
+            }
+
+            int panels = 0, buttons = 0, slots = 0, rows = 0;
+            // 1) 창 패널
+            foreach (var path in PanelPaths)
+            {
+                var t = canvas.Find(path);
+                if (t == null || !t.TryGetComponent<Image>(out var image))
+                    continue;
+                Skin(image, panel, Color.white, SmallPanels.Contains(path) ? 2f : 1f);
+                panels++;
+            }
+
+            // 2) 아이템 칸 원본 (핫바 · 가방 · 핫바 격자) — 선택되면 밝은 테두리 그림
+            var slotViews = new HashSet<HotbarSlotView>();
+            foreach (var v in canvas.GetComponentsInChildren<HotbarView>(true))
+            {
+                SetColor(v, "normalColor", Color.white);
+                SetColor(v, "selectedColor", Color.white);
+                if (Template(v, "slotTemplate") is HotbarSlotView s && slotViews.Add(s))
+                    slots += SkinSlot(s, slot, slotSelected);
+            }
+            foreach (var v in canvas.GetComponentsInChildren<SlotGridView>(true))
+            {
+                SetColor(v, "slotColor", Color.white);
+                if (Template(v, "slotTemplate") is HotbarSlotView s && slotViews.Add(s))
+                    slots += SkinSlot(s, slot, slotSelected);
+            }
+
+            // 3) 목록 줄 (상점 · 창고 · 스킬) · 상점 탭 — 버튼 그림, 살 수 없음 등은 회색 틴트
+            foreach (var v in canvas.GetComponentsInChildren<ShopScreen>(true))
+            {
+                SetColor(v, "availableColor", Color.white);
+                SetColor(v, "unavailableColor", Unavailable);
+                SetColor(v, "tabNormalColor", Unavailable);
+                SetColor(v, "tabSelectedColor", Color.white);
+                if (Template(v, "entryTemplate") is HotbarSlotView e && slotViews.Add(e))
+                    rows += SkinSlot(e, normal, normal, RowBorder);
+                if (Template(v, "tabTemplate") is HotbarSlotView tab && slotViews.Add(tab))
+                    rows += SkinSlot(tab, normal, hover, RowBorder);
+            }
+            foreach (var v in canvas.GetComponentsInChildren<SkillScreen>(true))
+            {
+                SetColor(v, "availableColor", Color.white);
+                SetColor(v, "unavailableColor", Unavailable);
+                SetColor(v, "maxedColor", Maxed);
+                if (Template(v, "entryTemplate") is HotbarSlotView e && slotViews.Add(e))
+                    rows += SkinSlot(e, normal, normal, RowBorder);
+            }
+            foreach (var v in canvas.GetComponentsInChildren<StorageScreen>(true))
+            {
+                SetColor(v, "entryColor", Color.white);
+                if (Template(v, "entryTemplate") is HotbarSlotView e && slotViews.Add(e))
+                    rows += SkinSlot(e, normal, normal, RowBorder);
+            }
+
+            // 4) 버튼 (칸 · 목록 줄 제외) — 그림 바꾸기(보통 · 올림 · 누름 · 못 누름)
+            foreach (var button in canvas.GetComponentsInChildren<Button>(true))
+            {
+                if (button.GetComponent<HotbarSlotView>() != null || !(button.targetGraphic is Image image))
+                    continue;
+                // 아니오 · 취소 같은 보조 버튼은 원래 회색이었다 → 그림은 같고 조금 어둡게
+                // (다시 실행해도 같게 — 이미 회색 틴트면 보조 버튼)
+                bool secondary = (image.color.r < 0.25f && image.color.g < 0.25f && Mathf.Abs(image.color.r - image.color.g) < 0.05f)
+                    || ((Vector4)(image.color - Unavailable)).sqrMagnitude < 1e-4f;
+                Skin(image, normal, secondary ? Unavailable : Color.white, 1f);
+                button.transition = Selectable.Transition.SpriteSwap;
+                button.spriteState = new SpriteState { highlightedSprite = hover, selectedSprite = hover, pressedSprite = pressed, disabledSprite = disabled };
+                EditorUtility.SetDirty(button);
+                buttons++;
+            }
+
+            // 5) 오프닝 편지지 — 밝은 종이라 글자를 어두운 잉크색으로 (버튼 글자는 그대로)
+            string letterNote = "편지지 없음";
+            var paper = canvas.Find("OpeningLetterScreen/Panel/Paper");
+            if (paper != null && letter != null && paper.TryGetComponent<Image>(out var paperImage))
+            {
+                Skin(paperImage, letter, Color.white, 1.4f);
+                foreach (var text in paper.GetComponentsInChildren<TMP_Text>(true))
+                    if (text.GetComponentInParent<Button>() == null)
+                    {
+                        text.color = LetterInk;
+                        EditorUtility.SetDirty(text);
+                    }
+                // 그림 위쪽 투명 여백 · 모서리 장식을 피해 글자를 안쪽으로 (종이 960 × 700 기준, 위에서부터)
+                Place(paper.Find("Title") as RectTransform, -84f, -136f, 340f);
+                Place(paper.Find("Body") as RectTransform, -150f, -600f, 330f);
+                letterNote = "편지지";
+            }
+
+            // 6) HUD 경험치 막대 — 바탕(가로 9-slice) + 채움(Filled 가로, HudView가 fillAmount)
+            string barNote = "경험치 막대 없음";
+            var bar = canvas.Find("HUD/ExpBar") as RectTransform;
+            var fill = bar != null ? bar.Find("Fill") as RectTransform : null;
+            if (bar != null && fill != null && barBg != null && barFill != null)
+            {
+                // 막대가 패널 아래 테두리(16 px)에 묻히지 않게 HUD를 조금 키운다
+                var hud = bar.parent as RectTransform;
+                if (hud != null && hud.sizeDelta.y < 142f)
+                    hud.sizeDelta = new Vector2(hud.sizeDelta.x, 142f);
+                bar.sizeDelta = new Vector2(bar.sizeDelta.x, 16f);
+                Skin(bar.GetComponent<Image>(), barBg, Color.white, 2.4f); // 39 px 그림 → 16 px, 끝 장식 30 px도 같은 비율로
+                var fillImage = fill.GetComponent<Image>();
+                fillImage.sprite = barFill;
+                fillImage.type = Image.Type.Filled;
+                fillImage.fillMethod = Image.FillMethod.Horizontal;
+                fillImage.fillOrigin = (int)Image.OriginHorizontal.Left;
+                fillImage.color = Color.white;
+                fill.anchorMin = Vector2.zero;
+                fill.anchorMax = Vector2.one;
+                fill.offsetMin = Vector2.zero;
+                fill.offsetMax = Vector2.zero;
+                EditorUtility.SetDirty(fillImage);
+                barNote = "경험치 막대";
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            if (opened)
+                EditorSceneManager.CloseScene(scene, true);
+            Debug.Log($"[Setup] UI 스킨 5-4a: 패널 {panels} · 버튼 {buttons} · 아이템 칸 원본 {slots} · 목록 줄/탭 원본 {rows} · {letterNote} · {barNote}");
+        }
+
+        private static Sprite Load(string name) => AssetDatabase.LoadAssetAtPath<Sprite>($"{Panels}/{name}.png");
+
+        private static void Skin(Image image, Sprite sprite, Color color, float borderScale)
+        {
+            if (image == null || sprite == null)
+                return;
+            image.sprite = sprite;
+            image.type = Image.Type.Sliced;
+            image.fillCenter = true;
+            image.pixelsPerUnitMultiplier = borderScale;
+            image.color = color;
+            EditorUtility.SetDirty(image);
+        }
+
+        // 위 가운데 앵커 글자 상자: 위 · 아래 끝(y, 위에서 −) · 가운데에서 좌우 반폭
+        private static void Place(RectTransform rt, float top, float bottom, float halfWidth)
+        {
+            if (rt == null)
+                return;
+            rt.anchorMin = new Vector2(0.5f, 1f);
+            rt.anchorMax = new Vector2(0.5f, 1f);
+            rt.offsetMin = new Vector2(-halfWidth, bottom);
+            rt.offsetMax = new Vector2(halfWidth, top);
+            EditorUtility.SetDirty(rt);
+        }
+
+        private static int SkinSlot(HotbarSlotView view, Sprite normal, Sprite selected, float borderScale = 1f)
+        {
+            var so = new SerializedObject(view);
+            so.FindProperty("normalSprite").objectReferenceValue = normal;
+            so.FindProperty("selectedSprite").objectReferenceValue = selected;
+            var background = so.FindProperty("background").objectReferenceValue as Image;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            Skin(background, normal, Color.white, borderScale);
+            return 1;
+        }
+
+        private static Object Template(Object owner, string property) => new SerializedObject(owner).FindProperty(property)?.objectReferenceValue;
+
+        private static void SetColor(Object owner, string property, Color color)
+        {
+            var so = new SerializedObject(owner);
+            var p = so.FindProperty(property);
+            if (p == null)
+                return;
+            p.colorValue = color;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+    }
+}
+#endif

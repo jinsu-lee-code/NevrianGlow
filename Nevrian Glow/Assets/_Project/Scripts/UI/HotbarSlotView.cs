@@ -24,6 +24,12 @@ namespace NevrianGlowFarm.UI
         [Tooltip("아이템 아이콘 (비우면 표시 안 함 — 5-4)")]
         [SerializeField] private Image icon;
 
+        [Header("조정값")]
+        [Tooltip("배경 그림 — 비우면 지금 그림 그대로 (5-4a UI 스킨)")]
+        [SerializeField] private Sprite normalSprite;
+        [Tooltip("선택된 칸 · 탭의 배경 그림 — 비우면 normalSprite")]
+        [SerializeField] private Sprite selectedSprite;
+
         /// <summary>버튼을 눌렀을 때.</summary>
         public event Action Clicked;
 
@@ -59,6 +65,8 @@ namespace NevrianGlowFarm.UI
         public void SetSelected(bool selected, Color normalColor, Color selectedColor)
         {
             background.color = selected ? selectedColor : normalColor;
+            if (normalSprite != null)
+                background.sprite = selected && selectedSprite != null ? selectedSprite : normalSprite;
         }
     }
 }
