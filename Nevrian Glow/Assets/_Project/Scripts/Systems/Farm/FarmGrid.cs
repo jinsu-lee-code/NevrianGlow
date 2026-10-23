@@ -23,6 +23,8 @@ namespace NevrianGlowFarm.Systems.Farm
         [SerializeField] private ContentDatabase database;
         [Tooltip("칸 프리팹 (Prefabs/Farm/farm_cell)")]
         [SerializeField] private FarmCellView cellPrefab;
+        [Tooltip("밭(2×2칸) 테두리 — 밭마다 4칸 가운데에 하나 (아트 pf_env_plot, 비우면 없음)")]
+        [SerializeField] private GameObject bedPrefab;
         [Tooltip("겹치면 안 되는 구역 (길 · 문 주변) — 겹치면 기즈모 빨강 + 시작 시 경고")]
         [SerializeField] private List<ForbiddenZone> forbiddenZones = new List<ForbiddenZone>();
         [Tooltip("성장일 능력치 — 작물 첫 성장일에 더함 (Data/Stats/stat_grow_days, 비우면 그대로)")]
@@ -260,7 +262,12 @@ namespace NevrianGlowFarm.Systems.Farm
             }
 
             if (changed)
-                RefreshCell(index);
+            {
+                // 흙 연출(아트 SoilFX): 괭이질 한 번 = 판 자리가 열림, 심기 = 구덩이 → 흙 덮기
+                RefreshCell(index, true, tillHit: held is HoeData);
+                if (held is SeedData)
+                    views[index].Planted();
+            }
         }
 
         /// <summary>물뿌리개 범위 안에서 물을 주면 바뀌는 칸 수.</summary>
@@ -399,6 +406,15 @@ namespace NevrianGlowFarm.Systems.Farm
                 var view = Instantiate(cellPrefab, CellPosition(i), CellRotation(), transform);
                 view.Bind(this, i);
                 views.Add(view);
+                // 밭의 마지막 칸이 생기면 그 밭 테두리 (밭 = 이어진 4칸 — FarmLayout)
+                if (bedPrefab != null && i % FarmLayout.CellsPerBed == FarmLayout.CellsPerBed - 1)
+                {
+                    Vector3 center = Vector3.zero;
+                    for (int k = 0; k < FarmLayout.CellsPerBed; k++)
+                        center += CellPosition(i - k);
+                    var bed = Instantiate(bedPrefab, center / FarmLayout.CellsPerBed, CellRotation(), transform);
+                    bed.name = $"Bed{i / FarmLayout.CellsPerBed:00}";
+                }
             }
         }
 
@@ -409,10 +425,14 @@ namespace NevrianGlowFarm.Systems.Farm
             UpdateSummary();
         }
 
-        private void RefreshCell(int index, bool updateSummary = true)
+        private void RefreshCell(int index, bool updateSummary = true, bool tillHit = false)
         {
             var cell = state.Cells[index];
             var status = state.StatusOf(index);
+            float till = status == FarmCellStatus.Untilled ? 0f
+                : status == FarmCellStatus.Tilling ? cell.TillProgress / settings.TillWorkRequired
+                : 1f;
+            views[index].ShowTill(till, tillHit);
 
             Color soil = status switch
             {

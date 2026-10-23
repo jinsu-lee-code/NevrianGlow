@@ -43,6 +43,36 @@ namespace NevrianGlowFarm.Systems.Farm
             index = cellIndex;
             name = $"Cell{cellIndex:00}";
             block ??= new MaterialPropertyBlock();
+            soilFx = soilRenderer.GetComponent<SoilFX>();
+        }
+
+        private SoilFX soilFx;     // 아트 칸 흙(pf_env_plot_soil)의 괭이질 · 심기 연출 — 그레이박스 흙이면 없음
+        private float shownTill = -1f;
+
+        /// <summary>
+        /// 개간 진행(0~1)을 흙 연출에 알린다. hit = 괭이질 한 번(판 자리가 열리고 흙덩이가 튐), 아니면 연출 없이 그 상태로(불러오기 · 아침 · 수확 뒤).
+        /// </summary>
+        public void ShowTill(float progress01, bool hit)
+        {
+            if (soilFx == null)
+                return;
+            if (hit)
+                soilFx.OnTillHit(progress01, soilRenderer.bounds.center + Vector3.up * soilRenderer.bounds.extents.y);
+            else if (!Mathf.Approximately(progress01, shownTill))
+            {
+                if (progress01 <= 0f)
+                    soilFx.ResetSoil();
+                else
+                    soilFx.SetTill(progress01);
+            }
+            shownTill = progress01;
+        }
+
+        /// <summary>심은 순간 — 가운데에 구덩이가 열리고 씨앗이 들어간 뒤 작은 흙무덤.</summary>
+        public void Planted()
+        {
+            if (soilFx != null)
+                soilFx.OnPlant();
         }
 
         public string GetUsePrompt(ItemData held) => grid != null ? grid.GetUsePrompt(index, held) : null;
@@ -86,8 +116,11 @@ namespace NevrianGlowFarm.Systems.Farm
         /// </summary>
         public void Show(Color soilColor, bool hasCrop, Color cropColor, float cropScale, GameObject stagePrefab)
         {
+            // 흙 연출(SoilFX)이 같은 블록에 쓴 값은 남기고 색만 바꾼다
+            soilRenderer.GetPropertyBlock(block);
             block.SetColor(BaseColorId, soilColor);
             soilRenderer.SetPropertyBlock(block);
+            block.Clear();
 
             GameObject wanted = hasCrop && modelAnchor != null ? stagePrefab : null;
             SetModel(wanted);

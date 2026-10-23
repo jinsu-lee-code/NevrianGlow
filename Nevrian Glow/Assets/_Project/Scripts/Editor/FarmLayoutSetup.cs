@@ -181,7 +181,36 @@ namespace NevrianGlowFarm.Editor
             visual.localPosition = new Vector3(0f, 0.01f, 0f);
             visual.localRotation = Quaternion.identity;
             visual.localScale = new Vector3(size.x, 0.02f, size.y);
+
+            // 아트 길 조각(1.5 × 4 m, 길이 = Z)을 긴 쪽으로 맞대어 깐다 — 길이 · 폭은 조금 늘려 꼭 맞춤 (BRANCH_ART 10/22). 있으면 회색 판은 숨김
+            var tiles = t.Find("Tiles");
+            if (tiles != null)
+                Object.DestroyImmediate(tiles.gameObject);
+            var piece = AssetDatabase.LoadAssetAtPath<GameObject>(PathPieceArt);
+            if (visual.TryGetComponent<Renderer>(out var greybox))
+                greybox.enabled = piece == null;
+            if (piece == null)
+                return;
+            tiles = new GameObject("Tiles").transform;
+            tiles.SetParent(t, false);
+            bool alongX = size.x >= size.y;
+            float length = alongX ? size.x : size.y, width = alongX ? size.y : size.x;
+            int count = Mathf.Max(1, Mathf.CeilToInt(length / PathPieceLength - 0.05f));
+            float step = length / count;
+            for (int i = 0; i < count; i++)
+            {
+                var tile = (GameObject)PrefabUtility.InstantiatePrefab(piece, tiles);
+                tile.name = $"Tile{i + 1:00}";
+                float offset = (i - (count - 1) * 0.5f) * step;
+                tile.transform.localPosition = alongX ? new Vector3(offset, 0f, 0f) : new Vector3(0f, 0f, offset);
+                tile.transform.localRotation = alongX ? Quaternion.Euler(0f, 90f, 0f) : Quaternion.identity;
+                tile.transform.localScale = new Vector3(width / PathPieceWidth, 1f, step / PathPieceLength);
+                GameObjectUtility.SetStaticEditorFlags(tile, StaticEditorFlags.BatchingStatic);
+            }
         }
+
+        private const string PathPieceArt = "Assets/Art/Environment/farm_path/pf_env_farm_path.prefab";
+        private const float PathPieceWidth = 1.5f, PathPieceLength = 4f;
 
         private static void Place(Transform parent, string name, Vector3 pos, Vector3? facing)
         {

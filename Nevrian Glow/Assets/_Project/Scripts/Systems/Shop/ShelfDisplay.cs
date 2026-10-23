@@ -334,6 +334,7 @@ namespace NevrianGlowFarm.Systems.Shop
             {
                 var r = Instantiate(itemPrefab, transform);
                 r.name = $"Slot{slot + 1}_Item{list.Count + 1}";
+                Items.ItemModelView.Apply(r, crop, slot * 31 + list.Count); // 작물 모델 (한 칸 = 한 종류라 칸이 빌 때까지 그대로)
                 list.Add(r);
             }
             while (list.Count > stack.Count)

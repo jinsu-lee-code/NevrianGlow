@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.CustomerData
   id: customer_pipi
   displayName: "\uD53C\uD53C"
-  prefab: {fileID: 8692623647252547470, guid: 488074fd3442d0b41b6e4fe77913cdd4, type: 3}
+  prefab: {fileID: 9181125774427795739, guid: c1b3f68aeff380845a69d1dbb343327d, type: 3}
   bodySize: 0
   greyboxColor: {r: 1, g: 0.6039216, b: 0.8352941, a: 1}
   basketSocketOffset: {x: 0, y: 0, z: 0}

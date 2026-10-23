@@ -17,6 +17,8 @@ MonoBehaviour:
   maxStack: 10
   canStore: 1
   heldPrefab: {fileID: 0}
+  worldModels:
+  - {fileID: 8847017585260763199, guid: 58a2df7188185a04791165870f2d8118, type: 3}
   greyboxColor: {r: 0.38431373, g: 0.9490196, b: 0.88235295, a: 1}
   stagePrefabs:
   - {fileID: 6492855999298447309, guid: 31666e8d0b5f8804aaa72bdde3f9bbbd, type: 3}

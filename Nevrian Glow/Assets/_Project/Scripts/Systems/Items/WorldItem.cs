@@ -53,6 +53,7 @@ namespace NevrianGlowFarm.Systems.Items
             var block = new MaterialPropertyBlock();
             block.SetColor(BaseColorId, data is CropData crop ? crop.GreyboxColor : defaultColor);
             modelRenderer.SetPropertyBlock(block);
+            ItemModelView.Apply(modelRenderer, data, ItemModelView.SeedOf(transform.position)); // 놓인 모습 모델 (쓰레기는 5종 중 하나)
         }
 
         public string GetHandPrompt()
