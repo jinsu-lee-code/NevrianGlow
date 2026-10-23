@@ -126,3 +126,6 @@
 | 10.21 | `bgm_market_loop` | 가게 장사 BGM | 1분 33초 · 루프 | 실제 템포 약 103 BPM | |
 | 10.21 | (이름 변경) | UI 7종 `ui_*` → `sfx_ui_*`, BGM `bgm_twilight_field` → `bgm_farm_loop` · `bgm_title` → `bgm_title_loop` · `bgm_lumian_market` → `bgm_market_loop` | — | 파일 이름을 sound.md(요청서) 기준으로 통일 (이진수 님 안내). 게임에 먼저 등록된 id(`bgm_twilight_field` · `bgm_lumian_market`)도 sound.md 이름으로 연결 부탁 | |
 | 10.21 | `bgm_clean_loop` | 청소 · 진열 BGM | 1분 36초 · 루프 (곡 도입부부터 시작, 끝 3초 페이드 후 처음으로) | 실제 템포 약 110 BPM | |
+| 10.23 | `sfx_step_wood_01~03` | 플레이어 발소리 (가게 나무 바닥, zone_shop) | 0.42~0.66초 · 변형 3 | 3개 음량 맞춤 | |
+| 10.23 | `sfx_step_soil_01~03` | 플레이어 발소리 (흙, zone_farm) | 0.27~0.42초 · 변형 3 | 3개 음량 맞춤 + 잡음 억제 · 흙 3 + 풀 3으로 나눔 | |
+| 10.23 | `sfx_step_grass_01~03` | 플레이어 발소리 (풀, zone_farm) | 0.31~0.58초 · 변형 3 | 3개 음량 맞춤 | |
