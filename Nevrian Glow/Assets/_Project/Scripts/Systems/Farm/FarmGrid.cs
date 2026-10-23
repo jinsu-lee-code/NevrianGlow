@@ -309,6 +309,7 @@ namespace NevrianGlowFarm.Systems.Farm
             if (result.Succeeded)
             {
                 hotbar.TryAdd(crop, result.Yield);
+                views[index].HarvestBurst(); // 모델이 바뀌기 전 자리에서 반짝임
                 RefreshCell(index);
                 AudioManager.Play(SoundCues.HarvestPull, CellPosition(index));
                 if (GameManager.Instance != null)

@@ -26,7 +26,10 @@ namespace NevrianGlowFarm.Systems.Cleaning
         {
             var inventory = PlayerInventory.Instance;
             if (settings != null && inventory != null && inventory.RemoveAll(settings.TrashItem) > 0)
+            {
                 AudioManager.Play(SoundCues.TrashDrop, transform.position);
+                VfxManager.Play(VfxCues.LightPuff, transform.position + Vector3.up * 0.8f); // 통 입구 위
+            }
         }
     }
 }

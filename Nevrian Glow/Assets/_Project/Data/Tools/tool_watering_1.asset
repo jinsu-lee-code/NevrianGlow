@@ -17,5 +17,7 @@ MonoBehaviour:
   maxStack: 1
   canStore: 1
   heldPrefab: {fileID: 1978704013072494628, guid: b6e994026b3f3484fa80b467236acb4c, type: 3}
+  worldModels: []
+  icon: {fileID: 21300000, guid: 6794bfba9559448419b3eb95e9345042, type: 3}
   useDelay: 0.3
   cellCount: 1

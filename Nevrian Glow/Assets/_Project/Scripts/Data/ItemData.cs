@@ -21,11 +21,14 @@ namespace NevrianGlowFarm.Data
         [SerializeField] private GameObject heldPrefab;
         [Tooltip("바닥 · 진열대 · 손님 바구니에 놓인 모습 (피벗 바닥 가운데) — 그레이박스 도형 크기에 맞춰 줄인다. 여러 개면 놓일 때마다 하나 (쓰레기 5종), 비우면 그레이박스")]
         [SerializeField] private List<GameObject> worldModels = new List<GameObject>();
+        [Tooltip("칸 아이콘 (아트 UI/Icons, 128 알파 Sprite) — 비우면 이름 글자만")]
+        [SerializeField] private Sprite icon;
 
         public virtual int MaxStack => maxStack;
         public bool CanStore => canStore;
         public GameObject HeldPrefab => heldPrefab;
         public IReadOnlyList<GameObject> WorldModels => worldModels;
+        public Sprite Icon => icon;
 
         /// <summary>놓인 모습 하나 (seed로 고름 — 같은 seed면 같은 모델). 없으면 null.</summary>
         public GameObject WorldModelFor(int seed)

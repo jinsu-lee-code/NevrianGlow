@@ -21,6 +21,8 @@ namespace NevrianGlowFarm.UI
         [SerializeField] private TMP_Text nameLabel;
         [Tooltip("클릭 버튼 (HUD 핫바는 비움)")]
         [SerializeField] private Button button;
+        [Tooltip("아이템 아이콘 (비우면 표시 안 함 — 5-4)")]
+        [SerializeField] private Image icon;
 
         /// <summary>버튼을 눌렀을 때.</summary>
         public event Action Clicked;
@@ -43,6 +45,15 @@ namespace NevrianGlowFarm.UI
                 keyLabel.text = keyNumber > 0 ? keyNumber.ToString() : string.Empty;
             }
             nameLabel.text = itemName;
+        }
+
+        /// <summary>아이콘 (null이면 숨김). 아이콘 칸이 없는 줄(상점 · 창고 목록)은 아무 일 없음.</summary>
+        public void SetIcon(Sprite sprite)
+        {
+            if (icon == null)
+                return;
+            icon.sprite = sprite;
+            icon.enabled = sprite != null;
         }
 
         public void SetSelected(bool selected, Color normalColor, Color selectedColor)

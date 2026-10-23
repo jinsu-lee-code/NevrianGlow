@@ -83,6 +83,8 @@ namespace NevrianGlowFarm.UI
                 if (!used)
                     continue;
                 slots[i].SetContent(showKeyNumbers ? i + 1 : 0, ItemLabel.Of(inventory, source[i], emptyLabel));
+                var item = source[i].IsEmpty ? null : inventory.Lookup(source[i].ItemId);
+                slots[i].SetIcon(item != null ? item.Icon : null);
                 slots[i].SetSelected(false, slotColor, slotColor);
             }
         }

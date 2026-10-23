@@ -583,6 +583,221 @@ namespace NevrianGlowFarm.Editor
             return notes.Count > 0 ? string.Join(" · ", notes) : "Farm 씬에서 FarmGrid · 창고를 못 찾음";
         }
 
+        // ── VFX 7종 (요청서 H — 아트가 파티클 프리팹까지, BRANCH_ART 10/22) ──
+
+        private const string VfxLibraryPath = "Assets/_Project/Data/Effects/VfxLibrary.asset";
+        private const string ArtFx = "Assets/Art/Environment/FX";
+
+        [MenuItem("Glow Farm/Setup/Connect Art (9) VFX")]
+        private static void VfxMenu()
+        {
+            if (!AssetDatabase.IsValidFolder("Assets/_Project/Data/Effects"))
+                AssetDatabase.CreateFolder("Assets/_Project/Data", "Effects");
+            var library = AssetDatabase.LoadAssetAtPath<VfxLibraryData>(VfxLibraryPath);
+            if (library == null)
+            {
+                library = ScriptableObject.CreateInstance<VfxLibraryData>();
+                AssetDatabase.CreateAsset(library, VfxLibraryPath);
+            }
+            // id = 아트 폴더 이름. 1회 효과는 가장 긴 입자 수명보다 조금 길게 지운다, 반복은 0
+            var rows = new (string Id, string Folder, float Lifetime)[]
+            {
+                (Core.VfxCues.Sparkle, "sparkle", 1.5f),
+                (Core.VfxCues.LightPuff, "light_puff", 1.2f),
+                (Core.VfxCues.RingGold, "ring_gold", 2f),
+                (Core.VfxCues.MergeBurst, "merge_burst", 2f),
+                (Core.VfxCues.WaterStream, "water_drop", 0f),
+                (Core.VfxCues.BubbleFoam, "bubble_foam", 0f),
+                (Core.VfxCues.GlowPulse, "glow_pulse", 0f),
+            };
+            var so = new SerializedObject(library);
+            var list = so.FindProperty("entries");
+            list.ClearArray();
+            int n = 0;
+            foreach (var (id, folder, life) in rows)
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{ArtFx}/{folder}/pf_vfx_{folder}.prefab");
+                if (prefab == null)
+                    continue;
+                list.InsertArrayElementAtIndex(n);
+                var e = list.GetArrayElementAtIndex(n++);
+                e.FindPropertyRelative("id").stringValue = id;
+                e.FindPropertyRelative("prefab").objectReferenceValue = prefab;
+                e.FindPropertyRelative("lifetime").floatValue = life;
+                e.FindPropertyRelative("scale").floatValue = 1f;
+            }
+            so.ApplyModifiedPropertiesWithoutUndo();
+            AssetDatabase.SaveAssets();
+
+            // Core 씬: AudioManager 옆에 VfxManager
+            const string corePath = "Assets/_Project/Scenes/Core.unity";
+            var scene = UnityEditor.SceneManagement.EditorSceneManager.GetSceneByPath(corePath);
+            bool opened = false;
+            if (!scene.isLoaded)
+            {
+                scene = UnityEditor.SceneManagement.EditorSceneManager.OpenScene(corePath, UnityEditor.SceneManagement.OpenSceneMode.Additive);
+                opened = true;
+            }
+            Core.VfxManager manager = null;
+            Transform audio = null;
+            foreach (var root in scene.GetRootGameObjects())
+            {
+                manager ??= root.GetComponentInChildren<Core.VfxManager>(true);
+                var a = root.GetComponentInChildren<Core.AudioManager>(true);
+                if (a != null)
+                    audio = a.transform;
+            }
+            if (manager == null)
+            {
+                var go = new GameObject("VfxManager");
+                UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(go, scene);
+                if (audio != null && audio.parent != null)
+                    go.transform.SetParent(audio.parent, false);
+                manager = go.AddComponent<Core.VfxManager>();
+            }
+            var mso = new SerializedObject(manager);
+            mso.FindProperty("library").objectReferenceValue = library;
+            mso.ApplyModifiedPropertiesWithoutUndo();
+            UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(scene);
+            UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene);
+            if (opened)
+                UnityEditor.SceneManagement.EditorSceneManager.CloseScene(scene, true);
+            Debug.Log($"[Setup] VFX: 라이브러리 {n}종 · Core 씬 VfxManager 연결");
+        }
+
+        // ── UI: 아이템 아이콘 · 칸 아이콘 자리 · 조준점 · 앱 아이콘 (요청서 G 일부 — 패널 · 버튼 스킨은 5-4 UI 몰아서) ──
+
+        private const string ArtIcons = "Assets/Art/UI/Icons";
+
+        [MenuItem("Glow Farm/Setup/Connect Art (10) Icons Crosshair AppIcon")]
+        private static void UiMenu()
+        {
+            var notes = new List<string>();
+            // 아이템 id → 아이콘 파일 (등급이 다른 도구는 같은 아이콘)
+            var icons = new (string Folder, string Id, string Icon)[]
+            {
+                ("Crops", "crop_moonroot", "icon_crop_moonroot"),
+                ("Crops", "crop_mushroomflower", "icon_crop_mushroomflower"),
+                ("Crops", "crop_lanternfruit", "icon_crop_lanternfruit"),
+                ("Items", "item_seed_moonroot", "icon_seed_moonroot"),
+                ("Items", "item_seed_mushroomflower", "icon_seed_mushroomflower"),
+                ("Items", "item_seed_lanternfruit", "icon_seed_lanternfruit"),
+                ("Items", "item_fertilizer", "icon_tool_fertilizer"),
+                ("Tools", "tool_hoe_1", "icon_tool_hoe"), ("Tools", "tool_hoe_2", "icon_tool_hoe"), ("Tools", "tool_hoe_3", "icon_tool_hoe"),
+                ("Tools", "tool_watering_1", "icon_tool_wateringcan"), ("Tools", "tool_watering_2", "icon_tool_wateringcan"), ("Tools", "tool_watering_3", "icon_tool_wateringcan"),
+                ("Tools", "tool_mop_1", "icon_tool_mop"), ("Tools", "tool_mop_2", "icon_tool_mop"), ("Tools", "tool_mop_3", "icon_tool_mop"),
+            };
+            int set = 0;
+            foreach (var (folder, id, iconName) in icons)
+            {
+                var item = AssetDatabase.LoadAssetAtPath<ItemData>($"Assets/_Project/Data/{folder}/{id}.asset");
+                var sprite = AssetDatabase.LoadAssetAtPath<Sprite>($"{ArtIcons}/{iconName}.png");
+                if (item == null || sprite == null)
+                {
+                    notes.Add($"{id} 아이콘 못 넣음");
+                    continue;
+                }
+                var so = new SerializedObject(item);
+                so.FindProperty("icon").objectReferenceValue = sprite;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                set++;
+            }
+            notes.Insert(0, $"아이템 아이콘 {set}");
+
+            // 앱 아이콘 (Player Settings 기본 아이콘)
+            var appIcon = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/UI/app_icon.png");
+            if (appIcon != null)
+            {
+                PlayerSettings.SetIcons(UnityEditor.Build.NamedBuildTarget.Unknown, new[] { appIcon }, IconKind.Any);
+                notes.Add("앱 아이콘");
+            }
+            AssetDatabase.SaveAssets();
+            notes.Add(CoreUi());
+            Debug.Log("[Setup] UI: " + string.Join(" · ", notes));
+        }
+
+        // Core 씬: 칸 원본(핫바 · 가방 · 핫바 격자)에 왼쪽 정사각형 아이콘 자리 + 이름 글자를 오른쪽으로, 조준점 그림
+        private static string CoreUi()
+        {
+            const string corePath = "Assets/_Project/Scenes/Core.unity";
+            var scene = UnityEditor.SceneManagement.EditorSceneManager.GetSceneByPath(corePath);
+            bool opened = false;
+            if (!scene.isLoaded)
+            {
+                scene = UnityEditor.SceneManagement.EditorSceneManager.OpenScene(corePath, UnityEditor.SceneManagement.OpenSceneMode.Additive);
+                opened = true;
+            }
+            int slots = 0;
+            bool crosshair = false;
+            foreach (var root in scene.GetRootGameObjects())
+            {
+                var templates = new List<Object>();
+                foreach (var v in root.GetComponentsInChildren<UI.HotbarView>(true))
+                    templates.Add(new SerializedObject(v).FindProperty("slotTemplate").objectReferenceValue);
+                foreach (var v in root.GetComponentsInChildren<UI.SlotGridView>(true))
+                    templates.Add(new SerializedObject(v).FindProperty("slotTemplate").objectReferenceValue);
+                foreach (var t in templates)
+                    if (t is UI.HotbarSlotView view && SlotIcon(view))
+                        slots++;
+
+                foreach (var t in root.GetComponentsInChildren<Transform>(true))
+                {
+                    if (t.name != "Crosshair" || !t.TryGetComponent<UnityEngine.UI.Image>(out var image))
+                        continue;
+                    image.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/UI/ui_crosshair.png");
+                    image.color = Color.white;
+                    image.preserveAspect = true;
+                    ((RectTransform)t).sizeDelta = new Vector2(28f, 28f);
+                    crosshair = image.sprite != null;
+                }
+            }
+            UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(scene);
+            UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene);
+            if (opened)
+                UnityEditor.SceneManagement.EditorSceneManager.CloseScene(scene, true);
+            return $"칸 원본 {slots}개 아이콘 자리 · 조준점 {(crosshair ? "교체" : "못 찾음")}";
+        }
+
+        // 칸 높이만 한 정사각형 아이콘을 왼쪽에 (글자 뒤), 이름은 그 오른쪽 · 자동 크기. 이미 있으면 그대로
+        private static bool SlotIcon(UI.HotbarSlotView view)
+        {
+            var so = new SerializedObject(view);
+            var iconProp = so.FindProperty("icon");
+            var rect = (RectTransform)view.transform;
+            float h = rect.sizeDelta.y;
+            var icon = view.transform.Find("Icon") as RectTransform;
+            if (icon == null)
+            {
+                icon = new GameObject("Icon", typeof(RectTransform), typeof(UnityEngine.UI.Image)).GetComponent<RectTransform>();
+                icon.SetParent(view.transform, false);
+                icon.SetSiblingIndex(0);
+            }
+            icon.anchorMin = new Vector2(0f, 0.5f);
+            icon.anchorMax = new Vector2(0f, 0.5f);
+            icon.pivot = new Vector2(0f, 0.5f);
+            icon.anchoredPosition = new Vector2(4f, 0f);
+            icon.sizeDelta = new Vector2(h - 8f, h - 8f);
+            var image = icon.GetComponent<UnityEngine.UI.Image>();
+            image.raycastTarget = false;
+            image.preserveAspect = true;
+            image.enabled = false;
+            iconProp.objectReferenceValue = image;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            var name = view.transform.Find("Name") as RectTransform;
+            if (name != null && name.TryGetComponent<TMPro.TMP_Text>(out var label))
+            {
+                name.offsetMin = new Vector2(h, name.offsetMin.y);
+                if (!label.enableAutoSizing)
+                {
+                    label.fontSizeMax = label.fontSize;
+                    label.fontSizeMin = 10f;
+                    label.enableAutoSizing = true;
+                }
+            }
+            return true;
+        }
+
         // ── 손님 피피 · 오르 (BRANCH_ART 10/22) · 둘러보기 · 넣기 클립 (BRANCH_ANIMATOR 10/22) ──
 
         private const string CustomerBase = "Assets/_Project/Prefabs/Shop/customer.prefab";

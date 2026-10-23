@@ -1,3 +1,4 @@
+using NevrianGlowFarm.Core;
 using NevrianGlowFarm.Data;
 using NevrianGlowFarm.Systems.Interaction;
 using UnityEngine;
@@ -25,6 +26,8 @@ namespace NevrianGlowFarm.Systems.Farm
         [SerializeField] private string harvestTrigger = "Harvest";
         [Tooltip("재수확 작물 모델 Animator의 '다시 열림' 트리거 — 봉오리 → 열매")]
         [SerializeField] private string regrowTrigger = "Regrow";
+        [Tooltip("다 자란 작물의 숨쉬는 빛 높이 — 모델 꼭대기 위 (m, 아트 0.35)")]
+        [SerializeField, Min(0f)] private float glowAbove = 0.35f;
 
         private FarmGrid grid;
         private int index;
@@ -124,6 +127,8 @@ namespace NevrianGlowFarm.Systems.Farm
 
             GameObject wanted = hasCrop && modelAnchor != null ? stagePrefab : null;
             SetModel(wanted);
+            if (!hasCrop)
+                SetGlow(false);
 
             bool greybox = hasCrop && wanted == null;
             cropRenderer.gameObject.SetActive(greybox);
@@ -166,6 +171,7 @@ namespace NevrianGlowFarm.Systems.Farm
         /// </summary>
         public void SetFruit(bool ready, bool regrowing)
         {
+            SetGlow(ready);
             if (fruitAnimator == null)
                 return;
             bool wanted = ready || !regrowing;
@@ -173,6 +179,38 @@ namespace NevrianGlowFarm.Systems.Farm
                 return;
             fruitAnimator.SetTrigger(wanted ? regrowTrigger : harvestTrigger);
             fruitShown = wanted;
+        }
+
+        // 다 자란 작물 위에서 숨쉬는 빛 (VFX glow_pulse, 5-8) — 모델 꼭대기 위 glowAbove m
+        private GameObject glow;
+        private bool glowOn;
+
+        private void SetGlow(bool on)
+        {
+            if (on == glowOn)
+                return;
+            glowOn = on;
+            if (on && glow == null)
+                glow = VfxManager.Attach(VfxCues.GlowPulse, transform);
+            if (glow == null)
+                return;
+            if (on)
+            {
+                float top = modelAnchor != null ? modelAnchor.position.y : transform.position.y;
+                if (shownModel != null)
+                    foreach (var r in shownModel.GetComponentsInChildren<Renderer>())
+                        if (!(r is ParticleSystemRenderer))
+                            top = Mathf.Max(top, r.bounds.max.y);
+                glow.transform.position = new Vector3(transform.position.x, top + glowAbove, transform.position.z);
+            }
+            VfxManager.SetPlaying(glow, on);
+        }
+
+        /// <summary>수확 순간 반짝임 (FarmGrid가 수확 성공 때 부른다).</summary>
+        public void HarvestBurst()
+        {
+            Vector3 p = modelAnchor != null ? modelAnchor.position : transform.position;
+            VfxManager.Play(VfxCues.Sparkle, p + Vector3.up * 0.3f);
         }
 
         private static bool HasTrigger(Animator animator, string name)

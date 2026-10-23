@@ -185,6 +185,7 @@ namespace NevrianGlowFarm.Systems.Shop
             state.Straighten(aimedSlot); // 다시 진열하면 그 칸은 반듯해진다 (청소 v2 — 홀로그램 스냅)
             RefreshSlot(aimedSlot, animateLast: true);
             AudioManager.Play(SoundCues.ShelfPlace);
+            VfxManager.Play(VfxCues.Sparkle, transform.TransformPoint(StackPoint(aimedSlot, state[aimedSlot].Count - 1)));
             // 홀로그램은 다음 자리로 (가득 차면 빨강). 마지막 1개를 놓아 손이 비면 다음 프레임 UpdateAim이 숨긴다.
             aimedCheck = state.CanPlace(aimedSlot, crop.Id);
             ShowHologram();
