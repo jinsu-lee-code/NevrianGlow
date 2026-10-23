@@ -1,11 +1,11 @@
 ﻿recipe_id,processor_id,input_1,qty_1,input_2,qty_2,output_item_id,output_qty,unlock,scope,mvp
-recipe_moonroot_juice,proc_grinder,item_moonroot,1,,0,item_moonroot_juice,1,,phase2,phase2
-recipe_lantern_juice,proc_grinder,item_lanternfruit,1,,0,item_lantern_juice,1,,phase2,phase2
+recipe_moonroot_juice,proc_grinder,crop_moonroot,1,,0,item_moonroot_juice,1,,phase2,phase2
+recipe_lantern_juice,proc_grinder,crop_lanternfruit,1,,0,item_lantern_juice,1,,phase2,phase2
 recipe_pearl_juice,proc_grinder,item_pearlcore,1,,0,item_pearl_juice,1,,phase2,phase2
 recipe_spore_powder,proc_grinder,item_dried_mushroom,1,,0,item_spore_powder,1,,phase2,phase2
 recipe_petal_powder,proc_grinder,item_dried_spiral_petal,1,,0,item_petal_powder,1,,phase2,phase2
-recipe_dried_mushroom,proc_dryer,item_mushroomflower,1,,0,item_dried_mushroom,1,,phase2,phase2
+recipe_dried_mushroom,proc_dryer,crop_mushroomflower,1,,0,item_dried_mushroom,1,,phase2,phase2
 recipe_dried_spiral_petal,proc_dryer,item_spiral_petal,1,,0,item_dried_spiral_petal,1,,phase2,phase2
-recipe_fragrant_oil,proc_distiller,item_spiral_petal,1,item_mushroomflower,1,item_fragrant_oil,1,skill_unlock_distiller:1,phase2,phase2
+recipe_fragrant_oil,proc_distiller,item_spiral_petal,1,crop_mushroomflower,1,item_fragrant_oil,1,skill_unlock_distiller:1,phase2,phase2
 recipe_nutrient_juice,proc_distiller,item_lantern_juice,1,item_petal_powder,1,item_nutrient_juice,1,skill_recipe_nutrient_juice:1,phase2,phase2
 recipe_pearlcore_elixir,proc_distiller,item_pearl_juice,1,item_spore_powder,1,item_pearlcore_elixir,1,skill_recipe_pearlcore_elixir:1,phase2,phase2

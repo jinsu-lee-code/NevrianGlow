@@ -34,6 +34,9 @@
 | 도구 | tool_watering_can_t1 | tool_watering_1 | 연결 | | 1칸 |
 | 도구 | tool_watering_can_t2 | tool_watering_2 | 연결 | | 4칸 |
 | 도구 | tool_watering_can_t3 | tool_watering_3 | 연결 | | 8칸 |
+| 도구 | tool_watering_can_1 | tool_watering_1 | 연결 | | 10/22 묶음부터 기획 CSV가 개발 id 규칙(`_1`)을 쓰는데 물뿌리개만 이름이 다름 |
+| 도구 | tool_watering_can_2 | tool_watering_2 | 연결 | | 〃 |
+| 도구 | tool_watering_can_3 | tool_watering_3 | 연결 | | 〃 |
 | 도구 | - | tool_watering_4 | 개발만 | | 4등급 폐기 (회신 #6) — 에셋 삭제함 |
 | 도구 | tool_mop_t1 | tool_mop_1 | 연결 | | |
 | 도구 | tool_mop_t2 | tool_mop_2 | 연결 | | |
