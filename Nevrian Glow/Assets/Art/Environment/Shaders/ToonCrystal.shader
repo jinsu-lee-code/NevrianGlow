@@ -55,7 +55,7 @@ Shader "DSEWA/ToonCrystal"
         [ToggleUI] _EdgeFromVertexColor ("Use Vertex Colour R As Edge Mask", Float) = 0
         [HDR] _EdgeColor ("Edge Color", Color) = (0.6, 2.4, 2.2, 1)
         _EdgeStrength ("Edge Strength", Range(0, 2)) = 1
-        [Header(Cut Face Glow (vertex colour G, crystal_shards.py marks fracture faces))]
+        [Header(Cut Face Glow (vertex colour G crystal_shards.py marks fracture faces))]
         [ToggleUI] _CutFromVertexColor ("Use Vertex Colour G As Cut Mask", Float) = 0
         [HDR] _CutColor ("Cut Color", Color) = (1.2, 2.0, 2.4, 1)
         _CutStrength ("Cut Strength", Range(0, 2)) = 0.6

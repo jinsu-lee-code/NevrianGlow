@@ -15,7 +15,7 @@ ModelImporter:
       name: M_LanternGlow
     second: {fileID: 2100000, guid: 835d6e4be6ccab34d9b9ef8f9183c68e, type: 2}
   materials:
-    materialImportMode: 2
+    materialImportMode: 0
     materialName: 0
     materialSearch: 1
     materialLocation: 1
