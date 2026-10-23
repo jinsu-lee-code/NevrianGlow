@@ -186,14 +186,110 @@ namespace NevrianGlowFarm.Editor
                 barNote = "경험치 막대";
             }
 
+            // 7) 타이틀 로고 (사용자 전달 10/23 — 아트 브랜치 납품 전이라 개발 폴더 사본) — 글자 제목은 숨기고 부제는 로고 아래로
+            string logoNote = "로고 없음";
+            var titlePanel = canvas.Find("TitleScreen/Panel");
+            var logoSprite = LoadLogo();
+            if (titlePanel != null && logoSprite != null)
+            {
+                var logo = titlePanel.Find("Logo") as RectTransform;
+                if (logo == null)
+                {
+                    logo = new GameObject("Logo", typeof(RectTransform), typeof(Image)).GetComponent<RectTransform>();
+                    logo.SetParent(titlePanel, false);
+                }
+                logo.anchorMin = logo.anchorMax = new Vector2(0.5f, 1f);
+                logo.pivot = new Vector2(0.5f, 1f);
+                logo.anchoredPosition = new Vector2(0f, -20f);
+                logo.sizeDelta = new Vector2(900f, 450f); // 그림 1024 × 512 비율 — 위아래 투명 여백 포함
+                var image = logo.GetComponent<Image>();
+                image.sprite = logoSprite;
+                image.type = Image.Type.Simple;
+                image.preserveAspect = true;
+                image.raycastTarget = false;
+                image.color = Color.white;
+                var gameTitle = titlePanel.Find("GameTitle");
+                if (gameTitle != null)
+                    gameTitle.gameObject.SetActive(false);
+                if (titlePanel.Find("Subtitle") is RectTransform sub)
+                    sub.anchoredPosition = new Vector2(0f, -400f);
+                EditorUtility.SetDirty(image);
+
+                // 왼쪽 달 형광 (사용자 10/23): 로고 뒤 큰 후광 + 앞의 옅은 빛, 숨쉬듯 — 달 중심 = 그림 (195, 245) / 1024 × 512
+                var glow = LoadSprite(GlowDev);
+                if (glow != null)
+                {
+                    Vector2 moon = new Vector2((195f / 1024f - 0.5f) * 900f, -(245f / 512f) * 450f); // 로고 위 가운데 기준
+                    MoonGlow(titlePanel, logo, "MoonHalo", glow, moon, 340f, new Color(0.55f, 0.85f, 1f), 0.25f, 0.6f, behind: true);
+                    MoonGlow(titlePanel, logo, "MoonShine", glow, moon, 190f, new Color(0.75f, 0.95f, 1f), 0.04f, 0.18f, behind: false);
+                }
+                logoNote = "타이틀 로고 · 달 형광";
+            }
+
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
             if (opened)
                 EditorSceneManager.CloseScene(scene, true);
-            Debug.Log($"[Setup] UI 스킨 5-4a: 패널 {panels} · 버튼 {buttons} · 아이템 칸 원본 {slots} · 목록 줄/탭 원본 {rows} · {letterNote} · {barNote}");
+            Debug.Log($"[Setup] UI 스킨 5-4a: 패널 {panels} · 버튼 {buttons} · 아이템 칸 원본 {slots} · 목록 줄/탭 원본 {rows} · {letterNote} · {barNote} · {logoNote}");
         }
 
         private static Sprite Load(string name) => AssetDatabase.LoadAssetAtPath<Sprite>($"{Panels}/{name}.png");
+
+        // 로고: 아트 폴더에 납품되면 그것을, 없으면 개발 폴더 사본. 가져오기 설정을 UI 그림으로 (Sprite · 밉맵 끔 · 압축 없음)
+        private const string LogoArt = "Assets/Art/UI/ui_logo.png";
+        private const string LogoDev = "Assets/_Project/Art/UI/ui_logo.png";
+
+        private const string GlowDev = "Assets/_Project/Art/UI/ui_glow_soft.png"; // 개발이 만든 부드러운 원형 빛 (흰색 · 알파)
+
+        // 로고와 같은 부모에 빛 그림 — behind면 로고 바로 뒤, 아니면 바로 앞. 위치는 로고 위 가운데 기준
+        private static void MoonGlow(Transform parent, RectTransform logo, string name, Sprite sprite, Vector2 center, float size, Color color, float min, float max, bool behind)
+        {
+            var rt = parent.Find(name) as RectTransform;
+            if (rt == null)
+            {
+                rt = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(UiGlowPulse)).GetComponent<RectTransform>();
+                rt.SetParent(parent, false);
+            }
+            rt.SetSiblingIndex(behind ? logo.GetSiblingIndex() : logo.GetSiblingIndex() + 1);
+            if (behind && rt.GetSiblingIndex() > logo.GetSiblingIndex())
+                logo.SetSiblingIndex(rt.GetSiblingIndex());
+            rt.anchorMin = rt.anchorMax = logo.anchorMin;
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = logo.anchoredPosition + center;
+            rt.sizeDelta = new Vector2(size, size);
+            var image = rt.GetComponent<Image>();
+            image.sprite = sprite;
+            image.raycastTarget = false;
+            image.color = new Color(color.r, color.g, color.b, max);
+            var so = new SerializedObject(rt.GetComponent<UiGlowPulse>());
+            so.FindProperty("minAlpha").floatValue = min;
+            so.FindProperty("maxAlpha").floatValue = max;
+            so.FindProperty("period").floatValue = 3.5f;
+            so.FindProperty("phase").floatValue = behind ? 0f : 0.15f;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(image);
+        }
+
+        private static Sprite LoadLogo()
+        {
+            string path = AssetDatabase.LoadAssetAtPath<Texture2D>(LogoArt) != null ? LogoArt : LogoDev;
+            return LoadSprite(path);
+        }
+
+        private static Sprite LoadSprite(string path)
+        {
+            if (AssetImporter.GetAtPath(path) is TextureImporter importer && path.StartsWith("Assets/_Project")
+                && (importer.textureType != TextureImporterType.Sprite || importer.mipmapEnabled || importer.textureCompression != TextureImporterCompression.Uncompressed))
+            {
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.mipmapEnabled = false;
+                importer.alphaIsTransparency = true;
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                importer.SaveAndReimport();
+            }
+            return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        }
 
         private static void Skin(Image image, Sprite sprite, Color color, float borderScale)
         {
