@@ -127,9 +127,10 @@ namespace NevrianGlowFarm.Systems.Zones
 
         private void OnPhaseChanged(PhaseChange change)
         {
-            // 문이 요청한 이동 중이면 그 이동이 끝까지 맡는다.
+            // 문이 요청한 이동 중이면 그 이동이 끝까지 맡는다 (도착할 때 음악도).
             if (transitioning || current == null)
                 return;
+            UpdateMusic();
             var target = Find(ZoneRules.TargetZone(change, current.Id, rules));
             if (target != null && target != current)
                 StartCoroutine(Run(target, null));
@@ -139,6 +140,7 @@ namespace NevrianGlowFarm.Systems.Zones
         {
             transitioning = true;
             PlayerInputGate.Block(this);
+            AudioManager.Play(SoundCues.UiFade);
             yield return fader.Fade(1f, fadeOut);
 
             midpoint?.Invoke();
@@ -148,6 +150,28 @@ namespace NevrianGlowFarm.Systems.Zones
             yield return fader.Fade(0f, fadeIn);
             PlayerInputGate.Release(this);
             transitioning = false;
+        }
+
+        /// <summary>
+        /// 불러오기 (6-1): 하루 시작 지역의 출발 지점에 바로 세운다 (페이드 없음).
+        /// 이동 중이었으면 그 이동을 멈추고 화면 · 입력 잠금을 푼 뒤 세운다.
+        /// </summary>
+        public bool ArriveAtDayStart()
+        {
+            if (!enabled || rules == null)
+                return false;
+            if (transitioning)
+            {
+                StopAllCoroutines();
+                fader.Set(0f);
+                PlayerInputGate.Release(this);
+                transitioning = false;
+            }
+            var start = Find(ZoneRules.DayStartZone(rules));
+            if (start == null)
+                return false;
+            Arrive(start);
+            return true;
         }
 
         private void Arrive(ZoneProfileData zone)
@@ -163,7 +187,19 @@ namespace NevrianGlowFarm.Systems.Zones
             currentZoneId = zone.Id;
             if (LogCollector.Instance != null)
                 LogCollector.Instance.SetZone(zone.Id);
+            UpdateMusic();
             ZoneChanged?.Invoke(zone);
+        }
+
+        /// <summary>
+        /// 지금 지역 · 단계의 배경음 (같은 곡이면 그대로 — AudioManager 교차 페이드). 게임 시작 전(타이틀)에는 타이틀 음악을 두고 건드리지 않는다.
+        /// </summary>
+        public void UpdateMusic()
+        {
+            var game = GameManager.Instance;
+            if (current == null || game == null || !game.IsStarted)
+                return;
+            AudioManager.PlayMusic(current.BgmFor(game.Phase));
         }
 
         private static void Apply(ZoneProfileData zone)

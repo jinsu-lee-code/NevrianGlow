@@ -1,4 +1,5 @@
 using System;
+using NevrianGlowFarm.Core;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,6 +21,14 @@ namespace NevrianGlowFarm.UI
         [SerializeField] private TMP_Text nameLabel;
         [Tooltip("클릭 버튼 (HUD 핫바는 비움)")]
         [SerializeField] private Button button;
+        [Tooltip("아이템 아이콘 (비우면 표시 안 함 — 5-4)")]
+        [SerializeField] private Image icon;
+
+        [Header("조정값")]
+        [Tooltip("배경 그림 — 비우면 지금 그림 그대로 (5-4a UI 스킨)")]
+        [SerializeField] private Sprite normalSprite;
+        [Tooltip("선택된 칸 · 탭의 배경 그림 — 비우면 normalSprite")]
+        [SerializeField] private Sprite selectedSprite;
 
         /// <summary>버튼을 눌렀을 때.</summary>
         public event Action Clicked;
@@ -27,7 +36,11 @@ namespace NevrianGlowFarm.UI
         private void Awake()
         {
             if (button != null)
-                button.onClick.AddListener(() => Clicked?.Invoke());
+                button.onClick.AddListener(() =>
+                {
+                    AudioManager.Play(SoundCues.UiClick);
+                    Clicked?.Invoke();
+                });
         }
 
         public void SetContent(int keyNumber, string itemName)
@@ -40,9 +53,20 @@ namespace NevrianGlowFarm.UI
             nameLabel.text = itemName;
         }
 
+        /// <summary>아이콘 (null이면 숨김). 아이콘 칸이 없는 줄(상점 · 창고 목록)은 아무 일 없음.</summary>
+        public void SetIcon(Sprite sprite)
+        {
+            if (icon == null)
+                return;
+            icon.sprite = sprite;
+            icon.enabled = sprite != null;
+        }
+
         public void SetSelected(bool selected, Color normalColor, Color selectedColor)
         {
             background.color = selected ? selectedColor : normalColor;
+            if (normalSprite != null)
+                background.sprite = selected && selectedSprite != null ? selectedSprite : normalSprite;
         }
     }
 }

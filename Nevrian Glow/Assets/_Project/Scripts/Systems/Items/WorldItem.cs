@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using NevrianGlowFarm.Core;
 using NevrianGlowFarm.Data;
 using NevrianGlowFarm.Systems.Interaction;
 using NevrianGlowFarm.Systems.Player;
@@ -52,6 +53,7 @@ namespace NevrianGlowFarm.Systems.Items
             var block = new MaterialPropertyBlock();
             block.SetColor(BaseColorId, data is CropData crop ? crop.GreyboxColor : defaultColor);
             modelRenderer.SetPropertyBlock(block);
+            ItemModelView.Apply(modelRenderer, data, ItemModelView.SeedOf(transform.position)); // 놓인 모습 모델 (쓰레기는 5종 중 하나)
         }
 
         public string GetHandPrompt()
@@ -70,6 +72,7 @@ namespace NevrianGlowFarm.Systems.Items
             var inventory = PlayerInventory.Instance;
             if (item == null || inventory == null || !inventory.TryAdd(item, count))
                 return;
+            AudioManager.Play(SoundCues.TrashPickup, transform.position); // 바닥 아이템 줍기 (쓰레기 · 떨어뜨린 물건 공용)
             Destroy(gameObject);
         }
     }

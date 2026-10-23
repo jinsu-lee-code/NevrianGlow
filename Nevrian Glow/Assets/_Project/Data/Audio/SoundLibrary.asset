@@ -1,0 +1,274 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee397837e9f438e428048cf2aeb6a7e4, type: 3}
+  m_Name: SoundLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.SoundLibraryData
+  entries:
+  - id: sfx_basket_pick
+    clips:
+    - {fileID: 8300000, guid: 52793dec0aa00c54d91bec4557ba0f8a, type: 3}
+    bus: 0
+    volume: 0.8
+    spatial: 1
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
+  - id: sfx_basket_put
+    clips:
+    - {fileID: 8300000, guid: 92b58fc740420be4aa17b637d94b877c, type: 3}
+    - {fileID: 8300000, guid: 90b81e1786079c84c8180d2aa9139e66, type: 3}
+    - {fileID: 8300000, guid: 7a72b94b0286fe445b0b7a657721e2d8, type: 3}
+    bus: 0
+    volume: 0.6
+    spatial: 1
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
+  - id: sfx_checkout_coin
+    clips:
+    - {fileID: 8300000, guid: c47e86f7e62c003498a842965fccb248, type: 3}
+    bus: 0
+    volume: 1
+    spatial: 1
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
+  - id: sfx_crop_mature
+    clips:
+    - {fileID: 8300000, guid: e36758d1b9349504d91e2474258ed740, type: 3}
+    bus: 0
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
+  - id: sfx_customer_enter
+    clips:
+    - {fileID: 8300000, guid: 9b477a8d4ca829a4990e4a0ec36d50a3, type: 3}
+    bus: 0
+    volume: 1
+    spatial: 1
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
+  - id: sfx_customer_exit
+    clips:
+    - {fileID: 8300000, guid: 161603449ddac904b8a97e25fe296ae6, type: 3}
+    bus: 0
+    volume: 1
+    spatial: 1
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
+  - id: sfx_customer_happy
+    clips:
+    - {fileID: 8300000, guid: 490f7ab93dd65044188f758ad5ca5644, type: 3}
+    - {fileID: 8300000, guid: c313cdbc151c64241afc709fb49476c1, type: 3}
+    - {fileID: 8300000, guid: 2ba9856129c0da04f8d0fc93f2a647f2, type: 3}
+    bus: 0
+    volume: 1
+    spatial: 1
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
+  - id: sfx_customer_step
+    clips:
+    - {fileID: 8300000, guid: f0548bd7072326640a3e0394c56e4da5, type: 3}
+    - {fileID: 8300000, guid: e44b17ea62dfa5042a2130d6c2fe5ace, type: 3}
+    - {fileID: 8300000, guid: e06a6292604c57b43bb134ed95015aaa, type: 3}
+    bus: 0
+    volume: 0.45
+    spatial: 1
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
+  - id: sfx_fertilizer_sparkle
+    clips:
+    - {fileID: 8300000, guid: 3313893b68017a04fbfe8c4db87223b4, type: 3}
+    bus: 0
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
+  - id: sfx_harvest_pull
+    clips:
+    - {fileID: 8300000, guid: 8011cfacd14333f4e8e801fbed210abf, type: 3}
+    - {fileID: 8300000, guid: da2952f185531c146ae98bd3fe4d1783, type: 3}
+    - {fileID: 8300000, guid: 5f359ba9ee3ddd2469244caf0d3d5b3f, type: 3}
+    bus: 0
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
+  - id: sfx_mop_loop
+    clips:
+    - {fileID: 8300000, guid: aa381d01ece500e428aeeff83a2dadb8, type: 3}
+    bus: 0
+    volume: 1
+    spatial: 0
+    loop: 1
+    pitchJitter: 0
+    cooldown: 0
+  - id: sfx_seed_plant
+    clips:
+    - {fileID: 8300000, guid: f86b68961c7b34e419eca3733c4f5ddf, type: 3}
+    - {fileID: 8300000, guid: 6f2284e5fcf21f44ea2551274403972e, type: 3}
+    - {fileID: 8300000, guid: e52d5aba0d776304bb53fdeebeadf9a8, type: 3}
+    bus: 0
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
+  - id: sfx_stain_clear
+    clips:
+    - {fileID: 8300000, guid: ec95dcfd2f7f94347be453dbee093dc4, type: 3}
+    bus: 0
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
+  - id: sfx_trash_drop
+    clips:
+    - {fileID: 8300000, guid: 64575fd764a431a4681fb13206c938f6, type: 3}
+    bus: 0
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
+  - id: sfx_trash_pickup
+    clips:
+    - {fileID: 8300000, guid: 3fd17fc8ccb7e3e4488ed881a84300b3, type: 3}
+    - {fileID: 8300000, guid: 538e0e29dfe10f3418cb7726ce6a3436, type: 3}
+    - {fileID: 8300000, guid: 5850389d9a67e414aac542ac933a973e, type: 3}
+    bus: 0
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
+  - id: sfx_ui_buy_fail
+    clips:
+    - {fileID: 8300000, guid: d83666e617c6c964da2c3369da0ee34b, type: 3}
+    bus: 1
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0
+    cooldown: 0.05
+  - id: sfx_ui_buy_success
+    clips:
+    - {fileID: 8300000, guid: 55b1501effed54043a2edc1cf19cb2e0, type: 3}
+    bus: 1
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0
+    cooldown: 0.05
+  - id: sfx_ui_click
+    clips:
+    - {fileID: 8300000, guid: cfa59daa6353a8445857bc93bb7c5b47, type: 3}
+    bus: 1
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0
+    cooldown: 0.05
+  - id: sfx_ui_fade
+    clips:
+    - {fileID: 8300000, guid: 0655a27b3a02d9441b58bec0a23e25a3, type: 3}
+    bus: 1
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0
+    cooldown: 0.05
+  - id: sfx_ui_levelup
+    clips:
+    - {fileID: 8300000, guid: 261e6e882ed5a5f41ab4021ffedef76e, type: 3}
+    bus: 1
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0
+    cooldown: 0.05
+  - id: sfx_ui_skill_learn
+    clips:
+    - {fileID: 8300000, guid: 2aa5579d13296bb438bc612225a6a416, type: 3}
+    bus: 1
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0
+    cooldown: 0.05
+  - id: sfx_water_pour
+    clips:
+    - {fileID: 8300000, guid: 61412469eb7c0d5488084f772a0143fa, type: 3}
+    - {fileID: 8300000, guid: 2a76035053d18a847985aab9ebb35ac4, type: 3}
+    - {fileID: 8300000, guid: 3cd31274d0115514bb03346e2f1ca346, type: 3}
+    bus: 0
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
+  - id: bgm_clean_loop
+    clips:
+    - {fileID: 8300000, guid: 2fff4fa07023fee41aa8de46b6224dac, type: 3}
+    bus: 2
+    volume: 1
+    spatial: 0
+    loop: 1
+    pitchJitter: 0
+    cooldown: 0
+  - id: bgm_farm_loop
+    clips:
+    - {fileID: 8300000, guid: a7879d3d92be27547a0ec781d9be573b, type: 3}
+    bus: 2
+    volume: 1
+    spatial: 0
+    loop: 1
+    pitchJitter: 0
+    cooldown: 0
+  - id: bgm_market_loop
+    clips:
+    - {fileID: 8300000, guid: 6325bf1f7c81a6f47a12d77a64f1f8a8, type: 3}
+    bus: 2
+    volume: 1
+    spatial: 0
+    loop: 1
+    pitchJitter: 0
+    cooldown: 0
+  - id: bgm_title_loop
+    clips:
+    - {fileID: 8300000, guid: 79cb67153a5cfcf4897ae99b75323ce7, type: 3}
+    bus: 2
+    volume: 1
+    spatial: 0
+    loop: 1
+    pitchJitter: 0
+    cooldown: 0
+  - id: sfx_ui_tool_switch
+    clips:
+    - {fileID: 8300000, guid: f118e3ec204d6e14f8c1cb1deb918e8d, type: 3}
+    bus: 1
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0
+    cooldown: 0.05
+  minDistance: 1
+  maxDistance: 15

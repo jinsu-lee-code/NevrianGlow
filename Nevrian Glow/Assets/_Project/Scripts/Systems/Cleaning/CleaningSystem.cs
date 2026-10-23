@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using NevrianGlowFarm.Core;
 using NevrianGlowFarm.Data;
 using NevrianGlowFarm.Logic;
@@ -6,22 +6,27 @@ using NevrianGlowFarm.Logic.Cleaning;
 using NevrianGlowFarm.Logic.Game;
 using NevrianGlowFarm.Systems.Farm;
 using NevrianGlowFarm.Systems.Items;
+using NevrianGlowFarm.Systems.Shop;
 using UnityEngine;
 
 namespace NevrianGlowFarm.Systems.Cleaning
 {
     /// <summary>
-    /// 가게 청소 (노션 GDD 12.4, GDD 4-4). Shop 씬에 하나. 이 오브젝트 위치 = 가게 바닥 원점, 생성 구역은 로컬 x · z 사각형.
-    /// 청소·진열 단계에 들어설 때(그날 처음 한 번) 쓰레기(바닥 아이템)와 얼룩을 포아송 배치로 놓는다 — 금지 구역 · 바닥 아이템 · 서로 사이 간격.
-    /// 쓰레기는 날이 지나도 남고(바닥 아이템), 얼룩은 날마다 새로 놓는다. 청결도는 장사 단계가 시작될 때 확정한다.
+    /// 가게 청소 · 정리 (노션 GDD 12.4, 청소 v2 설정안 · TASKS P-3). Shop 씬에 하나. 이 오브젝트 위치 = 가게 바닥 원점, 생성 구역은 로컬 x · z 사각형.
+    /// 청소·진열 단계에 들어설 때(그날 처음 한 번) 어제 장사의 흔적을 놓는다 — 쓰레기(1일차 30 · 평소 1~3) · 얼룩(1일차 12 · 어제 손님 × 0.3) ·
+    /// 흩어진 상품(진열대에서 빼서 바닥에, 진짜 재고) · 흐트러진 진열 칸. 놓을 자리는 포아송 배치(금지 구역 · 바닥 아이템 · 서로 사이 간격).
+    /// 쓰레기 · 바닥 상품은 날이 지나도 남고(바닥 아이템), 얼룩 · 흐트러짐은 날마다 새로. 청결도 · 정돈도는 장사 단계가 시작될 때 확정한다.
     /// </summary>
     public class CleaningSystem : MonoBehaviour
     {
-        private const int ScatterPurpose = 3; // 쓰레기 · 얼룩 배치용 난수 흐름
+        private const int ScatterPurpose = 3; // 쓰레기 · 얼룩 · 흩어진 상품 배치용 난수 흐름
+        private const int MessPurpose = 7;    // 흩어질 상품 · 흐트러질 칸 고르기
 
         [Header("참조")]
-        [Tooltip("개수 규칙 · 간격 · 쓰레기 아이템 (Data/Stats/CleaningSettings)")]
+        [Tooltip("개수 규칙 · 간격 · 쓰레기 아이템 · 등급 (Data/Stats/CleaningSettings)")]
         [SerializeField] private CleaningSettingsData settings;
+        [Tooltip("어지러움 생성 배율 능력치 — 청결 유지 스킬 (Data/Stats/stat_mess_rate, 비우면 1)")]
+        [SerializeField] private StatData messRateStat;
         [Tooltip("바닥 아이템 프리팹 (Prefabs/Items/world_item) — 쓰레기로 쓴다")]
         [SerializeField] private WorldItem worldItemPrefab;
         [Tooltip("얼룩 프리팹 (Prefabs/Cleaning/stain)")]
@@ -52,9 +57,16 @@ namespace NevrianGlowFarm.Systems.Cleaning
         [SerializeField] private int initialStains;
         [Tooltip("장사 시작 때 확정한 청결도 (0~1, −1 = 아직, 읽기 전용)")]
         [SerializeField] private float lockedCleanliness = -1f;
+        [Tooltip("오늘 처음 바닥 상품 수 = 오늘 흩어진 상품 + 전날 남은 바닥 상품 (읽기 전용)")]
+        [SerializeField] private int initialScattered;
+        [Tooltip("오늘 처음 흐트러진 진열 칸 수 (읽기 전용)")]
+        [SerializeField] private int initialDisordered;
+        [Tooltip("장사 시작 때 확정한 정돈도 (0~1, −1 = 아직, 읽기 전용)")]
+        [SerializeField] private float lockedTidiness = -1f;
 
         private static CleaningSystem instance;
         private readonly List<Stain> stains = new List<Stain>();
+        private readonly List<ShelfDisplay> shelves = new List<ShelfDisplay>();
         private readonly List<Vector3> previewTrash = new List<Vector3>();
         private readonly List<Vector3> previewStains = new List<Vector3>();
 
@@ -64,7 +76,27 @@ namespace NevrianGlowFarm.Systems.Cleaning
         public int InitialStains => initialStains;
         /// <summary>장사 시작 때 확정한 청결도. 아직이면 −1 — 손님 수(3-1)가 읽는다.</summary>
         public float LockedCleanliness => lockedCleanliness;
+        /// <summary>장사 시작 때 확정한 정돈도. 아직이면 −1 — 손님 만족도 · 정산 등급이 읽는다.</summary>
+        public float LockedTidiness => lockedTidiness;
+        public int InitialScattered => initialScattered;
+        public int InitialDisordered => initialDisordered;
         public IReadOnlyList<Stain> Stains => stains;
+
+        /// <summary>청결 · 정돈 등급 (S ≥ 0.95 · A ≥ 0.80 · B ≥ 0.60 · C).</summary>
+        public TidyGrade GradeOf(float value) => TidyRules.Grade(value, settings.ToMessSpec());
+
+        /// <summary>남은 얼룩 수 (가게 HUD '오늘의 정리').</summary>
+        public int StainsLeft
+        {
+            get
+            {
+                int n = 0;
+                foreach (var s in stains)
+                    if (s != null && !s.IsClean)
+                        n++;
+                return n;
+            }
+        }
 
         private void Awake()
         {
@@ -91,18 +123,58 @@ namespace NevrianGlowFarm.Systems.Cleaning
             if (change.Phase == DayPhase.CleanDisplay && spawnedDay != change.Day)
                 SpawnForDay(change.Day);
             else if (change.Phase == DayPhase.Sales && change.PreviousPhase != DayPhase.Sales)
+            {
                 lockedCleanliness = CurrentCleanliness();
+                lockedTidiness = CurrentTidiness();
+            }
         }
 
         // ── 하루 배치 ─────────────────────────────────────────
 
-        /// <summary>그날의 쓰레기 · 얼룩을 놓는다. 남은 얼룩은 치우고, 바닥 쓰레기는 그대로 두어 처음 쓰레기 수에 더한다.</summary>
+        /// <summary>그날 생길 양 (어제 손님 · 지금 진열 기준, 청결 유지 스킬 반영).</summary>
+        public readonly struct DayMess
+        {
+            public readonly int Trash, Stains, Scattered, Disordered;
+            public DayMess(int trash, int stains, int scattered, int disordered)
+            {
+                Trash = trash; Stains = stains; Scattered = scattered; Disordered = disordered;
+            }
+        }
+
+        /// <summary>
+        /// 그날의 어지러움을 놓는다: 흩어진 상품(진열대에서 빼서 바닥에) → 흐트러진 칸 → 쓰레기 · 얼룩.
+        /// 남은 얼룩은 치우고, 바닥 쓰레기 · 바닥 상품은 그대로 두어 처음 개수에 더한다.
+        /// </summary>
         public void SpawnForDay(int day)
         {
             ClearStains();
-            int carry = FloorTrashCount();
+            CollectShelves();
+            foreach (var s in shelves)
+                s.ClearDisorder();
+            int carryTrash = FloorTrashCount();
+            int carryProducts = FloorProductCount();
 
-            var (trashPoints, stainPoints) = Plan(day);
+            var mess = CountFor(day);
+            var pickRandom = new SeededRandom(SeededRandom.SeedFor(seed, MessPurpose, day));
+            var states = ShelfStates();
+
+            // 흩어진 상품: 진열된 것 중 재고 비례로 골라 진열대에서 뺀다 (진짜 재고 — 다시 진열해야 팔림)
+            var scattered = new List<CropData>();
+            for (int n = 0; n < mess.Scattered; n++)
+            {
+                if (!Logic.Sales.SalesRules.TryPickUnit(states, pickRandom, out int shelf, out int slot))
+                    break;
+                var crop = shelves[shelf].TryTakeForSale(slot);
+                if (crop != null)
+                    scattered.Add(crop);
+            }
+            // 흐트러진 진열: 상품이 남은 칸 중에서
+            int disordered = 0;
+            foreach (var (shelf, slot) in TidyRules.PickDisorderSlots(states, mess.Disordered, pickRandom))
+                if (shelves[shelf].SetDisordered(slot))
+                    disordered++;
+
+            var (trashPoints, stainPoints, productPoints) = Plan(day, mess.Trash, mess.Stains, scattered.Count);
             for (int i = 0; i < trashPoints.Count; i++)
             {
                 // 방향은 순서로 정한다 (황금각) — 배치와 마찬가지로 같은 날이면 같은 모습.
@@ -111,32 +183,130 @@ namespace NevrianGlowFarm.Systems.Cleaning
             }
             foreach (var p in stainPoints)
                 stains.Add(Instantiate(stainPrefab, p, Quaternion.identity, transform));
+            for (int i = 0; i < scattered.Count; i++)
+            {
+                // 바닥에 놓을 자리를 못 찾은 상품은 진열대에 되돌린다 (재고가 사라지지 않게)
+                if (i >= productPoints.Count)
+                {
+                    ReturnToShelf(scattered[i]);
+                    continue;
+                }
+                var item = Instantiate(worldItemPrefab, productPoints[i], Quaternion.Euler(0f, (i * 97f) % 360f, 0f), transform);
+                item.Init(scattered[i], 1);
+            }
 
             spawnedDay = day;
-            initialTrash = carry + trashPoints.Count;
+            initialTrash = carryTrash + trashPoints.Count;
             initialStains = stainPoints.Count;
+            initialScattered = carryProducts + Mathf.Min(scattered.Count, productPoints.Count);
+            initialDisordered = disordered;
             lockedCleanliness = -1f;
-            int wanted = CleaningRules.DailyCount(settings.Trash.BaseCount, day, settings.Trash.DayDivisor, settings.Trash.DayBonusCap);
-            if (trashPoints.Count < wanted)
-                Debug.LogWarning($"[CleaningSystem] {day}일차 쓰레기 {wanted}개 중 {trashPoints.Count}개만 놓음 — 생성 구역이 좁거나 금지 구역 · 바닥 아이템이 많음", this);
+            lockedTidiness = -1f;
+            Debug.Log($"[CleaningSystem] {day}일차 가게 정리: 쓰레기 {trashPoints.Count} · 얼룩 {stainPoints.Count} · 흩어진 상품 {initialScattered - carryProducts} · 흐트러진 칸 {disordered} (어제 손님 {CustomersYesterday(day)})");
+            if (trashPoints.Count < mess.Trash)
+                Debug.LogWarning($"[CleaningSystem] {day}일차 쓰레기 {mess.Trash}개 중 {trashPoints.Count}개만 놓음 — 생성 구역이 좁거나 금지 구역 · 바닥 아이템이 많음", this);
+            if (stainPoints.Count < mess.Stains)
+                Debug.LogWarning($"[CleaningSystem] {day}일차 얼룩 {mess.Stains}개 중 {stainPoints.Count}개만 놓음 — 생성 구역이 좁거나 쓰레기 · 바닥 아이템이 자리를 차지함", this);
+        }
+
+        /// <summary>그날 생길 양을 계산만 한다 (배치 · 미리보기 공통).</summary>
+        public DayMess CountFor(int day)
+        {
+            var spec = settings.ToMessSpec();
+            double messRate = StatSystem.Apply(messRateStat, 1.0);
+            int customers = CustomersYesterday(day);
+            var countRandom = new SeededRandom(SeededRandom.SeedFor(seed, ScatterPurpose + 100, day));
+            var states = ShelfStates();
+            int unsold = 0;
+            foreach (var s in states)
+                unsold += s.TotalCount;
+            int scatter = TidyRules.ScatterCount(day, unsold, customers, messRate, spec);
+            int filledAfter = Mathf.Max(0, TidyRules.FilledSlots(states)); // 흩어진 뒤 빈 칸이 생길 수 있어 실제 수는 배치 때 줄 수 있다
+            return new DayMess(TidyRules.TrashCount(day, spec, countRandom), TidyRules.StainCount(day, customers, messRate, spec),
+                scatter, TidyRules.DisorderCount(day, filledAfter, messRate, spec));
         }
 
         /// <summary>그날 놓을 자리를 계산만 한다 (배치 · 미리보기 공통). 지금 바닥 아이템을 피한다.</summary>
-        public (List<Vector3> Trash, List<Vector3> Stains) Plan(int day)
+        public (List<Vector3> Trash, List<Vector3> Stains, List<Vector3> Products) Plan(int day, int trashCount, int stainCount, int productCount)
         {
             var occupied = new List<FloorPoint>();
             foreach (var item in WorldItem.All)
                 if (item != null && item.gameObject.scene == gameObject.scene)
                     occupied.Add(ToLocal(item.transform.position));
 
-            int trashCount = CleaningRules.DailyCount(settings.Trash.BaseCount, day, settings.Trash.DayDivisor, settings.Trash.DayBonusCap);
-            int stainCount = CleaningRules.DailyCount(settings.Stain.BaseCount, day, settings.Stain.DayDivisor, settings.Stain.DayBonusCap);
             var random = new SeededRandom(SeededRandom.SeedFor(seed, ScatterPurpose, day));
-
             var trash = CleaningRules.Scatter(trashCount, areaMin.x, areaMin.y, areaMax.x, areaMax.y, settings.MinSpacing, settings.PlacementAttempts, random, Allowed, occupied);
             occupied.AddRange(trash);
-            var stain = CleaningRules.Scatter(stainCount, areaMin.x, areaMin.y, areaMax.x, areaMax.y, settings.MinSpacing, settings.PlacementAttempts, random, Allowed, occupied);
-            return (trash.ConvertAll(ToWorld), stain.ConvertAll(ToWorld));
+            var stain = CleaningRules.Scatter(stainCount, areaMin.x, areaMin.y, areaMax.x, areaMax.y, settings.MinSpacing, settings.PlacementAttempts, random, AllowedForStain, occupied);
+            occupied.AddRange(stain);
+            var products = CleaningRules.Scatter(productCount, areaMin.x, areaMin.y, areaMax.x, areaMax.y, settings.MinSpacing, settings.PlacementAttempts, random, Allowed, occupied);
+            return (trash.ConvertAll(ToWorld), stain.ConvertAll(ToWorld), products.ConvertAll(ToWorld));
+        }
+
+        /// <summary>미리보기용: 그날 양으로 자리만 계산.</summary>
+        public (List<Vector3> Trash, List<Vector3> Stains, List<Vector3> Products) Plan(int day)
+        {
+            var mess = CountFor(day);
+            return Plan(day, mess.Trash, mess.Stains, mess.Scattered);
+        }
+
+        // 어제 정산의 손님 수 (1일차 · 기록이 없으면 0)
+        private static int CustomersYesterday(int day)
+        {
+            var game = GameManager.Instance;
+            return game != null && day > 1 && game.Run.TryGet(day - 1, out var report) ? report.Customers : 0;
+        }
+
+        private void CollectShelves()
+        {
+            // 진열대는 이 씬(가게)에 있다 — 하루 한 번 찾는다 (프레임마다 아님)
+            shelves.Clear();
+            var found = FindObjectsByType<ShelfDisplay>(FindObjectsSortMode.None);
+            System.Array.Sort(found, (a, b) => string.CompareOrdinal(a.name, b.name));
+            shelves.AddRange(found);
+        }
+
+        private List<Logic.Shop.ShelfState> ShelfStates()
+        {
+            if (shelves.Count == 0)
+                CollectShelves();
+            var list = new List<Logic.Shop.ShelfState>(shelves.Count);
+            foreach (var s in shelves)
+                list.Add(s.State);
+            return list;
+        }
+
+        private void ReturnToShelf(CropData crop)
+        {
+            foreach (var s in shelves)
+                if (s.TryReturn(crop))
+                    return;
+            Debug.LogWarning($"[CleaningSystem] 흩어질 상품 {crop.Id}를 바닥에도 진열대에도 놓지 못함", this);
+        }
+
+        // ── 정돈도 ──────────────────────────────────────────
+
+        /// <summary>지금 정돈도 (청소 v2): 바닥에 남은 상품 + 흐트러진 채 남은 진열 칸만 감점. 들고 있는 상품은 치운 것.</summary>
+        public float CurrentTidiness() =>
+            (float)TidyRules.Tidiness(initialScattered, initialDisordered, FloorProductCount(), DisorderedNow());
+
+        /// <summary>가게 바닥(이 씬)에 놓인 상품(작물) 개수.</summary>
+        public int FloorProductCount()
+        {
+            int count = 0;
+            foreach (var item in WorldItem.All)
+                if (item != null && item.Item is CropData && item.gameObject.scene == gameObject.scene)
+                    count += item.Count;
+            return count;
+        }
+
+        /// <summary>흐트러진 채 남은 진열 칸 수.</summary>
+        public int DisorderedNow()
+        {
+            int n = 0;
+            foreach (var s in ShelfStates())
+                n += s.DisorderedCount;
+            return n;
         }
 
         // ── 청결도 ──────────────────────────────────────────
@@ -201,7 +371,7 @@ namespace NevrianGlowFarm.Systems.Cleaning
         /// <summary>인스펙터 "배치 미리보기": 그날 놓을 자리를 기즈모로만 보여 준다 (아무것도 만들지 않음).</summary>
         public void Preview(int day)
         {
-            var (trash, stain) = Plan(day);
+            var (trash, stain, _) = Plan(day);
             previewTrash.Clear(); previewTrash.AddRange(trash);
             previewStains.Clear(); previewStains.AddRange(stain);
         }
@@ -215,6 +385,20 @@ namespace NevrianGlowFarm.Systems.Cleaning
         public int PreviewTrashCount => previewTrash.Count;
         public int PreviewStainCount => previewStains.Count;
 
+        /// <summary>
+        /// 불러오기 (6-1): 오늘 놓은 얼룩을 치우고 "오늘 배치 안 함"으로 되돌린다 → 청소·진열 단계에 들어가면 다시 놓는다.
+        /// 바닥 쓰레기는 바닥 아이템이라 저장 내용으로 따로 돌아온다.
+        /// </summary>
+        public void ResetForLoad()
+        {
+            ClearStains();
+            spawnedDay = 0;
+            lockedCleanliness = -1f;
+            lockedTidiness = -1f;
+            initialScattered = 0;
+            initialDisordered = 0;
+        }
+
         // ── 내부 ────────────────────────────────────────────
 
         private void ClearStains()
@@ -225,11 +409,16 @@ namespace NevrianGlowFarm.Systems.Cleaning
             stains.Clear();
         }
 
-        private bool Allowed(FloorPoint local)
+        private bool Allowed(FloorPoint local) => Allowed(local, false);
+
+        // 얼룩 · 발자국: 통로처럼 '얼룩은 허용'인 금지 구역에는 생겨도 된다 (기획 회신 10/22 A2 — 통로를 걸은 발자국)
+        private bool AllowedForStain(FloorPoint local) => Allowed(local, true);
+
+        private bool Allowed(FloorPoint local, bool stain)
         {
             Vector3 world = ToWorld(local);
             foreach (var zone in forbiddenZones)
-                if (zone != null && zone.Overlaps(world, itemHalfSize, itemHalfSize))
+                if (zone != null && !(stain && zone.AllowsStains) && zone.Overlaps(world, itemHalfSize, itemHalfSize))
                     return false;
             return true;
         }

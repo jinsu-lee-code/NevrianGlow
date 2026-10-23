@@ -16,4 +16,8 @@ MonoBehaviour:
   displayName: "\uCCA0 \uAD2D\uC774"
   maxStack: 1
   canStore: 1
-  workPerUse: 1.5
+  heldPrefab: {fileID: 345275002101877966, guid: 736a6ed56a5321a4fbe5058ea854f75d, type: 3}
+  worldModels: []
+  icon: {fileID: 21300000, guid: 2dfb1e838f9872f44becd781a9d53247, type: 3}
+  useDelay: 0
+  workPerUse: 2

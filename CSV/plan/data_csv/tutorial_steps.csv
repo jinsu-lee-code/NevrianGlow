@@ -1,0 +1,31 @@
+﻿step_id,day,phase,text,highlight,complete_event,locks,mvp
+D1-01,1,shop,(창고 위 편지 꾸러미에서 편지 ①이 자동으로 열림),letter_ui,letter_closed:letter_1,move,P0
+D1-02,1,shop,상점에서 월광 뿌리 씨앗을 4번 눌러 4개 사 보세요,shop_tab_seed;shop_row:item_seed_moonroot,owned:item_seed_moonroot:4,buy_other;close_shop,P0
+D1-03,1,farming,마우스로 둘러보고 W A S D로 걸어 보세요,,moved:3,end_farming,P0
+D1-04,1,farming,1번을 눌러 괭이를 들어요,hotbar:1,selected:tool_hoe_1,end_farming,P0
+D1-05,1,farming,밭 한 칸을 좌클릭으로 세 번 일궈요,bed_tutorial:cell_0,tilled:1,end_farming,P0
+D1-06,1,farming,같은 밭의 나머지 3칸도 일궈요,bed_tutorial,tilled:4,end_farming,P0
+D1-07,1,farming,4번 씨앗을 들고 일군 칸에 좌클릭으로 심어요,hotbar:4;bed_tutorial,planted:4,end_farming,P0
+D1-08,1,farming,2번 물뿌리개로 심은 칸에 물을 줘요,hotbar:2;bed_tutorial,watered:4,end_farming,P0
+D1-09,1,farming,농장 문 옆 창고를 E로 열고 할머니의 월광 뿌리 2개를 꺼내요,storage_farm;storage_row:crop_moonroot,owned:crop_moonroot:2,end_farming,P0
+D1-10,1,farming,농사 끝내기 [Enter] 또는 가게 문(E)으로 가요,btn_end_farming;door_shop,zone:zone_shop,,P0
+D1-11,1,tidy,오랫동안 닫혀 있던 가게예요. 쓰레기 3개를 E로 주워 쓰레기통(E)에 버려요,trash_nearest:3;trash_bin,trashed:3,open_sales,P0
+D1-12,1,tidy,남은 쓰레기와 얼룩은 원하는 만큼 치워요. 깨끗할수록 내일 손님이 늘어요,hud_tidy_grade,auto,,P0
+D1-13,1,tidy,월광 뿌리를 들고 과일 진열대에 좌클릭으로 진열해요 (2개),fruit_shelf_1,displayed:2,open_sales,P0
+D1-14,1,tidy,준비 끝! 장사 시작 [Enter] 버튼 또는 간판 E로 장사를 시작해요,btn_open_sales;signboard,phase:sales,,P0
+D1-15,1,sales,(피피 등장) 장사는 손님이 알아서 사 가요,customer_pipi,sales_done,,P0
+D1-16,1,settlement,오늘의 결과예요. 경험치가 100이 되면 레벨업해요,settle_revenue;settle_grade;settle_xp,next_day,,P0
+D2-01,2,shop,(편지 ②),letter_ui,letter_closed:letter_2,move,P0
+D2-02,2,shop,오늘은 월광 뿌리 씨앗을 넉넉히 사요 (추천 10개),shop_row:item_seed_moonroot,owned:item_seed_moonroot:4,close_shop,P0
+D2-03,2,farming,빛나는 월광 뿌리를 E로 수확해요,bed_tutorial,harvested:4,end_farming,P0
+D2-04,2,farming,수확한 칸은 흙이 다시 굳었어요. 다시 일구고 심어요 (옆 밭에도 심어도 좋아요),bed_tutorial;bed_next,planted:4,end_farming,P0
+D2-05,2,farming,심은 칸에 물을 줘요,planted_cells,watered:4,end_farming,P0
+D2-06,2,farming,농사 끝내기 [Enter] 또는 가게 문으로 가요,btn_end_farming;door_shop,zone:zone_shop,,P0
+D2-07,2,tidy,어제 손님 발자국이 통로에 남았어요. 3번 대걸레를 들고 좌클릭을 누른 채 문질러요,stains;hotbar:3,stains_cleared:2,open_sales,P0
+D2-08,2,tidy,오늘 수확한 월광 뿌리 4개를 과일 진열대에 진열해요,fruit_shelf_1,displayed:4,open_sales,P0
+D2-09,2,tidy,장사 시작 [Enter] 버튼 또는 간판 E로 장사를 시작해요,btn_open_sales;signboard,phase:sales,,P0
+D2-10,2,sales,"(손님 3명, 피피 포함)",customers,sales_done,,P0
+D2-11,2,settlement,경험치가 가득 찼어요! 레벨업!,settle_xp;levelup_banner,leveled_up,,P0
+D2-12,2,settlement,SP 3으로 새 작물을 배울 수 있어요. 버섯꽃 해금을 눌러요,skill_node:skill_unlock_mushroom;btn_learn,skill:skill_unlock_mushroom,close_skill;other_skills,P0
+D2-13,2,settlement,(편지 ③),letter_ui,letter_closed:letter_3,,P0
+D2-14,2,settlement,내일 아침부터 상점에 버섯꽃 씨앗이 들어와요. 다음 날을 눌러요,btn_next_day,next_day,,P0

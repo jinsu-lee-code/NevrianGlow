@@ -1,0 +1,18 @@
+﻿old_plan_id,dev_id,status
+seed_moonroot,item_seed_moonroot,확인
+seed_mushroomflower,item_seed_mushroomflower,규칙 적용 (ID_MAP으로 확인 필요)
+seed_lanternfruit,item_seed_lanternfruit,규칙 적용 (ID_MAP으로 확인 필요)
+seed_spiralbloom,item_seed_spiralbloom,규칙 적용 (ID_MAP으로 확인 필요)
+seed_pearlcore,item_seed_pearlcore,규칙 적용 (ID_MAP으로 확인 필요)
+item_moonroot,crop_moonroot,확인
+item_mushroomflower,crop_mushroomflower,규칙 적용 (ID_MAP으로 확인 필요)
+item_lanternfruit,crop_lanternfruit,규칙 적용 (ID_MAP으로 확인 필요)
+tool_hoe_t1,tool_hoe_1,확인
+tool_hoe_t2,tool_hoe_2,규칙 적용 (ID_MAP으로 확인 필요)
+tool_hoe_t3,tool_hoe_3,규칙 적용 (ID_MAP으로 확인 필요)
+tool_mop_t1,tool_mop_1,규칙 적용 (ID_MAP으로 확인 필요)
+tool_mop_t2,tool_mop_2,규칙 적용 (ID_MAP으로 확인 필요)
+tool_mop_t3,tool_mop_3,규칙 적용 (ID_MAP으로 확인 필요)
+tool_watering_can_t1,tool_watering_can_1,규칙 적용 (ID_MAP으로 확인 필요)
+tool_watering_can_t2,tool_watering_can_2,규칙 적용 (ID_MAP으로 확인 필요)
+tool_watering_can_t3,tool_watering_can_3,규칙 적용 (ID_MAP으로 확인 필요)

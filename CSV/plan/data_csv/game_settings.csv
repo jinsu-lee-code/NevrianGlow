@@ -1,0 +1,60 @@
+﻿key,value,unit,desc,source
+start_money,150,달러,시작 자금,GDD
+start_hotbar,tool_hoe_1;tool_watering_can_1;tool_mop_1;,item_id,시작 핫바 4칸 (마지막 칸 비움),회신2 2-3
+start_bag,,item_id,시작 가방 (비어 있음),회신2 2-3
+start_storage,crop_moonroot:2,item_id:개수,시작 창고,회신2 2-3
+start_fruit_shelves,3,대,시작 매장 과일 진열대 (가공품 진열대 없음),회신2 2-1
+start_beds,8,밭,시작 밭 (4×2),레벨배치
+level_xp_base,100,xp,레벨업 필요량 = base + step × (레벨 − 1),회신 #3
+level_xp_step,50,xp,,
+sp_per_level,3,SP,,
+xp_per_revenue,1,배,경험치 = 매출 × 이 값,
+day1_customers,1,명,1일차 손님 고정,손님수
+day1_first_buy,2,개,1일차 첫 손님 구매 개수 고정,손님수
+customer_regulars_after_day1,2,명,1일차 장사 후 단골 수 N,손님수
+customer_market_size,40,명,시장 크기 M (매장 확장마다 +20),손님수
+customer_ad_rate,0.02,,광고 계수 p (간판 단계마다 +0.01),손님수
+customer_wom_rate,0.35,,입소문 계수 q (× 어제 만족도),손님수
+customer_churn,0.10,,이탈 계수 c,손님수
+customer_visit_prob,0.5,,단골 하루 방문 확률 v,손님수
+market_day_interval,7,일,장날 주기,손님수
+market_day_mult,1.5,배,장날 손님 배율,손님수
+customer_cap_per_spot,3,명,손님 상한 = 가구 자리 × 이 값,손님수
+same_day_clean_min,0.8,,당일 손님 × (min + (1 − min) × 청결도),회신 #17
+satisfaction_w_clean,0.35,,만족도 가중치: 청결도,손님수
+satisfaction_w_tidy,0.35,,만족도 가중치: 정돈도,손님수
+satisfaction_w_success,0.30,,만족도 가중치: 구매 성공률,손님수
+buy_min,1,개,손님 구매 개수 최소 (균등),회신 #19
+buy_max,3,개,손님 구매 개수 최대 (균등),회신 #19
+buy_extra_max,4,개,단골의 장바구니로 늘어날 수 있는 최대,회신2 2-5
+trash_day1,30,개,1일차 쓰레기,회신 #20
+stain_day1,12,개,1일차 얼룩,회신 #20
+trash_daily_min,1,개,평소 쓰레기 최소,회신 #20
+trash_daily_max,3,개,평소 쓰레기 최대,회신 #20
+trash_expand_base,10,개,매장 확장 직후 새 구역 쓰레기 = base + 늘어난 자리 × per_spot,회신 #20
+trash_expand_per_spot,2,개,,
+stain_per_customer,0.3,개,얼룩 · 발자국 = 손님 수 × 이 값 (통로에도 생김),청소 v2
+scatter_unsold_ratio,0.15,,흩어진 상품 = 안 팔린 진열 × 이 값 + 손님 수 ÷ scatter_per_customers,청소 v2
+scatter_per_customers,3,명,,
+disorder_ratio,0.20,,"상품이 있는 진열 칸 중 흐트러지는 비율 (과일 진열대 1대 = 1칸, 일반 진열대 1층 = 1칸)",청소 v2
+disorder_buy_mult,0.5,배,흐트러진 층의 구매 확률 배율,회신 #18
+sale_duration,30,초,자동 장사 시간,GDD
+grade_s_min,0.95,,청결도 · 정돈도 등급 S 하한 (청결 · 정돈 같은 기준),회신3 1-1
+grade_a_min,0.80,,등급 A 하한,회신3 1-1
+grade_b_min,0.60,,등급 B 하한 (미만은 C),회신3 1-1
+customer_random,0.10,,오늘 손님 수 ±무작위 폭 (±10%),회신3 2-5
+stain_expand,4,개,매장 확장 직후 새 구역 얼룩 (2차),회신3 2-5
+store_width,12,m,"기본 매장 가로 (10/22, 게임 크기 기준)",레벨배치
+store_depth,10,m,기본 매장 세로,레벨배치
+store_aisle_width,1.4,m,통로 폭 (위 · 아래 2줄),레벨배치
+trash_bin_location,storage_side,,쓰레기통 위치: 창고 구역 옆(농장 문 쪽),레벨배치
+store_spots_fruit,4,자리,기본 매장 과일 진열대 자리 (가운데),회신 10/20
+store_spots_shelf,4,자리,"기본 매장 일반 진열대 자리 (벽 쪽, 2차)",회신 10/20
+tutorial_day1_buy_all,true,,튜토리얼 1일차: 피피 1명이 진열 2개 모두 구매,튜토리얼
+tutorial_day2_customers,3,명,튜토리얼 2일차 손님 수 고정,튜토리얼
+tutorial_day2_buy_all,true,,튜토리얼 2일차: 진열된 월광 뿌리 모두 구매 (레벨업 보장),튜토리얼
+tutorial_day2_stains,2,개,튜토리얼 2일차 발자국 수 (흩어진 상품 · 흐트러짐 0),튜토리얼
+tutorial_random_off,true,,튜토리얼 1~2일차 손님 무작위 · 장날 끔,튜토리얼
+stain_zone,floor_incl_aisle,,얼룩 · 발자국 생성 구역 = 바닥 − 가구 자리 − 계산대 − 창고 − 쓰레기통 (통로 포함),A2 10/22
+trash_zone,floor_excl_aisle,,쓰레기 생성 구역 = 바닥 − 가구 자리 − 통로 − 계산대 − 창고 − 쓰레기통,A2 10/22
+shop_buy_per_click,1,개,상점에서 한 번 누를 때 사는 개수 (수량 고르기 없음),10/22

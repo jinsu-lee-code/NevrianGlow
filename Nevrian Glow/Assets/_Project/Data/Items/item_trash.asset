@@ -16,3 +16,10 @@ MonoBehaviour:
   displayName: "\uC4F0\uB808\uAE30"
   maxStack: 10
   canStore: 0
+  heldPrefab: {fileID: 0}
+  worldModels:
+  - {fileID: 3111692224055376705, guid: 042ed43170dd19d48abcd6b555a59fff, type: 3}
+  - {fileID: 5609541075884742882, guid: 4f2fdcbacb53ffb418f8c43bbd487a53, type: 3}
+  - {fileID: 2649233225253384290, guid: 3590f398824443843a153398d630b91a, type: 3}
+  - {fileID: 150754234311803321, guid: 22247742382dab84d94089f3a4fb7a65, type: 3}
+  - {fileID: 8404415216180328333, guid: ecbee65850f4a874c8b522d0e2edde93, type: 3}

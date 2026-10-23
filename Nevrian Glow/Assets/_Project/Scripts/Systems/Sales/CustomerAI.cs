@@ -1,8 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
+using NevrianGlowFarm.Core;
 using NevrianGlowFarm.Data;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Serialization;
 
 namespace NevrianGlowFarm.Systems.Sales
 {
@@ -33,20 +35,31 @@ namespace NevrianGlowFarm.Systems.Sales
         [Header("참조")]
         [Tooltip("길찾기 (가게 바닥 NavMesh)")]
         [SerializeField] private NavMeshAgent agent;
-        [Tooltip("공용 애니메이터 ac_customer (파라미터 Speed · Browsing · PickBasket · PutItem · Happy · HasBasket)")]
+        [Tooltip("공용 애니메이터 ac_customer (파라미터 Speed · Browsing · PickBasket · PutItem · Happy · HasBasket · WalkPlayback) — 리그 모델이면 모델 쪽 Animator")]
         [SerializeField] private Animator animator;
-        [Tooltip("겉모습 (그레이박스 캡슐 — 키 · 색을 손님 종류대로)")]
-        [SerializeField] private Renderer model;
-        [Tooltip("장바구니 (집기 전에는 숨김)")]
+        [Tooltip("겉모습 루트 — 체형 키에 맞춰 크기를 바꾼다")]
+        [SerializeField] private Transform model;
+        [Tooltip("그레이박스 캡슐 (있으면 손님 색 · 캡슐 비율을 입힌다, 아트 모델이면 비움)")]
+        [FormerlySerializedAs("model")]
+        [SerializeField] private Renderer greyboxRenderer;
+        [Tooltip("장바구니 (집기 전에는 숨김) — 리그 모델이면 왼손 소켓 Socket_Basket 아래")]
         [SerializeField] private Transform basket;
+        [Tooltip("장바구니에 담긴 상품을 놓는 자리 (비우면 장바구니)")]
+        [SerializeField] private Transform basketContents;
         [Tooltip("장바구니에 담긴 상품 하나의 겉모습 (Prefabs/Shop/shelf_item)")]
         [SerializeField] private Renderer basketItemPrefab;
+        [Tooltip("살 게 없어 빈손으로 나갈 때 머리 위에 켜는 실망 아이콘 (회신 #7 — 신규 모션 대신, 비우면 없음)")]
+        [SerializeField] private GameObject disappointedIcon;
 
         [Header("조정값")]
+        [Tooltip("모델 원래 키 — 체형 키 ÷ 이 값으로 크기를 바꾼다 (m)")]
+        [SerializeField, Min(0.1f)] private float modelHeight = 1.84f;
+        [Tooltip("왼팔 바구니 레이어를 켜고 끄는 시간 (초)")]
+        [SerializeField, Min(0f)] private float basketLayerBlend = 0.25f;
         [Tooltip("애니메이션 이벤트가 없을 때 장바구니 집기 시간 (초, 임시)")]
         [SerializeField, Min(0f)] private float pickBasketFallback = 0.5f;
-        [Tooltip("애니메이션 이벤트가 없을 때 상품 하나 넣는 시간 (초, 임시)")]
-        [SerializeField, Min(0f)] private float putItemFallback = 0.4f;
+        [Tooltip("상품 하나 넣기를 기다리는 최대 시간 — OnItemPlace(바구니에 넣는 순간)가 오면 그때 넘어간다 (초, put_item 클립 1.53초 · 이벤트 1.03초)")]
+        [SerializeField, Min(0f)] private float putItemFallback = 1.2f;
         [Tooltip("애니메이션 이벤트가 없을 때 해피 아이들 시간 (초, 임시)")]
         [SerializeField, Min(0f)] private float happyFallback = 1f;
         [Tooltip("도착으로 보는 남은 거리 여유 — 정지 거리에 더한다 (m)")]
@@ -55,6 +68,8 @@ namespace NevrianGlowFarm.Systems.Sales
         [SerializeField, Min(1f)] private float walkTimeout = 12f;
         [Tooltip("그레이박스 해피 동작 — 제자리 뛰기 높이 (m)")]
         [SerializeField, Min(0f)] private float happyHop = 0.15f;
+        [Tooltip("발소리 간격 — 걸은 거리 (m). 걷기 클립에 OnFootstep 이벤트가 있으면 이벤트로 바뀐다 (animation.md B-1)")]
+        [SerializeField, Min(0.1f)] private float stepDistance = 1.05f;
 
         [Header("디버그")]
         [Tooltip("지금 상태 (읽기 전용)")]
@@ -68,7 +83,9 @@ namespace NevrianGlowFarm.Systems.Sales
         private static readonly int PutItemId = Animator.StringToHash("PutItem");
         private static readonly int HappyId = Animator.StringToHash("Happy");
         private static readonly int HasBasketId = Animator.StringToHash("HasBasket");
+        private static readonly int WalkPlaybackId = Animator.StringToHash("WalkPlayback");
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        private const string BasketLayer = "Basket";
 
         private SalesSystem system;
         private CustomerData data;
@@ -76,7 +93,14 @@ namespace NevrianGlowFarm.Systems.Sales
         private readonly List<Renderer> basketItems = new List<Renderer>();
         private bool paid;
         private int animEvents;
+        private int placeEvents;
+        private CustomerFace face;
         private Vector3 modelBase;
+        private float stepTravel;
+        private bool footstepEvents;
+        private bool hasBasket;
+        private int basketLayer = -1;
+        private float walkClipSpeed = 1f;
 
         public int Number { get; private set; }
         public CustomerData Data => data;
@@ -101,29 +125,80 @@ namespace NevrianGlowFarm.Systems.Sales
             agent.stoppingDistance = settings.StopDistance;
             agent.height = type.Height;
             agent.avoidancePriority = 30 + number % 40; // 서로 비켜 가게 조금씩 다르게
-            if (animator != null)
-                animator.speed = type.WalkSpeedMul; // 이동 속도와 걷기 재생 속도를 같은 비율로
+            walkClipSpeed = settings.WalkClipSpeed;
+            if (animator != null && animator.runtimeAnimatorController != null)
+            {
+                basketLayer = animator.GetLayerIndex(BasketLayer);
+                if (basketLayer >= 0)
+                    animator.SetLayerWeight(basketLayer, 0f);
+            }
 
-            // 그레이박스: 캡슐 키 = 체형, 색 = 손님 종류
             float h = type.Height;
-            model.transform.localScale = new Vector3(h * 0.3f, h * 0.5f, h * 0.3f);
-            model.transform.localPosition = new Vector3(0f, h * 0.5f, 0f);
-            modelBase = model.transform.localPosition;
-            var block = new MaterialPropertyBlock();
-            block.SetColor(BaseColorId, type.GreyboxColor);
-            model.SetPropertyBlock(block);
+            if (model == null && greyboxRenderer != null)
+                model = greyboxRenderer.transform;
+            if (greyboxRenderer != null)
+            {
+                // 그레이박스: 캡슐 키 = 체형, 색 = 손님 종류
+                model.localScale = new Vector3(h * 0.3f, h * 0.5f, h * 0.3f);
+                model.localPosition = new Vector3(0f, h * 0.5f, 0f);
+                var block = new MaterialPropertyBlock();
+                block.SetColor(BaseColorId, type.GreyboxColor);
+                greyboxRenderer.SetPropertyBlock(block);
+            }
+            else if (model != null)
+                model.localScale = Vector3.one * (h / modelHeight); // 아트 모델: 체형 키에 맞춰 같은 비율로
+            modelBase = model != null ? model.localPosition : Vector3.zero;
+            // 표정(피피 · 오르 아트 모델, BRANCH_ART 10/22) — 없으면 그레이박스 · Cunsumer
+            face = model != null ? model.GetComponentInChildren<CustomerFace>(true) : null;
             if (basket != null)
             {
                 basket.localPosition = type.BasketSocketOffset;
                 basket.gameObject.SetActive(false);
             }
+            if (disappointedIcon != null)
+                disappointedIcon.SetActive(false);
             StartCoroutine(Run(settings));
+        }
+
+        // 실망 아이콘은 늘 카메라를 본다 (켜져 있을 때만)
+        private void LateUpdate()
+        {
+            if (disappointedIcon == null || !disappointedIcon.activeSelf)
+                return;
+            var cam = Camera.main;
+            if (cam != null)
+                disappointedIcon.transform.rotation = Quaternion.LookRotation(disappointedIcon.transform.position - cam.transform.position, Vector3.up);
         }
 
         private void Update()
         {
-            if (animator != null && agent.enabled)
-                animator.SetFloat(SpeedId, agent.velocity.magnitude);
+            if (!agent.enabled)
+                return;
+            float speed = agent.velocity.magnitude;
+            if (animator != null && animator.runtimeAnimatorController != null)
+            {
+                animator.SetFloat(SpeedId, speed);
+                // 발이 미끄러지지 않게: 재생 배속 = 실제 속도 ÷ (클립 기준 속도 × 휴먼 스케일 × 모델 크기)
+                float scale = model != null ? model.lossyScale.y : 1f;
+                animator.SetFloat(WalkPlaybackId, speed / Mathf.Max(0.01f, walkClipSpeed * animator.humanScale * scale));
+                // 왼팔 바구니 레이어: 바구니를 든 동안만 (빈 상태가 팔을 기본 자세로 덮지 않게 — BRANCH_ANIMATOR 10/16 ①)
+                if (basketLayer >= 0)
+                {
+                    float w = Mathf.MoveTowards(animator.GetLayerWeight(basketLayer), hasBasket ? 1f : 0f,
+                        basketLayerBlend > 0f ? Time.deltaTime / basketLayerBlend : 1f);
+                    animator.SetLayerWeight(basketLayer, w);
+                }
+            }
+
+            // 발소리: 걷기 클립에 OnFootstep 이벤트가 없으면 걸은 거리로
+            if (footstepEvents)
+                return;
+            stepTravel += speed * Time.deltaTime;
+            if (stepTravel >= stepDistance)
+            {
+                stepTravel -= stepDistance;
+                AudioManager.Play(SoundCues.CustomerStep, transform.position);
+            }
         }
 
         private IEnumerator Run(SalesSettingsData settings)
@@ -136,6 +211,8 @@ namespace NevrianGlowFarm.Systems.Sales
             yield return WaitAnimation(pickBasketFallback);
             if (basket != null)
                 basket.gameObject.SetActive(true);
+            AudioManager.Play(SoundCues.BasketPick, transform.position);
+            hasBasket = true;
             SetBool(HasBasketId, true);
 
             state = CustomerState.ToShelf;
@@ -154,14 +231,18 @@ namespace NevrianGlowFarm.Systems.Sales
             for (int i = 0; i < items.Count; i++)
             {
                 SetTrigger(PutItemId);
-                yield return WaitAnimation(putItemFallback);
+                // 집는 순간(OnItemTake)이 아니라 바구니에 넣는 순간(OnItemPlace)까지 — 넣는 동작이 잘리지 않게 (BRANCH_ANIMATOR 10/22 ①)
+                yield return WaitPlace(putItemFallback);
                 ShowBasketItem(items[i]);
+                AudioManager.Play(SoundCues.BasketPut, transform.position);
             }
             SetBool(BrowsingId, false);
 
             if (items.Count == 0)
             {
-                // 못 사면 계산을 건너뛰고 바로 퇴장
+                // 못 사면 계산을 건너뛰고 바로 퇴장 — 머리 위 실망 아이콘 (구매 실패는 만족도로 다음 날 손님에 반영)
+                if (disappointedIcon != null)
+                    disappointedIcon.SetActive(true);
                 PayOnce();
                 yield return LeaveStore();
                 yield break;
@@ -191,7 +272,12 @@ namespace NevrianGlowFarm.Systems.Sales
 
             state = CustomerState.Happy;
             SetTrigger(HappyId);
+            AudioManager.Play(SoundCues.CustomerHappy, transform.position);
+            if (face != null)
+                face.SetHappy(true);
             yield return HappyRoutine();
+            if (face != null)
+                face.SetHappy(false);
 
             yield return LeaveStore();
         }
@@ -257,6 +343,14 @@ namespace NevrianGlowFarm.Systems.Sales
                 yield return null;
         }
 
+        private IEnumerator WaitPlace(float fallback)
+        {
+            int before = placeEvents;
+            float start = Time.time;
+            while (placeEvents == before && Time.time - start < fallback)
+                yield return null;
+        }
+
         private IEnumerator HappyRoutine()
         {
             int before = animEvents;
@@ -265,17 +359,19 @@ namespace NevrianGlowFarm.Systems.Sales
             {
                 // 그레이박스 해피: 제자리에서 두 번 통통 (클립이 오면 애니메이터가 대신)
                 float t = (Time.time - start) / Mathf.Max(0.01f, happyFallback);
-                model.transform.localPosition = modelBase + Vector3.up * Mathf.Abs(Mathf.Sin(t * Mathf.PI * 2f)) * happyHop;
+                if (model != null)
+                    model.localPosition = modelBase + Vector3.up * Mathf.Abs(Mathf.Sin(t * Mathf.PI * 2f)) * happyHop;
                 yield return null;
             }
-            model.transform.localPosition = modelBase;
+            if (model != null)
+                model.localPosition = modelBase;
         }
 
         private void ShowBasketItem(CropData crop)
         {
             if (basket == null || basketItemPrefab == null || crop == null)
                 return;
-            var r = Instantiate(basketItemPrefab, basket);
+            var r = Instantiate(basketItemPrefab, basketContents != null ? basketContents : basket);
             int i = basketItems.Count;
             // 장바구니 루트는 크기 1 (모델 자식만 납작한 상자) — 상품은 바구니 위에 나란히
             r.transform.localPosition = new Vector3((i % 3 - 1) * 0.09f, 0.1f + i / 3 * 0.08f, 0f);
@@ -283,6 +379,7 @@ namespace NevrianGlowFarm.Systems.Sales
             var block = new MaterialPropertyBlock();
             block.SetColor(BaseColorId, crop.GreyboxColor);
             r.SetPropertyBlock(block);
+            Systems.Items.ItemModelView.Apply(r, crop, i);
             basketItems.Add(r);
         }
 
@@ -297,8 +394,16 @@ namespace NevrianGlowFarm.Systems.Sales
         private void SetBool(int id, bool value) { if (animator != null && animator.runtimeAnimatorController != null) animator.SetBool(id, value); }
 
         // ── 애니메이션 이벤트 (김기인 납품 클립에 넣는 이름 — BALANCE 9-5) ──
+        // 리그 모델은 Animator가 모델 쪽에 있어 CustomerAnimationEvents가 여기로 넘긴다.
+        public void OnBasketAttach() => animEvents++;
         public void OnItemTake() => animEvents++;
-        public void OnItemPlace() => animEvents++;
+        public void OnItemPlace() { animEvents++; placeEvents++; }
         public void OnHappyGlow() => animEvents++;
+
+        public void OnFootstep()
+        {
+            footstepEvents = true; // 이제부터 걸은 거리 발소리는 끈다
+            AudioManager.Play(SoundCues.CustomerStep, transform.position);
+        }
     }
 }

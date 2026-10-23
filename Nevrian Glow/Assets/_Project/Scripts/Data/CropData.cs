@@ -25,6 +25,8 @@ namespace NevrianGlowFarm.Data
         [Header("성장")]
         [Tooltip("심은 뒤 수확까지 자라야 하는 날 수 (일)")]
         [SerializeField, Min(1)] private int growDays = 1;
+        [Tooltip("물을 줘야 자라는지 — 끄면 물 없이 밤마다 자란다 (버섯꽃, 기획 crops.csv needs_water)")]
+        [SerializeField] private bool needsWater = true;
         [Tooltip("물을 한 번 주면 젖은 상태가 유지되는 날 수 (일)")]
         [SerializeField, Min(1)] private int wetDays = 1;
         [Tooltip("한 번 수확할 때 얻는 개수 (개)")]
@@ -45,6 +47,7 @@ namespace NevrianGlowFarm.Data
         public int SeedPrice => seedPrice;
         public int SellPrice => sellPrice;
         public int GrowDays => growDays;
+        public bool NeedsWater => needsWater;
         public int WetDays => wetDays;
         public int HarvestYield => harvestYield;
         public int RegrowDays => regrowDays;
@@ -57,6 +60,6 @@ namespace NevrianGlowFarm.Data
         public IReadOnlyList<GameObject> StagePrefabs => stagePrefabs;
 
         /// <summary>규칙 계산용 값 묶음 (Logic FarmRules · CropEconomics).</summary>
-        public Logic.Farm.CropSpec ToSpec() => new Logic.Farm.CropSpec(growDays, wetDays, harvestYield, regrowDays, maxHarvests);
+        public Logic.Farm.CropSpec ToSpec() => new Logic.Farm.CropSpec(growDays, wetDays, harvestYield, regrowDays, maxHarvests, needsWater);
     }
 }

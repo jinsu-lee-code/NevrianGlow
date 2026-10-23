@@ -16,29 +16,20 @@ namespace NevrianGlowFarm.Data
         [Serializable]
         public struct SkillEntry
         {
-            [Tooltip("스킬 id (skill_*)")]
-            [SerializeField] private string skillId;
-            [Tooltip("단계별 비용 — 개수 = 최대 단계 (SP, 스킬 데이터 4-3 전 임시: BALANCE 9-3)")]
-            [SerializeField] private List<int> costs;
-            [Tooltip("선행 스킬 id — 비우면 없음")]
-            [SerializeField] private string prerequisiteId;
-            [Tooltip("선행 스킬 필요 단계")]
-            [SerializeField, Min(0)] private int prerequisiteLevel;
+            [Tooltip("배울 스킬 — 비용 · 선행은 스킬 데이터에서 읽는다 (P-6, 2026-10-21)")]
+            [SerializeField] private SkillData skill;
 
-            public SkillEntry(string skillId, List<int> costs, string prerequisiteId = null, int prerequisiteLevel = 0)
-            {
-                this.skillId = skillId;
-                this.costs = costs;
-                this.prerequisiteId = prerequisiteId;
-                this.prerequisiteLevel = prerequisiteLevel;
-            }
+            public SkillEntry(SkillData skill) => this.skill = skill;
 
-            public SimSkill ToLogic() => new SimSkill
+            public SkillData Skill => skill;
+
+            /// <summary>스킬 데이터 → 봇 스킬 (비용 · 선행 그대로). 스킬이 비면 null.</summary>
+            public SimSkill ToLogic() => skill == null ? null : new SimSkill
             {
-                Id = skillId,
-                Costs = costs != null ? costs.ToArray() : new int[0],
-                PrerequisiteId = prerequisiteId,
-                PrerequisiteLevel = prerequisiteLevel,
+                Id = skill.Id,
+                Costs = new List<int>(skill.Costs).ToArray(),
+                PrerequisiteId = skill.Prerequisite != null ? skill.Prerequisite.Id : null,
+                PrerequisiteLevel = skill.Prerequisite != null ? skill.PrerequisiteLevel : 0,
             };
         }
 
@@ -86,6 +77,8 @@ namespace NevrianGlowFarm.Data
         [SerializeField] private InventorySettingsData inventory;
         [Tooltip("작물 · 상품 (Data/ContentDatabase)")]
         [SerializeField] private ContentDatabase database;
+        [Tooltip("쓰레기 · 얼룩 · 흩어진 상품 · 흐트러진 칸 개수 — 정리 클릭 수 (Data/Stats/CleaningSettings)")]
+        [SerializeField] private CleaningSettingsData cleaning;
 
         [Header("조정값")]
         [Tooltip("돌릴 시드 수 (판)")]
@@ -96,13 +89,15 @@ namespace NevrianGlowFarm.Data
         [SerializeField, Min(1)] private int days = 6;
         [Tooltip("장사 시작 때 청결도 — BALANCE 4번 3: 혼자 다 못 치운 10% 남김 (0~1)")]
         [SerializeField, Range(0f, 1f)] private float cleanliness = 0.9f;
-        [Tooltip("손님 수 보너스 합 — 스킬 · 매장 효과(4-3) 전에는 0 (배)")]
-        [SerializeField, Min(0f)] private float customerBonus;
+        [Tooltip("정돈도 가정 — 만족도에 들어감. 가게 정리(P-3) 전에는 1 (0~1)")]
+        [SerializeField, Range(0f, 1f)] private float tidiness = 1f;
         [Tooltip("켜면 구획 살 돈이 있으면 구획 먼저(BALANCE 4번 1), 끄면 씨앗을 먼저 사고 남은 돈으로 구획")]
         [SerializeField] private bool plotBeforeSeeds = true;
-        [Tooltip("SP를 쓰는 순서 (BALANCE 4번 5: 작물 해금 → 고품질). 앞 스킬을 다 배울 때까지 뒤는 아껴 둔다")]
+        [Tooltip("1일차에 심는 칸 상한 — 튜토리얼대로 따라가는 플레이어 실험 (칸, 0 = 제한 없음)")]
+        [SerializeField, Min(0)] private int firstDayCells;
+        [Tooltip("SP를 쓰는 순서 (BALANCE 4번 5: 작물 해금 순). 앞 스킬을 다 배울 때까지 뒤는 아껴 둔다. 숨김 스킬은 봇도 배우지 않음")]
         [SerializeField] private List<SkillEntry> skillPriority = new List<SkillEntry>();
-        [Tooltip("GDD 6장 일차별 목표 판정")]
+        [Tooltip("GDD 1페이지 데모 목표 경험 — 일차별 판정 (봇 규칙 8)")]
         [SerializeField] private List<GoalEntry> goals = new List<GoalEntry>();
 
         public GameStartSettingsData GameStart => gameStart;
@@ -110,12 +105,14 @@ namespace NevrianGlowFarm.Data
         public ProgressionData Progression => progression;
         public InventorySettingsData Inventory => inventory;
         public ContentDatabase Database => database;
+        public CleaningSettingsData Cleaning => cleaning;
         public int SeedCount => seedCount;
         public int BaseSeed => baseSeed;
         public int Days => days;
         public float Cleanliness => cleanliness;
-        public float CustomerBonus => customerBonus;
+        public float Tidiness => tidiness;
         public bool PlotBeforeSeeds => plotBeforeSeeds;
+        public int FirstDayCells => firstDayCells;
         public IReadOnlyList<SkillEntry> SkillPriority => skillPriority;
         public IReadOnlyList<GoalEntry> Goals => goals;
     }

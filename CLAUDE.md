@@ -89,5 +89,5 @@ Assets/Audio/        사운드 파트 납품 (Sound 브랜치)
 - 파트 에셋 브랜치 `Art` · `Animator` · `Sound` (결정 2026-10-16) — 각 파트가 자기 폴더에만 에셋을 올리고, 개발이 `dev`로 가져온다(`git merge --no-ff origin/파트`, 메시지 `MM.DD/Merge/파트-요약`). 가져오기 전 `git diff --stat dev...origin/파트`로 자기 폴더 밖 변경이 없는지 확인. 운영 방식은 BRANCHES.md, 파트별 사용법은 BRANCH_ART.md · BRANCH_ANIMATOR.md · BRANCH_SOUND.md
 - 파트 폴더 (개발은 가져온 에셋을 이 폴더에서 수정하지 않고, 게임 연결은 `_Project` 쪽 프리팹 · 컨트롤러 · 데이터에서 한다): Art = `Assets/Art/`(Characters 제외) · `Assets/Scenes/`(배경 씬), Animator = `Assets/Art/Characters/`, Sound = `Assets/Audio/`
 - 커밋 메시지: `MM.DD/Phase-항목/PascalCase요약` (예: `10.08/0-3/SetupScenes`). 수정은 `…Fix`.
-- 항목 구현이 끝나면 확인 없이 자동 커밋한다. Git은 GitHub Desktop 내장 git(`%LOCALAPPDATA%\GitHubDesktop\app-*\resources\app\git\cmd\git.exe`)을 쓰고, push는 사용자가 GitHub Desktop에서 한다 (결정 2026-10-07).
+- 항목 구현이 끝나면 확인 없이 자동 커밋하고 **push까지 자동으로 한다** (결정 2026-10-07, push 자동은 변경 2026-10-20 사용자 요청). Git은 GitHub Desktop 내장 git(`%LOCALAPPDATA%\GitHubDesktop\app-*\resources\app\git\cmd\git.exe`)을 쓴다. 강제 push(`--force`)는 하지 않는다.
 - `.gitignore`의 출력 폴더는 루트 기준 경로로만 (`/Build/`, `/Temp/`). `**/Build/` 같은 넓은 패턴 금지.

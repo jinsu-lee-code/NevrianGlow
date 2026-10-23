@@ -20,6 +20,7 @@ namespace NevrianGlowFarm.Logic.Shop
     public sealed class ShelfState
     {
         private readonly List<ItemStack> slots = new List<ItemStack>();
+        private readonly HashSet<int> disordered = new HashSet<int>();
 
         public ShelfState(int slotCount, int itemsPerSlot)
         {
@@ -43,6 +44,35 @@ namespace NevrianGlowFarm.Logic.Shop
                 return n;
             }
         }
+
+        // ── 흐트러진 진열 (가게 정리 P-3): 저장하지 않는다 — 청소·진열 단계에 들어갈 때 생긴다 ──
+
+        /// <summary>흐트러진 칸인지 (빈 칸은 흐트러지지 않음).</summary>
+        public bool IsDisordered(int slot) => disordered.Contains(slot) && !this[slot].IsEmpty;
+
+        /// <summary>흐트러진 채 남은 칸 수 (상품이 있는 칸만).</summary>
+        public int DisorderedCount
+        {
+            get
+            {
+                int n = 0;
+                foreach (int s in disordered)
+                    if (!this[s].IsEmpty)
+                        n++;
+                return n;
+            }
+        }
+
+        public void SetDisordered(int slot)
+        {
+            if (slot >= 0 && slot < slots.Count && !slots[slot].IsEmpty)
+                disordered.Add(slot);
+        }
+
+        /// <summary>바로잡는다 (다시 진열했을 때). 바뀌었으면 true.</summary>
+        public bool Straighten(int slot) => disordered.Remove(slot);
+
+        public void ClearDisorder() => disordered.Clear();
 
         public PlaceCheck CanPlace(int slot, string itemId)
         {
@@ -73,7 +103,20 @@ namespace NevrianGlowFarm.Logic.Shop
                 return null;
             var s = slots[slot];
             slots[slot] = new ItemStack(s.ItemId, s.Count - 1);
+            if (s.Count - 1 <= 0)
+                disordered.Remove(slot); // 빈 칸은 흐트러짐이 없다
             return s.ItemId;
+        }
+
+        /// <summary>칸 수와 내용을 통째로 정한다 (불러오기 6-1). 칸당 개수를 넘으면 자른다.</summary>
+        public void Load(IReadOnlyList<ItemStack> stacks)
+        {
+            slots.Clear();
+            disordered.Clear();
+            if (stacks == null)
+                return;
+            foreach (var s in stacks)
+                slots.Add(s.IsEmpty ? ItemStack.Empty : new ItemStack(s.ItemId, Math.Min(s.Count, ItemsPerSlot)));
         }
 
         /// <summary>칸 수를 늘린다 (진열대 확장 상품 3-3). 줄이지 않는다.</summary>

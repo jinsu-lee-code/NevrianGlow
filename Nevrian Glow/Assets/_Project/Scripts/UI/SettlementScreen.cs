@@ -1,6 +1,7 @@
 using NevrianGlowFarm.Core;
 using NevrianGlowFarm.Data;
 using NevrianGlowFarm.Logic.Game;
+using NevrianGlowFarm.Systems.Cleaning;
 using NevrianGlowFarm.Systems.Sales;
 using NevrianGlowFarm.Systems.Shop;
 using TMPro;
@@ -106,6 +107,9 @@ namespace NevrianGlowFarm.UI
             var game = GameManager.Instance;
             titleLabel.text = $"{Report.Day}일차 정산";
             string body = string.Join("\n", Report.Lines(NameOf));
+            string grades = GradeLine();
+            if (grades != null)
+                body += "\n" + grades;
             if (game != null)
             {
                 body += $"\n\n보유 {game.Money:N0}달러 · SP {game.SkillPoints}";
@@ -155,6 +159,16 @@ namespace NevrianGlowFarm.UI
                 return new SettlementReport(day, true, r.Customers, r.Buyers, r.EmptyHanded, r.ItemsSold, r.Revenue, r.Sold, spent, r.Exp, level);
             }
             return new SettlementReport(day, false, 0, 0, 0, 0, 0, null, spent, default, level);
+        }
+
+        // 청결 · 정돈 등급 (정산 표시 P0, 회신2 2-4) — 장사 시작 때 확정한 값. 장사를 안 했으면 없음.
+        private static string GradeLine()
+        {
+            var cleaning = CleaningSystem.Instance;
+            if (cleaning == null || cleaning.LockedCleanliness < 0f || cleaning.LockedTidiness < 0f)
+                return null;
+            float clean = cleaning.LockedCleanliness, tidy = cleaning.LockedTidiness;
+            return $"청결 등급 {cleaning.GradeOf(clean)} ({clean:P0}) · 정돈 등급 {cleaning.GradeOf(tidy)} ({tidy:P0})";
         }
 
         private string NameOf(string cropId)

@@ -16,4 +16,7 @@ MonoBehaviour:
   displayName: "\uB4F1\uBD88 \uC5F4\uB9E4 \uC528\uC557"
   maxStack: 10
   canStore: 1
+  heldPrefab: {fileID: 7977416672371603278, guid: e9f338da286edfa43ae6dee4d3d99824, type: 3}
+  worldModels: []
+  icon: {fileID: 21300000, guid: 2e6397386becbd54f9b343965b14139f, type: 3}
   crop: {fileID: 11400000, guid: a4a4c84efe1da9c4cba2eb00bf71d748, type: 2}

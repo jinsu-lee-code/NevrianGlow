@@ -8,7 +8,7 @@ namespace NevrianGlowFarm.Core
     /// <summary>
     /// 일차 · 하루 단계 · 달러 · SP를 가진다 (CLAUDE 핵심 규칙 2: 단계는 이 상태 머신 하나로).
     /// 규칙은 Logic의 DayCycle · Wallet, 이 컴포넌트는 알림(GameEvents)과 로그 연결만 한다.
-    /// 구역 씬이 모두 올라온 뒤(SceneBootstrapper.Ready) 1일차 상점 단계로 시작한다.
+    /// 구역 씬이 모두 올라온 뒤 타이틀 화면(5-6)이 새 게임 · 이어하기로 시작한다 (타이틀을 끄면 바로 1일차 상점 단계).
     /// </summary>
     [DefaultExecutionOrder(-100)]
     public class GameManager : MonoBehaviour, Logic.Shop.IUnlockContext
@@ -20,6 +20,10 @@ namespace NevrianGlowFarm.Core
         [SerializeField] private SceneBootstrapper bootstrapper;
         [Tooltip("경험치 · 레벨 규칙 (Data/Stats/Progression)")]
         [SerializeField] private ProgressionData progressionData;
+
+        [Header("조정값")]
+        [Tooltip("타이틀 화면(새 게임 · 이어하기)이 시작을 맡는다. 끄면 구역 씬이 올라오자마자 새 게임 (에디터 빠른 확인용)")]
+        [SerializeField] private bool waitForTitle = true;
 
         [Header("디버그")]
         [Tooltip("현재 일차 (읽기 전용)")]
@@ -81,9 +85,12 @@ namespace NevrianGlowFarm.Core
                 bootstrapper.Ready -= StartNewGame;
         }
 
+        /// <summary>타이틀 화면이 새 게임 · 이어하기를 기다리는지 (아니면 바로 새 게임).</summary>
+        public bool WaitsForTitle => waitForTitle;
+
         private void Start()
         {
-            if (!enabled)
+            if (!enabled || waitForTitle)
                 return;
             if (bootstrapper.IsReady)
                 StartNewGame();
@@ -91,7 +98,7 @@ namespace NevrianGlowFarm.Core
                 bootstrapper.Ready += StartNewGame;
         }
 
-        /// <summary>1일차 첫 단계 · 시작 자금으로 새 게임을 시작한다. (저장 불러오기는 6-1)</summary>
+        /// <summary>1일차 첫 단계 · 시작 자금으로 새 게임을 시작한다 (타이틀 '새 게임' · 이어하기 직전). 저장 불러오기는 SaveSystem.</summary>
         public void StartNewGame()
         {
             bootstrapper.Ready -= StartNewGame;
@@ -107,6 +114,46 @@ namespace NevrianGlowFarm.Core
             GameEvents.RaiseMoneyChanged(wallet.Money);
             GameEvents.RaiseSkillPointsChanged(wallet.SkillPoints);
             GameEvents.RaiseExpChanged(progression.Exp, progression.Required);
+        }
+
+        // ── 저장 (6-1) ──
+
+        /// <summary>일차 · 단계 · 달러 · SP · 레벨 · 스킬 · 수확 기록 · 날마다 정산을 저장 내용에 담는다.</summary>
+        public void CaptureTo(Logic.Save.SaveSnapshot into)
+        {
+            if (!RequireStarted())
+                return;
+            into.Day = cycle.Day;
+            into.Phase = cycle.Phase;
+            into.Money = wallet.Money;
+            into.SkillPoints = wallet.SkillPoints;
+            into.Level = progression.Level;
+            into.Exp = progression.Exp;
+            Logic.Save.SaveState.CaptureProgress(skills, record, run, into);
+        }
+
+        /// <summary>
+        /// 저장 내용으로 상태를 바꾸고 알린다. 단계 알림은 같은 날 안의 전환으로 보낸다(DayChanged 아님 → 밤 처리가 다시 돌지 않음).
+        /// 다른 시스템(밭 · 인벤토리 · 상점 …)의 복원은 SaveSystem이 이 다음에 한다.
+        /// </summary>
+        public void LoadFrom(Logic.Save.SaveSnapshot from)
+        {
+            bootstrapper.Ready -= StartNewGame;
+            cycle = new DayCycle(from.Day, from.Phase);
+            wallet = new Wallet(from.Money, from.SkillPoints);
+            progression = new Progression(progressionData.ToCurve(), from.Level, from.Exp);
+            Logic.Save.SaveState.ApplyProgress(skills, record, run, from);
+            SyncDebugView();
+
+            var change = new PhaseChange(cycle.Day, cycle.Phase, cycle.Day, cycle.Phase);
+            ReportPhase(change);
+            GameEvents.RaisePhaseChanged(change);
+            GameEvents.RaiseDayChanged(cycle.Day);
+            GameEvents.RaiseMoneyChanged(wallet.Money);
+            GameEvents.RaiseSkillPointsChanged(wallet.SkillPoints);
+            GameEvents.RaiseExpChanged(progression.Exp, progression.Required);
+            foreach (var pair in skills.All)
+                GameEvents.RaiseSkillLevelChanged(pair.Key, pair.Value);
         }
 
         /// <summary>매출로 경험치를 받는다 (정산 3-3: 경험치 = 매출 × 1). 레벨업하면 SP가 더해진다.</summary>

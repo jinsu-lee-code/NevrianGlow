@@ -14,16 +14,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.ItemProductData
   id: shop_seed_mushroomflower
   displayName: "\uBC84\uC12F\uAF43 \uC528\uC557"
-  sortOrder: 11
+  sortOrder: 20
   category: "\uC528\uC557"
+  hidden: 0
   repeatable: 1
   tiers:
-  - price: 20
+  - price: 30
     requirements:
     - kind: 1
       targetId: skill_unlock_mushroom
       value: 1
-  dailyStock: 08000000
-  stockFromNextDay: 0
+  dailyStock: 05000000
+  stockFromNextDay: 1
   item: {fileID: 11400000, guid: 526adb1750cb4b1478827fb40e4db8bb, type: 2}
   count: 1

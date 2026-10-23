@@ -5,25 +5,9 @@ using NUnit.Framework;
 
 namespace NevrianGlowFarm.Tests
 {
-    /// <summary>BALANCE 2-5 (개수) · 3-7 (청결도) · 배치 간격.</summary>
+    /// <summary>BALANCE 3-7 (청결도) · 배치 간격. 하루 생기는 양은 TidyRulesTests (P-3).</summary>
     public class CleaningRulesTests
     {
-        [Test]
-        public void TrashCount_Base6PlusDay_Cap12()
-        {
-            int[] expected = { 7, 8, 9, 10, 11, 12, 12, 12 }; // 1~8일차
-            for (int day = 1; day <= expected.Length; day++)
-                Assert.AreEqual(expected[day - 1], CleaningRules.DailyCount(6, day, 1, 6), $"{day}일차");
-        }
-
-        [Test]
-        public void StainCount_Base4PlusHalfDayFloor_Cap8()
-        {
-            int[] expected = { 4, 5, 5, 6, 6, 7, 7, 8, 8, 8 }; // 1~10일차
-            for (int day = 1; day <= expected.Length; day++)
-                Assert.AreEqual(expected[day - 1], CleaningRules.DailyCount(4, day, 2, 4), $"{day}일차");
-        }
-
         // BALANCE 3-7: 1일차 쓰레기 7 · 얼룩 4 = 처음 11
         [TestCase(0, 0.0, 1.0, TestName = "모두 치움")]
         [TestCase(7, 4.0, 0.0, TestName = "아무것도 안 함")]

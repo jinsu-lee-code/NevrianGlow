@@ -15,12 +15,58 @@ namespace NevrianGlowFarm.Systems.Zones
         [Header("참조")]
         [Tooltip("가는 곳 (Data/Zones)")]
         [SerializeField] private ZoneProfileData destination;
+        [Tooltip("문 모델의 Animator (아트 pf_env_farm_door — Bool 'IsOpen') — 비우면 열리는 연출 없음")]
+        [SerializeField] private Animator doorAnimator;
 
         [Header("조정값")]
         [Tooltip("이 단계에서만 문을 쓸 수 있다")]
         [SerializeField] private DayPhase usablePhase = DayPhase.Farming;
         [Tooltip("문을 쓰면 다음 단계로 넘긴다 (농사 끝내기)")]
         [SerializeField] private bool advancesPhase = true;
+        [Tooltip("문 Animator의 열림 Bool 이름 (아트 ac_env_farm_door)")]
+        [SerializeField] private string openParameter = "IsOpen";
+
+
+        // 켜져 있는 문 (HUD '농사 끝내기' 단축키가 문과 같은 길로 넘기게 — P-7). 문은 Farm 씬이라 씬 사이 참조 대신 목록.
+        private static readonly System.Collections.Generic.List<ZoneDoor> active = new System.Collections.Generic.List<ZoneDoor>();
+
+        private void OnEnable() => active.Add(this);
+        private void OnDisable() => active.Remove(this);
+
+        /// <summary>
+        /// 그 단계를 끝내는 문을 어디서든 바로 쓴다 (회신2 4절 #1: 농사 끝내기 = 버튼 + 문, 확인 없이). 쓸 문이 없거나 이동 중이면 false.
+        /// </summary>
+        public static bool TryUseFor(DayPhase phase)
+        {
+            var game = GameManager.Instance;
+            var transition = ZoneTransition.Instance;
+            if (game == null || !game.IsStarted || game.Phase != phase || transition == null || transition.IsTransitioning)
+                return false;
+            foreach (var door in active)
+                if (door != null && door.advancesPhase && door.usablePhase == phase && door.destination != null)
+                    return door.Go(game, transition);
+            return false;
+        }
+
+        // 문을 열고(아트 연출 0.9초 — 페이드와 함께 보임) 이동한다. 화면이 어두워진 순간(플레이어가 떠난 뒤) 문을 다시 닫아 다음에 올 때 닫혀 있게.
+        private bool Go(GameManager game, ZoneTransition transition)
+        {
+            bool started = transition.Request(destination, () =>
+            {
+                if (advancesPhase)
+                    game.AdvancePhase();
+                SetOpen(false);
+            });
+            if (started)
+                SetOpen(true);
+            return started;
+        }
+
+        private void SetOpen(bool open)
+        {
+            if (doorAnimator != null && !string.IsNullOrEmpty(openParameter))
+                doorAnimator.SetBool(openParameter, open);
+        }
 
         public string GetHandPrompt()
         {
@@ -40,7 +86,7 @@ namespace NevrianGlowFarm.Systems.Zones
             var transition = ZoneTransition.Instance;
             if (destination == null || game == null || transition == null || game.Phase != usablePhase)
                 return;
-            transition.Request(destination, advancesPhase ? game.AdvancePhase : (System.Action)null);
+            Go(game, transition);
         }
     }
 }

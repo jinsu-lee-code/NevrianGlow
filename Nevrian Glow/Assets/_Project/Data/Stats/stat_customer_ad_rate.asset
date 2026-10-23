@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07892da8d47091c4b96927b6778ddd42, type: 3}
+  m_Name: stat_customer_ad_rate
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.StatData
+  id: stat_customer_ad_rate
+  displayName: "\uAD11\uACE0 \uACC4\uC218"
+  description: "\uC785\uC18C\uBB38 \uBAA8\uB378 \uAD11\uACE0 \uACC4\uC218 p \u2014
+    \uAE30\uBCF8\uAC12(SalesSettings)\uC5D0 \uB354\uD55C\uB2E4 (\uAC04\uD310, P-2)"

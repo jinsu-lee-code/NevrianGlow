@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03a390ed4bbbbfe4c8a6c5761113ca2d, type: 3}
+  m_Name: skill_quality
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.SkillData
+  id: skill_quality
+  displayName: "\uACE0\uD488\uC9C8 \uC791\uBB3C"
+  tab: "\uB18D\uC0AC"
+  tabOrder: 0
+  order: 3
+  hidden: 1
+  levelDescriptions:
+  - "\uD310\uB9E4\uAC00 \xD71.05"
+  - "\uD310\uB9E4\uAC00 \xD71.10"
+  - "\uD310\uB9E4\uAC00 \xD71.15"
+  costs: 020000000300000004000000
+  prerequisite: {fileID: 0}
+  prerequisiteLevel: 1
+  modifiers:
+  - stat: {fileID: 11400000, guid: 2214fc0dcdc9ee0489de0f73ab987230, type: 2}
+    op: 1
+    values:
+    - 1.05
+    - 1.1
+    - 1.15

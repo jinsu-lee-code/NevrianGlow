@@ -165,6 +165,26 @@
                     "interactions": "",
                     "initialStateCheck": false,
                     "priority": 0
+                },
+                {
+                    "name": "Skill",
+                    "type": "Button",
+                    "id": "5e8c2a41-9d37-4b16-a0f4-3c7e9b1d6a25",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
+                },
+                {
+                    "name": "EndPhase",
+                    "type": "Button",
+                    "id": "7a3d9e52-4c18-4b6f-9e27-1f5c8a0d3b46",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
                 }
             ],
             "bindings": [
@@ -704,6 +724,28 @@
                     "processors": "",
                     "groups": "Keyboard&Mouse",
                     "action": "Shop",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "c4f7a2d9-61b8-4e35-9a0c-8d2f5b3e7a14",
+                    "path": "<Keyboard>/k",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "Skill",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d81b6f39-2e45-4a07-b6c3-9e4a7d2f15c8",
+                    "path": "<Keyboard>/enter",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "EndPhase",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

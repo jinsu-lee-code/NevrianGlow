@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c9fa4a81fc8b6454a92b20fd0f1032b8, type: 3}
+  m_Name: VfxLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.VfxLibraryData
+  entries:
+  - id: vfx_sparkle
+    prefab: {fileID: 1551050224284001616, guid: b2ab1d1d27be85540ac9a296794606ac, type: 3}
+    lifetime: 1.5
+    scale: 1
+  - id: vfx_light_puff
+    prefab: {fileID: 943559288103933105, guid: 036df45e6fcfcb646a76a81e5b0cfacf, type: 3}
+    lifetime: 1.2
+    scale: 1
+  - id: vfx_ring_gold
+    prefab: {fileID: 4490579917294160480, guid: 02034943f27bb4d47bce8f6e12dca6f2, type: 3}
+    lifetime: 2
+    scale: 1
+  - id: vfx_merge_burst
+    prefab: {fileID: 6860993136177537713, guid: 95b04592bea215241a1012d86da39bd4, type: 3}
+    lifetime: 2
+    scale: 1
+  - id: vfx_water_drop
+    prefab: {fileID: 7403970417984286558, guid: 331f586bdf6b5a94195c860810e296d6, type: 3}
+    lifetime: 0
+    scale: 1
+  - id: vfx_bubble_foam
+    prefab: {fileID: 723881645486749699, guid: 4670bd90dfbef634a9c32185ea217b86, type: 3}
+    lifetime: 0
+    scale: 1
+  - id: vfx_glow_pulse
+    prefab: {fileID: 4659286823927715355, guid: 47be1773b7001bc4c90e8fe4c7e7d9f4, type: 3}
+    lifetime: 0
+    scale: 1

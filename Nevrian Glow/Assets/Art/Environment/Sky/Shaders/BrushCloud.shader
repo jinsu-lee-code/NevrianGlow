@@ -22,7 +22,7 @@ Shader "DSEWA/BrushCloud"
         _MidThreshold ("Mid Step (third tone, lit above this)", Range(0, 1)) = 0.62
         _MidMix ("Mid Tone (shadow .. lit)", Range(0, 1)) = 0.5
 
-        [Header(Colours (used when CloudSunLight does not publish globals, or Use Material Colours))]
+        [Header(Colours (used when CloudSunLight does not publish globals or Use Material Colours))]
         [Toggle] _UseMatColors ("Use Material Colours (ignore CloudSunLight)", Float) = 0
         _LitColor ("Lit", Color) = (1, 1, 1, 1)
         _MidColor ("Mid", Color) = (0.8, 0.8, 0.92, 1)

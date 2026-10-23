@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.ItemProductData
   id: shop_seed_lanternfruit
   displayName: "\uB4F1\uBD88 \uC5F4\uB9E4 \uC528\uC557"
-  sortOrder: 12
+  sortOrder: 30
   category: "\uC528\uC557"
+  hidden: 0
   repeatable: 1
   tiers:
   - price: 70
@@ -24,6 +25,6 @@ MonoBehaviour:
       targetId: skill_unlock_lantern
       value: 1
   dailyStock: 04000000
-  stockFromNextDay: 0
+  stockFromNextDay: 1
   item: {fileID: 11400000, guid: 7163b34af8cd65b4294c0a9f1fa9a84b, type: 2}
   count: 1

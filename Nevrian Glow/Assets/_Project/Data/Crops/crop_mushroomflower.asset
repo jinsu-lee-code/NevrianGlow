@@ -16,12 +16,20 @@ MonoBehaviour:
   displayName: "\uBC84\uC12F\uAF43"
   maxStack: 10
   canStore: 1
+  heldPrefab: {fileID: 0}
+  worldModels:
+  - {fileID: 5675273399623873325, guid: 41db9aaf9fb816241b9264326b7c8a85, type: 3}
+  icon: {fileID: 21300000, guid: 4f466125f34d32f4ba32478088b4bd83, type: 3}
   greyboxColor: {r: 0.627451, g: 0.54509807, b: 1, a: 1}
-  stagePrefabs: []
-  seedPrice: 20
-  sellPrice: 40
+  stagePrefabs:
+  - {fileID: 6492855999298447309, guid: 31666e8d0b5f8804aaa72bdde3f9bbbd, type: 3}
+  - {fileID: 4369270702501804124, guid: 009f1cb53e4241f42be46d1d9f7fd2df, type: 3}
+  - {fileID: 9114481416940882190, guid: c78d482c2dad077489effebc1d6fa957, type: 3}
+  seedPrice: 30
+  sellPrice: 50
   growDays: 2
-  wetDays: 2
+  needsWater: 0
+  wetDays: 1
   harvestYield: 2
   regrowDays: 0
   maxHarvests: 1

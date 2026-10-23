@@ -1,0 +1,38 @@
+﻿item_id,name_ko,item_type,sell_price,stack_size,display_per_slot,feed_ok,container,tool_kind,tool_tier,tool_power,tool_radius,tool_speed,icon_id,note,mvp
+item_seed_moonroot,월광 뿌리 씨앗,seed,0,10,,false,,,,,,,icon_seed_moonroot,판매 불가,P0
+item_seed_mushroomflower,버섯꽃 씨앗,seed,0,10,,false,,,,,,,icon_seed_mushroomflower,판매 불가,P0
+item_seed_lanternfruit,등불 열매 씨앗,seed,0,10,,false,,,,,,,icon_seed_lanternfruit,판매 불가,P0
+item_seed_spiralbloom,나선층꽃 씨앗,seed,0,10,,false,,,,,,,icon_seed_spiralbloom,판매 불가,phase2
+item_seed_pearlcore,진주핵꽃 씨앗,seed,0,10,,false,,,,,,,icon_seed_pearlcore,판매 불가,phase2
+crop_moonroot,월광 뿌리,crop,18,10,30,true,,,,,,,icon_item_moonroot,,P0
+crop_mushroomflower,버섯꽃,crop,50,10,30,false,,,,,,,icon_item_mushroomflower,1개 = 1묶음,P0
+crop_lanternfruit,등불 열매,crop,110,10,30,true,,,,,,,icon_item_lanternfruit,,P0
+item_spiral_petal,나선층 꽃잎,crop,90,10,30,true,,,,,,,icon_item_spiral_petal,1개 = 1묶음,phase2
+item_pearlcore,진주핵,crop,450,10,30,false,,,,,,,icon_item_pearlcore,진주핵꽃 수확물,phase2
+item_dried_mushroom,말린 버섯꽃,processed,65,10,30,false,bundle,,,,,,icon_item_dried_mushroom,작은 가공품 30개,phase2
+item_dried_spiral_petal,말린 나선층꽃잎,processed,105,10,30,false,bundle,,,,,,icon_item_dried_spiral_petal,작은 가공품 30개,phase2
+item_moonroot_juice,월광뿌리즙,processed,30,10,30,false,glass_bottle,,,,,,icon_item_moonroot_juice,작은 가공품 30개,phase2
+item_lantern_juice,등불열매 즙,processed,165,10,30,false,glass_bottle,,,,,,icon_item_lantern_juice,작은 가공품 30개,phase2
+item_pearl_juice,진주열매 즙,processed,550,10,30,false,glass_bottle,,,,,,icon_item_pearl_juice,작은 가공품 30개,phase2
+item_spore_powder,포자 가루,processed,140,10,12,false,sack,,,,,,icon_item_spore_powder,큰 가공품 12개,phase2
+item_petal_powder,꽃잎 가루,processed,240,10,12,false,sack,,,,,,icon_item_petal_powder,큰 가공품 12개,phase2
+item_fragrant_oil,향유,processed,400,10,12,false,slender_flask,,,,,,icon_item_fragrant_oil,큰 가공품 12개,phase2
+item_nutrient_juice,영양 주스,processed,900,10,12,false,slender_flask,,,,,,icon_item_nutrient_juice,큰 가공품 12개,phase2
+item_pearlcore_elixir,진주핵 영양주,processed,1800,10,12,false,slender_flask,,,,,,icon_item_pearlcore_elixir,큰 가공품 12개,phase2
+tool_hoe_1,낡은 괭이,tool,0,1,,false,,hoe,1,1,,,icon_tool_hoe_t1,1회 작업량 (칸 필요 작업량 3),P0
+tool_hoe_2,철 괭이,tool,0,1,,false,,hoe,2,2,,,icon_tool_hoe_t2,1회 작업량 (칸 필요 작업량 3),P1
+tool_hoe_3,발광 괭이,tool,0,1,,false,,hoe,3,3,,,icon_tool_hoe_t3,1회 작업량 (칸 필요 작업량 3),P1
+tool_mop_1,낡은 대걸레,tool,0,1,,false,,mop,1,,0.9,0.9,icon_tool_mop_t1,반경 m · 속도 /초,P0
+tool_mop_2,좋은 대걸레,tool,0,1,,false,,mop,2,,1.3,1.2,icon_tool_mop_t2,반경 m · 속도 /초,P1
+tool_mop_3,발광 대걸레,tool,0,1,,false,,mop,3,,1.7,1.5,icon_tool_mop_t3,반경 m · 속도 /초,P1
+tool_watering_can_1,물뿌리개 1등급,tool,0,1,,false,,watering_can,1,1,,,icon_tool_watering_can_t1,한 번에 물 주는 칸 수,P0
+tool_watering_can_2,물뿌리개 2등급,tool,0,1,,false,,watering_can,2,4,,,icon_tool_watering_can_t2,한 번에 물 주는 칸 수,P1
+tool_watering_can_3,물뿌리개 3등급,tool,0,1,,false,,watering_can,3,8,,,icon_tool_watering_can_t3,한 번에 물 주는 칸 수,P1
+item_fertilizer,비료,consumable,0,10,,false,,,,,,,icon_item_fertilizer,"성장일 −1, 작물당 1회",P1
+item_trash,쓰레기,trash,0,10,,false,,,,,,,icon_item_trash,"쓰레기통에만 버림, 창고 불가",P0
+device_sprinkler,스프링클러,device,0,1,,false,,,,,,,icon_device_sprinkler,"밭 4개가 만나는 모서리 점에 설치, 인접 4밭(16칸)",P1
+proc_grinder,공명 분쇄석,processor,0,1,,false,,,,,,,icon_proc_grinder,"밭 바깥 빈 땅 설치, 여러 대 가능",phase2
+proc_dryer,포자바람 건조막,processor,0,1,,false,,,,,,,icon_proc_dryer,"밭 바깥 빈 땅 설치, 여러 대 가능",phase2
+proc_distiller,성광 증류관,processor,0,1,,false,,,,,,,icon_proc_distiller,"밭 바깥 빈 땅 설치, 여러 대 가능",phase2
+furn_fruit_shelf,과일 진열대,furniture,0,1,,false,,,,,,,icon_furn_fruit_shelf,작물 전용 · 1층 낮은 판매대 · 한 종류만 · 작물 30개 · 매장 가운데 과일 진열대 자리에 설치,P0
+furn_goods_shelf,일반 진열대,furniture,0,1,,false,,,,,,,icon_furn_goods_shelf,가공품 전용 · 3층 높은 선반 · 층마다 다른 종류 가능(층 안은 한 종류) · 층당 큰 12 / 작은 30 · 벽 쪽 일반 진열대 자리에 설치,phase2

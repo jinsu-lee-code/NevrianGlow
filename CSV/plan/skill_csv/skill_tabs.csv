@@ -1,0 +1,4 @@
+﻿tab_id,name_ko,order,icon
+tab_farm,농장 운영,1,icon_tab_farm
+tab_store,매장 운영,2,icon_tab_store
+tab_common,공용,3,icon_tab_common

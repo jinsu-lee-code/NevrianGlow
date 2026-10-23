@@ -14,6 +14,8 @@ namespace NevrianGlowFarm.UI
         [SerializeField] private HotbarSlotView slotTemplate;
         [Tooltip("칸을 늘어놓을 부모 (HorizontalLayoutGroup)")]
         [SerializeField] private Transform slotParent;
+        [Tooltip("고른 칸의 아이템 이름 (핫바 위 한 줄 — 비우면 칸 안에 이름)")]
+        [SerializeField] private TMPro.TMP_Text selectedNameLabel;
 
         [Header("조정값")]
         [Tooltip("선택되지 않은 칸 색")]
@@ -66,8 +68,12 @@ namespace NevrianGlowFarm.UI
                     continue;
                 var item = hotbar.GetItem(i);
                 int count = hotbar.GetCount(i);
-                string label = item == null ? emptyLabel : item.MaxStack > 1 ? $"{item.DisplayName} ×{count}" : item.DisplayName;
+                // 이름을 핫바 위에 따로 보이면 칸 안에는 개수만 (아이콘이 무엇인지 보여 줌 — 5-4b)
+                string label = item == null ? (selectedNameLabel != null ? string.Empty : emptyLabel)
+                    : selectedNameLabel != null ? (item.MaxStack > 1 ? $"×{count}" : string.Empty)
+                    : item.MaxStack > 1 ? $"{item.DisplayName} ×{count}" : item.DisplayName;
                 slots[i].SetContent(i + 1, label);
+                slots[i].SetIcon(item != null ? item.Icon : null);
                 slots[i].SetSelected(false, normalColor, selectedColor);
             }
 
@@ -82,6 +88,11 @@ namespace NevrianGlowFarm.UI
             if (index >= 0 && index < hotbar.SlotCount)
                 slots[index].SetSelected(true, normalColor, selectedColor);
             highlighted = index;
+            if (selectedNameLabel != null)
+            {
+                var item = index >= 0 && index < hotbar.SlotCount ? hotbar.GetItem(index) : null;
+                selectedNameLabel.text = item != null ? item.DisplayName : string.Empty;
+            }
         }
     }
 }

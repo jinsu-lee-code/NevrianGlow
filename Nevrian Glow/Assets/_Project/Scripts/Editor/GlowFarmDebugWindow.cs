@@ -31,6 +31,8 @@ namespace NevrianGlowFarm.Editor
         {
             DrawGameSection();
             EditorGUILayout.Space();
+            DrawSaveSection();
+            EditorGUILayout.Space();
             DrawFarmSection();
             EditorGUILayout.Space();
             DrawCleaningSection();
@@ -42,6 +44,34 @@ namespace NevrianGlowFarm.Editor
             DrawHotbarSection();
             EditorGUILayout.Space();
             DrawLogSection();
+        }
+
+        // 저장 (SaveSystem 6-1) — 타이틀 "이어하기"(5-6) 전까지 불러오기는 여기서. 자동 저장은 다음 날 아침마다.
+        private void DrawSaveSection()
+        {
+            EditorGUILayout.LabelField("저장 (SaveSystem)", EditorStyles.boldLabel);
+            var save = Systems.Save.SaveSystem.Instance;
+            if (!Application.isPlaying || save == null)
+            {
+                EditorGUILayout.HelpBox("플레이 중일 때 저장 · 불러오기 · 삭제 버튼이 보인다. 자동 저장은 다음 날 아침마다.", MessageType.None);
+                return;
+            }
+            EditorGUILayout.LabelField("파일", save.HasSave ? File.GetLastWriteTime(save.FilePath).ToString("MM-dd HH:mm:ss") : "없음");
+            EditorGUILayout.LabelField("마지막 결과", save.LastResult ?? "-");
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("지금 저장"))
+                    save.Save(out _);
+                using (new EditorGUI.DisabledScope(!save.HasSave))
+                {
+                    if (GUILayout.Button("불러오기"))
+                        save.Load(out _);
+                    if (GUILayout.Button("삭제") && EditorUtility.DisplayDialog("저장 삭제", "저장 파일(.bak 포함)을 지운다.", "지우기", "취소"))
+                        save.DeleteSave();
+                }
+                if (GUILayout.Button("폴더 열기"))
+                    EditorUtility.RevealInFinder(save.FilePath);
+            }
         }
 
         private void DrawGameSection()
@@ -56,7 +86,21 @@ namespace NevrianGlowFarm.Editor
             }
             if (!game.IsStarted)
             {
-                EditorGUILayout.HelpBox("구역 씬을 불러오는 중…", MessageType.None);
+                var title = UI.GameScreen.Current as UI.TitleScreen;
+                if (title == null)
+                {
+                    EditorGUILayout.HelpBox("구역 씬을 불러오는 중…", MessageType.None);
+                    return;
+                }
+                // 타이틀 화면 (5-6): 저장을 건드리지 않고 바로 시작하려면 GameManager의 '타이틀 기다림'을 끈다
+                EditorGUILayout.HelpBox("타이틀 화면 - 아래 버튼 또는 게임 화면에서 시작", MessageType.None);
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("새 게임"))
+                        title.NewGame();
+                    if (GUILayout.Button("이어하기"))
+                        title.ContinueGame();
+                }
                 return;
             }
 
@@ -146,38 +190,57 @@ namespace NevrianGlowFarm.Editor
             EditorGUILayout.LabelField("장사 시작 때 확정", locked);
             if (GUILayout.Button("바닥 쓰레기 · 얼룩 모두 치우기"))
                 cleaning.DebugCleanAll();
+            // 대걸레질 동작 확인용 — 대걸레를 들고 조준한 채 켜 두면 좌클릭을 누르고 있는 것과 같다
+            var mop = FindFirstObjectByType<Systems.Cleaning.MopTool>();
+            if (mop != null)
+                mop.DebugHold = EditorGUILayout.Toggle("대걸레 누르고 있기", mop.DebugHold);
         }
 
-        // 스킬 단계 (SkillSystem 4-3 전 임시) — 상점 상품 해금 조건에 나오는 스킬 id를 모아 단계를 바로 바꾼다 (SP 소비 없음)
+        // 스킬 단계 (SkillSystem 4-3) — SP 없이 단계를 바로 바꾼다(+/-), 효과(StatSystem)는 그대로 따라 바뀐다.
+        // 상점 해금 조건에만 있고 스킬 데이터가 없는 id도 함께 보여 준다 (데이터 누락 확인용).
         private void DrawSkillSection()
         {
-            EditorGUILayout.LabelField("스킬 단계 (4-3 전 임시)", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("스킬 단계 (SP 없이 바꾸기)", EditorStyles.boldLabel);
             var game = GameManager.Instance;
             var shop = Systems.Shop.ShopSystem.Instance;
-            if (!Application.isPlaying || game == null || !game.IsStarted || shop == null)
+            var skills = Systems.Skill.SkillSystem.Instance;
+            if (!Application.isPlaying || game == null || !game.IsStarted)
             {
-                EditorGUILayout.HelpBox("플레이 중일 때 상점 해금 조건의 스킬 단계를 바꿀 수 있다 (SP를 쓰지 않음).", MessageType.None);
+                EditorGUILayout.HelpBox("플레이 중일 때 스킬 단계를 바꿀 수 있다 (SP를 쓰지 않음). 게임에서 배우기는 K 스킬 화면.", MessageType.None);
                 return;
             }
-            var ids = new System.Collections.Generic.SortedSet<string>();
-            foreach (var p in shop.Products)
-                foreach (var t in p.Tiers)
-                    foreach (var r in t.Requirements)
-                        if (r.Kind == Logic.Shop.UnlockKind.SkillLevel && !string.IsNullOrEmpty(r.TargetId))
-                            ids.Add(r.TargetId);
-            foreach (var id in ids)
+            var rows = new System.Collections.Generic.List<(string id, string label, int max)>();
+            var known = new System.Collections.Generic.HashSet<string>();
+            if (skills != null)
+                foreach (var s in skills.Skills)
+                {
+                    rows.Add((s.Id, $"[{s.Tab}] {s.DisplayName}", s.MaxLevel));
+                    known.Add(s.Id);
+                }
+            if (shop != null)
+                foreach (var p in shop.Products)
+                    foreach (var t in p.Tiers)
+                        foreach (var r in t.Requirements)
+                            if (r.Kind == Logic.Shop.UnlockKind.SkillLevel && !string.IsNullOrEmpty(r.TargetId) && known.Add(r.TargetId))
+                                rows.Add((r.TargetId, $"{r.TargetId} (스킬 데이터 없음)", 99));
+            foreach (var (id, label, max) in rows)
             {
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     int level = game.SkillLevel(id);
-                    EditorGUILayout.LabelField(id, $"{level}단계");
+                    EditorGUILayout.LabelField(label, $"{level}/{max}단계");
                     if (GUILayout.Button("-", GUILayout.Width(30)))
                         game.SetSkillLevel(id, level - 1);
-                    if (GUILayout.Button("+", GUILayout.Width(30)))
+                    if (GUILayout.Button("+", GUILayout.Width(30)) && level < max)
                         game.SetSkillLevel(id, level + 1);
                 }
             }
-            EditorGUILayout.LabelField("오늘 상점 지출", $"{shop.SpentToday}달러");
+            var stats = StatSystem.Instance;
+            if (stats != null)
+                foreach (var m in stats.Modifiers)
+                    EditorGUILayout.LabelField("  효과", $"{m.StatId} {(m.Op == Logic.Game.ModifierOp.Add ? "+" : m.Op == Logic.Game.ModifierOp.Set ? "=" : "×")}{m.Value:0.###}");
+            if (shop != null)
+                EditorGUILayout.LabelField("오늘 상점 지출", $"{shop.SpentToday}달러");
         }
 
         // 장사 단계 진행 (SalesSystem 3-2) — 진행 요약 · 건너뛰기(게임의 Space와 같은 함수)

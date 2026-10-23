@@ -1,13 +1,16 @@
+using System.Collections.Generic;
+using NevrianGlowFarm.Core;
 using NevrianGlowFarm.Data;
 using NevrianGlowFarm.Logic.Cleaning;
 using NevrianGlowFarm.Systems.Interaction;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 namespace NevrianGlowFarm.Systems.Cleaning
 {
     /// <summary>
     /// 가게 바닥 얼룩 하나 (GDD 4-4). 양 1 = 처음, 0 = 다 닦임. 대걸레를 들고 좌클릭을 누르고 있으면 MopTool이 줄인다.
-    /// 그레이박스: 반투명 원판의 투명도 = 양 — URP Decal 교체는 비주얼(5-x)에서 (모델 자식만 바꾼다).
+    /// 겉모습: 데칼(아트 얼룩 3종, 진하기 = 양 — 렌더러 Decal 기능 Screen Space) 또는 그레이박스 반투명 원판(투명도 = 양).
     /// 조준용 얇은 트리거 콜라이더(Interactable)로 "누르고 있으면 닦기" 프롬프트를 보여 준다.
     /// </summary>
     public class Stain : MonoBehaviour, IItemUseTarget
@@ -15,6 +18,10 @@ namespace NevrianGlowFarm.Systems.Cleaning
         [Header("참조")]
         [Tooltip("겉모습 (반투명 원판)")]
         [SerializeField] private Renderer modelRenderer;
+        [Tooltip("얼룩 데칼 (URP Decal Projector) — 있으면 원판 대신 이것을 쓰고 진하기 = 남은 양")]
+        [SerializeField] private DecalProjector decal;
+        [Tooltip("데칼 재질 후보 — 놓인 자리로 하나 고름 (아트 mat_decal_stain_01 ~ 03)")]
+        [SerializeField] private List<Material> decalMaterials = new List<Material>();
 
         [Header("조정값")]
         [Tooltip("다 더러울 때 색 (알파 = 최대 진하기)")]
@@ -33,6 +40,18 @@ namespace NevrianGlowFarm.Systems.Cleaning
         private void Awake()
         {
             block = new MaterialPropertyBlock();
+            if (decal != null)
+            {
+                if (decalMaterials.Count > 0)
+                {
+                    int i = Items.ItemModelView.SeedOf(transform.position) % decalMaterials.Count;
+                    decal.material = decalMaterials[(i + decalMaterials.Count) % decalMaterials.Count];
+                }
+                // 얼룩마다 방향을 달리 (같은 자리면 같은 방향)
+                decal.transform.localRotation = Quaternion.Euler(90f, (transform.position.x * 53f + transform.position.z * 31f) % 360f, 0f);
+                if (modelRenderer != null)
+                    modelRenderer.enabled = false;
+            }
             Refresh();
         }
 
@@ -43,7 +62,11 @@ namespace NevrianGlowFarm.Systems.Cleaning
             amount = (float)CleaningRules.Wipe(amount, wipeAmount);
             Refresh();
             if (IsClean)
+            {
                 gameObject.SetActive(false);
+                if (before > 0f)
+                    AudioManager.Play(SoundCues.StainClear, transform.position);
+            }
             return before - amount;
         }
 
@@ -55,6 +78,11 @@ namespace NevrianGlowFarm.Systems.Cleaning
 
         private void Refresh()
         {
+            if (decal != null)
+            {
+                decal.fadeFactor = amount;
+                return;
+            }
             if (modelRenderer == null || block == null)
                 return;
             var c = fullColor;
