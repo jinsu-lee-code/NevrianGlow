@@ -17,8 +17,10 @@ namespace NevrianGlowFarm.UI
         [Header("참조")]
         [Tooltip("일차 · 단계 · 지역 한 줄")]
         [SerializeField] private TMP_Text dayLabel;
-        [Tooltip("달러 · SP 한 줄")]
+        [Tooltip("달러 · SP 한 줄 (SP 글자가 따로 있으면 달러만)")]
         [SerializeField] private TMP_Text walletLabel;
+        [Tooltip("SP 글자 — 아이콘과 함께 따로 보일 때 (비우면 달러 줄에 같이, 5-4b)")]
+        [SerializeField] private TMP_Text skillPointLabel;
         [Tooltip("레벨 · 경험치 숫자")]
         [SerializeField] private TMP_Text levelLabel;
         [Tooltip("경험치 바 채움 — 가로 앵커(anchorMax.x)를 비율로 바꾼다")]
@@ -84,6 +86,8 @@ namespace NevrianGlowFarm.UI
             {
                 dayLabel.text = string.Empty;
                 walletLabel.text = string.Empty;
+                if (skillPointLabel != null)
+                    skillPointLabel.text = string.Empty;
                 levelLabel.text = string.Empty;
                 SetFill(0f);
                 return;
@@ -139,7 +143,16 @@ namespace NevrianGlowFarm.UI
             dayLabel.text = $"{day}일차 · {DayPhaseNames.ToKorean(phase)}{zone}";
         }
 
-        private void RefreshWallet() => walletLabel.text = $"{money:N0} 달러 · SP {skillPoints}";
+        private void RefreshWallet()
+        {
+            if (skillPointLabel == null)
+            {
+                walletLabel.text = $"{money:N0} 달러 · SP {skillPoints}";
+                return;
+            }
+            walletLabel.text = $"{money:N0} 달러";
+            skillPointLabel.text = $"SP {skillPoints}";
+        }
 
         private void RefreshLevel()
         {

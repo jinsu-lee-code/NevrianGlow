@@ -56,6 +56,7 @@ namespace NevrianGlowFarm.Editor
                 Grids(canvas),
                 Lists(canvas),
                 TitleGroup(canvas),
+                HudIcons(canvas),
                 Sliders(canvas),
             };
 
@@ -328,6 +329,82 @@ namespace NevrianGlowFarm.Editor
                 arr.GetArrayElementAtIndex(i).objectReferenceValue = list[i];
             so.ApplyModifiedPropertiesWithoutUndo();
             return $"타이틀 로고 묶음 {list.Count}";
+        }
+
+        // ── HUD 아이콘: 돈 · SP · 경험치 (아트 icon_dollar · icon_skillpoint · icon_xp) ──
+
+        private const string IconFolder = "Assets/Art/UI/Icons";
+
+        private static string HudIcons(Transform canvas)
+        {
+            var hud = canvas.Find("HUD") as RectTransform;
+            var view = hud != null ? hud.GetComponent<HudView>() : null;
+            var wallet = hud != null ? hud.Find("Wallet") as RectTransform : null;
+            var level = hud != null ? hud.Find("Level") as RectTransform : null;
+            if (view == null || wallet == null || level == null)
+                return "HUD 줄 없음";
+            var dollar = AssetDatabase.LoadAssetAtPath<Sprite>($"{IconFolder}/icon_dollar.png");
+            var sp = AssetDatabase.LoadAssetAtPath<Sprite>($"{IconFolder}/icon_skillpoint.png");
+            var xp = AssetDatabase.LoadAssetAtPath<Sprite>($"{IconFolder}/icon_xp.png");
+
+            // 달러 줄: [달러 아이콘][150 달러]   [SP 아이콘][SP 0]
+            float walletTop = wallet.offsetMax.y, walletHeight = wallet.rect.height;
+            Icon(hud, "IconDollar", dollar, 18f, walletTop, walletHeight);
+            Line(wallet, 18f + walletHeight + 6f, walletTop, 170f, walletHeight);
+            var spLabelRt = hud.Find("SkillPoints") as RectTransform;
+            if (spLabelRt == null)
+            {
+                spLabelRt = Object.Instantiate(wallet.gameObject, hud).GetComponent<RectTransform>();
+                spLabelRt.name = "SkillPoints";
+            }
+            Icon(hud, "IconSkillPoint", sp, 230f, walletTop, walletHeight);
+            Line(spLabelRt, 230f + walletHeight + 6f, walletTop, 130f, walletHeight);
+
+            // 레벨 줄: [경험치 아이콘][Lv1 0 / 100]
+            float levelTop = level.offsetMax.y, levelHeight = level.rect.height;
+            Icon(hud, "IconXp", xp, 18f, levelTop, levelHeight);
+            Line(level, 18f + levelHeight + 6f, levelTop, 330f, levelHeight);
+
+            var so = new SerializedObject(view);
+            so.FindProperty("skillPointLabel").objectReferenceValue = spLabelRt.GetComponent<TMP_Text>();
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return $"HUD 아이콘 {(dollar != null ? 1 : 0) + (sp != null ? 1 : 0) + (xp != null ? 1 : 0)}";
+        }
+
+        // 왼쪽 위 기준 정사각 아이콘 (줄 높이만 한)
+        private static void Icon(Transform parent, string name, Sprite sprite, float x, float top, float size)
+        {
+            if (sprite == null)
+                return;
+            var rt = parent.Find(name) as RectTransform;
+            if (rt == null)
+            {
+                rt = new GameObject(name, typeof(RectTransform), typeof(Image)).GetComponent<RectTransform>();
+                rt.SetParent(parent, false);
+            }
+            rt.anchorMin = rt.anchorMax = new Vector2(0f, 1f);
+            rt.pivot = new Vector2(0f, 1f);
+            rt.offsetMin = new Vector2(x, top - size);
+            rt.offsetMax = new Vector2(x + size, top);
+            var image = rt.GetComponent<Image>();
+            image.sprite = sprite;
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+            EditorUtility.SetDirty(image);
+        }
+
+        private static void Line(RectTransform rt, float x, float top, float width, float height)
+        {
+            rt.anchorMin = rt.anchorMax = new Vector2(0f, 1f);
+            rt.pivot = new Vector2(0f, 1f);
+            rt.offsetMin = new Vector2(x, top - height);
+            rt.offsetMax = new Vector2(x + width, top);
+            if (rt.TryGetComponent<TMP_Text>(out var text))
+            {
+                text.alignment = TextAlignmentOptions.Left;
+                EditorUtility.SetDirty(text);
+            }
+            EditorUtility.SetDirty(rt);
         }
 
         // ── ④ 설정 슬라이더 ──
