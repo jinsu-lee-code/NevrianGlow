@@ -124,6 +124,13 @@ namespace NevrianGlowFarm.Editor
             }
             gso.ApplyModifiedPropertiesWithoutUndo();
 
+            // 배경 지형 풀이 밭 · 길 위로 솟지 않게 (실행 중 지형 사본에서 지움 — 아트 지형 에셋은 그대로, 2026-10-23)
+            if (!gridT.TryGetComponent<FarmGrassClearer>(out var grass))
+                grass = gridT.gameObject.AddComponent<FarmGrassClearer>();
+            var grassSo = new SerializedObject(grass);
+            grassSo.FindProperty("grid").objectReferenceValue = grid;
+            grassSo.ApplyModifiedPropertiesWithoutUndo();
+
             // 바닥이 길 바깥까지 덮는지
             var ground = root.Find("Ground");
             if (ground != null && ground.TryGetComponent<Renderer>(out var groundRenderer))
@@ -186,9 +193,10 @@ namespace NevrianGlowFarm.Editor
             var tiles = t.Find("Tiles");
             if (tiles != null)
                 Object.DestroyImmediate(tiles.gameObject);
-            var piece = AssetDatabase.LoadAssetAtPath<GameObject>(PathPieceArt);
+            // 결정 (2026-10-23, 사용자): 길에 판을 깔지 않는다 — 배경 지형 바닥이 그대로 보이고, 풀만 FarmGrassClearer가 지워 흙길처럼 보인다
+            var piece = DrawPathSurface ? AssetDatabase.LoadAssetAtPath<GameObject>(PathPieceArt) : null;
             if (visual.TryGetComponent<Renderer>(out var greybox))
-                greybox.enabled = piece == null;
+                greybox.enabled = false;
             if (piece == null)
                 return;
             tiles = new GameObject("Tiles").transform;
@@ -211,6 +219,7 @@ namespace NevrianGlowFarm.Editor
 
         private const string PathPieceArt = "Assets/Art/Environment/farm_path/pf_env_farm_path.prefab";
         private const float PathPieceWidth = 1.5f, PathPieceLength = 4f;
+        private static readonly bool DrawPathSurface = false; // 다시 길 판을 깔려면 true (아트 길 조각)
 
         private static void Place(Transform parent, string name, Vector3 pos, Vector3? facing)
         {

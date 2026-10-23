@@ -34,7 +34,7 @@ namespace NevrianGlowFarm.Systems.Farm
         [Tooltip("칸 하나의 흙 크기 — 겹침 검사에도 쓴다, 칸 프리팹 크기와 같게 (m)")]
         [SerializeField, Min(0.1f)] private float cellFootprint = 1.6f;
         [Tooltip("미개간 흙 색 (BALANCE 9-5 임시)")]
-        [SerializeField] private Color untilledColor = new Color(0.024f, 0.086f, 0.122f);
+        [SerializeField] private Color untilledColor = new Color(0.46f, 0.45f, 0.48f); // 아트 칸 흙(흰 바탕) · 밤 조명에서 검게 보이지 않게 밝힘 (2026-10-23, 사용자)
         [Tooltip("개간된 흙 색 — 개간 중에는 진행만큼 이 색에 가까워진다")]
         [SerializeField] private Color tilledColor = new Color(0.17f, 0.33f, 0.47f);
         [Tooltip("젖은 흙 색 (심은 칸에 물을 줬을 때)")]
@@ -71,6 +71,7 @@ namespace NevrianGlowFarm.Systems.Farm
 
         public FarmState State => state;
         public int CellCount => state != null ? state.Cells.Count : 0;
+        public IReadOnlyList<ForbiddenZone> ForbiddenZones => forbiddenZones;
         public string Summary => summary;
 
         private void Awake()
@@ -402,6 +403,8 @@ namespace NevrianGlowFarm.Systems.Farm
 
         private void SpawnMissingViews()
         {
+            if (views.Count < state.Cells.Count && TryGetComponent<FarmGrassClearer>(out var grass))
+                grass.RefreshNextFrame(); // 새 칸 자리의 배경 풀을 지운다 (새 게임 · 불러오기 · 구획 확장)
             for (int i = views.Count; i < state.Cells.Count; i++)
             {
                 var view = Instantiate(cellPrefab, CellPosition(i), CellRotation(), transform);

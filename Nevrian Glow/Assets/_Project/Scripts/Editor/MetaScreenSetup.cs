@@ -114,6 +114,42 @@ namespace NevrianGlowFarm.Editor
             Debug.Log("[Setup] 오늘의 정리 HUD: 생성");
         }
 
+        // ── 타이틀 배경 카메라 투어 (2026-10-23) ──
+
+        [MenuItem("Glow Farm/Setup/Create Title Camera Tour")]
+        private static void CreateTitleTourMenu()
+        {
+            const string corePath = "Assets/_Project/Scenes/Core.unity";
+            var scene = EditorSceneManager.GetSceneByPath(corePath);
+            bool opened = false;
+            if (!scene.isLoaded)
+            {
+                scene = EditorSceneManager.OpenScene(corePath, OpenSceneMode.Additive);
+                opened = true;
+            }
+            TitleScreen title = null;
+            foreach (var root in scene.GetRootGameObjects())
+                title ??= root.GetComponentInChildren<TitleScreen>(true);
+            if (title == null)
+            {
+                Debug.LogError("[Setup] Core 씬에 TitleScreen이 없음 - Create Meta Screens 먼저");
+                return;
+            }
+            // 장면 값은 코드 기본값으로 다시 깐다 (있으면 지우고 새로 — 장면 형식이 바뀌어도 같은 결과)
+            bool created = !title.TryGetComponent<TitleCameraTour>(out var tour);
+            if (!created)
+                Object.DestroyImmediate(tour, true);
+            tour = title.gameObject.AddComponent<TitleCameraTour>();
+            var so = new SerializedObject(tour);
+            so.FindProperty("title").objectReferenceValue = title;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            if (opened)
+                EditorSceneManager.CloseScene(scene, true);
+            Debug.Log("[Setup] 타이틀 카메라 투어: " + (created ? "생성" : "기본 장면으로 다시 만듦"));
+        }
+
         // ── P-7 화면 · 조작: 상점 탭 · 단계 넘기기 HUD 버튼 · 오프닝 편지 ──
 
         [MenuItem("Glow Farm/Setup/Create P-7 UI")]
