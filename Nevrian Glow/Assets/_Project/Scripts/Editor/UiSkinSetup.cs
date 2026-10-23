@@ -223,7 +223,7 @@ namespace NevrianGlowFarm.Editor
                     MoonGlow(titlePanel, logo, "MoonHalo", glow, moon, 340f, new Color(0.55f, 0.85f, 1f), 0.25f, 0.6f, behind: true);
                     MoonGlow(titlePanel, logo, "MoonShine", glow, moon, 190f, new Color(0.75f, 0.95f, 1f), 0.04f, 0.18f, behind: false);
                 }
-                logoNote = "타이틀 로고 · 달 형광";
+                logoNote = "타이틀 로고 · 달 형광" + LogoShine(titlePanel, logo, logoSprite) + LogoStars(titlePanel, logo);
             }
 
             EditorSceneManager.MarkSceneDirty(scene);
@@ -268,6 +268,107 @@ namespace NevrianGlowFarm.Editor
             so.FindProperty("phase").floatValue = behind ? 0f : 0.15f;
             so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(image);
+        }
+
+        // ── 로고 빛 쓸기 · 별 반짝임 (사용자 10/23 — 제안 3 · 4번) ──
+
+        private const string ShineShader = "NevrianGlowFarm/UI/Shine";
+        private const string ShineMaterialPath = "Assets/_Project/Art/UI/mat_ui_logo_shine.mat";
+        private const string StarGlintDev = "Assets/_Project/Art/UI/ui_star_glint.png";
+
+        // 로고 그림 속 네 꼭지 별 (그림 1024 × 512 기준 중심 · 크기 px, 색)
+        private static readonly (Vector2 Pos, float Size, Color Color)[] LogoStarSpots =
+        {
+            (new Vector2(78f, 228f), 70f, new Color(0.85f, 0.65f, 1f)),   // 왼쪽 큰 보라
+            (new Vector2(227f, 220f), 56f, new Color(0.65f, 0.95f, 1f)),  // 달 옆 청록
+            (new Vector2(605f, 197f), 64f, new Color(0.85f, 0.65f, 1f)),  // 위 가운데 보라
+            (new Vector2(940f, 268f), 76f, new Color(0.85f, 0.65f, 1f)),  // 오른쪽 큰 보라
+            (new Vector2(300f, 255f), 40f, new Color(1f, 0.75f, 1f)),     // 분홍 작은 별
+            (new Vector2(382f, 277f), 40f, new Color(0.65f, 0.95f, 1f)),
+            (new Vector2(733f, 312f), 44f, new Color(0.65f, 0.95f, 1f)),
+            (new Vector2(540f, 341f), 44f, new Color(0.65f, 0.95f, 1f)),
+            (new Vector2(313f, 327f), 40f, new Color(1f, 0.75f, 1f)),
+            (new Vector2(835f, 330f), 40f, new Color(0.85f, 0.65f, 1f)),
+        };
+
+        // 로고와 같은 자리 · 크기의 층 (위 가운데 앵커)
+        private static RectTransform LogoLayer(Transform parent, RectTransform logo, string name, int siblingAfterLogo, params System.Type[] components)
+        {
+            var rt = parent.Find(name) as RectTransform;
+            if (rt == null)
+            {
+                var types = new System.Collections.Generic.List<System.Type> { typeof(RectTransform) };
+                types.AddRange(components);
+                rt = new GameObject(name, types.ToArray()).GetComponent<RectTransform>();
+                rt.SetParent(parent, false);
+            }
+            rt.SetSiblingIndex(logo.GetSiblingIndex() + siblingAfterLogo);
+            rt.anchorMin = logo.anchorMin;
+            rt.anchorMax = logo.anchorMax;
+            rt.pivot = logo.pivot;
+            rt.anchoredPosition = logo.anchoredPosition;
+            rt.sizeDelta = logo.sizeDelta;
+            return rt;
+        }
+
+        private static string LogoShine(Transform parent, RectTransform logo, Sprite logoSprite)
+        {
+            var shader = Shader.Find(ShineShader);
+            if (shader == null)
+                return " · 빛 쓸기 셰이더 없음";
+            var material = AssetDatabase.LoadAssetAtPath<Material>(ShineMaterialPath);
+            if (material == null)
+            {
+                material = new Material(shader);
+                AssetDatabase.CreateAsset(material, ShineMaterialPath);
+            }
+            material.shader = shader;
+            // 글자가 이미 밝아 약하면 안 보임 — 캡처로 맞춘 값 (10/23)
+            material.SetColor("_ShineColor", new Color(0.85f, 0.97f, 1f, 1f));
+            material.SetFloat("_ShineWidth", 0.09f);
+            material.SetFloat("_ShineSlant", 0.35f);
+            material.SetFloat("_Intensity", 1.8f);
+            EditorUtility.SetDirty(material);
+            var layer = LogoLayer(parent, logo, "LogoShine", 2, typeof(Image), typeof(UiShineSweep)); // 로고 · 앞 달빛 다음
+            var image = layer.GetComponent<Image>();
+            image.sprite = logoSprite;
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+            image.color = Color.white;
+            image.material = material;
+            EditorUtility.SetDirty(image);
+            return " · 빛 쓸기";
+        }
+
+        private static string LogoStars(Transform parent, RectTransform logo)
+        {
+            var glint = LoadSprite(StarGlintDev);
+            if (glint == null)
+                return " · 별 그림 없음";
+            var layer = LogoLayer(parent, logo, "LogoStars", 3);
+            float scale = logo.sizeDelta.x / 1024f;
+            for (int i = 0; i < LogoStarSpots.Length; i++)
+            {
+                var (pos, size, color) = LogoStarSpots[i];
+                string name = $"Star{i + 1:00}";
+                var rt = layer.Find(name) as RectTransform;
+                if (rt == null)
+                {
+                    rt = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(UiTwinkle)).GetComponent<RectTransform>();
+                    rt.SetParent(layer, false);
+                }
+                rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 1f);
+                rt.pivot = new Vector2(0.5f, 0.5f);
+                rt.anchoredPosition = new Vector2((pos.x - 512f) * scale, -pos.y * scale);
+                rt.sizeDelta = Vector2.one * size * scale * 1.6f; // 빛줄기가 별 꼭지보다 조금 길게
+                rt.localScale = Vector3.one;
+                var image = rt.GetComponent<Image>();
+                image.sprite = glint;
+                image.raycastTarget = false;
+                image.color = new Color(color.r, color.g, color.b, 0f);
+                EditorUtility.SetDirty(image);
+            }
+            return $" · 별 반짝임 {LogoStarSpots.Length}";
         }
 
         private static Sprite LoadLogo()
