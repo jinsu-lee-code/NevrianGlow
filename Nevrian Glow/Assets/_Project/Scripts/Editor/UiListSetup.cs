@@ -218,9 +218,9 @@ namespace NevrianGlowFarm.Editor
             if (screen == null || panel == null || !(Template(screen, "entryTemplate") is HotbarSlotView entry))
                 return "상점 화면 없음";
 
-            const float rowHeight = 72f;
+            const float rowHeight = 82f;
             const int visibleRows = 6;
-            panel.sizeDelta = new Vector2(panel.sizeDelta.x, 720f); // 590 → 720: 탭 + 6줄(72 px)
+            panel.sizeDelta = new Vector2(panel.sizeDelta.x, 760f); // 590 → 760: 탭 + 6줄(82 px — 두 줄 글자가 프레임 띠 안쪽에 들어가게)
             float width = panel.sizeDelta.x - EdgeX * 2f;
             var tab = TabBar(panel, screen, art, new Vector2(EdgeX, -82f), width);
             ScrollList(panel, screen, new Vector2(EdgeX, -82f - TabHeight - 8f), new Vector2(width, visibleRows * rowHeight + (visibleRows - 1) * RowGap));
@@ -251,8 +251,9 @@ namespace NevrianGlowFarm.Editor
             if (screen == null || panel == null || !(Template(screen, "entryTemplate") is HotbarSlotView entry))
                 return "스킬 화면 없음";
 
-            const float rowHeight = 64f;
+            const float rowHeight = 74f;
             const int visibleRows = 5;
+            panel.sizeDelta = new Vector2(panel.sizeDelta.x, 640f); // 590 → 640: 5줄(74 px)
             float width = panel.sizeDelta.x - EdgeX * 2f;
             var tab = TabBar(panel, screen, art, new Vector2(EdgeX, -82f), width);
             ScrollList(panel, screen, new Vector2(EdgeX, -82f - TabHeight - 8f), new Vector2(width, visibleRows * rowHeight + (visibleRows - 1) * RowGap));
@@ -306,7 +307,9 @@ namespace NevrianGlowFarm.Editor
             le.flexibleWidth = 1f;
 
             var so = new SerializedObject(view);
-            float iconSize = height - 16f;
+            // 글자 · 아이콘은 프레임 위 · 아래 띠(FrameEdge) 안쪽에 — 띠의 어두운 그러데이션이 두 줄 글자를 물고 있었다 (사용자 10/24)
+            float inset = FrameEdge / frameScale * 0.7f;
+            float iconSize = height - 2f * (inset + 2f);
             float left = frameSide + 8f + iconSize + 14f; // 왼쪽 별 장식 뒤부터
             float right = frameSide + 8f;                  // 오른쪽 별 장식 앞까지
 
@@ -394,8 +397,8 @@ namespace NevrianGlowFarm.Editor
             {
                 name.anchorMin = Vector2.zero;
                 name.anchorMax = Vector2.one;
-                name.offsetMin = new Vector2(left, 6f);
-                name.offsetMax = new Vector2(-nameRight, -7f);
+                name.offsetMin = new Vector2(left, inset);
+                name.offsetMax = new Vector2(-nameRight, -inset);
                 nameText.enableAutoSizing = false;
                 nameText.fontSize = 26f;
                 nameText.color = Color.white;
@@ -411,8 +414,8 @@ namespace NevrianGlowFarm.Editor
             detail.rectTransform.anchorMin = new Vector2(0f, 0f);
             detail.rectTransform.anchorMax = new Vector2(1f, 0f);
             detail.rectTransform.pivot = new Vector2(0.5f, 0f);
-            detail.rectTransform.offsetMin = new Vector2(left, 7f);
-            detail.rectTransform.offsetMax = new Vector2(-nameRight, 7f + 22f);
+            detail.rectTransform.offsetMin = new Vector2(left, inset);
+            detail.rectTransform.offsetMax = new Vector2(-nameRight, inset + 22f);
             detail.textWrappingMode = TextWrappingModes.NoWrap;
             detail.overflowMode = TextOverflowModes.Ellipsis;
             so.FindProperty("detailLabel").objectReferenceValue = detail;
