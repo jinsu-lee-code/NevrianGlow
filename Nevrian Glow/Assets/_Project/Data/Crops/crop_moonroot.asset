@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.CropData
   id: crop_moonroot
   displayName: "\uC6D4\uAD11 \uBFCC\uB9AC"
+  description: 
   maxStack: 10
   canStore: 1
   heldPrefab: {fileID: 0}

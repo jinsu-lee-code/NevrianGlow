@@ -1,7 +1,11 @@
-# HANDOFF.md — 다른 컴퓨터에서 이어서 작업하기 (2026-10-23 기준)
+# HANDOFF.md — 다른 컴퓨터에서 이어서 작업하기 (2026-10-23 기준, 10/24 갱신)
 
 > 마지막 커밋 `a8b091e 10.23/5-4b/HudIcons` (dev = origin/dev). 상세 기록은 TASKS.md 작업 일지, 수치는 BALANCE.md.
 > 이 파일은 넘겨받는 메모 — 다음 작업 세션이 시작되면 내용을 TASKS에 반영하고 갱신한다.
+
+## 0. 10/24 갱신 (첫 번째 컴퓨터에서 이어받음)
+- 첫 번째 컴퓨터의 `dev`는 10/18~19 커밋 7개가 push되지 않은 채 갈라져 있었다 → 그 작업은 그 컴퓨터의 로컬 브랜치 `backup/this-pc-10.19`에만 보관(push 안 함)하고 `dev`를 `origin/dev`로 맞췄다. 원격에 없는 것: `기획확인_2026-10-18.md` · `기획확인2_2026-10-19.md` · `ASSET_PLACEMENT.md` · `customer_cunsumer.prefab`(10/20 5-3이 대신함)
+- 5-4c 목록 가독성 · 툴팁 추가 (TASKS 5-4c) — Setup 메뉴 순서에 `Apply UI Lists (5-4c)`가 마지막으로 들어감. 아래 4절 1번 '플레이 확인'에 상점 · 스킬 · 창고 줄 · 툴팁도 포함
 
 ## 1. 새 컴퓨터 준비
 1. GitHub Desktop으로 저장소 clone → 브랜치 **`dev`** 체크아웃. Git은 GitHub Desktop 내장 git(`%LOCALAPPDATA%\GitHubDesktop\app-*\resources\app\git\cmd\git.exe`)

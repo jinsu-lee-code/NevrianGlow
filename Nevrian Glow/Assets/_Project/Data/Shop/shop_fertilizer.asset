@@ -14,9 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.ItemProductData
   id: shop_fertilizer
   displayName: "\uBE44\uB8CC"
+  description: "\uC2EC\uC740 \uCE78 \uC131\uC7A5\uC77C -1 (\uC791\uBB3C\uB2F9 1\uD68C)"
   sortOrder: 140
   category: "\uC18C\uBAA8\uD488 \xB7 \uC7A5\uCE58"
   hidden: 0
+  icon: {fileID: 0}
   repeatable: 1
   tiers:
   - price: 40

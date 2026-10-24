@@ -14,5 +14,11 @@ namespace NevrianGlowFarm.Data
 
         public ItemData Item => item;
         public int Count => count;
+
+        public override Sprite IconFor(int tier)
+        {
+            var own = base.IconFor(tier);
+            return own != null ? own : item != null ? item.Icon : null;
+        }
     }
 }

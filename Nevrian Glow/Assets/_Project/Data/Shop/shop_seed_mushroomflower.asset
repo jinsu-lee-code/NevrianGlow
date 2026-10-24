@@ -14,9 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.ItemProductData
   id: shop_seed_mushroomflower
   displayName: "\uBC84\uC12F\uAF43 \uC528\uC557"
+  description: "\uBB3C \uC5C6\uC774 2\uC77C \uB4A4 2\uBB36\uC74C"
   sortOrder: 20
   category: "\uC528\uC557"
   hidden: 0
+  icon: {fileID: 0}
   repeatable: 1
   tiers:
   - price: 30

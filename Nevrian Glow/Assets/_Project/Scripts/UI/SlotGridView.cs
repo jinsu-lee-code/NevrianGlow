@@ -15,6 +15,7 @@ namespace NevrianGlowFarm.UI
 
     /// <summary>
     /// 핫바 또는 가방의 칸을 늘어놓고 클릭을 알린다 (가방 · 창고 화면). 칸 수만큼 칸을 만들고, 인벤토리가 바뀔 때만 다시 그린다.
+    /// 칸에 마우스를 올리면 아이템 설명 툴팁 (5-4c).
     /// </summary>
     public class SlotGridView : MonoBehaviour
     {
@@ -73,6 +74,8 @@ namespace NevrianGlowFarm.UI
                 var slot = Instantiate(slotTemplate, slotParent);
                 slot.name = $"Slot{index + 1}";
                 slot.Clicked += () => SlotClicked?.Invoke(Source, index);
+                // 마우스를 올리면 그 칸의 지금 아이템 설명 — 집기 · 놓기로 바뀌어도 올린 순간의 칸을 본다
+                slot.BindTooltip(() => TooltipOf(index));
                 slots.Add(slot);
             }
 
@@ -87,6 +90,14 @@ namespace NevrianGlowFarm.UI
                 slots[i].SetIcon(item != null ? item.Icon : null);
                 slots[i].SetSelected(false, slotColor, slotColor);
             }
+        }
+
+        private TooltipContent TooltipOf(int index)
+        {
+            var source = Source;
+            if (source == null || index >= source.SlotCount || source[index].IsEmpty)
+                return default;
+            return TooltipText.ForItem(inventory.Lookup(source[index].ItemId), source[index].Count);
         }
     }
 

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using NevrianGlowFarm.Data;
 using NevrianGlowFarm.Logic.Data;
+using NevrianGlowFarm.Logic.Text;
 using UnityEditor;
 using UnityEngine;
 
@@ -295,6 +296,7 @@ namespace NevrianGlowFarm.Editor
                 var so = new SerializedObject(product);
                 string category = table.Get(r, "category");
                 so.FindProperty("displayName").stringValue = table.Get(r, "name_ko");
+                so.FindProperty("description").stringValue = UiText.ForScreenFont(table.Get(r, "description")); // 툴팁 본문 (5-4c)
                 so.FindProperty("sortOrder").intValue = (r + 1) * 10;
                 so.FindProperty("category").stringValue = map.DevIdOf(category, "상점 분류") ?? category;
                 so.FindProperty("repeatable").boolValue = repeatable;
@@ -511,6 +513,7 @@ namespace NevrianGlowFarm.Editor
                 var entry = map.Find(planId);
                 var so = new SerializedObject(skill);
                 so.FindProperty("displayName").stringValue = table.Get(r, "name_ko");
+                so.FindProperty("description").stringValue = UiText.ForScreenFont(table.Get(r, "description")); // 툴팁 본문 (5-4c)
                 string tabId = table.Get(r, "tab_id");
                 var tab = tabs.TryGetValue(tabId, out var tb) ? tb : (tabId, 99);
                 so.FindProperty("tab").stringValue = tab.Item1;

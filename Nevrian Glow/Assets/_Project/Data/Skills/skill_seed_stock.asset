@@ -14,6 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.SkillData
   id: skill_seed_stock
   displayName: "\uD48D\uC131\uD55C \uC785\uACE0"
+  description: "\uC528\uC557 \uC77C\uC77C \uC785\uACE0\uB7C9\uC774 \uB2E8\uACC4\uB9C8\uB2E4
+    \uAE30\uBCF8 \u2192 \uCD5C\uB300(shop.csv stock_max) \uCABD\uC73C\uB85C 1/4\uC529
+    \uC99D\uAC00"
   tab: "\uB18D\uC7A5 \uC6B4\uC601"
   tabOrder: 1
   order: 206

@@ -14,9 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.PlotExpandProductData
   id: shop_plot_expand
   displayName: "\uBC2D \uD655\uC7A5\uAD8C"
+  description: "\uBC2D +4 \u2192 +8 \u2192 +16 \u2192 +28\uBC2D (\uCD5C\uB300 8\xD78\uBC2D
+    = 256\uCE78)"
   sortOrder: 90
   category: "\uD655\uC7A5"
   hidden: 1
+  icon: {fileID: 0}
   repeatable: 0
   tiers:
   - price: 1500

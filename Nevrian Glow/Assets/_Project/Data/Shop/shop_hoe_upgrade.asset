@@ -14,9 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.ToolUpgradeProductData
   id: shop_hoe_upgrade
   displayName: "\uAD2D\uC774 \uC5C5\uADF8\uB808\uC774\uB4DC"
+  description: "\uAC1C\uAC04 \uD69F\uC218 3 \u2192 2 \u2192 1\uD68C"
   sortOrder: 60
   category: "\uB3C4\uAD6C"
   hidden: 0
+  icon: {fileID: 0}
   repeatable: 0
   tiers:
   - price: 150

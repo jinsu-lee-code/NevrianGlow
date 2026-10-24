@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.SkillData
   id: skill_clean_keep
   displayName: "\uCCAD\uACB0 \uC720\uC9C0"
+  description: "\uD769\uC5B4\uC9C4 \uC0C1\uD488 \xB7 \uD750\uD2B8\uB7EC\uC9C4 \uC9C4\uC5F4
+    \xB7 \uC5BC\uB8E9 \uC0DD\uC131\uC774 \uB2E8\uACC4\uB9C8\uB2E4 10%\uC529 \uC904\uC5B4\uB4E0\uB2E4"
   tab: "\uB9E4\uC7A5 \uC6B4\uC601"
   tabOrder: 2
   order: 101

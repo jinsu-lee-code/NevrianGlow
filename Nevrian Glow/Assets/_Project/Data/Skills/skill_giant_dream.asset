@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.SkillData
   id: skill_giant_dream
   displayName: "\uAC70\uB300\uD55C \uAFC8"
+  description: "\uAC70\uB300 \uC791\uBB3C \uD655\uB960\uC774 \uC624\uB978\uB2E4"
   tab: "\uB18D\uC7A5 \uC6B4\uC601"
   tabOrder: 1
   order: 204

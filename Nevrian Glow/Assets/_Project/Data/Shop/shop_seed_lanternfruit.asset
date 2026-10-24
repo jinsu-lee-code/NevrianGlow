@@ -14,9 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.ItemProductData
   id: shop_seed_lanternfruit
   displayName: "\uB4F1\uBD88 \uC5F4\uB9E4 \uC528\uC557"
+  description: "6\uC77C \uB4A4 \uCCAB \uC218\uD655, 3\uC77C\uB9C8\uB2E4 \uCD1D 5\uD68C"
   sortOrder: 30
   category: "\uC528\uC557"
   hidden: 0
+  icon: {fileID: 0}
   repeatable: 1
   tiers:
   - price: 70

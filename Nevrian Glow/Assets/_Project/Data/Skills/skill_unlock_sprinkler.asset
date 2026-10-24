@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.SkillData
   id: skill_unlock_sprinkler
   displayName: "\uC2A4\uD504\uB9C1\uD074\uB7EC \uD574\uAE08"
+  description: "\uC0C1\uC810\uC5D0 \uC2A4\uD504\uB9C1\uD074\uB7EC\uAC00 \uB4F1\uC7A5\uD55C\uB2E4"
   tab: "\uB18D\uC7A5 \uC6B4\uC601"
   tabOrder: 1
   order: 202

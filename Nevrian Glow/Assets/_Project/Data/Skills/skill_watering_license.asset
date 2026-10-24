@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.SkillData
   id: skill_watering_license
   displayName: "\uBB3C\uBFCC\uB9AC\uAC1C \uB77C\uC774\uC120\uC2A4"
+  description: "\uB2E8\uACC4\uB9C8\uB2E4 \uB2E4\uC74C \uBB3C\uBFCC\uB9AC\uAC1C \uB4F1\uAE09(4\uCE78
+    \u2192 8\uCE78)\uC774 \uC0C1\uC810\uC5D0 \uB4F1\uC7A5\uD55C\uB2E4"
   tab: "\uB18D\uC7A5 \uC6B4\uC601"
   tabOrder: 1
   order: 102

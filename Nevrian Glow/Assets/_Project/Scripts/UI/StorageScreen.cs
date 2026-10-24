@@ -173,15 +173,26 @@ namespace NevrianGlowFarm.UI
                 entries[i].gameObject.SetActive(used);
                 if (!used)
                     continue;
-                entries[i].SetSelected(false, entryColor, entryColor);
+                var view = entries[i];
+                view.SetSelected(false, entryColor, entryColor);
                 if (list.Count == 0)
                 {
-                    entries[i].SetContent(0, emptyText);
+                    view.SetIcon(null);
+                    view.SetContent(0, emptyText);
+                    view.SetDetail(string.Empty);
+                    view.SetValue(string.Empty);
+                    view.BindTooltip(null);
                     continue;
                 }
                 var e = list[i];
                 var item = inventory.Lookup(e.ItemId);
-                entries[i].SetContent(0, $"{(item != null ? item.DisplayName : e.ItemId)} ×{e.Count}");
+                string itemId = e.ItemId;
+                // 줄: [아이콘] 이름 / 안내 … ×개수 (5-4c)
+                view.SetIcon(item != null ? item.Icon : null);
+                view.SetContent(0, item != null ? item.DisplayName : e.ItemId);
+                view.SetDetail("누르면 한 묶음 꺼내기");
+                view.SetValue($"×{e.Count}");
+                view.BindTooltip(() => TooltipText.ForItem(inventory.Lookup(itemId), storage.CountOf(itemId)));
                 entryIds.Add(e.ItemId);
             }
         }

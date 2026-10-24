@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.SkillData
   id: skill_bag_license
   displayName: "\uAC00\uBC29 \uB77C\uC774\uC120\uC2A4"
+  description: "\uC0C1\uC810\uC5D0\uC11C \uC0B4 \uC218 \uC788\uB294 \uAC00\uBC29
+    \uD655\uC7A5 \uB2E8\uACC4\uAC00 \uB298\uC5B4\uB09C\uB2E4"
   tab: "\uACF5\uC6A9"
   tabOrder: 3
   order: 102

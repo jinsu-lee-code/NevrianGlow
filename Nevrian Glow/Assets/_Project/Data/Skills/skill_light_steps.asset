@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.SkillData
   id: skill_light_steps
   displayName: "\uAC00\uBCBC\uC6B4 \uBC1C\uAC78\uC74C"
+  description: "\uAE30\uBCF8 \uC774\uB3D9 \uC18D\uB3C4\uAC00 \uC624\uB978\uB2E4"
   tab: "\uACF5\uC6A9"
   tabOrder: 3
   order: 103

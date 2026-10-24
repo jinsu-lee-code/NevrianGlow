@@ -61,6 +61,8 @@ namespace NevrianGlowFarm.Data
         [SerializeField] private string category;
         [Tooltip("상점에 보이지 않음 — 기획 mvp = phase2 · 시스템 연결 전 상품 (기획 CSV 가져오기가 정한다, ID_MAP.md)")]
         [SerializeField] private bool hidden;
+        [Tooltip("목록 아이콘 (아트 UI/Icons) — 비우면 주는 아이템 · 도구의 아이콘, 그것도 없으면 빈 자리 (5-4c)")]
+        [SerializeField] private Sprite icon;
 
         [Header("단계 · 가격")]
         [Tooltip("켜면 단계 1개를 하루 입고량만큼 여러 번 산다(씨앗 · 소모품). 끄면 단계를 차례로 한 번씩(도구 등급 · 확장)")]
@@ -84,6 +86,9 @@ namespace NevrianGlowFarm.Data
 
         /// <summary>단계 이름 (목록 글자) — 하위 종류가 "철 괭이"처럼 바꾼다.</summary>
         public virtual string TierLabel(int tier) => repeatable || tiers.Count <= 1 ? DisplayName : $"{DisplayName} {tier + 1}단계";
+
+        /// <summary>이 단계의 목록 아이콘 — 하위 종류가 주는 아이템 · 도구의 아이콘으로 바꾼다. 없으면 null.</summary>
+        public virtual Sprite IconFor(int tier) => icon;
 
         public ProductSpec ToSpec()
         {

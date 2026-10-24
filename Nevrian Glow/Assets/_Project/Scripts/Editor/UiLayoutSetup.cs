@@ -296,6 +296,8 @@ namespace NevrianGlowFarm.Editor
                 list.spacing = RowGap;
                 foreach (Transform row in list.transform)
                 {
+                    if (row.Find("Icon") != null)
+                        continue; // 5-4c 아이콘 줄은 자기 높이 (UiListSetup)
                     if (!row.TryGetComponent<LayoutElement>(out var le))
                         le = row.gameObject.AddComponent<LayoutElement>();
                     le.minHeight = RowHeight;

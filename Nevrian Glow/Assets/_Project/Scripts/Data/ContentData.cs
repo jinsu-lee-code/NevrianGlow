@@ -12,8 +12,11 @@ namespace NevrianGlowFarm.Data
         [SerializeField] private string id;
         [Tooltip("화면에 보이는 이름")]
         [SerializeField] private string displayName;
+        [Tooltip("설명 한두 줄 (툴팁 본문, 5-4c) — 기획 CSV의 description. 비우면 수치로 만든 설명만 보인다")]
+        [SerializeField, TextArea] private string description;
 
         public string Id => id;
         public string DisplayName => displayName;
+        public string Description => description;
     }
 }

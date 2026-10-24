@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using System.Globalization;
 using NevrianGlowFarm.Core;
 using NevrianGlowFarm.Data;
 using NevrianGlowFarm.Logic.Game;
+using NevrianGlowFarm.Logic.Text;
 using NevrianGlowFarm.Systems.Skill;
 using TMPro;
 using UnityEngine;
@@ -11,9 +11,9 @@ using UnityEngine.InputSystem;
 namespace NevrianGlowFarm.UI
 {
     /// <summary>
-    /// 스킬 트리 화면 (K, 어디서나 — GDD 4-1 스킬 단계 표 · TASKS 4-3). 스킬 데이터를 탭 · 순서대로 한 줄씩 자동 배치:
-    /// [탭] 이름 단계/최대 - 다음 단계 효과 · 비용 · 상태. 줄을 누르면 다음 단계를 배운다. K · Esc로 닫는다.
-    /// 모양은 UI를 몰아서 다듬을 때(5-4)까지 상점 화면과 같은 그레이박스.
+    /// 스킬 트리 화면 (K, 어디서나 — GDD 4-1 스킬 단계 표 · TASKS 4-3). 스킬 데이터를 탭(SkillData.tab · tabOrder) · 순서대로 한 줄씩 자동 배치 (5-4c):
+    /// [현재/최대] 이름 / 둘째 줄 다음 단계 효과 · 잠김 조건 … 비용 [SP]. 마우스를 올리면 단계별 효과 툴팁. 줄을 누르면 다음 단계를 배운다. K · Esc로 닫는다.
+    /// 탭 UI가 없으면(참조 비움) 예전처럼 한 목록에 [탭] 글자를 붙인다.
     /// </summary>
     public class SkillScreen : GameScreen
     {
@@ -32,6 +32,12 @@ namespace NevrianGlowFarm.UI
         [SerializeField] private InputActionReference toggleAction;
         [Tooltip("닫기 입력 (UI/Cancel, Esc)")]
         [SerializeField] private InputActionReference cancelAction;
+        [Tooltip("탭 버튼 원본 — 비활성 자식으로 두면 탭 수만큼 복제한다 (비우면 탭 없이 한 목록, 5-4c)")]
+        [SerializeField] private HotbarSlotView tabTemplate;
+        [Tooltip("탭 버튼을 늘어놓을 부모")]
+        [SerializeField] private Transform tabParent;
+        [Tooltip("비용 옆 SP 아이콘 (비우면 숫자만, 5-4c)")]
+        [SerializeField] private Sprite costIcon;
 
         [Header("조정값")]
         [Tooltip("배울 수 있는 줄 색")]
@@ -40,8 +46,16 @@ namespace NevrianGlowFarm.UI
         [SerializeField] private Color unavailableColor = new Color(0.12f, 0.12f, 0.16f, 0.85f);
         [Tooltip("다 배운 줄 색")]
         [SerializeField] private Color maxedColor = new Color(0.25f, 0.2f, 0.4f, 0.85f);
+        [Tooltip("고른 탭 색")]
+        [SerializeField] private Color tabSelectedColor = new Color(0.15f, 0.45f, 0.5f, 0.95f);
+        [Tooltip("고르지 않은 탭 색")]
+        [SerializeField] private Color tabNormalColor = new Color(0.08f, 0.14f, 0.18f, 0.9f);
 
         private readonly List<HotbarSlotView> entries = new List<HotbarSlotView>();
+        private readonly List<SkillData> rowSkills = new List<SkillData>();
+        private readonly List<HotbarSlotView> tabViews = new List<HotbarSlotView>();
+        private readonly List<string> tabNames = new List<string>();
+        private int tabIndex;
 
         public static SkillScreen Instance { get; private set; }
 
@@ -56,6 +70,8 @@ namespace NevrianGlowFarm.UI
             }
             Instance = this;
             entryTemplate.gameObject.SetActive(false);
+            if (tabTemplate != null)
+                tabTemplate.gameObject.SetActive(false);
         }
 
         protected override void OnDestroy()
@@ -92,7 +108,70 @@ namespace NevrianGlowFarm.UI
         protected override void OnOpened()
         {
             messageLabel.text = "줄을 누르면 다음 단계를 배운다";
+            BuildTabs();
             Rebuild();
+        }
+
+        public int TabCount => tabViews.Count;
+
+        /// <summary>탭을 고른다 (탭 클릭 · 디버그).</summary>
+        public void SelectTab(int index)
+        {
+            if (index < 0 || index >= tabViews.Count)
+                return;
+            tabIndex = index;
+            Rebuild();
+        }
+
+        // 탭 = 스킬 데이터의 탭 이름을 tabOrder 순으로 (스킬 목록이 바뀌었을 때만 다시 만든다). 탭 UI가 없으면 한 목록
+        private void BuildTabs()
+        {
+            if (tabTemplate == null || tabParent == null)
+                return;
+            var names = new List<string>();
+            var orders = new List<int>();
+            foreach (var s in skills.Skills)
+            {
+                string tab = s.Tab ?? string.Empty;
+                int at = names.IndexOf(tab);
+                if (at < 0)
+                {
+                    names.Add(tab);
+                    orders.Add(s.TabOrder);
+                }
+                else if (s.TabOrder < orders[at])
+                    orders[at] = s.TabOrder;
+            }
+            var sorted = new List<int>();
+            for (int i = 0; i < names.Count; i++)
+                sorted.Add(i);
+            sorted.Sort((a, b) => orders[a] != orders[b] ? orders[a].CompareTo(orders[b]) : a.CompareTo(b));
+            var ordered = new List<string>(names.Count);
+            foreach (int i in sorted)
+                ordered.Add(names[i]);
+
+            bool same = ordered.Count == tabNames.Count;
+            for (int i = 0; same && i < ordered.Count; i++)
+                same = ordered[i] == tabNames[i];
+            if (same)
+                return;
+
+            foreach (var v in tabViews)
+                Destroy(v.gameObject);
+            tabViews.Clear();
+            tabNames.Clear();
+            tabNames.AddRange(ordered);
+            for (int i = 0; i < tabNames.Count; i++)
+            {
+                int index = i;
+                var view = Instantiate(tabTemplate, tabParent);
+                view.name = $"Tab{i + 1}";
+                view.gameObject.SetActive(true);
+                view.SetContent(0, string.IsNullOrEmpty(tabNames[i]) ? "기타" : tabNames[i]);
+                view.Clicked += () => SelectTab(index);
+                tabViews.Add(view);
+            }
+            tabIndex = Mathf.Clamp(tabIndex, 0, Mathf.Max(0, tabViews.Count - 1));
         }
 
         /// <summary>스킬 줄 하나의 다음 단계를 배운다 (화면 클릭 · 디버그).</summary>
@@ -112,67 +191,58 @@ namespace NevrianGlowFarm.UI
             var game = GameManager.Instance;
             titleLabel.text = game == null ? "스킬" : $"스킬 - 보유 SP {game.SkillPoints}";
 
-            var list = skills.Skills;
-            while (entries.Count < list.Count)
+            bool useTabs = tabViews.Count > 0;
+            for (int i = 0; i < tabViews.Count; i++)
+                tabViews[i].SetSelected(i == tabIndex, tabNormalColor, tabSelectedColor);
+
+            rowSkills.Clear();
+            foreach (var s in skills.Skills)
+                if (!useTabs || (s.Tab ?? string.Empty) == tabNames[tabIndex])
+                    rowSkills.Add(s);
+
+            while (entries.Count < rowSkills.Count)
             {
                 int row = entries.Count;
                 var view = Instantiate(entryTemplate, entryParent);
                 view.name = $"Skill{row + 1}";
-                view.Clicked += () => { if (row < skills.Skills.Count) OnEntryClicked(skills.Skills[row]); };
+                view.Clicked += () => { if (row < rowSkills.Count) OnEntryClicked(rowSkills[row]); };
                 entries.Add(view);
             }
             for (int i = 0; i < entries.Count; i++)
             {
-                bool used = i < list.Count;
+                bool used = i < rowSkills.Count;
                 entries[i].gameObject.SetActive(used);
                 if (!used)
                     continue;
-                var skill = list[i];
+                var skill = rowSkills[i];
                 var check = skills.Check(skill);
-                entries[i].SetContent(0, RowText(skill, check));
+                int level = skills.LevelOf(skill);
+                var view = entries[i];
+                view.SetIcon(null);
+                string head = useTabs || string.IsNullOrEmpty(skill.Tab) ? string.Empty : $"[{skill.Tab}] ";
+                view.SetContent(0, head + skill.DisplayName);
+                view.SetKeyText(UiText.SkillLevel(level, skill.MaxLevel));
+                view.SetDetail(DetailText(skill, level, check));
+                view.SetValue(check == LearnCheck.MaxLevel ? string.Empty : skills.NextCost(skill).ToString(), costIcon);
+                view.BindTooltip(() => TooltipText.ForSkill(skill, skills.LevelOf(skill), skills.Check(skill), skills.NextCost(skill)));
                 var color = check == LearnCheck.Ok ? availableColor : check == LearnCheck.MaxLevel ? maxedColor : unavailableColor;
-                entries[i].SetSelected(false, color, color);
+                view.SetSelected(false, color, color);
             }
         }
 
-        // 게임 화면 글자에는 "—"를 쓰지 않는다 (글꼴에 없음, TASKS 트러블슈팅)
-        private string RowText(SkillData skill, LearnCheck check)
+        // 둘째 줄: 다음 단계 효과 + 못 배우는 이유. 게임 화면 글자에는 "—"를 쓰지 않는다 (글꼴에 없음, TASKS 트러블슈팅)
+        private static string DetailText(SkillData skill, int level, LearnCheck check)
         {
-            string head = string.IsNullOrEmpty(skill.Tab) ? string.Empty : $"[{skill.Tab}] ";
-            int level = skills.LevelOf(skill);
-            string text = $"{head}{skill.DisplayName} {level}/{skill.MaxLevel}단계";
             if (check == LearnCheck.MaxLevel)
-                return $"{text} - {EffectText(skill, level)} · 다 배움";
-            string next = $"{text} - 다음: {EffectText(skill, level + 1)} · {skills.NextCost(skill)} SP";
+                return UiText.Join(TooltipText.EffectText(skill, level), "다 배움");
+            string next = $"다음: {TooltipText.EffectText(skill, level + 1)}";
             switch (check)
             {
                 case LearnCheck.Prerequisite:
-                    return skill.Prerequisite != null ? $"{next} · 잠김 ({skill.Prerequisite.DisplayName} {skill.PrerequisiteLevel}단계 필요)" : $"{next} · 잠김";
-                case LearnCheck.NotEnoughPoints: return $"{next} · SP 부족";
+                    return UiText.Join(next, skill.Prerequisite != null ? $"잠김 ({skill.Prerequisite.DisplayName} {skill.PrerequisiteLevel}단계 필요)" : "잠김");
+                case LearnCheck.NotEnoughPoints: return UiText.Join(next, "SP 부족");
                 default: return next;
             }
-        }
-
-        // 단계 설명이 있으면 그대로, 없으면 능력치 변경 값으로 (예: 판매가 ×1.1)
-        private static string EffectText(SkillData skill, int level)
-        {
-            string described = skill.LevelDescription(level);
-            if (described != null)
-                return described;
-            var parts = new List<string>();
-            var mods = new List<StatModifier>();
-            skill.CollectModifiers(level, mods);
-            foreach (var m in mods)
-            {
-                string name = m.StatId;
-                foreach (var e in skill.Modifiers)
-                    if (e.Stat != null && e.Stat.Id == m.StatId)
-                        name = e.Stat.DisplayName;
-                string value = m.Value.ToString("0.##", CultureInfo.InvariantCulture);
-                parts.Add(m.Op == ModifierOp.Add ? $"{name} {(m.Value >= 0 ? "+" : string.Empty)}{value}"
-                    : m.Op == ModifierOp.Set ? $"{name} {value}" : $"{name} ×{value}");
-            }
-            return parts.Count > 0 ? string.Join(", ", parts) : "효과 없음";
         }
     }
 }
