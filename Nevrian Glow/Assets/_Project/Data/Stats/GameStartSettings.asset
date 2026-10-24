@@ -28,8 +28,8 @@ MonoBehaviour:
   maxPlotCount: 16
   cellsPerPlot: 16
   tillWorkRequired: 3
-  cellPitch: 2
-  bedPitch: 4
-  plotPitch: 8
+  cellPitch: 2.5
+  bedPitch: 5
+  plotPitch: 10
   plotExpandDirection: {x: 0, y: 0, z: -1}
   demoLastDay: 6

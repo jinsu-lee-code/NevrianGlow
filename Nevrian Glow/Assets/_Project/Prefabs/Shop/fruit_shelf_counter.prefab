@@ -95,8 +95,44 @@ PrefabInstance:
       value: 0.15
       objectReference: {fileID: 0}
     - target: {fileID: 4814822803973273858, guid: 3ed436d76401af54b970903fdad144e0, type: 3}
+      propertyPath: trays.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4814822803973273858, guid: 3ed436d76401af54b970903fdad144e0, type: 3}
       propertyPath: rowLayout.Array.size
       value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 4814822803973273858, guid: 3ed436d76401af54b970903fdad144e0, type: 3}
+      propertyPath: trays.Array.data[0].w
+      value: 0.55
+      objectReference: {fileID: 0}
+    - target: {fileID: 4814822803973273858, guid: 3ed436d76401af54b970903fdad144e0, type: 3}
+      propertyPath: trays.Array.data[0].x
+      value: -0.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4814822803973273858, guid: 3ed436d76401af54b970903fdad144e0, type: 3}
+      propertyPath: trays.Array.data[0].y
+      value: -0.55
+      objectReference: {fileID: 0}
+    - target: {fileID: 4814822803973273858, guid: 3ed436d76401af54b970903fdad144e0, type: 3}
+      propertyPath: trays.Array.data[0].z
+      value: -0.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4814822803973273858, guid: 3ed436d76401af54b970903fdad144e0, type: 3}
+      propertyPath: trays.Array.data[1].w
+      value: 0.55
+      objectReference: {fileID: 0}
+    - target: {fileID: 4814822803973273858, guid: 3ed436d76401af54b970903fdad144e0, type: 3}
+      propertyPath: trays.Array.data[1].x
+      value: 0.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 4814822803973273858, guid: 3ed436d76401af54b970903fdad144e0, type: 3}
+      propertyPath: trays.Array.data[1].y
+      value: -0.55
+      objectReference: {fileID: 0}
+    - target: {fileID: 4814822803973273858, guid: 3ed436d76401af54b970903fdad144e0, type: 3}
+      propertyPath: trays.Array.data[1].z
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: 4814822803973273858, guid: 3ed436d76401af54b970903fdad144e0, type: 3}
       propertyPath: rowLayout.Array.data[0].x

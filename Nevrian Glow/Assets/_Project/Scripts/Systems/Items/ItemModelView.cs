@@ -12,8 +12,8 @@ namespace NevrianGlowFarm.Systems.Items
     public static class ItemModelView
     {
         private const string ChildName = "ItemModel";
-        // 프리팹마다 가장 긴 변 (m) — 처음 한 번만 잰다
-        private static readonly Dictionary<GameObject, float> sizes = new Dictionary<GameObject, float>();
+        // 프리팹마다 가장 긴 변 (m) · 피벗에서 모델 바닥까지 (m, 보통 0 또는 음수) — 처음 한 번만 잰다
+        private static readonly Dictionary<GameObject, Vector2> sizes = new Dictionary<GameObject, Vector2>();
 
         /// <summary>greybox 아래에 item의 모델을 붙인다 (이미 붙어 있으면 바꾼다). 붙였으면 true.</summary>
         public static bool Apply(Renderer greybox, ItemData item, int seed)
@@ -30,8 +30,10 @@ namespace NevrianGlowFarm.Systems.Items
 
             var model = Object.Instantiate(prefab, greybox.transform, false);
             model.name = ChildName;
-            float size = LongestSide(prefab);
-            model.transform.localPosition = new Vector3(0f, -0.5f, 0f);
+            var measure = Measure(prefab);
+            float size = measure.x;
+            // 모델 바닥(피벗이 바닥이 아닌 모델도)을 도형 바닥에 — 진열대 · 바닥에 파묻히지 않게 (2026-10-25)
+            model.transform.localPosition = new Vector3(0f, -0.5f - measure.y / size, 0f);
             model.transform.localRotation = Quaternion.identity;
             model.transform.localScale = Vector3.one / size;
             // 놓인 모습은 조준 판정에 끼지 않는다 (판정은 부모 콜라이더)
@@ -40,10 +42,10 @@ namespace NevrianGlowFarm.Systems.Items
             return true;
         }
 
-        private static float LongestSide(GameObject prefab)
+        private static Vector2 Measure(GameObject prefab)
         {
-            if (sizes.TryGetValue(prefab, out float size))
-                return size;
+            if (sizes.TryGetValue(prefab, out var measure))
+                return measure;
             var probe = Object.Instantiate(prefab);
             probe.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
             probe.transform.localScale = Vector3.one;
@@ -57,9 +59,10 @@ namespace NevrianGlowFarm.Systems.Items
                 else bounds.Encapsulate(r.bounds);
             }
             Object.DestroyImmediate(probe);
-            size = any ? Mathf.Max(0.01f, Mathf.Max(bounds.size.x, Mathf.Max(bounds.size.y, bounds.size.z))) : 1f;
-            sizes[prefab] = size;
-            return size;
+            float size = any ? Mathf.Max(0.01f, Mathf.Max(bounds.size.x, Mathf.Max(bounds.size.y, bounds.size.z))) : 1f;
+            measure = new Vector2(size, any ? bounds.min.y : 0f);
+            sizes[prefab] = measure;
+            return measure;
         }
 
         /// <summary>위치로 정하는 모델 고르기 값 (불러와도 같은 자리면 같은 모델).</summary>

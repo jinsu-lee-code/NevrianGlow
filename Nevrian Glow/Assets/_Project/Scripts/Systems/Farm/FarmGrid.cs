@@ -33,6 +33,8 @@ namespace NevrianGlowFarm.Systems.Farm
         [Header("조정값")]
         [Tooltip("칸 하나의 흙 크기 — 겹침 검사에도 쓴다, 칸 프리팹 크기와 같게 (m)")]
         [SerializeField, Min(0.1f)] private float cellFootprint = 1.6f;
+        [Tooltip("칸 · 밭 테두리 프리팹이 만들어진 기준 칸 간격 — 데이터 칸 간격이 다르면 그 비율로 프리팹을 키운다 (m, 2026-10-25 밭 키우기)")]
+        [SerializeField, Min(0.1f)] private float cellPrefabPitch = 2f;
         [Tooltip("미개간 흙 색 (BALANCE 9-5 임시)")]
         [SerializeField] private Color untilledColor = new Color(0.46f, 0.45f, 0.48f); // 아트 칸 흙(흰 바탕) · 밤 조명에서 검게 보이지 않게 밝힘 (2026-10-23, 사용자)
         [Tooltip("개간된 흙 색 — 개간 중에는 진행만큼 이 색에 가까워진다")]
@@ -455,9 +457,12 @@ namespace NevrianGlowFarm.Systems.Farm
         {
             if (views.Count < state.Cells.Count && TryGetComponent<FarmGrassClearer>(out var grass))
                 grass.RefreshNextFrame(); // 새 칸 자리의 배경 풀을 지운다 (새 게임 · 불러오기 · 구획 확장)
+            // 칸 · 밭 테두리 프리팹은 기준 간격(2 m)으로 만들어졌다 — 데이터 칸 간격에 맞춰 키운다 (밭을 키워 시선을 올리는 2026-10-25 조정)
+            float prefabScale = settings.CellPitch / Mathf.Max(0.1f, cellPrefabPitch);
             for (int i = views.Count; i < state.Cells.Count; i++)
             {
                 var view = Instantiate(cellPrefab, CellPosition(i), CellRotation(), transform);
+                view.transform.localScale = cellPrefab.transform.localScale * prefabScale;
                 view.Bind(this, i);
                 views.Add(view);
                 // 밭의 마지막 칸이 생기면 그 밭 테두리 (밭 = 이어진 4칸 — FarmLayout)
@@ -467,6 +472,7 @@ namespace NevrianGlowFarm.Systems.Farm
                     for (int k = 0; k < FarmLayout.CellsPerBed; k++)
                         center += CellPosition(i - k);
                     var bed = Instantiate(bedPrefab, center / FarmLayout.CellsPerBed, CellRotation(), transform);
+                    bed.transform.localScale = bedPrefab.transform.localScale * prefabScale;
                     bed.name = $"Bed{i / FarmLayout.CellsPerBed:00}";
                 }
             }
@@ -518,7 +524,7 @@ namespace NevrianGlowFarm.Systems.Farm
                 bool regrowing = cell.HarvestCount > 0 && spec.RegrowDays > 0;
                 int stage = CropStageRules.StageIndex(stages.Count, growth, ready, regrowing);
                 var stagePrefab = stage >= 0 ? stages[stage] : null;
-                views[index].Show(soil, true, color, Mathf.Lerp(seedlingScale, grownScale, growth), stagePrefab);
+                views[index].Show(soil, true, color, Mathf.Lerp(seedlingScale, grownScale, growth), stagePrefab, crop.ModelScale);
                 views[index].SetFruit(ready, regrowing);
             }
 

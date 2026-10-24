@@ -26,6 +26,7 @@ MonoBehaviour:
   - {fileID: 6492855999298447309, guid: 31666e8d0b5f8804aaa72bdde3f9bbbd, type: 3}
   - {fileID: 3907984100574426674, guid: fe2a122e0a806784d9b084a580e5b4bd, type: 3}
   - {fileID: 4578930050187181139, guid: f45b794843f6e9e409ad6e01a5e7b57d, type: 3}
+  modelScale: 1.4
   seedPrice: 10
   sellPrice: 18
   growDays: 1

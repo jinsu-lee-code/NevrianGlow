@@ -28,6 +28,7 @@ namespace NevrianGlowFarm.Editor
         private const float ApproachWidth = 2f;     // 문에서 둘레 길까지 들어오는 길 폭 (m)
         private const float SpawnFromDoor = 2f;     // 출발 지점 = 문 앞 (m)
         private const float StorageFromDoor = 1f, StorageSide = 2.5f; // 창고 = 문 옆 (m)
+        private const float GroundMargin = 4f;      // 걷는 바닥이 울타리 바깥으로 더 덮는 여유 (m)
 
         [MenuItem("Glow Farm/Setup/Build Farm Layout")]
         private static void BuildMenu()
@@ -122,6 +123,8 @@ namespace NevrianGlowFarm.Editor
                 list.InsertArrayElementAtIndex(i);
                 list.GetArrayElementAtIndex(i).objectReferenceValue = zones[i];
             }
+            // 칸 흙 크기 · 겹침 검사 크기는 칸 간격에 맞춘다 (칸 프리팹 기준 간격 2 m — 2026-10-25 밭 키우기)
+            gso.FindProperty("cellFootprint").floatValue = settings.CellPitch * 0.8f;
             gso.ApplyModifiedPropertiesWithoutUndo();
 
             // 배경 지형 풀이 밭 · 길 위로 솟지 않게 (실행 중 지형 사본에서 지움 — 아트 지형 에셋은 그대로, 2026-10-23)
@@ -129,6 +132,7 @@ namespace NevrianGlowFarm.Editor
                 grass = gridT.gameObject.AddComponent<FarmGrassClearer>();
             var grassSo = new SerializedObject(grass);
             grassSo.FindProperty("grid").objectReferenceValue = grid;
+            grassSo.FindProperty("cellArea").floatValue = settings.CellPitch; // 칸 간격만큼 풀을 지운다
             grassSo.ApplyModifiedPropertiesWithoutUndo();
 
             // 울타리 (아트 fence 10/23: 기둥 · 가로대 2종 — 사용자 결정 2026-10-25: 밭 기준 둘레로 플레이어 이동 범위 제한)
@@ -144,17 +148,25 @@ namespace NevrianGlowFarm.Editor
             pieces += FenceLine(fence, "Fence_NearLeft", At(aMid - gapHalf, fc0), At(fa0, fc0), skipLast: true);
             notes.Add(pieces > 0 ? $"울타리 {fa1 - fa0:0.#} × {fc1 - fc0:0.#} m · 조각 {pieces} · 문 틈 {FenceDoorGap} m" : "울타리 모델 없음 (Assets/Art/Environment/fence)");
 
-            // 바닥이 길 · 울타리 바깥까지 덮는지
+            // 걷는 바닥(Ground 평면 = 10 × 10 m 메시, 보이지 않는 콜라이더)이 울타리 바깥 GroundMargin까지 덮게 크기를 맞춘다 (2026-10-25: 밭이 커지며 울타리가 바닥 밖으로 나감)
             var ground = root.Find("Ground");
             if (ground != null && ground.TryGetComponent<Renderer>(out var groundRenderer))
             {
                 var g = groundRenderer.bounds;
-                foreach (var corner in new[] { At(fa0, fc0), At(fa1, fc1), At(fa0, fc1), At(fa1, fc0) })
-                    if (corner.x < g.min.x || corner.x > g.max.x || corner.z < g.min.z || corner.z > g.max.z)
-                    {
-                        notes.Add($"경고: 울타리 모서리 {corner}가 바닥(Ground) 밖");
-                        break;
-                    }
+                var corners = new[] { At(fa0, fc0), At(fa1, fc1), At(fa0, fc1), At(fa1, fc0) };
+                float minX = corners.Min(c => c.x) - GroundMargin, maxX = corners.Max(c => c.x) + GroundMargin;
+                float minZ = corners.Min(c => c.z) - GroundMargin, maxZ = corners.Max(c => c.z) + GroundMargin;
+                // 문 앞(문 바깥 쪽)도 덮는다
+                minX = Mathf.Min(minX, doorPos.x - GroundMargin); maxX = Mathf.Max(maxX, doorPos.x + GroundMargin);
+                minZ = Mathf.Min(minZ, doorPos.z - GroundMargin); maxZ = Mathf.Max(maxZ, doorPos.z + GroundMargin);
+                if (minX < g.min.x || maxX > g.max.x || minZ < g.min.z || maxZ > g.max.z)
+                {
+                    Undo.RecordObject(ground, "Farm Ground");
+                    ground.position = new Vector3((minX + maxX) * 0.5f, ground.position.y, (minZ + maxZ) * 0.5f);
+                    ground.rotation = Quaternion.identity;
+                    ground.localScale = new Vector3((maxX - minX) / 10f, 1f, (maxZ - minZ) / 10f);
+                    notes.Add($"바닥을 {maxX - minX:0.#} × {maxZ - minZ:0.#} m로 늘림");
+                }
             }
 
             int beds = settings.StartPlotCount * settings.CellsPerPlot / FarmLayout.CellsPerBed;
@@ -241,7 +253,7 @@ namespace NevrianGlowFarm.Editor
         private static readonly float[] FenceRailHeights = { 0.26f, 0.62f }; // 가로대 2단 (바닥 기준 피벗 높이, m)
 
         /// <summary>from → to 한 줄: 기둥(간격마다) + 가로대 2단 + 보이지 않는 상자 콜라이더. 매번 새로 놓는다(이름으로 찾아 지움). 놓은 조각 수.</summary>
-        private static int FenceLine(Transform parent, string name, Vector3 from, Vector3 to, bool skipLast)
+        internal static int FenceLine(Transform parent, string name, Vector3 from, Vector3 to, bool skipLast)
         {
             var old = parent.Find(name);
             if (old != null)

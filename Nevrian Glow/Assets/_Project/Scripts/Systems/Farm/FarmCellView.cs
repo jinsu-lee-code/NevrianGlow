@@ -117,7 +117,7 @@ namespace NevrianGlowFarm.Systems.Farm
         /// 흙 색과 작물 겉모습을 바꾼다. FarmGrid가 상태가 바뀐 칸에만 부른다.
         /// stagePrefab이 있으면 그 단계 모델(아트), 없으면 그레이박스 상자(색 · 크기 = 성장 비율).
         /// </summary>
-        public void Show(Color soilColor, bool hasCrop, Color cropColor, float cropScale, GameObject stagePrefab)
+        public void Show(Color soilColor, bool hasCrop, Color cropColor, float cropScale, GameObject stagePrefab, float modelScale = 1f)
         {
             // 흙 연출(SoilFX)이 같은 블록에 쓴 값은 남기고 색만 바꾼다
             soilRenderer.GetPropertyBlock(block);
@@ -127,6 +127,8 @@ namespace NevrianGlowFarm.Systems.Farm
 
             GameObject wanted = hasCrop && modelAnchor != null ? stagePrefab : null;
             SetModel(wanted);
+            if (shownModel != null)
+                shownModel.transform.localScale = Vector3.one * modelScale; // 작물 데이터의 모델 배율 (칸 배율은 부모가 맡는다)
             if (!hasCrop)
                 SetGlow(false);
 

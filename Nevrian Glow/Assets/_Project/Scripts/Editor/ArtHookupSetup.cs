@@ -201,21 +201,26 @@ namespace NevrianGlowFarm.Editor
         private static readonly Vector2[] TieredRows = { new Vector2(0.17f, 0.33f), new Vector2(0.60f, 0.16f), new Vector2(1.04f, -0.12f) };
         // 낮은 판매대(1.8 × 0.9 × 1.4 m): 가운데가 솟은 경사 윗면 — 앞쪽 경사면 세 줄
         private static readonly Vector2[] CounterRows = { new Vector2(0.71f, 0.45f), new Vector2(0.76f, 0.25f), new Vector2(0.80f, 0.05f) };
+        // 진열 가능 영역(파인 쟁반, 로컬 xMin · zMin · xMax · zMax) — 모델 위에서 레이로 잰 값 (2026-10-25 사용자: 파인 자리에만, 기울인 면을 따라)
+        // 3층 경사 진열대: 층마다 나무 상자 바닥 (앞 턱 안쪽, 세로 칸막이는 홈이라 가로질러도 됨). 낮은 층 z 0.29~0.37 · 가운데 0.12~0.20 · 높은 층 -0.27~0.03
+        private static readonly Vector4[] TieredTrays = { new Vector4(-0.72f, 0.29f, 0.72f, 0.37f), new Vector4(-0.72f, 0.12f, 0.72f, 0.20f), new Vector4(-0.72f, -0.27f, 0.72f, 0.03f) };
+        // 낮은 판매대: 가운데 솟은 지붕면 양옆의 파인 쟁반 두 줄 (x ±0.6~0.8, 바깥쪽으로 20° 기울어짐), 길이 z -0.55~0.55
+        private static readonly Vector4[] CounterTrays = { new Vector4(-0.80f, -0.55f, -0.60f, 0.55f), new Vector4(0.60f, -0.55f, 0.80f, 0.55f) };
 
         [MenuItem("Glow Farm/Setup/Connect Art (5) Produce Shelves")]
         private static void ProduceShelvesMenu()
         {
             var notes = new List<string>
             {
-                ShelfVariant(FruitShelfTiered, "Assets/Art/Props/shelf_produce/pf_prop_shelf_produce.prefab", TieredRows, new Vector3(1.8f, 1.4f, 0.9f)),
-                ShelfVariant(FruitShelfCounter, "Assets/Art/Props/shelf_produce/pf_prop_shelf_produce_2.prefab", CounterRows, new Vector3(1.8f, 0.9f, 1.4f)),
+                ShelfVariant(FruitShelfTiered, "Assets/Art/Props/shelf_produce/pf_prop_shelf_produce.prefab", TieredRows, TieredTrays, new Vector3(1.8f, 1.4f, 0.9f)),
+                ShelfVariant(FruitShelfCounter, "Assets/Art/Props/shelf_produce/pf_prop_shelf_produce_2.prefab", CounterRows, CounterTrays, new Vector3(1.8f, 0.9f, 1.4f)),
             };
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] 과일 진열대: " + string.Join(" · ", notes) + " — 다음: Build Shop Layout(섞어 배치) → Bake Shop NavMesh");
         }
 
         // fruit_shelf(ShelfDisplay · 홀로그램 · 설정 참조)의 Variant: 회색 몸체는 숨기고 아트 모델을 자식으로, 진열 줄 · 조준 상자를 모델에 맞춘다
-        private static string ShelfVariant(string path, string artPath, Vector2[] rows, Vector3 size)
+        private static string ShelfVariant(string path, string artPath, Vector2[] rows, Vector4[] trays, Vector3 size)
         {
             var art = AssetDatabase.LoadAssetAtPath<GameObject>(artPath);
             var baseShelf = AssetDatabase.LoadAssetAtPath<GameObject>(FruitShelfBase);
@@ -256,6 +261,10 @@ namespace NevrianGlowFarm.Editor
                 list.arraySize = rows.Length;
                 for (int i = 0; i < rows.Length; i++)
                     list.GetArrayElementAtIndex(i).vector2Value = rows[i];
+                var trayList = so.FindProperty("trays");
+                trayList.arraySize = trays.Length;
+                for (int i = 0; i < trays.Length; i++)
+                    trayList.GetArrayElementAtIndex(i).vector4Value = trays[i];
                 so.ApplyModifiedPropertiesWithoutUndo();
                 if (root.TryGetComponent<BoxCollider>(out var box))
                 {
