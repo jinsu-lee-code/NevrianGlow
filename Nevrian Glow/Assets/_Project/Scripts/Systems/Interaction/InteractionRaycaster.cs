@@ -120,7 +120,13 @@ namespace NevrianGlowFarm.Systems.Interaction
             if (PlayerInputGate.IsWorldBlocked)
             {
                 ClearAimTarget();
+                // 대상도 함께 비운다 — 구역 이동(문 · 다음 날) 뒤 ray가 아무것도 안 맞으면 "콜라이더 그대로(null)"로 보고
+                // 이전 구역의 대상(밭 칸)이 남아 가게 안에서 "괭이로 갈기" 프롬프트가 뜨고 좌클릭이 그 칸에 들어갔다 (발견 2026-10-24)
                 lastCollider = null;
+                handTarget = null;
+                useTarget = null;
+                secondaryTarget = null;
+                targetName = string.Empty;
                 SetPrompt(null);
                 promptDirty = true;
                 return;
