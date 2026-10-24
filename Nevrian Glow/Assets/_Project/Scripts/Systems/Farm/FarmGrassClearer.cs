@@ -91,10 +91,11 @@ namespace NevrianGlowFarm.Systems.Farm
                     collider.terrainData = copy;
                 cloned = true;
             }
-            clearedInstances += Clear(terrain, rects);
+            clearedInstances += ClearDetails(terrain, rects);
         }
 
-        private static int Clear(Terrain terrain, List<Rect> rects)
+        /// <summary>지형의 풀(디테일)을 월드 x · z 사각형 안에서 지운다. 지운 포기 수. 사본 지형에만 쓸 것 (가게 바깥 땅도 쓴다).</summary>
+        internal static int ClearDetails(Terrain terrain, List<Rect> rects)
         {
             var td = terrain.terrainData;
             int res = td.detailResolution;

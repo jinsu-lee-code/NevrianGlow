@@ -248,31 +248,22 @@ namespace NevrianGlowFarm.Editor
             BuildOutside(root);
         }
 
-        // 가게 바깥 (2026-10-25 사용자: 창문 밖에 땅이 없고 입구가 막혀 보임): 넓은 땅 + 입구 앞 울타리 두 줄(앞마당 느낌). 콜라이더 없는 땅(플레이어는 입구 벽이 막음)
-        private const string OutsideGroundMaterial = "Assets/Art/Environment/Ground/Materials/mat_env_ground_toon.mat";
-        private const float OutsideGroundSize = 90f, OutsideFenceLength = 7f, OutsideFenceGap = 3.2f;
+        // 가게 바깥 (2026-10-25 사용자: 창문 밖에 땅이 없고 입구가 막혀 보임 → 밭 쪽 배경과 같은 땅으로):
+        // 배경 지형을 실행 중에 복제하는 ShopOutsideGround(Outside/Terrain, 콜라이더 없음 — 플레이어는 입구 벽이 막음) + 입구 앞 울타리 두 줄(앞마당 느낌)
+        private const float OutsideFenceLength = 7f, OutsideFenceGap = 3.2f;
 
         private static void BuildOutside(Transform root)
         {
             var outside = Child(root, "Outside");
             outside.localPosition = Vector3.zero;
             outside.localRotation = Quaternion.identity;
-            var ground = outside.Find("Ground");
-            if (ground == null)
-            {
-                var go = GameObject.CreatePrimitive(PrimitiveType.Plane);
-                go.name = "Ground";
-                Object.DestroyImmediate(go.GetComponent<Collider>());
-                go.transform.SetParent(outside, false);
-                ground = go.transform;
-                GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic);
-            }
-            ground.localPosition = new Vector3(0f, -0.03f, 0f);
-            ground.localRotation = Quaternion.identity;
-            ground.localScale = Vector3.one * (OutsideGroundSize / 10f);
-            var material = AssetDatabase.LoadAssetAtPath<Material>(OutsideGroundMaterial);
-            if (material != null && ground.TryGetComponent<Renderer>(out var r))
-                r.sharedMaterial = material;
+            var oldGround = outside.Find("Ground"); // 예전 평평한 판 (mat_env_ground_toon) — 배경과 달라 보여 지움
+            if (oldGround != null)
+                Undo.DestroyObjectImmediate(oldGround.gameObject);
+            var terrainT = Child(outside, "Terrain");
+            if (!terrainT.TryGetComponent<ShopOutsideGround>(out _))
+                terrainT.gameObject.AddComponent<ShopOutsideGround>();
+            terrainT.localPosition = Vector3.zero;
 
             // 입구 앞 양옆 울타리 (아트 fence — 농장 울타리와 같은 부품)
             float hd = Depth * 0.5f;
