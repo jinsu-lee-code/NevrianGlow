@@ -754,6 +754,14 @@ namespace NevrianGlowFarm.Editor
                 if (CsvValue.TryInt(V("store_spots_fruit"), out int fruitSpots) && CsvValue.TryInt(V("store_spots_shelf"), out int shelfSpots))
                     so.FindProperty("furnitureSpots").intValue = fruitSpots + shelfSpots;
                 Float("disorder_buy_mult", "disorderBuyMultiplier"); // 흐트러진 칸 구매 확률 (P-3)
+                // 튜토리얼 고정값 (5-7, 기획 튜토리얼 2절) — 1 · 2일차 '모두 구매'는 한 값으로 (어느 하나라도 켜져 있으면)
+                Int("tutorial_day2_customers", "tutorialCustomers");
+                bool hasBuy1 = CsvValue.TryBool(V("tutorial_day1_buy_all"), out bool buy1);
+                bool hasBuy2 = CsvValue.TryBool(V("tutorial_day2_buy_all"), out bool buy2);
+                if (hasBuy1 || hasBuy2)
+                    so.FindProperty("tutorialBuyAll").boolValue = (hasBuy1 && buy1) || (hasBuy2 && buy2);
+                if (CsvValue.TryBool(V("tutorial_random_off"), out bool randomOff))
+                    so.FindProperty("tutorialRandomOff").boolValue = randomOff;
                 Apply(so, sales, "설정 SalesSettings", report);
             }
 
@@ -769,6 +777,7 @@ namespace NevrianGlowFarm.Editor
                 Int("trash_daily_min", "trashDailyMin");
                 Int("trash_daily_max", "trashDailyMax");
                 Float("stain_per_customer", "stainPerCustomer");
+                Int("tutorial_day2_stains", "tutorialStains"); // 튜토리얼 고정값 (5-7)
                 Float("scatter_unsold_ratio", "scatterUnsoldRatio");
                 Float("scatter_per_customers", "scatterPerCustomers");
                 Float("disorder_ratio", "disorderRatio");

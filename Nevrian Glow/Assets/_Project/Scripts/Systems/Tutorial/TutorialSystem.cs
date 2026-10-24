@@ -56,6 +56,9 @@ namespace NevrianGlowFarm.Systems.Tutorial
         /// <summary>단계가 바뀌었을 때 (새 단계 — 끝났거나 꺼졌으면 null). HUD가 받는다.</summary>
         public event Action<TutorialStep> StepChanged;
 
+        /// <summary>튜토리얼이 진행 중인지 (없거나 끝났으면 false) — 튜토리얼 고정값(손님 수 · 모두 구매 · 무작위 끔 · 발자국)을 쓰는 조건.</summary>
+        public static bool IsActive => instance != null && instance.progress != null && instance.progress.IsRunning;
+
         /// <summary>현재 단계가 그 이름을 잠갔는지 (튜토리얼이 없거나 끝났으면 false).</summary>
         public static bool IsLocked(string lockName) => instance != null && instance.progress != null && instance.progress.IsLocked(lockName);
 

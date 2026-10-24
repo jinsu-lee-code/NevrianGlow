@@ -225,6 +225,8 @@ namespace NevrianGlowFarm.Systems.Cleaning
             // 튜토리얼(5-7)이 오늘 "쓰레기 n개 버리기 · 얼룩 n개 닦기"를 안내하면 그만큼은 생기게 (기획 고정값: 2일차 발자국 2 — 손님 × 0.3으로는 0개)
             int trash = Mathf.Max(TidyRules.TrashCount(day, spec, countRandom), Mathf.CeilToInt(Systems.Tutorial.TutorialSystem.RequiredToday(Logic.Tutorial.TutorialEvents.Trashed)));
             int stains = Mathf.Max(TidyRules.StainCount(day, customers, messRate, spec), Mathf.CeilToInt(Systems.Tutorial.TutorialSystem.RequiredToday(Logic.Tutorial.TutorialEvents.StainsCleared)));
+            if (Systems.Tutorial.TutorialSystem.IsActive && day > 1)
+                stains = Mathf.Max(stains, settings.TutorialStains); // 기획 고정값 tutorial_day2_stains
             return new DayMess(trash, stains, scatter, TidyRules.DisorderCount(day, filledAfter, messRate, spec));
         }
 
