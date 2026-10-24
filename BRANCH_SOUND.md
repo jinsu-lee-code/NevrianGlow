@@ -32,30 +32,28 @@
 
 게임 코드는 파일이 아니라 **소리 id**로 소리를 부른다. 파일 이름 = id 로 맞추면 개발이 바로 연결한다. 파일이 없으면 게임은 조용히 넘어간다(오류 아님).
 
-> **이름은 요청서(sound.md)가 기준이다** (2026-10-20 정정 — 이 문서의 예전 예시 `ui_*` · `bgm_title` 등은 틀렸음). 게임이 부르는 id 목록은 `Assets/_Project/Scripts/Core/SoundCues.cs`.
+### 4-1. BGM 4곡
 
-### 4-1. BGM 4곡 · 환경음 (하루 단계별 BGM, 구역별 환경음 — asset_placement 6번)
+| id (= 파일 이름) | 곡 | 쓰는 곳 | 상태 |
+|---|---|---|---|
+| `bgm_title` | 타이틀 | 타이틀 화면 (5-6) | id 제안 |
+| `bgm_twilight_field` | 황혼의 밭 | 농장 | **게임에 이미 등록됨** |
+| `bgm_spore_dust` | 포자 먼지 | (용도 기획 확인 — 밤 · 정산 등) | id 제안 |
+| `bgm_lumian_market` | 루미안의 장날 | 가게 | **게임에 이미 등록됨** |
 
-| id (= 파일 이름) | 곡 | 쓰는 곳 |
-|---|---|---|
-| `bgm_title_loop` | 타이틀 | 타이틀 화면 (5-6) |
-| `bgm_farm_loop` | 황혼의 밭 | 상점 · 농사 단계 |
-| `bgm_clean_loop` | 포자 먼지 | 청소 · 진열 단계 |
-| `bgm_market_loop` | 루미안의 장날 | 장사 · 정산 단계 |
-| `amb_farm_loop` · `amb_shop_loop` | 환경음 | 농장 · 가게 |
+- 등록된 두 id는 그대로 써 주세요. 제안 id를 바꾸고 싶으면 납품 기록에 적으면 개발이 맞춘다
+- 지역을 옮길 때 1.5초 교차로 바뀐다 → **루프 지점이 끊기지 않게** (곡 처음 · 끝이 자연스럽게 이어지게)
 
-- 단계 · 구역이 바뀔 때 1.5초 교차 → **루프 지점이 끊기지 않게** (곡 끝 → 처음이 이어지게)
+### 4-2. 효과음 (약 25종 + 후보)
 
-### 4-2. 효과음
-
-- 이름은 요청서 표 그대로 — 예 `sfx_seed_plant_01`, `sfx_water_pour_01`, `sfx_mop_loop`, `sfx_checkout_coin`
-- **반복해서 나는 소리는 0.5초 이하 · 변형 3개** (`_01` `_02` `_03`) — 게임이 셋 중 무작위로 고른다 (바로 전과 같은 것은 안 고름, 음높이 ±5%)
-- 아직 안 온 것: `sfx_shelf_place_01~03` · `sfx_shelf_take` · `sfx_storage_open` · `sfx_storage_put` · `sfx_day_start` · `sfx_giant_merge` · `sfx_ui_tool_switch` · `sfx_step_soil_01~03` · `sfx_step_wood_01~03` — 게임 쪽 자리는 이미 연결돼 있어 파일만 오면 난다
+- 이름: `sfx_분류_동작_번호` — 예 `sfx_farm_water_pour_01`, `sfx_farm_plant_01`, `sfx_farm_harvest_01`, `sfx_clean_mop_01`, `sfx_clean_trash_pick_01`, `sfx_shop_register_01`, `sfx_zone_door_01`
+- **반복해서 나는 소리는 0.5초 이하 · 변형 3개** (`_01` `_02` `_03`) — 게임이 셋 중 무작위로 고른다
+- 후보(GDD): 괭이 · 개간 완료 · 내려놓기 · 줍기 · 쓰레기통 비우기 · 비료
+- 어떤 행동에 쓰는 소리인지 납품 기록 "어디에 쓰나"에 꼭 적는다 (개발이 그 행동에 연결)
 
 ### 4-3. UI 소리
 
-- 이름: `sfx_ui_동작` — `sfx_ui_click` · `sfx_ui_buy_success` · `sfx_ui_buy_fail` · `sfx_ui_skill_learn` · `sfx_ui_levelup` · `sfx_ui_fade` · `sfx_ui_tool_switch`
-- 10/19 납품의 `ui_*` 파일은 개발이 `sfx_ui_*`로 이름을 붙여 게임용 사본을 만들었다 — 다음 납품부터 요청서 이름으로
+- 이름: `ui_동작` — 예 `ui_click`, `ui_open`, `ui_close`, `ui_levelup`, `ui_coin`
 
 ## 5. 파일 형식 (권장)
 
@@ -71,8 +69,7 @@
 
 ## 6. 게임에서 확인하기
 
-- 10/20부터 게임에서 소리가 난다 (5-5 AudioManager). 게임이 쓰는 건 **개발이 다듬은 사본** `Assets/_Project/Audio/` — 납품 원본(`Assets/Audio/`)은 그대로 둔다
-- 개발이 하는 다듬기: 요청 길이로 자르고 끝을 자연스럽게 줄임, 앞 무음 10 ms 이하로, 피크 −1 dBFS, 48 kHz 모노. 다듬은 결과가 이상하면 납품 기록에 적어 주세요
+- 5-5 AudioManager가 붙기 전까지는 게임에서 소리가 나지 않는다 (id만 호출, 파일 없음 = 무음)
 - 들어 보려면 Unity Project 창에서 파일을 선택 → 인스펙터 아래 재생 버튼
 - 게임 흐름을 보고 싶으면 `Nevrian Glow/Assets/_Project/Scenes/Core.unity` → Play. 게임 씬 · `_Project` 파일이 바뀌었으면 **커밋 전에 되돌린다**
 
@@ -129,21 +126,12 @@
 | 10.21 | `bgm_market_loop` | 가게 장사 BGM | 1분 33초 · 루프 | 실제 템포 약 103 BPM | |
 | 10.21 | (이름 변경) | UI 7종 `ui_*` → `sfx_ui_*`, BGM `bgm_twilight_field` → `bgm_farm_loop` · `bgm_title` → `bgm_title_loop` · `bgm_lumian_market` → `bgm_market_loop` | — | 파일 이름을 sound.md(요청서) 기준으로 통일 (이진수 님 안내). 게임에 먼저 등록된 id(`bgm_twilight_field` · `bgm_lumian_market`)도 sound.md 이름으로 연결 부탁 | |
 | 10.21 | `bgm_clean_loop` | 청소 · 진열 BGM | 1분 36초 · 루프 (곡 도입부부터 시작, 끝 3초 페이드 후 처음으로) | 실제 템포 약 110 BPM | |
-
-**개발 확인 (10/20, dev 병합 `2f77993` + 게임 연결)** — 위 22개 id 모두 게임에서 재생. 게임용 사본 `Assets/_Project/Audio/` (원본은 그대로). Blender로 파형을 보고 아래처럼 다듬음:
-
-| id | 받은 길이 → 게임 길이 | 다듬은 내용 · 메모 |
-|---|---|---|
-| `sfx_seed_plant_01~03` | 0.38~0.40 → 0.30초 | 끝 0.08초 페이드 |
-| `sfx_water_pour` · `sfx_harvest_pull` · `sfx_fertilizer_sparkle` · `sfx_trash_drop` · `sfx_basket_put` · `sfx_ui_click` · `sfx_ui_buy_*` | 요청 길이 그대로 | 끝 짧은 페이드만. 비료는 게임 기능(P1)이 아직 없어 등록만 |
-| `sfx_trash_pickup_01~03` | 0.78~1.01 → 0.30초 | 게임에 쓰레기 종류 구분이 아직 없어(쓰레기 id 1개, 모델만 여러 개) **무작위** 재생. 종류별로 고르는 건 쓰레기 모델이 들어올 때 다시 |
-| `sfx_crop_mature` | 1.60 → 1.00초 | 끝 0.35초 페이드 |
-| `sfx_mop_loop` | 3.40 → 1.60초 루프 | 고른 구간(0.4~2.0초)을 골라 끝 → 처음을 0.15초 교차 (이음새 차 0.0001) |
-| `sfx_stain_clear` | 1.12 → 0.60초 | 끝 0.25초 페이드 |
-| `sfx_customer_enter` / `_exit` | 1.42 / 1.32 → 0.80 / 0.60초 | 끝 0.3 / 0.25초 페이드 |
-| `sfx_checkout_coin` | 1.21 → 0.60초 | 후보 3개(`SFX/_candidates`) 중 C와 같은 파형이라 본 파일 사용. 장사 30초에 10번 넘게 들리므로 짧게 |
-| `sfx_customer_happy_01~03` | 1.18~1.37 → 1.00초 | 끝 0.3초 페이드 |
-| `sfx_customer_step_01~03` | 6초 → **0.20초** | 파일마다 걸음 6~9번 중 첫 걸음(가장 또렷)을 잘라 변형 3개. 앞 무음 70 ms → 1 ms. 걸은 거리 1.05 m마다 재생(애니메이션 이벤트 오기 전까지) |
-| `sfx_basket_pick` | 0.40 → 0.30초 | 앞 무음 40 → 1 ms. 일부러 작게 만든 의도대로 게임 볼륨 0.8 |
-| `ui_*` → `sfx_ui_*` | `ui_skill_learn` 1.44 → 0.80 · `ui_levelup` 2.34 → 2.00 · `ui_fade` 3.56 → **0.60초** | 페이드는 전환(0.35초) 뒤 꼬리가 길어 0.6초로 |
-| 공통 | — | 3D(손님 위치): 손님 · 바구니 · 계산. 나머지는 2D. 발소리 볼륨 0.45 · 넣기 0.6 (손님 6명이 동시에 있어도 시끄럽지 않게) |
+| 10.23 | `sfx_step_wood_01~03` | 플레이어 발소리 (가게 나무 바닥, zone_shop) | 0.42~0.66초 · 변형 3 | 3개 음량 맞춤 | |
+| 10.23 | `sfx_step_soil_01~03` | 플레이어 발소리 (흙, zone_farm) | 0.27~0.42초 · 변형 3 | 3개 음량 맞춤 + 잡음 억제 · 흙 3 + 풀 3으로 나눔 (이진수 님과 협의) | |
+| 10.23 | `sfx_step_grass_01~03` | 플레이어 발소리 (풀, zone_farm) | 0.31~0.58초 · 변형 3 | 3개 음량 맞춤 | |
+| 10.23 | `amb_farm_loop` | 농장 환경음 (바람 · 벌레, zone_farm) | 45초 · 루프 · 스테레오 | 레이어 3개 겹침, -24 LUFS | |
+| 10.23 | `amb_shop_loop` | 가게 실내 환경음 (zone_shop) | 30초 · 루프 · 스테레오 | 레이어 3개 겹침, -26 LUFS · 폴더 Assets/Audio/AMB/ 신규 | |
+| 10.23 | `sfx_shelf_place_01~03` | 진열대에 작물 1개 놓기 (클릭) | 0.25초 · 변형 3 | 나무 진열대에 단단한 물건 놓는 소리, 직접 합성(나무 발소리 · 바구니 소리 재가공) | |
+| 10.23 | `sfx_shelf_take` | 진열대에서 1개 회수 (우클릭) | 0.2초 · 1개 | 짧은 나무 '틱' + 스치는 소리, 직접 합성 | |
+| 10.23 | `sfx_giant_merge` | 거대 작물로 합쳐짐 (P1) | 4.38초 · 1개 | 희귀 이벤트라 화려하게. 길면 개발에서 잘라도 됨 | |
+| 10.23 | `sfx_day_start` | 다음 날 아침 시작 징글 | 2.56초 · 1개 | 칼림바 · 유리 종 | |
