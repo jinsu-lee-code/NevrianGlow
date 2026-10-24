@@ -10788,6 +10788,7 @@ GameObject:
   - component: {fileID: 657109490}
   - component: {fileID: 657109491}
   - component: {fileID: 657109492}
+  - component: {fileID: 657109493}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -10965,6 +10966,20 @@ MonoBehaviour:
   reach: 1.3
   drawRange: 1
   mopping: 0
+--- !u!114 &657109493
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 657109484}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2e7b91e36331ae46b5557e3d1375f05, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Systems.Player.PlayerFootsteps
+  stepDistance: 1.7
+  minSpeed: 0.5
 --- !u!1 &660426856
 GameObject:
   m_ObjectHideFlags: 0

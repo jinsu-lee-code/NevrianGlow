@@ -201,6 +201,8 @@ namespace NevrianGlowFarm.Systems.Zones
             if (current == null || game == null || !game.IsStarted)
                 return;
             AudioManager.PlayMusic(current.BgmFor(game.Phase));
+            if (!string.IsNullOrEmpty(current.AmbienceId))
+                AudioManager.PlayAmbience(current.AmbienceId); // 환경음 (사운드 납품 10.23)
         }
 
         private static void Apply(ZoneProfileData zone)

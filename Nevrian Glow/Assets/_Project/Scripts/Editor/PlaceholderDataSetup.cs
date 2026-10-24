@@ -238,6 +238,8 @@ namespace NevrianGlowFarm.Editor
                 so.FindProperty("fogColor").colorValue = new Color(0.055f, 0.15f, 0.25f);     // 심청 #0E2640
                 so.FindProperty("fogDensity").floatValue = 0.02f;
                 so.FindProperty("bgmId").stringValue = "bgm_farm_loop"; // 사운드 납품 이름 (2026-10-21 bgm_twilight_field → bgm_farm_loop)
+                so.FindProperty("ambienceId").stringValue = "amb_farm_loop";   // 사운드 납품 10.23
+                so.FindProperty("footstepId").stringValue = "sfx_step_grass";
             });
             Ensure<ZoneProfileData>($"{ZonesFolder}/zone_shop.asset", resetExisting, report, so =>
             {
@@ -253,6 +255,8 @@ namespace NevrianGlowFarm.Editor
                 phaseBgm.arraySize = 1;
                 phaseBgm.GetArrayElementAtIndex(0).FindPropertyRelative("phase").enumValueIndex = (int)DayPhase.CleanDisplay;
                 phaseBgm.GetArrayElementAtIndex(0).FindPropertyRelative("bgmId").stringValue = "bgm_clean_loop";
+                so.FindProperty("ambienceId").stringValue = "amb_shop_loop";   // 사운드 납품 10.23
+                so.FindProperty("footstepId").stringValue = "sfx_step_wood";
             });
 
             // BALANCE 2-1

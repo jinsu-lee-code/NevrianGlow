@@ -230,6 +230,8 @@ namespace NevrianGlowFarm.Editor
             float entranceLeft = EntranceX - EntranceGap * 0.5f, entranceRight = EntranceX + EntranceGap * 0.5f;
             Wall(walls, "Wall_FrontLeft", new Vector3((-hw + entranceLeft) * 0.5f, 0f, -hd), new Vector3(entranceLeft + hw, WallHeight, WallThickness), material);
             Wall(walls, "Wall_FrontRight", new Vector3((entranceRight + hw) * 0.5f, 0f, -hd), new Vector3(hw - entranceRight, WallHeight, WallThickness), material);
+            // 입구 구멍은 보이지 않는 벽으로 막는다 — 플레이어가 입구를 뚫고 나가 바닥 밖으로 떨어졌음 (2026-10-25). 손님은 입구 안쪽(z −4.6)에서 생기고 사라져 영향 없음
+            Wall(walls, "Wall_Entrance", new Vector3(EntranceX, 0f, -hd), new Vector3(EntranceGap, WallHeight, WallThickness), material);
             // 왼쪽 벽: 아트 벽에 농장 문 구멍이 없으므로 한 장 (예전 두 조각 중 앞 조각은 지움)
             Wall(walls, "Wall_LeftBack", new Vector3(-hw, 0f, 0f), new Vector3(WallThickness, WallHeight, Depth), material);
             var leftFront = walls.Find("Wall_LeftFront");

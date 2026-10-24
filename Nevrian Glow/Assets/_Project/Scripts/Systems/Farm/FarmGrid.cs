@@ -562,6 +562,24 @@ namespace NevrianGlowFarm.Systems.Farm
         private Vector3 AcrossDir => Vector3.Cross(Vector3.up, AlongDir).normalized;
         private Quaternion CellRotation() => Quaternion.LookRotation(AcrossDir, Vector3.up);
 
+        /// <summary>그 자리가 밭 칸이나 길(금지 구역) 위인지 — 플레이어 발소리(흙)에 쓴다.</summary>
+        public bool IsFarmGround(Vector3 world)
+        {
+            if (state == null)
+                return false;
+            float half = cellFootprint * 0.5f;
+            for (int i = 0; i < state.Cells.Count; i++)
+            {
+                Vector3 c = CellPosition(i);
+                if (Mathf.Abs(world.x - c.x) <= half && Mathf.Abs(world.z - c.z) <= half)
+                    return true;
+            }
+            foreach (var zone in forbiddenZones)
+                if (zone != null && zone.Overlaps(world, 0.05f, 0.05f))
+                    return true;
+            return false;
+        }
+
         /// <summary>칸 중심의 월드 위치 (바닥 높이 = 이 오브젝트 높이).</summary>
         public Vector3 CellPosition(int index)
         {

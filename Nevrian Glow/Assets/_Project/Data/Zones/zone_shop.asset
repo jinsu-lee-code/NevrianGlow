@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.ZoneProfileData
   id: zone_shop
   displayName: "\uAC00\uAC8C"
+  description: 
   phases: 020000000300000004000000
   isDayStart: 0
   useSkyboxAmbient: 0
@@ -26,3 +27,5 @@ MonoBehaviour:
   phaseBgm:
   - phase: 2
     bgmId: bgm_clean_loop
+  ambienceId: amb_shop_loop
+  footstepId: sfx_step_wood

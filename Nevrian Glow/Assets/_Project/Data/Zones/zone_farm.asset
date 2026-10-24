@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.ZoneProfileData
   id: zone_farm
   displayName: "\uB18D\uC7A5"
+  description: 
   phases: 01000000
   isDayStart: 1
   useSkyboxAmbient: 1
@@ -24,3 +25,5 @@ MonoBehaviour:
   skybox: {fileID: 2100000, guid: e184177764406104284629835649d3cd, type: 2}
   bgmId: bgm_farm_loop
   phaseBgm: []
+  ambienceId: amb_farm_loop
+  footstepId: sfx_step_grass
