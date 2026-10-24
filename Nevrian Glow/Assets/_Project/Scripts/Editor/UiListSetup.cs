@@ -23,12 +23,19 @@ namespace NevrianGlowFarm.Editor
         private const float EdgeX = 44f;      // 5-4b 창 안쪽 여백 (px)
         private const float RowGap = 4f;      // 목록 줄 간격 (px)
         private const float TabHeight = 44f;
-        private static readonly Color DetailColor = new Color(0.72f, 0.84f, 0.9f, 1f);
+        private static readonly Color DetailColor = new Color(0.75f, 0.86f, 0.92f, 1f);
         private static readonly Color ValueColor = new Color(1f, 0.9f, 0.6f, 1f);
         private static readonly Color BadgeColor = new Color(0.55f, 0.95f, 1f, 1f);
         private static readonly Color SubtitleColor = new Color(0.55f, 0.9f, 1f, 1f);
         private static readonly Color BodyColor = new Color(0.88f, 0.93f, 0.96f, 1f);
         private static readonly Color Unavailable = new Color(0.6f, 0.6f, 0.66f, 1f);
+        // 목록 줄은 장식 없는 단색 — 아트 버튼 그림의 양 끝 별 장식이 아이콘 · 가격과 겹쳐 읽기 어려웠다 (사용자 10/24)
+        private static readonly Color RowAvailable = new Color(0.06f, 0.2f, 0.27f, 0.96f);
+        private static readonly Color RowUnavailable = new Color(0.09f, 0.1f, 0.13f, 0.94f);
+        private static readonly Color RowMaxed = new Color(0.2f, 0.15f, 0.3f, 0.94f);
+        private static readonly Color RowOutline = new Color(0.4f, 0.9f, 1f, 0.35f);
+        private static readonly Color Backdrop = new Color(0f, 0f, 0f, 0.55f);
+        private static readonly string[] DimScreens = { "ShopScreen", "SkillScreen", "StorageScreen", "InventoryScreen" };
 
         private struct Art
         {
@@ -87,6 +94,7 @@ namespace NevrianGlowFarm.Editor
                 Shop(canvas, art, inventory),
                 Skill(canvas, art),
                 Storage(canvas, art),
+                Backdrops(canvas),
             };
 
             EditorSceneManager.MarkSceneDirty(scene);
@@ -135,10 +143,11 @@ namespace NevrianGlowFarm.Editor
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-            var title = Text(panel, "Title", art.Font, 22f, Color.white, TextAlignmentOptions.TopLeft);
-            var subtitle = Text(panel, "Subtitle", art.Font, 15f, SubtitleColor, TextAlignmentOptions.TopLeft);
-            var body = Text(panel, "Body", art.Font, 17f, BodyColor, TextAlignmentOptions.TopLeft);
-            var footer = Text(panel, "Footer", art.Font, 16f, ValueColor, TextAlignmentOptions.TopLeft);
+            panel.sizeDelta = new Vector2(440f, 120f);
+            var title = Text(panel, "Title", art.Font, 25f, Color.white, TextAlignmentOptions.TopLeft);
+            var subtitle = Text(panel, "Subtitle", art.Font, 16f, SubtitleColor, TextAlignmentOptions.TopLeft);
+            var body = Text(panel, "Body", art.Font, 19f, BodyColor, TextAlignmentOptions.TopLeft);
+            var footer = Text(panel, "Footer", art.Font, 18f, ValueColor, TextAlignmentOptions.TopLeft);
 
             var so = new SerializedObject(root.GetComponent<TooltipView>());
             so.FindProperty("panel").objectReferenceValue = panel;
@@ -199,19 +208,23 @@ namespace NevrianGlowFarm.Editor
             if (screen == null || panel == null || !(Template(screen, "entryTemplate") is HotbarSlotView entry))
                 return "상점 화면 없음";
 
-            const float rowHeight = 64f;
+            const float rowHeight = 72f;
             const int visibleRows = 6;
-            panel.sizeDelta = new Vector2(panel.sizeDelta.x, 680f); // 590 → 680: 탭 + 6줄
+            panel.sizeDelta = new Vector2(panel.sizeDelta.x, 720f); // 590 → 720: 탭 + 6줄(72 px)
             float width = panel.sizeDelta.x - EdgeX * 2f;
             var tab = TabBar(panel, screen, art, new Vector2(EdgeX, -82f), width);
             ScrollList(panel, screen, new Vector2(EdgeX, -82f - TabHeight - 8f), new Vector2(width, visibleRows * rowHeight + (visibleRows - 1) * RowGap));
-            BuildRow(entry, art, rowHeight, badge: false, valueWidth: 150f, valueIcon: true);
+            BuildRow(entry, art, rowHeight, badge: false, valueWidth: 160f, valueIcon: true);
+            var money = CornerValue(panel, art, "Money", art.Dollar);
 
             var so = new SerializedObject(screen);
             if (so.FindProperty("emptyLabel").objectReferenceValue == null && panel.Find("EmptyTab") is Transform empty && empty.TryGetComponent<TMP_Text>(out var emptyText))
                 so.FindProperty("emptyLabel").objectReferenceValue = emptyText;
             so.FindProperty("inventory").objectReferenceValue = inventory;
             so.FindProperty("priceIcon").objectReferenceValue = art.Dollar;
+            so.FindProperty("moneyLabel").objectReferenceValue = money;
+            so.FindProperty("availableColor").colorValue = RowAvailable;
+            so.FindProperty("unavailableColor").colorValue = RowUnavailable;
             so.FindProperty("tabNormalColor").colorValue = Unavailable;
             so.FindProperty("tabSelectedColor").colorValue = Color.white;
             so.ApplyModifiedPropertiesWithoutUndo();
@@ -228,15 +241,20 @@ namespace NevrianGlowFarm.Editor
             if (screen == null || panel == null || !(Template(screen, "entryTemplate") is HotbarSlotView entry))
                 return "스킬 화면 없음";
 
-            const float rowHeight = 56f;
+            const float rowHeight = 64f;
             const int visibleRows = 5;
             float width = panel.sizeDelta.x - EdgeX * 2f;
             var tab = TabBar(panel, screen, art, new Vector2(EdgeX, -82f), width);
             ScrollList(panel, screen, new Vector2(EdgeX, -82f - TabHeight - 8f), new Vector2(width, visibleRows * rowHeight + (visibleRows - 1) * RowGap));
             BuildRow(entry, art, rowHeight, badge: true, valueWidth: 120f, valueIcon: true);
+            var points = CornerValue(panel, art, "Points", art.SkillPoint);
 
             var so = new SerializedObject(screen);
             so.FindProperty("costIcon").objectReferenceValue = art.SkillPoint;
+            so.FindProperty("pointsLabel").objectReferenceValue = points;
+            so.FindProperty("availableColor").colorValue = RowAvailable;
+            so.FindProperty("unavailableColor").colorValue = RowUnavailable;
+            so.FindProperty("maxedColor").colorValue = RowMaxed;
             so.FindProperty("tabNormalColor").colorValue = Unavailable;
             so.FindProperty("tabSelectedColor").colorValue = Color.white;
             so.ApplyModifiedPropertiesWithoutUndo();
@@ -253,10 +271,13 @@ namespace NevrianGlowFarm.Editor
             if (screen == null || panel == null || !(Template(screen, "entryTemplate") is HotbarSlotView entry))
                 return "창고 화면 없음";
 
-            const float rowHeight = 56f;
-            const int visibleRows = 6;
+            const float rowHeight = 60f;
+            const int visibleRows = 5;
             ScrollList(panel, screen, new Vector2(EdgeX, -86f), new Vector2(360f, visibleRows * rowHeight + (visibleRows - 1) * RowGap));
             BuildRow(entry, art, rowHeight, badge: false, valueWidth: 70f, valueIcon: false);
+            var so = new SerializedObject(screen);
+            so.FindProperty("entryColor").colorValue = RowAvailable;
+            so.ApplyModifiedPropertiesWithoutUndo();
             Hint(panel, "창고 목록을 누르면 한 묶음 꺼내기 · 마우스를 올리면 설명 | Tab · Esc 닫기");
             return $"창고 줄 {rowHeight} px";
         }
@@ -275,14 +296,32 @@ namespace NevrianGlowFarm.Editor
 
             var so = new SerializedObject(view);
             float iconSize = height - 16f;
-            float left = 12f + iconSize + 12f;
-            float right = 14f;
+            float left = 14f + iconSize + 14f;
+            float right = 16f;
+
+            // 배경: 장식 없는 단색(줄 색은 화면이 SetSelected로) + 얇은 테두리, 마우스 올림 · 누름은 밝기 변화
+            var background = so.FindProperty("background").objectReferenceValue as Image;
+            if (background != null)
+            {
+                background.sprite = null;
+                background.type = Image.Type.Simple;
+                background.color = RowAvailable;
+                var outline = background.GetComponent<Outline>();
+                if (outline == null)
+                    outline = background.gameObject.AddComponent<Outline>();
+                outline.effectColor = RowOutline;
+                outline.effectDistance = new Vector2(1f, -1f);
+                outline.useGraphicAlpha = false;
+                EditorUtility.SetDirty(background);
+            }
+            so.FindProperty("normalSprite").objectReferenceValue = null;
+            so.FindProperty("selectedSprite").objectReferenceValue = null;
 
             var icon = Child(rt, "Icon", typeof(Image));
             icon.SetSiblingIndex(0);
             icon.anchorMin = icon.anchorMax = new Vector2(0f, 0.5f);
             icon.pivot = new Vector2(0f, 0.5f);
-            icon.anchoredPosition = new Vector2(12f, 0f);
+            icon.anchoredPosition = new Vector2(14f, 0f);
             icon.sizeDelta = new Vector2(iconSize, iconSize);
             var iconImage = icon.GetComponent<Image>();
             iconImage.raycastTarget = false;
@@ -293,10 +332,10 @@ namespace NevrianGlowFarm.Editor
             // 아이콘 자리의 표시 글자 (스킬 "현재/최대") — 아이콘이 없는 줄에만
             if (badge)
             {
-                var key = Text(rt, "Badge", art.Font, 20f, BadgeColor, TextAlignmentOptions.Center);
+                var key = Text(rt, "Badge", art.Font, 22f, BadgeColor, TextAlignmentOptions.Center);
                 key.rectTransform.anchorMin = key.rectTransform.anchorMax = new Vector2(0f, 0.5f);
                 key.rectTransform.pivot = new Vector2(0f, 0.5f);
-                key.rectTransform.anchoredPosition = new Vector2(12f, 0f);
+                key.rectTransform.anchoredPosition = new Vector2(14f, 0f);
                 key.rectTransform.sizeDelta = new Vector2(iconSize, iconSize);
                 so.FindProperty("keyLabel").objectReferenceValue = key;
             }
@@ -309,17 +348,17 @@ namespace NevrianGlowFarm.Editor
                 vIcon.anchorMin = vIcon.anchorMax = new Vector2(1f, 0.5f);
                 vIcon.pivot = new Vector2(1f, 0.5f);
                 vIcon.anchoredPosition = new Vector2(-right, 0f);
-                vIcon.sizeDelta = new Vector2(28f, 28f);
+                vIcon.sizeDelta = new Vector2(32f, 32f);
                 var vImage = vIcon.GetComponent<Image>();
                 vImage.raycastTarget = false;
                 vImage.preserveAspect = true;
                 vImage.enabled = false;
                 so.FindProperty("valueIcon").objectReferenceValue = vImage;
-                valueX += 28f + 8f;
+                valueX += 32f + 8f;
             }
             else
                 so.FindProperty("valueIcon").objectReferenceValue = null;
-            var value = Text(rt, "Value", art.Font, 22f, ValueColor, TextAlignmentOptions.MidlineRight);
+            var value = Text(rt, "Value", art.Font, 26f, ValueColor, TextAlignmentOptions.MidlineRight);
             value.rectTransform.anchorMin = value.rectTransform.anchorMax = new Vector2(1f, 0.5f);
             value.rectTransform.pivot = new Vector2(1f, 0.5f);
             value.rectTransform.anchoredPosition = new Vector2(-valueX, 0f);
@@ -336,7 +375,8 @@ namespace NevrianGlowFarm.Editor
                 name.offsetMin = new Vector2(left, 6f);
                 name.offsetMax = new Vector2(-nameRight, -7f);
                 nameText.enableAutoSizing = false;
-                nameText.fontSize = 22f;
+                nameText.fontSize = 26f;
+                nameText.color = Color.white;
                 nameText.alignment = TextAlignmentOptions.MidlineLeft;
                 nameText.textWrappingMode = TextWrappingModes.NoWrap;
                 nameText.overflowMode = TextOverflowModes.Ellipsis;
@@ -345,12 +385,12 @@ namespace NevrianGlowFarm.Editor
             }
 
             // 둘째 줄 (아래 띠)
-            var detail = Text(rt, "Detail", art.Font, 15f, DetailColor, TextAlignmentOptions.BottomLeft);
+            var detail = Text(rt, "Detail", art.Font, 17f, DetailColor, TextAlignmentOptions.BottomLeft);
             detail.rectTransform.anchorMin = new Vector2(0f, 0f);
             detail.rectTransform.anchorMax = new Vector2(1f, 0f);
             detail.rectTransform.pivot = new Vector2(0.5f, 0f);
             detail.rectTransform.offsetMin = new Vector2(left, 7f);
-            detail.rectTransform.offsetMax = new Vector2(-nameRight, 7f + 20f);
+            detail.rectTransform.offsetMax = new Vector2(-nameRight, 7f + 22f);
             detail.textWrappingMode = TextWrappingModes.NoWrap;
             detail.overflowMode = TextOverflowModes.Ellipsis;
             so.FindProperty("detailLabel").objectReferenceValue = detail;
@@ -358,15 +398,72 @@ namespace NevrianGlowFarm.Editor
             so.FindProperty("tooltip").objectReferenceValue = Trigger(view);
             so.ApplyModifiedPropertiesWithoutUndo();
 
-            // 올림 · 누름 그림 (5-4a는 줄을 보통 그림으로만)
+            // 마우스 올림 · 누름 = 밝기 (단색 배경이라 그림 바꾸기 대신 색 곱)
             var button = view.GetComponent<Button>();
-            if (button != null && art.Hover != null)
+            if (button != null)
             {
-                button.transition = Selectable.Transition.SpriteSwap;
-                button.spriteState = new SpriteState { highlightedSprite = art.Hover, selectedSprite = art.Hover, pressedSprite = art.Pressed, disabledSprite = art.Disabled };
+                button.transition = Selectable.Transition.ColorTint;
+                var colors = button.colors;
+                colors.normalColor = Color.white;
+                colors.highlightedColor = new Color(1.45f, 1.45f, 1.45f, 1f);
+                colors.pressedColor = new Color(0.75f, 0.75f, 0.75f, 1f);
+                colors.selectedColor = Color.white;
+                colors.disabledColor = new Color(0.6f, 0.6f, 0.6f, 1f);
+                colors.colorMultiplier = 1f;
+                colors.fadeDuration = 0.08f;
+                button.colors = colors;
                 EditorUtility.SetDirty(button);
             }
             EditorUtility.SetDirty(rt);
+        }
+
+        // 제목 줄 오른쪽 끝의 보유 값 "150 [달러]" (창 안쪽 여백 기준)
+        private static TextMeshProUGUI CornerValue(RectTransform panel, Art art, string name, Sprite iconSprite)
+        {
+            const float iconSize = 34f;
+            var icon = Child(panel, name + "Icon", typeof(Image));
+            icon.anchorMin = icon.anchorMax = new Vector2(1f, 1f);
+            icon.pivot = new Vector2(1f, 1f);
+            icon.anchoredPosition = new Vector2(-EdgeX, -34f - 3f);
+            icon.sizeDelta = new Vector2(iconSize, iconSize);
+            var image = icon.GetComponent<Image>();
+            image.sprite = iconSprite;
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+            image.enabled = iconSprite != null;
+            EditorUtility.SetDirty(image);
+
+            var label = Text(panel, name, art.Font, 28f, ValueColor, TextAlignmentOptions.MidlineRight);
+            label.rectTransform.anchorMin = label.rectTransform.anchorMax = new Vector2(1f, 1f);
+            label.rectTransform.pivot = new Vector2(1f, 1f);
+            label.rectTransform.anchoredPosition = new Vector2(-EdgeX - (iconSprite != null ? iconSize + 8f : 0f), -34f);
+            label.rectTransform.sizeDelta = new Vector2(260f, 40f);
+            return label;
+        }
+
+        // 창이 열리면 뒤 세상을 어둡게 — 반투명 패널 너머로 보이던 밭 · 하늘이 글자와 섞였다 (스타듀밸리도 창 뒤를 어둡게)
+        private static string Backdrops(Transform canvas)
+        {
+            int n = 0;
+            foreach (var name in DimScreens)
+            {
+                var panel = canvas.Find(name + "/Panel") as RectTransform;
+                if (panel == null)
+                    continue;
+                var dim = Child(panel, "Backdrop", typeof(Image));
+                dim.SetSiblingIndex(0);
+                dim.anchorMin = dim.anchorMax = new Vector2(0.5f, 0.5f);
+                dim.pivot = new Vector2(0.5f, 0.5f);
+                dim.anchoredPosition = Vector2.zero;
+                dim.sizeDelta = new Vector2(8000f, 8000f);
+                var image = dim.GetComponent<Image>();
+                image.sprite = null;
+                image.color = Backdrop;
+                image.raycastTarget = true; // 창 밖 클릭이 뒤 버튼에 닿지 않게
+                EditorUtility.SetDirty(image);
+                n++;
+            }
+            return $"창 뒤 어둡게 {n}";
         }
 
         // ── ③ 탭 줄: 제목 아래 가로 버튼 (이미 있으면 크기 · 참조만) ──

@@ -38,6 +38,8 @@ namespace NevrianGlowFarm.UI
         [SerializeField] private Transform tabParent;
         [Tooltip("비용 옆 SP 아이콘 (비우면 숫자만, 5-4c)")]
         [SerializeField] private Sprite costIcon;
+        [Tooltip("보유 SP 글자 — 제목 오른쪽에 따로 (비우면 제목에 같이, 5-4c)")]
+        [SerializeField] private TMP_Text pointsLabel;
 
         [Header("조정값")]
         [Tooltip("배울 수 있는 줄 색")]
@@ -189,7 +191,9 @@ namespace NevrianGlowFarm.UI
             if (!IsOpen)
                 return;
             var game = GameManager.Instance;
-            titleLabel.text = game == null ? "스킬" : $"스킬 - 보유 SP {game.SkillPoints}";
+            titleLabel.text = game == null || pointsLabel != null ? "스킬" : $"스킬 - 보유 SP {game.SkillPoints}";
+            if (pointsLabel != null)
+                pointsLabel.text = game != null ? game.SkillPoints.ToString() : string.Empty;
 
             bool useTabs = tabViews.Count > 0;
             for (int i = 0; i < tabViews.Count; i++)
@@ -227,6 +231,7 @@ namespace NevrianGlowFarm.UI
                 view.BindTooltip(() => TooltipText.ForSkill(skill, skills.LevelOf(skill), skills.Check(skill), skills.NextCost(skill)));
                 var color = check == LearnCheck.Ok ? availableColor : check == LearnCheck.MaxLevel ? maxedColor : unavailableColor;
                 view.SetSelected(false, color, color);
+                view.SetDimmed(check != LearnCheck.Ok && check != LearnCheck.MaxLevel);
             }
         }
 

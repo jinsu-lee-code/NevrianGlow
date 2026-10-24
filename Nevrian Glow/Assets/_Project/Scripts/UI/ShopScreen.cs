@@ -45,6 +45,8 @@ namespace NevrianGlowFarm.UI
         [SerializeField] private PlayerInventory inventory;
         [Tooltip("가격 옆 달러 아이콘 (비우면 숫자만, 5-4c)")]
         [SerializeField] private Sprite priceIcon;
+        [Tooltip("보유 달러 글자 — 제목 오른쪽에 따로 (비우면 제목에 같이, 5-4c)")]
+        [SerializeField] private TMP_Text moneyLabel;
 
         [Header("조정값")]
         [Tooltip("탭 = 상품 분류(ShopProductData.category) 순서 (와이어프레임 4: 씨앗 · 도구 · 확장 · 가구 · 소모품 · 장치). 목록에 없는 분류는 마지막 탭에")]
@@ -198,10 +200,14 @@ namespace NevrianGlowFarm.UI
                 return;
             var game = GameManager.Instance;
             bool canBuy = shop.CanBuyNow;
+            // 보유 달러 글자가 따로 있으면 제목은 짧게 (오른쪽 위에 "150 [달러]")
+            string money = moneyLabel != null || game == null ? string.Empty : $" - 보유 {game.Money:N0}달러";
             titleLabel.text = game == null ? "상점"
-                : game.Phase == Logic.Game.DayPhase.Shop ? $"{game.Day}일차 상점 - 보유 {game.Money:N0}달러 · 닫으면 농사 시작"
-                : canBuy ? $"상점 - 보유 {game.Money:N0}달러"
-                : $"상점 (보기만) - 보유 {game.Money:N0}달러";
+                : game.Phase == Logic.Game.DayPhase.Shop ? $"{game.Day}일차 상점{money} · 닫으면 농사 시작"
+                : canBuy ? $"상점{money}"
+                : $"상점 (보기만){money}";
+            if (moneyLabel != null)
+                moneyLabel.text = game != null ? $"{game.Money:N0}" : string.Empty;
 
             bool useTabs = tabViews.Count > 0;
             for (int i = 0; i < tabViews.Count; i++)
@@ -245,8 +251,10 @@ namespace NevrianGlowFarm.UI
                 view.SetDetail(UiText.Join(UiText.Offer(offer.Status, offer.StockLeft, LockReason(product, offer), StockFromTomorrow(product)), UiText.Owned(OwnedCount(product))));
                 view.SetValue(offer.Status == OfferStatus.MaxedOut ? string.Empty : $"{offer.Price:N0}", priceIcon);
                 view.BindTooltip(() => Tooltip(product));
-                var color = offer.Status == OfferStatus.Available && canBuy ? availableColor : unavailableColor;
+                bool available = offer.Status == OfferStatus.Available && canBuy;
+                var color = available ? availableColor : unavailableColor;
                 view.SetSelected(false, color, color);
+                view.SetDimmed(!available);
             }
         }
 

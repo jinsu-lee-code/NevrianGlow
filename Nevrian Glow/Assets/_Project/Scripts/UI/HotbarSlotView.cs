@@ -121,5 +121,18 @@ namespace NevrianGlowFarm.UI
             if (normalSprite != null)
                 background.sprite = selected && selectedSprite != null ? selectedSprite : normalSprite;
         }
+
+        /// <summary>살 수 없음 · 잠김 줄: 아이콘 · 이름 · 값을 흐리게 (배경색과 별개로 글자 대비를 낮춰 "지금은 아님"을 보여 준다, 5-4c).</summary>
+        public void SetDimmed(bool dimmed)
+        {
+            float alpha = dimmed ? 0.55f : 1f;
+            nameLabel.alpha = alpha;
+            if (valueLabel != null)
+                valueLabel.alpha = alpha;
+            if (icon != null)
+                icon.color = dimmed ? new Color(0.6f, 0.6f, 0.65f, 1f) : Color.white;
+            if (valueIcon != null)
+                valueIcon.color = dimmed ? new Color(0.6f, 0.6f, 0.65f, 1f) : Color.white;
+        }
     }
 }
