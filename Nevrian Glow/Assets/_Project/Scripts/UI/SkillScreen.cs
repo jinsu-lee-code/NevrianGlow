@@ -98,11 +98,14 @@ namespace NevrianGlowFarm.UI
             {
                 if (toggleAction.action.WasPressedThisFrame() || cancelAction.action.WasPressedThisFrame())
                 {
-                    // 튜토리얼(5-7): 안내한 스킬을 배우기 전에는 닫히지 않는다
-                    if (Systems.Tutorial.TutorialSystem.IsLocked(Logic.Tutorial.TutorialLocks.CloseSkill))
+                    // 튜토리얼(5-7): 안내한 스킬을 배우기 전에는 닫히지 않는다 — Esc는 일시정지가 받는다(PauseScreen, 닫히면 다시 열림)
+                    if (IsCloseLocked)
                     {
-                        messageLabel.text = "먼저 안내한 스킬을 배워요";
-                        AudioManager.Play(SoundCues.UiBuyFail);
+                        if (toggleAction.action.WasPressedThisFrame())
+                        {
+                            messageLabel.text = "먼저 안내한 스킬을 배워요";
+                            AudioManager.Play(SoundCues.UiBuyFail);
+                        }
                     }
                     else
                         Close();
@@ -115,6 +118,9 @@ namespace NevrianGlowFarm.UI
         }
 
         public void Open() => Show();
+
+        /// <summary>튜토리얼(5-7)이 닫기를 잠갔는지 — 열려 있고 close_skill 잠금. 일시정지는 이 위에 열릴 수 있다.</summary>
+        public bool IsCloseLocked => IsOpen && Systems.Tutorial.TutorialSystem.IsLocked(Logic.Tutorial.TutorialLocks.CloseSkill);
 
         protected override void OnOpened()
         {

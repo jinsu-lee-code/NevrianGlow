@@ -88,6 +88,7 @@ namespace NevrianGlowFarm.Editor
             var letter = canvas.GetComponentInChildren<OpeningLetterScreen>(true);
             notes.Add(BuildSystem(scene, data, letter));
             notes.Add(BuildHud(canvas, font));
+            notes.Add(BuildLevelUpBanner(canvas, font));
             notes.Add(FixPhaseButtons(canvas, Ref("Player", "EndPhase")));
             notes.Add(AddLetterCloseKey(letter, Ref("Player", "Interact")));
 
@@ -243,6 +244,95 @@ namespace NevrianGlowFarm.Editor
                 }
             }
             return note;
+        }
+
+        // 레벨업 배너: 화면 위쪽(튜토리얼 줄 아래) 아트 패널 + 큰 글자, 평소 숨김 — LeveledUp에 3초
+        private static string BuildLevelUpBanner(Transform canvas, TMP_FontAsset font)
+        {
+            var existing = canvas.Find("LevelUpBanner");
+            string note = "레벨업 배너 유지";
+            RectTransform root;
+            if (existing == null)
+            {
+                root = new GameObject("LevelUpBanner", typeof(RectTransform), typeof(LevelUpBanner)).GetComponent<RectTransform>();
+                root.SetParent(canvas, false);
+                var panel = new GameObject("Panel", typeof(RectTransform), typeof(Image), typeof(CanvasGroup)).GetComponent<RectTransform>();
+                panel.SetParent(root, false);
+                panel.anchorMin = Vector2.zero;
+                panel.anchorMax = Vector2.one;
+                panel.offsetMin = panel.offsetMax = Vector2.zero;
+                var image = panel.GetComponent<Image>();
+                image.raycastTarget = false;
+                var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(PanelSprite);
+                if (sprite != null)
+                {
+                    image.sprite = sprite;
+                    image.type = Image.Type.Sliced;
+                    image.pixelsPerUnitMultiplier = 1.4f;
+                    image.color = Color.white;
+                }
+                else
+                    image.color = new Color(0.02f, 0.09f, 0.12f, 0.92f);
+                var group = panel.GetComponent<CanvasGroup>();
+                group.alpha = 0f;
+                group.blocksRaycasts = false;
+                group.interactable = false;
+
+                var label = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI)).GetComponent<TextMeshProUGUI>();
+                label.rectTransform.SetParent(panel, false);
+                label.rectTransform.anchorMin = Vector2.zero;
+                label.rectTransform.anchorMax = Vector2.one;
+                label.rectTransform.offsetMin = new Vector2(30f, 10f);
+                label.rectTransform.offsetMax = new Vector2(-30f, -10f);
+                if (font != null)
+                    label.font = font;
+                label.fontSize = 40f;
+                label.color = new Color(0.55f, 0.95f, 1f, 1f);
+                label.alignment = TextAlignmentOptions.Center;
+                label.raycastTarget = false;
+                label.text = string.Empty;
+
+                var so = new SerializedObject(root.GetComponent<LevelUpBanner>());
+                so.FindProperty("group").objectReferenceValue = group;
+                so.FindProperty("label").objectReferenceValue = label;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                Undo.RegisterCreatedObjectUndo(root.gameObject, "Create LevelUpBanner");
+                note = "레벨업 배너 생성";
+            }
+            else
+                root = existing as RectTransform;
+
+            root.anchorMin = root.anchorMax = new Vector2(0.5f, 1f);
+            root.pivot = new Vector2(0.5f, 1f);
+            root.anchoredPosition = new Vector2(0f, -110f);
+            root.sizeDelta = new Vector2(640f, 110f);
+            EditorUtility.SetDirty(root);
+
+            var tooltip = canvas.Find("Tooltip");
+            var fader = canvas.Find("ScreenFader");
+            var anchor = tooltip != null ? tooltip : fader;
+            if (anchor != null)
+                root.SetSiblingIndex(anchor.GetSiblingIndex() - (anchor.GetSiblingIndex() > root.GetSiblingIndex() ? 1 : 0));
+            if (AddTitleHide(canvas, root.gameObject))
+                note += " · 타이틀 중 숨김";
+            return note;
+        }
+
+        // 타이틀이 떠 있는 동안 숨길 목록에 더한다 (이미 있으면 false)
+        private static bool AddTitleHide(Transform canvas, GameObject target)
+        {
+            var title = canvas.Find("TitleScreen")?.GetComponent<TitleScreen>();
+            if (title == null)
+                return false;
+            var tso = new SerializedObject(title);
+            var arr = tso.FindProperty("hideWhileOpen");
+            for (int i = 0; i < arr.arraySize; i++)
+                if (arr.GetArrayElementAtIndex(i).objectReferenceValue == target)
+                    return false;
+            arr.arraySize++;
+            arr.GetArrayElementAtIndex(arr.arraySize - 1).objectReferenceValue = target;
+            tso.ApplyModifiedPropertiesWithoutUndo();
+            return true;
         }
 
         // 단계 버튼: 농사(end_farming) · 청소·진열 "장사 시작 [Enter]"(open_sales, 새로) · 장사
