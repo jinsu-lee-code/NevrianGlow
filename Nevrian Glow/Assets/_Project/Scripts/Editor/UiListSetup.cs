@@ -31,15 +31,18 @@ namespace NevrianGlowFarm.Editor
         private static readonly Color BodyColor = new Color(0.88f, 0.93f, 0.96f, 1f);
         private static readonly Color Unavailable = new Color(0.6f, 0.6f, 0.66f, 1f);
         // 목록 줄은 장식 없는 단색 — 아트 버튼 그림의 양 끝 별 장식이 아이콘 · 가격과 겹쳐 읽기 어려웠다 (사용자 10/24)
-        private static readonly Color RowAvailable = new Color(0.06f, 0.2f, 0.27f, 0.96f);
-        private static readonly Color RowUnavailable = new Color(0.09f, 0.1f, 0.13f, 0.94f);
-        private static readonly Color RowMaxed = new Color(0.2f, 0.15f, 0.3f, 0.94f);
+        private static readonly Color RowAvailable = new Color(0.07f, 0.22f, 0.3f, 0.92f);
+        private static readonly Color RowUnavailable = new Color(0.1f, 0.11f, 0.14f, 0.9f);
+        private static readonly Color RowMaxed = new Color(0.21f, 0.16f, 0.31f, 0.9f);
+        private static readonly Color TabNormal = new Color(0.07f, 0.13f, 0.18f, 0.9f);
+        private static readonly Color TabSelected = new Color(0.12f, 0.4f, 0.48f, 0.96f);
+        private static readonly Color FrameTint = new Color(1f, 1f, 1f, 0.85f); // 장식은 글자보다 한 단계 뒤로
         // 절충 (사용자 10/24): 단색 바탕은 두되 아트 버튼 그림의 테두리 · 별 장식만 가장자리에 얹는다 — 글자 · 아이콘은 장식 안쪽에서 시작
         private const string RowFramePath = "Assets/_Project/Art/UI/ui_row_frame.asset";
         private const float FrameSide = 56f;  // 그림(256 × 64) 양 끝 별 장식까지 포함하는 폭 (px)
         private const float FrameEdge = 20f;  // 위 · 아래 테두리 (px)
         private static readonly Color Backdrop = new Color(0f, 0f, 0f, 0.55f);
-        private static readonly string[] DimScreens = { "ShopScreen", "SkillScreen", "StorageScreen", "InventoryScreen" };
+        private static readonly string[] DimScreens = { "ShopScreen", "SkillScreen", "StorageScreen", "InventoryScreen", "SettlementScreen", "DemoEndScreen" };
 
         private struct Art
         {
@@ -193,10 +196,13 @@ namespace NevrianGlowFarm.Editor
                 EditorUtility.SetDirty(image);
                 wired = 1;
             }
-            // 버튼 칸(가방 · 창고 격자)만 툴팁 — HUD 핫바는 커서가 잠겨 있어 올릴 수 없다
-            if (view.GetComponent<Button>() != null)
+            // 버튼 칸(가방 · 창고 격자)만 툴팁 · 올림 밝기 — HUD 핫바는 커서가 잠겨 있어 올릴 수 없다
+            var button = view.GetComponent<Button>();
+            if (button != null)
             {
                 so.FindProperty("tooltip").objectReferenceValue = Trigger(view);
+                button.transition = Selectable.Transition.None;
+                HoverTint(view, so.FindProperty("background").objectReferenceValue as Graphic);
                 tips++;
             }
             so.ApplyModifiedPropertiesWithoutUndo();
@@ -229,8 +235,8 @@ namespace NevrianGlowFarm.Editor
             so.FindProperty("moneyLabel").objectReferenceValue = money;
             so.FindProperty("availableColor").colorValue = RowAvailable;
             so.FindProperty("unavailableColor").colorValue = RowUnavailable;
-            so.FindProperty("tabNormalColor").colorValue = Unavailable;
-            so.FindProperty("tabSelectedColor").colorValue = Color.white;
+            so.FindProperty("tabNormalColor").colorValue = TabNormal;
+            so.FindProperty("tabSelectedColor").colorValue = TabSelected;
             so.ApplyModifiedPropertiesWithoutUndo();
             Hint(panel, "줄을 누르면 산다 · 마우스를 올리면 설명 · B / Esc 닫기");
             return $"상점 줄 {rowHeight} px · 탭 {(tab != null ? "연결" : "없음")} · 달러 아이콘 {(art.Dollar != null ? 1 : 0)}";
@@ -259,8 +265,8 @@ namespace NevrianGlowFarm.Editor
             so.FindProperty("availableColor").colorValue = RowAvailable;
             so.FindProperty("unavailableColor").colorValue = RowUnavailable;
             so.FindProperty("maxedColor").colorValue = RowMaxed;
-            so.FindProperty("tabNormalColor").colorValue = Unavailable;
-            so.FindProperty("tabSelectedColor").colorValue = Color.white;
+            so.FindProperty("tabNormalColor").colorValue = TabNormal;
+            so.FindProperty("tabSelectedColor").colorValue = TabSelected;
             so.ApplyModifiedPropertiesWithoutUndo();
             Hint(panel, "줄을 누르면 배운다 · 마우스를 올리면 단계별 효과 · K / Esc 닫기");
             return $"스킬 줄 {rowHeight} px · 탭 {(tab != null ? "연결" : "없음")} · SP 아이콘 {(art.SkillPoint != null ? 1 : 0)}";
@@ -278,7 +284,7 @@ namespace NevrianGlowFarm.Editor
             const float rowHeight = 60f;
             const int visibleRows = 5;
             ScrollList(panel, screen, new Vector2(EdgeX, -86f), new Vector2(360f, visibleRows * rowHeight + (visibleRows - 1) * RowGap));
-            BuildRow(entry, art, rowHeight, badge: false, valueWidth: 70f, valueIcon: false);
+            BuildRow(entry, art, rowHeight, badge: false, valueWidth: 60f, valueIcon: false, frameScale: 1.6f); // 360 px 폭 — 장식을 줄여 이름 자리 확보
             var so = new SerializedObject(screen);
             so.FindProperty("entryColor").colorValue = RowAvailable;
             so.ApplyModifiedPropertiesWithoutUndo();
@@ -288,8 +294,9 @@ namespace NevrianGlowFarm.Editor
 
         // ── ② 목록 줄 원본: [아이콘(또는 표시 글자)] 이름 / 둘째 줄 … 값 [값 아이콘] ──
 
-        private static void BuildRow(HotbarSlotView view, Art art, float height, bool badge, float valueWidth, bool valueIcon)
+        private static void BuildRow(HotbarSlotView view, Art art, float height, bool badge, float valueWidth, bool valueIcon, float frameScale = 1f)
         {
+            float frameSide = FrameSide / frameScale; // 좁은 목록(창고)은 장식을 줄여 글자 자리를 남긴다
             var rt = (RectTransform)view.transform;
             var le = rt.GetComponent<LayoutElement>();
             if (le == null)
@@ -300,8 +307,8 @@ namespace NevrianGlowFarm.Editor
 
             var so = new SerializedObject(view);
             float iconSize = height - 16f;
-            float left = FrameSide + 6f + iconSize + 14f; // 왼쪽 별 장식 뒤부터
-            float right = FrameSide + 6f;                  // 오른쪽 별 장식 앞까지
+            float left = frameSide + 8f + iconSize + 14f; // 왼쪽 별 장식 뒤부터
+            float right = frameSide + 8f;                  // 오른쪽 별 장식 앞까지
 
             // 배경: 단색(줄 색은 화면이 SetSelected로), 마우스 올림 · 누름은 밝기 변화. 그 위에 아트 테두리 · 별 장식만 얹는다 (Frame)
             var background = so.FindProperty("background").objectReferenceValue as Image;
@@ -327,16 +334,16 @@ namespace NevrianGlowFarm.Editor
             frameImage.sprite = RowFrameSprite(art.Normal);
             frameImage.type = Image.Type.Sliced;
             frameImage.fillCenter = false; // 가운데는 비워 단색 바탕이 보이게
-            frameImage.pixelsPerUnitMultiplier = 1f;
-            frameImage.color = Color.white;
+            frameImage.pixelsPerUnitMultiplier = frameScale;
+            frameImage.color = FrameTint;
             frameImage.raycastTarget = false;
             EditorUtility.SetDirty(frameImage);
 
             var icon = Child(rt, "Icon", typeof(Image));
-            icon.SetSiblingIndex(0);
+            icon.SetSiblingIndex(1); // 프레임 다음
             icon.anchorMin = icon.anchorMax = new Vector2(0f, 0.5f);
             icon.pivot = new Vector2(0f, 0.5f);
-            icon.anchoredPosition = new Vector2(FrameSide + 6f, 0f);
+            icon.anchoredPosition = new Vector2(frameSide + 8f, 0f);
             icon.sizeDelta = new Vector2(iconSize, iconSize);
             var iconImage = icon.GetComponent<Image>();
             iconImage.raycastTarget = false;
@@ -350,7 +357,7 @@ namespace NevrianGlowFarm.Editor
                 var key = Text(rt, "Badge", art.Font, 22f, BadgeColor, TextAlignmentOptions.Center);
                 key.rectTransform.anchorMin = key.rectTransform.anchorMax = new Vector2(0f, 0.5f);
                 key.rectTransform.pivot = new Vector2(0f, 0.5f);
-                key.rectTransform.anchoredPosition = new Vector2(FrameSide + 6f, 0f);
+                key.rectTransform.anchoredPosition = new Vector2(frameSide + 8f, 0f);
                 key.rectTransform.sizeDelta = new Vector2(iconSize, iconSize);
                 so.FindProperty("keyLabel").objectReferenceValue = key;
             }
@@ -413,23 +420,33 @@ namespace NevrianGlowFarm.Editor
             so.FindProperty("tooltip").objectReferenceValue = Trigger(view);
             so.ApplyModifiedPropertiesWithoutUndo();
 
-            // 마우스 올림 · 누름 = 밝기 (단색 배경이라 그림 바꾸기 대신 색 곱)
+            // 마우스 올림 · 누름 = 바탕과 프레임이 함께 밝아짐 (UiHoverTint) — Button 자체 전환은 끈다
             var button = view.GetComponent<Button>();
             if (button != null)
             {
-                button.transition = Selectable.Transition.ColorTint;
-                var colors = button.colors;
-                colors.normalColor = Color.white;
-                colors.highlightedColor = new Color(1.45f, 1.45f, 1.45f, 1f);
-                colors.pressedColor = new Color(0.75f, 0.75f, 0.75f, 1f);
-                colors.selectedColor = Color.white;
-                colors.disabledColor = new Color(0.6f, 0.6f, 0.6f, 1f);
-                colors.colorMultiplier = 1f;
-                colors.fadeDuration = 0.08f;
-                button.colors = colors;
+                button.transition = Selectable.Transition.None;
                 EditorUtility.SetDirty(button);
             }
+            HoverTint(view, background, frameImage);
             EditorUtility.SetDirty(rt);
+        }
+
+        // 바탕 · 프레임을 함께 밝히는 올림 효과 (있으면 대상만 갱신)
+        private static void HoverTint(Component owner, params Graphic[] targets)
+        {
+            var tint = owner.GetComponent<UiHoverTint>();
+            if (tint == null)
+                tint = owner.gameObject.AddComponent<UiHoverTint>();
+            var so = new SerializedObject(tint);
+            var arr = so.FindProperty("targets");
+            var list = new List<Graphic>();
+            foreach (var t in targets)
+                if (t != null)
+                    list.Add(t);
+            arr.arraySize = list.Count;
+            for (int i = 0; i < list.Count; i++)
+                arr.GetArrayElementAtIndex(i).objectReferenceValue = list[i];
+            so.ApplyModifiedPropertiesWithoutUndo();
         }
 
         // 제목 줄 오른쪽 끝의 보유 값 "150 [달러]" (창 안쪽 여백 기준)
@@ -456,7 +473,7 @@ namespace NevrianGlowFarm.Editor
             return label;
         }
 
-        // 창이 열리면 뒤 세상을 어둡게 — 반투명 패널 너머로 보이던 밭 · 하늘이 글자와 섞였다 (스타듀밸리도 창 뒤를 어둡게)
+        // 창이 열리면 뒤 세상을 어둡게 — 반투명 패널 너머로 보이던 밭 · 하늘이 글자와 섞였다 (스타듀밸리도 창 뒤를 어둡게). 정산 · 데모 끝 창도 같게
         private static string Backdrops(Transform canvas)
         {
             int n = 0;
@@ -512,25 +529,38 @@ namespace NevrianGlowFarm.Editor
             var le = tab.GetComponent<LayoutElement>();
             if (le == null)
                 le = tab.gameObject.AddComponent<LayoutElement>();
-            le.preferredWidth = 200f;
+            le.preferredWidth = 216f;
             le.preferredHeight = TabHeight;
             le.flexibleWidth = 0f;
+            // 목록 줄과 같은 방식: 단색 바탕(고른 탭은 밝은 청록) + 아트 테두리 · 별 장식 프레임, 올림은 밝기
             var image = tab.GetComponent<Image>();
-            image.sprite = art.Normal;
-            image.type = Image.Type.Sliced;
-            image.pixelsPerUnitMultiplier = 2f;
-            image.color = Color.white;
+            image.sprite = null;
+            image.type = Image.Type.Simple;
+            image.color = TabNormal;
             image.raycastTarget = true;
             var button = tab.GetComponent<Button>();
             button.targetGraphic = image;
-            button.transition = Selectable.Transition.SpriteSwap;
-            button.spriteState = new SpriteState { highlightedSprite = art.Hover, selectedSprite = art.Hover, pressedSprite = art.Pressed, disabledSprite = art.Disabled };
-            var name = Text(tab, "Name", art.Font, 20f, Color.white, TextAlignmentOptions.Center);
+            button.transition = Selectable.Transition.None;
+            var frame = Child(tab, "Frame", typeof(Image));
+            frame.SetSiblingIndex(0);
+            frame.anchorMin = Vector2.zero;
+            frame.anchorMax = Vector2.one;
+            frame.offsetMin = frame.offsetMax = Vector2.zero;
+            var frameImage = frame.GetComponent<Image>();
+            frameImage.sprite = RowFrameSprite(art.Normal);
+            frameImage.type = Image.Type.Sliced;
+            frameImage.fillCenter = false;
+            frameImage.pixelsPerUnitMultiplier = 1.25f; // 탭은 낮아(44 px) 테두리를 조금 줄인다
+            frameImage.color = FrameTint;
+            frameImage.raycastTarget = false;
+            EditorUtility.SetDirty(frameImage);
+            var name = Text(tab, "Name", art.Font, 21f, Color.white, TextAlignmentOptions.Center);
             name.rectTransform.anchorMin = Vector2.zero;
             name.rectTransform.anchorMax = Vector2.one;
-            name.rectTransform.offsetMin = new Vector2(6f, 4f);
-            name.rectTransform.offsetMax = new Vector2(-6f, -4f);
+            name.rectTransform.offsetMin = new Vector2(FrameSide * 0.8f, 4f);
+            name.rectTransform.offsetMax = new Vector2(-FrameSide * 0.8f, -4f);
             name.enableAutoSizing = false;
+            HoverTint(tab.GetComponent<HotbarSlotView>(), image, frameImage);
             // 옛 탭 원본(상품 줄 복제)에 남은 아이콘 자리 · 둘째 줄은 치운다
             foreach (var extra in new[] { "Icon", "Detail", "Value", "ValueIcon", "Badge" })
                 if (tab.Find(extra) is Transform t)
@@ -546,8 +576,8 @@ namespace NevrianGlowFarm.Editor
             so.FindProperty("valueLabel").objectReferenceValue = null;
             so.FindProperty("valueIcon").objectReferenceValue = null;
             so.FindProperty("tooltip").objectReferenceValue = null;
-            so.FindProperty("normalSprite").objectReferenceValue = art.Normal;
-            so.FindProperty("selectedSprite").objectReferenceValue = art.Hover;
+            so.FindProperty("normalSprite").objectReferenceValue = null;
+            so.FindProperty("selectedSprite").objectReferenceValue = null;
             so.ApplyModifiedPropertiesWithoutUndo();
             tab.gameObject.SetActive(false);
 

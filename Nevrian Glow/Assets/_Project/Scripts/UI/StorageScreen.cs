@@ -190,7 +190,7 @@ namespace NevrianGlowFarm.UI
                 // 줄: [아이콘] 이름 / 안내 … ×개수 (5-4c)
                 view.SetIcon(item != null ? item.Icon : null);
                 view.SetContent(0, item != null ? item.DisplayName : e.ItemId);
-                view.SetDetail("누르면 한 묶음 꺼내기");
+                view.SetDetail(string.Empty); // 좁은 목록 — 꺼내기 안내는 아래 Hint 줄에
                 view.SetValue($"×{e.Count}");
                 view.BindTooltip(() => TooltipText.ForItem(inventory.Lookup(itemId), storage.CountOf(itemId)));
                 entryIds.Add(e.ItemId);
