@@ -851,4 +851,7 @@
 | MCP `Unity_Camera_Capture`가 게임 카메라 대신 Scene View를 찍음 | 도구가 Scene View를 우선 캡처하는 경우가 있음 | `RunCommand`에서 `Camera.main`을 RenderTexture로 렌더해 PNG로 저장한 뒤 읽는다 (화면 UI는 안 찍힘) |
 | 플레이 중 스크립트를 고친 뒤 MCP 확인 코드가 NullReference | 플레이 중 다시 컴파일되며 씬 상태가 깨짐 | 스크립트 수정은 플레이를 멈춘 뒤 → Refresh → 다시 플레이. 플레이 직후에는 `Step()` 몇 프레임 뒤에 찾는다(Farm 씬 칸 생성 전) |
 | Blender `aud.Sound.buffer(...).write()`가 "filling the audio frame failed with ffmpeg"로 실패 | 넘긴 numpy 배열이 임시 값이라 쓰기 전에 정리됨(버퍼가 배열을 복사하지 않음) → 반쯤 써진 파일이 남아 다시 쓰기도 실패 | 배열 · Sound 객체를 변수로 붙잡아 두고, 임시 폴더에 쓴 뒤 복사 |
+| MCP 카메라 캡처에는 화면 UI가 안 찍힘 | 카메라 렌더 텍스처에는 Overlay 캔버스가 없음 | 플레이 중 `RunCommand`에서 `ScreenCapture.CaptureScreenshot(경로)` — Game view를 UI까지 PNG로 저장(다음 프레임에 써짐). 툴팁처럼 마우스 올림이 필요한 것은 `TooltipView.Instance.Show(내용, null)`로 띄워 모양만 확인 (5-4c) |
+| MCP `RunCommand`에 중첩 클래스를 쓰면 "Elements defined in a namespace cannot be explicitly declared as private" | 도구가 코드를 네임스페이스로 감싸며 중첩 클래스를 바깥에 한 번 더 복제함 | 보조 클래스(테스트 콜백 등)는 `CommandScript` 밖의 최상위 `internal` 클래스로 둔다 |
+| MCP로 EditMode 테스트 실행 | Test Runner 창을 열 수 없음 | `RunCommand`에서 `TestRunnerApi.Execute(new ExecutionSettings(new Filter { testMode = TestMode.EditMode }))` + `ICallbacks.RunFinished`에서 결과를 파일로 씀 → PowerShell로 읽는다 (5-4c) |
 | (작업 중 겪을 때마다 추가) | | |
