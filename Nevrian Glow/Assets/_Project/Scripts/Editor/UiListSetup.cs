@@ -12,7 +12,8 @@ namespace NevrianGlowFarm.Editor
 {
     /// <summary>
     /// 5-4c 목록 · 툴팁 (2026-10-24, 스타듀밸리식 가독성): 5-4a 스킨 · 5-4b 레이아웃 뒤에 실행한다. Core 씬 UICanvas. 여러 번 실행해도 결과가 같다.
-    /// ① 툴팁 창(Tooltip) 하나 — ScreenFader 바로 아래 ② 상점 · 스킬 · 창고 목록 줄 원본을 [아이콘] 이름 / 둘째 줄 … 값 [아이콘] 모양으로 (올림 · 누름 그림)
+    /// ① 툴팁 창(Tooltip) 하나 — ScreenFader 바로 아래 ② 상점 · 스킬 · 창고 목록 줄 원본을 [아이콘] 이름 / 둘째 줄 … 값 [아이콘] 모양으로
+    ///    (단색 바탕 + 아트 테두리 · 별 장식 프레임, 올림 · 누름은 밝기 — 사용자 10/24 가독성 · 톤 절충)
     /// ③ 상점 · 스킬 탭 줄 참조 연결 ④ 목록을 스크롤(EntryScroll ▸ EntryList)로 ⑤ 칸 원본의 아이콘 참조 연결(비어 있어 아이콘이 안 보이던 것) + 가방 · 창고 칸 툴팁
     /// </summary>
     public static class UiListSetup
@@ -33,7 +34,10 @@ namespace NevrianGlowFarm.Editor
         private static readonly Color RowAvailable = new Color(0.06f, 0.2f, 0.27f, 0.96f);
         private static readonly Color RowUnavailable = new Color(0.09f, 0.1f, 0.13f, 0.94f);
         private static readonly Color RowMaxed = new Color(0.2f, 0.15f, 0.3f, 0.94f);
-        private static readonly Color RowOutline = new Color(0.4f, 0.9f, 1f, 0.35f);
+        // 절충 (사용자 10/24): 단색 바탕은 두되 아트 버튼 그림의 테두리 · 별 장식만 가장자리에 얹는다 — 글자 · 아이콘은 장식 안쪽에서 시작
+        private const string RowFramePath = "Assets/_Project/Art/UI/ui_row_frame.asset";
+        private const float FrameSide = 56f;  // 그림(256 × 64) 양 끝 별 장식까지 포함하는 폭 (px)
+        private const float FrameEdge = 20f;  // 위 · 아래 테두리 (px)
         private static readonly Color Backdrop = new Color(0f, 0f, 0f, 0.55f);
         private static readonly string[] DimScreens = { "ShopScreen", "SkillScreen", "StorageScreen", "InventoryScreen" };
 
@@ -296,10 +300,10 @@ namespace NevrianGlowFarm.Editor
 
             var so = new SerializedObject(view);
             float iconSize = height - 16f;
-            float left = 14f + iconSize + 14f;
-            float right = 16f;
+            float left = FrameSide + 6f + iconSize + 14f; // 왼쪽 별 장식 뒤부터
+            float right = FrameSide + 6f;                  // 오른쪽 별 장식 앞까지
 
-            // 배경: 장식 없는 단색(줄 색은 화면이 SetSelected로) + 얇은 테두리, 마우스 올림 · 누름은 밝기 변화
+            // 배경: 단색(줄 색은 화면이 SetSelected로), 마우스 올림 · 누름은 밝기 변화. 그 위에 아트 테두리 · 별 장식만 얹는다 (Frame)
             var background = so.FindProperty("background").objectReferenceValue as Image;
             if (background != null)
             {
@@ -307,21 +311,32 @@ namespace NevrianGlowFarm.Editor
                 background.type = Image.Type.Simple;
                 background.color = RowAvailable;
                 var outline = background.GetComponent<Outline>();
-                if (outline == null)
-                    outline = background.gameObject.AddComponent<Outline>();
-                outline.effectColor = RowOutline;
-                outline.effectDistance = new Vector2(1f, -1f);
-                outline.useGraphicAlpha = false;
+                if (outline != null)
+                    Object.DestroyImmediate(outline); // 이전 절충안의 얇은 테두리 — 아트 테두리로 대신
                 EditorUtility.SetDirty(background);
             }
             so.FindProperty("normalSprite").objectReferenceValue = null;
             so.FindProperty("selectedSprite").objectReferenceValue = null;
 
+            var frame = Child(rt, "Frame", typeof(Image));
+            frame.SetSiblingIndex(0); // 바탕 바로 위, 아이콘 · 글자 아래
+            frame.anchorMin = Vector2.zero;
+            frame.anchorMax = Vector2.one;
+            frame.offsetMin = frame.offsetMax = Vector2.zero;
+            var frameImage = frame.GetComponent<Image>();
+            frameImage.sprite = RowFrameSprite(art.Normal);
+            frameImage.type = Image.Type.Sliced;
+            frameImage.fillCenter = false; // 가운데는 비워 단색 바탕이 보이게
+            frameImage.pixelsPerUnitMultiplier = 1f;
+            frameImage.color = Color.white;
+            frameImage.raycastTarget = false;
+            EditorUtility.SetDirty(frameImage);
+
             var icon = Child(rt, "Icon", typeof(Image));
             icon.SetSiblingIndex(0);
             icon.anchorMin = icon.anchorMax = new Vector2(0f, 0.5f);
             icon.pivot = new Vector2(0f, 0.5f);
-            icon.anchoredPosition = new Vector2(14f, 0f);
+            icon.anchoredPosition = new Vector2(FrameSide + 6f, 0f);
             icon.sizeDelta = new Vector2(iconSize, iconSize);
             var iconImage = icon.GetComponent<Image>();
             iconImage.raycastTarget = false;
@@ -335,7 +350,7 @@ namespace NevrianGlowFarm.Editor
                 var key = Text(rt, "Badge", art.Font, 22f, BadgeColor, TextAlignmentOptions.Center);
                 key.rectTransform.anchorMin = key.rectTransform.anchorMax = new Vector2(0f, 0.5f);
                 key.rectTransform.pivot = new Vector2(0f, 0.5f);
-                key.rectTransform.anchoredPosition = new Vector2(14f, 0f);
+                key.rectTransform.anchoredPosition = new Vector2(FrameSide + 6f, 0f);
                 key.rectTransform.sizeDelta = new Vector2(iconSize, iconSize);
                 so.FindProperty("keyLabel").objectReferenceValue = key;
             }
@@ -604,6 +619,21 @@ namespace NevrianGlowFarm.Editor
         // ── 도우미 ──
 
         private static Sprite Load(string folder, string name) => AssetDatabase.LoadAssetAtPath<Sprite>($"{folder}/{name}.png");
+
+        // 아트 버튼 그림과 같은 텍스처에 테두리를 별 장식까지 넓힌 스프라이트 (개발 폴더 에셋, 한 번 만들면 재사용) — fillCenter 끄면 가장자리 장식만 그려진다
+        private static Sprite RowFrameSprite(Sprite source)
+        {
+            var existing = AssetDatabase.LoadAssetAtPath<Sprite>(RowFramePath);
+            if (existing != null && existing.texture == source.texture)
+                return existing;
+            var sprite = Sprite.Create(source.texture, source.rect, new Vector2(0.5f, 0.5f), source.pixelsPerUnit, 0, SpriteMeshType.FullRect,
+                new Vector4(FrameSide, FrameEdge, FrameSide, FrameEdge));
+            sprite.name = "ui_row_frame";
+            if (existing != null)
+                AssetDatabase.DeleteAsset(RowFramePath);
+            AssetDatabase.CreateAsset(sprite, RowFramePath);
+            return sprite;
+        }
 
         private static Object Template(Object owner, string property) => new SerializedObject(owner).FindProperty(property)?.objectReferenceValue;
 
