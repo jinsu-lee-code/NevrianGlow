@@ -196,6 +196,11 @@ MonoBehaviour:
   yawStep: 137.5
   harvestTrigger: Harvest
   regrowTrigger: Regrow
+  glowAbove: 0.35
+  beamMaterial: {fileID: 2100000, guid: dc56df107519eae4c98d1e10ff8837c3, type: 2}
+  beamHeight: 2.5
+  beamWidth: 0.05
+  beamAlpha: 0.45
 --- !u!1001 &3420125134230880770
 PrefabInstance:
   m_ObjectHideFlags: 0

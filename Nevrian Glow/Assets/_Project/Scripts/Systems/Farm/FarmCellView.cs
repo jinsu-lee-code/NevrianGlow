@@ -28,6 +28,14 @@ namespace NevrianGlowFarm.Systems.Farm
         [SerializeField] private string regrowTrigger = "Regrow";
         [Tooltip("다 자란 작물의 숨쉬는 빛 높이 — 모델 꼭대기 위 (m, 아트 0.35)")]
         [SerializeField, Min(0f)] private float glowAbove = 0.35f;
+        [Tooltip("다 자란 작물 위로 솟는 가는 빛기둥 재질 (URP Unlit 가산 — Build Farm Layout이 만들어 넣음). 비우면 빛기둥 없음 — 시선 유도 1안 (2026-10-25)")]
+        [SerializeField] private Material beamMaterial;
+        [Tooltip("빛기둥 높이 — 작물 꼭대기부터 (m)")]
+        [SerializeField, Min(0f)] private float beamHeight = 2.5f;
+        [Tooltip("빛기둥 굵기 (m)")]
+        [SerializeField, Min(0.01f)] private float beamWidth = 0.05f;
+        [Tooltip("빛기둥 밝기 — 작물 빛 색에 곱한다 (0~1)")]
+        [SerializeField, Range(0f, 1f)] private float beamAlpha = 0.45f;
 
         private FarmGrid grid;
         private int index;
@@ -124,6 +132,7 @@ namespace NevrianGlowFarm.Systems.Farm
             block.SetColor(BaseColorId, soilColor);
             soilRenderer.SetPropertyBlock(block);
             block.Clear();
+            cropGlowColor = cropColor;
 
             GameObject wanted = hasCrop && modelAnchor != null ? stagePrefab : null;
             SetModel(wanted);
@@ -183,29 +192,73 @@ namespace NevrianGlowFarm.Systems.Farm
             fruitShown = wanted;
         }
 
-        // 다 자란 작물 위에서 숨쉬는 빛 (VFX glow_pulse, 5-8) — 모델 꼭대기 위 glowAbove m
+        // 다 자란 작물 위에서 숨쉬는 빛 (VFX glow_pulse, 5-8) — 모델 꼭대기 위 glowAbove m. 그 위로 가는 빛기둥(시선 유도 1안: 멀리서 하늘을 배경으로 보인다)
         private GameObject glow;
+        private Transform beam;
+        private Renderer beamRenderer;
         private bool glowOn;
+        private Color cropGlowColor = Color.white;
 
         private void SetGlow(bool on)
         {
             if (on == glowOn)
                 return;
             glowOn = on;
+            float top = ModelTop();
             if (on && glow == null)
                 glow = VfxManager.Attach(VfxCues.GlowPulse, transform);
-            if (glow == null)
-                return;
-            if (on)
+            if (glow != null)
             {
-                float top = modelAnchor != null ? modelAnchor.position.y : transform.position.y;
-                if (shownModel != null)
-                    foreach (var r in shownModel.GetComponentsInChildren<Renderer>())
-                        if (!(r is ParticleSystemRenderer))
-                            top = Mathf.Max(top, r.bounds.max.y);
-                glow.transform.position = new Vector3(transform.position.x, top + glowAbove, transform.position.z);
+                if (on)
+                    glow.transform.position = new Vector3(transform.position.x, top + glowAbove, transform.position.z);
+                VfxManager.SetPlaying(glow, on);
             }
-            VfxManager.SetPlaying(glow, on);
+            SetBeam(on, top);
+        }
+
+        private float ModelTop()
+        {
+            float top = modelAnchor != null ? modelAnchor.position.y : transform.position.y;
+            if (shownModel != null)
+                foreach (var r in shownModel.GetComponentsInChildren<Renderer>())
+                    if (!(r is ParticleSystemRenderer))
+                        top = Mathf.Max(top, r.bounds.max.y);
+            return top;
+        }
+
+        // 빛기둥: 콜라이더 없는 가는 원기둥(월드 크기 — 칸 배율과 무관), 작물 빛 색 × beamAlpha
+        private void SetBeam(bool on, float top)
+        {
+            if (beamMaterial == null || beamHeight <= 0f)
+                return;
+            if (beam == null)
+            {
+                if (!on)
+                    return;
+                var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                go.name = "ReadyBeam";
+                Destroy(go.GetComponent<Collider>());
+                go.transform.SetParent(transform, false);
+                beam = go.transform;
+                beamRenderer = go.GetComponent<Renderer>();
+                beamRenderer.sharedMaterial = beamMaterial;
+                beamRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                beamRenderer.receiveShadows = false;
+            }
+            beam.gameObject.SetActive(on);
+            if (!on)
+                return;
+            float bottom = top + glowAbove * 0.5f;
+            beam.position = new Vector3(transform.position.x, bottom + beamHeight * 0.5f, transform.position.z);
+            beam.rotation = Quaternion.identity;
+            var parentScale = transform.lossyScale;
+            beam.localScale = new Vector3(beamWidth / Mathf.Max(0.01f, parentScale.x), beamHeight * 0.5f / Mathf.Max(0.01f, parentScale.y), beamWidth / Mathf.Max(0.01f, parentScale.z));
+            var color = cropGlowColor;
+            color.a = beamAlpha;
+            block.Clear();
+            block.SetColor(BaseColorId, color);
+            beamRenderer.SetPropertyBlock(block);
+            block.Clear();
         }
 
         /// <summary>수확 순간 반짝임 (FarmGrid가 수확 성공 때 부른다).</summary>

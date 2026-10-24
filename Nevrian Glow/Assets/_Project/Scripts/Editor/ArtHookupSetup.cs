@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System.Collections.Generic;
 using NevrianGlowFarm.Data;
+using NevrianGlowFarm.Systems.Shop;
 using UnityEditor;
 using UnityEngine;
 
@@ -201,11 +202,22 @@ namespace NevrianGlowFarm.Editor
         private static readonly Vector2[] TieredRows = { new Vector2(0.17f, 0.33f), new Vector2(0.60f, 0.16f), new Vector2(1.04f, -0.12f) };
         // 낮은 판매대(1.8 × 0.9 × 1.4 m): 가운데가 솟은 경사 윗면 — 앞쪽 경사면 세 줄
         private static readonly Vector2[] CounterRows = { new Vector2(0.71f, 0.45f), new Vector2(0.76f, 0.25f), new Vector2(0.80f, 0.05f) };
-        // 진열 가능 영역(파인 쟁반, 로컬 xMin · zMin · xMax · zMax) — 모델 위에서 레이로 잰 값 (2026-10-25 사용자: 파인 자리에만, 기울인 면을 따라)
-        // 3층 경사 진열대: 층마다 나무 상자 바닥 (앞 턱 안쪽, 세로 칸막이는 홈이라 가로질러도 됨). 낮은 층 z 0.29~0.37 · 가운데 0.12~0.20 · 높은 층 -0.27~0.03
-        private static readonly Vector4[] TieredTrays = { new Vector4(-0.72f, 0.29f, 0.72f, 0.37f), new Vector4(-0.72f, 0.12f, 0.72f, 0.20f), new Vector4(-0.72f, -0.27f, 0.72f, 0.03f) };
-        // 낮은 판매대: 가운데 솟은 지붕면 양옆의 파인 쟁반 두 줄 (x ±0.6~0.8, 바깥쪽으로 20° 기울어짐), 길이 z -0.55~0.55
-        private static readonly Vector4[] CounterTrays = { new Vector4(-0.80f, -0.55f, -0.60f, 0.55f), new Vector4(0.60f, -0.55f, 0.80f, 0.55f) };
+        // 진열 가능 영역(파인 쟁반 · 바구니, 채우는 순서) — 모델 위에서 레이로 잰 값 (2026-10-25 사용자: 파인 자리에만 · 한 줄 · 기울인 면을 따라)
+        // 3층 경사 진열대: 층마다 가운데 기둥으로 나뉜 바구니 2개(x ±0.08~0.72), 한 줄씩 — 앞 턱(낮은 층 z 0.375 · 가운데 0.2 · 높은 층 0.05)에 작물이 걸리지 않게 턱 안쪽 z에,
+        // 바닥 높이(0.18 · 0.60 · 1.03)를 적어 윗층 처마 아래의 바닥을 잡는다
+        private static readonly ShelfDisplay.Tray[] TieredTrays =
+        {
+            new ShelfDisplay.Tray(new Vector2(-0.72f, -0.08f), new Vector2(0.27f, 0.27f), 0.18f, 0f), new ShelfDisplay.Tray(new Vector2(0.08f, 0.72f), new Vector2(0.27f, 0.27f), 0.18f, 0f),
+            new ShelfDisplay.Tray(new Vector2(-0.72f, -0.08f), new Vector2(0.10f, 0.10f), 0.60f, 0f), new ShelfDisplay.Tray(new Vector2(0.08f, 0.72f), new Vector2(0.10f, 0.10f), 0.60f, 0f),
+            new ShelfDisplay.Tray(new Vector2(-0.72f, -0.08f), new Vector2(-0.07f, -0.07f), 1.03f, 0f), new ShelfDisplay.Tray(new Vector2(0.08f, 0.72f), new Vector2(-0.07f, -0.07f), 1.03f, 0f),
+        };
+        // 낮은 판매대: 양옆 파인 쟁반(x ±0.6~0.8, 바깥으로 20° 경사, 길이 z ±0.55) 한 줄씩 — 그쪽에 선 손님을 보게 ±90° · 가운데 낮은 지붕면(x ±0.4 · z ±0.5, 양옆 턱 0.9보다 낮은 0.7~0.82)
+        private static readonly ShelfDisplay.Tray[] CounterTrays =
+        {
+            new ShelfDisplay.Tray(new Vector2(-0.80f, -0.60f), new Vector2(-0.55f, 0.55f), 0.70f, -90f),
+            new ShelfDisplay.Tray(new Vector2(0.60f, 0.80f), new Vector2(-0.55f, 0.55f), 0.70f, 90f),
+            new ShelfDisplay.Tray(new Vector2(-0.40f, 0.40f), new Vector2(-0.50f, 0.50f), 0.78f, 0f),
+        };
 
         [MenuItem("Glow Farm/Setup/Connect Art (5) Produce Shelves")]
         private static void ProduceShelvesMenu()
@@ -220,7 +232,7 @@ namespace NevrianGlowFarm.Editor
         }
 
         // fruit_shelf(ShelfDisplay · 홀로그램 · 설정 참조)의 Variant: 회색 몸체는 숨기고 아트 모델을 자식으로, 진열 줄 · 조준 상자를 모델에 맞춘다
-        private static string ShelfVariant(string path, string artPath, Vector2[] rows, Vector4[] trays, Vector3 size)
+        private static string ShelfVariant(string path, string artPath, Vector2[] rows, ShelfDisplay.Tray[] trays, Vector3 size)
         {
             var art = AssetDatabase.LoadAssetAtPath<GameObject>(artPath);
             var baseShelf = AssetDatabase.LoadAssetAtPath<GameObject>(FruitShelfBase);
@@ -264,7 +276,13 @@ namespace NevrianGlowFarm.Editor
                 var trayList = so.FindProperty("trays");
                 trayList.arraySize = trays.Length;
                 for (int i = 0; i < trays.Length; i++)
-                    trayList.GetArrayElementAtIndex(i).vector4Value = trays[i];
+                {
+                    var e = trayList.GetArrayElementAtIndex(i);
+                    e.FindPropertyRelative("x").vector2Value = trays[i].X;
+                    e.FindPropertyRelative("z").vector2Value = trays[i].Z;
+                    e.FindPropertyRelative("floorHeight").floatValue = trays[i].FloorHeight;
+                    e.FindPropertyRelative("yaw").floatValue = trays[i].Yaw;
+                }
                 so.ApplyModifiedPropertiesWithoutUndo();
                 if (root.TryGetComponent<BoxCollider>(out var box))
                 {

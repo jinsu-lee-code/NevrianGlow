@@ -45,8 +45,32 @@ namespace NevrianGlowFarm.Systems.Shop
         [SerializeField, Min(0.05f)] private float itemSize = 0.24f;
         [Tooltip("줄마다 (놓는 면 높이, 앞뒤 위치 z) — 0번 = 앞줄(손님 쪽). 층 · 경사 진열대(아트 2026-10-22)용, 비우면 topHeight 한 면에 stackSpacing 간격 (m)")]
         [SerializeField] private List<Vector2> rowLayout = new List<Vector2>();
-        [Tooltip("진열 가능 영역(파인 쟁반) — 칸 중심 기준 로컬 (xMin, zMin, xMax, zMax). 있으면 이 영역 안에만 stackSpacing 격자로 놓고 면 기울기를 따른다, 칸당 개수가 안 들어가면 간격 · 크기를 줄인다 (m, 2026-10-25)")]
-        [SerializeField] private List<Vector4> trays = new List<Vector4>();
+        [Tooltip("진열 가능 영역(파인 쟁반 · 바구니) — 채우는 순서대로. 있으면 이 영역 안에만 stackSpacing 격자로 놓고 면 기울기를 따른다, 칸당 개수가 안 들어가면 간격 · 크기를 줄인다 (2026-10-25)")]
+        [SerializeField] private List<Tray> trays = new List<Tray>();
+
+        /// <summary>진열 가능 영역 하나 (칸 중심 기준 로컬). z 범위를 0으로 주면 한 줄.</summary>
+        [System.Serializable]
+        public struct Tray
+        {
+            [Tooltip("로컬 x 범위 (m)")]
+            [SerializeField] private Vector2 x;
+            [Tooltip("로컬 z 범위 — 같은 값이면 한 줄 (m)")]
+            [SerializeField] private Vector2 z;
+            [Tooltip("놓는 면의 대략 높이 — 위에서 쏜 레이가 여러 면에 맞으면(윗층 턱 · 처마) 이 높이에 가장 가까운 면 (m, 0 = 가장 높은 면)")]
+            [SerializeField, Min(0f)] private float floorHeight;
+            [Tooltip("작물이 바라보는 방향 — 0 = 손님 쪽 +Z, 90 = +X, -90 = -X (도)")]
+            [SerializeField] private float yaw;
+
+            public Tray(Vector2 x, Vector2 z, float floorHeight, float yaw)
+            {
+                this.x = x; this.z = z; this.floorHeight = floorHeight; this.yaw = yaw;
+            }
+
+            public Vector2 X => x;
+            public Vector2 Z => z;
+            public float FloorHeight => floorHeight;
+            public float Yaw => yaw;
+        }
         [Tooltip("놓을 수 있을 때 홀로그램 색 — 알파 = 투명도, 밝기는 재질의 Emission Scale (시안 #62F2E1)")]
         [SerializeField] private Color okColor = new Color(0.38f, 0.95f, 0.88f, 0.35f);
         [Tooltip("놓을 수 없을 때 홀로그램 색 (빨강)")]
@@ -69,9 +93,8 @@ namespace NevrianGlowFarm.Systems.Shop
         private ShelfState state;
         private readonly List<Collider> surfaceColliders = new List<Collider>();
         private readonly Dictionary<int, float> surfaceHeights = new Dictionary<int, float>();
-        private readonly List<Vector2> trayGrid = new List<Vector2>();            // 쟁반 격자 자리 (칸 중심 기준 x · z), 채우는 순서대로
+        private readonly List<(Vector2 Cell, int Tray)> trayGrid = new List<(Vector2, int)>(); // 쟁반 격자 자리 (칸 중심 기준 x · z, 쟁반 번호), 채우는 순서대로
         private readonly Dictionary<int, (Vector3 Pos, Quaternion Rot)> trayPoints = new Dictionary<int, (Vector3, Quaternion)>();
-        private float trayItemScale = 1f;                                         // 쟁반에 다 넣으려고 줄인 비율
         private readonly List<List<Renderer>> views = new List<List<Renderer>>();
         private readonly List<(Transform Item, Vector3 To, float Time)> placing = new List<(Transform, Vector3, float)>();
         private CropData aimedCrop;
@@ -99,45 +122,37 @@ namespace NevrianGlowFarm.Systems.Shop
                 return;
             }
             block = new MaterialPropertyBlock();
-            state = new ShelfState(BaseSlots, ItemsPerSlot);
+            BuildTrayGrid();
+            // 칸당 개수는 가구 데이터(30)와 바구니에 실제로 들어가는 수 중 작은 쪽 (2026-10-25 사용자: 바구니 크기에 맞게 개수 조정)
+            int perSlot = trayGrid.Count > 0 ? Mathf.Min(ItemsPerSlot, trayGrid.Count) : ItemsPerSlot;
+            state = new ShelfState(BaseSlots, perSlot);
             hologram.gameObject.SetActive(false);
             AddSurfaceColliders();
-            BuildTrayGrid();
             FitBody();
             RefreshAll();
         }
 
-        // 진열된 작물 한 개의 크기 — 쟁반에 다 넣으려고 줄였으면 그만큼 작게 (m)
-        private float PlacedSize => itemSize * trayItemScale;
+        // 진열된 작물 한 개의 크기 (m)
+        private float PlacedSize => itemSize;
 
-        // 쟁반 영역을 stackSpacing 격자로 나눈 자리 (2026-10-25 사용자: 파인 쟁반 안에만, 기울인 면을 따라).
-        // 칸당 개수가 다 안 들어가면 간격을 10 %씩 줄인다 (작물 크기도 같은 비율로). 쟁반 순서대로 · 쟁반 안은 앞줄(+Z)부터 채운다
+        // 쟁반 영역을 stackSpacing 격자로 나눈 자리 (2026-10-25 사용자: 파인 쟁반 안에만, 한 줄, 기울인 면을 따라).
+        // 한 영역에 들어가는 수 = 너비 ÷ 간격 (작물은 간격보다 조금 커서 이웃과 살짝 겹친다 — 수북한 느낌, 영역 밖 턱 · 기둥으로는 안 나감).
+        // 쟁반 순서대로 · 쟁반 안은 앞줄(+Z)부터 채운다
         private void BuildTrayGrid()
         {
             trayGrid.Clear();
             trayPoints.Clear();
-            trayItemScale = 1f;
-            if (trays.Count == 0)
-                return;
-            float spacing = stackSpacing;
-            for (int attempt = 0; attempt < 12; attempt++)
+            for (int ti = 0; ti < trays.Count; ti++)
             {
-                trayGrid.Clear();
-                foreach (var t in trays)
-                {
-                    float width = Mathf.Abs(t.z - t.x), depth = Mathf.Abs(t.w - t.y);
-                    int cols = Mathf.Max(1, Mathf.RoundToInt(width / spacing));
-                    int rows = Mathf.Max(1, Mathf.RoundToInt(depth / spacing));
-                    float cx = (t.x + t.z) * 0.5f, cz = (t.y + t.w) * 0.5f;
-                    for (int r = 0; r < rows; r++)
-                        for (int c = 0; c < cols; c++)
-                            trayGrid.Add(new Vector2(cx + (c - (cols - 1) * 0.5f) * spacing, cz + ((rows - 1) * 0.5f - r) * spacing));
-                }
-                if (trayGrid.Count >= state.ItemsPerSlot)
-                    break;
-                spacing *= 0.9f;
+                var t = trays[ti];
+                float width = Mathf.Abs(t.X.y - t.X.x), depth = Mathf.Abs(t.Z.y - t.Z.x);
+                int cols = Mathf.Max(1, Mathf.FloorToInt(width / stackSpacing + 0.001f));
+                int rows = Mathf.Max(1, Mathf.FloorToInt(depth / stackSpacing + 0.001f));
+                float cx = (t.X.x + t.X.y) * 0.5f, cz = (t.Z.x + t.Z.y) * 0.5f;
+                for (int r = 0; r < rows; r++)
+                    for (int c = 0; c < cols; c++)
+                        trayGrid.Add((new Vector2(cx + (c - (cols - 1) * 0.5f) * stackSpacing, cz + ((rows - 1) * 0.5f - r) * stackSpacing), ti));
             }
-            trayItemScale = spacing / stackSpacing;
         }
 
         // 쟁반 자리 하나: 격자 x · z 위에서 아래로 쏜 레이가 처음 닿는 모델 면에 작물 바닥을 대고, 면의 기울기만큼 눕힌다. 한 번 재면 기억한다
@@ -146,17 +161,22 @@ namespace NevrianGlowFarm.Systems.Shop
             int key = slot * 1000 + index;
             if (trayPoints.TryGetValue(key, out var point))
                 return point;
-            var cell = trayGrid[index % trayGrid.Count];
+            var (cell, trayIndex) = trayGrid[index % trayGrid.Count];
+            var tray = trays[trayIndex];
             float x = (float)ShelfLayout.SlotCenterX(slot, state.SlotCount, slotPitch) + cell.x;
             float z = cell.y;
             float half = PlacedSize * 0.5f + 0.005f;
-            point = (new Vector3(x, topHeight + half, z), Quaternion.identity);
+            var facing = Quaternion.Euler(0f, tray.Yaw, 0f);
+            float floor = tray.FloorHeight > 0f ? tray.FloorHeight : topHeight;
+            point = (new Vector3(x, floor + half, z), facing);
             if (surfaceColliders.Count > 0)
             {
-                Vector3 top = transform.TransformPoint(new Vector3(x, 3f, z));
+                // 바닥 높이를 알면 그 바로 위(작물 한 개 높이)에서 쏜다 — 윗층 턱 · 처마 아래의 바닥도 잡는다 (메시 콜라이더 하나는 레이에 한 번만 맞으므로 위에서 쏘면 처마에 막힘)
+                float from = tray.FloorHeight > 0f ? tray.FloorHeight + itemSize : 3f;
+                Vector3 top = transform.TransformPoint(new Vector3(x, from, z));
                 bool any = false;
                 RaycastHit best = default;
-                foreach (var h in Physics.RaycastAll(top, -transform.up, 6f, ~0, QueryTriggerInteraction.Ignore))
+                foreach (var h in Physics.RaycastAll(top, -transform.up, from + 1f, ~0, QueryTriggerInteraction.Ignore))
                 {
                     if (!surfaceColliders.Contains(h.collider))
                         continue;
@@ -168,7 +188,7 @@ namespace NevrianGlowFarm.Systems.Shop
                     if (normal.y < 0.5f)
                         normal = Vector3.up; // 벽 · 턱의 옆면에 맞으면 세워 둔다
                     Vector3 hit = transform.InverseTransformPoint(best.point);
-                    point = (hit + normal * half, Quaternion.FromToRotation(Vector3.up, normal));
+                    point = (hit + normal * half, Quaternion.FromToRotation(Vector3.up, normal) * facing);
                 }
             }
             trayPoints[key] = point;

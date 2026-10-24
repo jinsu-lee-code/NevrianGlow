@@ -135,6 +135,22 @@ namespace NevrianGlowFarm.Editor
             grassSo.FindProperty("cellArea").floatValue = settings.CellPitch; // 칸 간격만큼 풀을 지운다
             grassSo.ApplyModifiedPropertiesWithoutUndo();
 
+            // 다 자란 작물의 빛기둥 재질 → 칸 프리팹 (시선 유도 1안, 2026-10-25)
+            var cellPrefab = gso.FindProperty("cellPrefab").objectReferenceValue as FarmCellView;
+            if (cellPrefab != null)
+            {
+                var beam = EnsureBeamMaterial();
+                var cso = new SerializedObject(cellPrefab);
+                if (cso.FindProperty("beamMaterial").objectReferenceValue != beam)
+                {
+                    cso.FindProperty("beamMaterial").objectReferenceValue = beam;
+                    cso.ApplyModifiedPropertiesWithoutUndo();
+                    EditorUtility.SetDirty(cellPrefab);
+                    AssetDatabase.SaveAssets();
+                    notes.Add("칸 프리팹 빛기둥 재질 연결");
+                }
+            }
+
             // 울타리 (아트 fence 10/23: 기둥 · 가로대 2종 — 사용자 결정 2026-10-25: 밭 기준 둘레로 플레이어 이동 범위 제한)
             // 둘레 길 바깥 여유만큼 떨어진 사각형, 문 쪽(앞마당 끝 = 문 줄)은 문 자리만 비운다. 각 줄에 보이지 않는 상자 콜라이더
             float fa0 = aMin - p - FenceMargin, fa1 = aMax + p + FenceMargin, fc0 = cDoor, fc1 = cMax + p + FenceMargin;
@@ -175,6 +191,34 @@ namespace NevrianGlowFarm.Editor
         }
 
         // ── 부품 ──
+
+        // 빛기둥 재질: URP Unlit · 투명 · 가산 (색은 칸이 작물 빛 색으로 블록에 넣는다). 있으면 그대로
+        private const string BeamMaterialPath = "Assets/_Project/Art/Materials/mat_vfx_ready_beam.mat";
+
+        private static Material EnsureBeamMaterial()
+        {
+            var material = AssetDatabase.LoadAssetAtPath<Material>(BeamMaterialPath);
+            if (material != null)
+                return material;
+            var shader = Shader.Find("Universal Render Pipeline/Unlit");
+            material = new Material(shader) { name = "mat_vfx_ready_beam" };
+            // URP Unlit의 투명 · 가산 설정 (인스펙터 Surface Transparent · Blend Additive와 같은 값 · 키워드)
+            material.SetFloat("_Surface", 1f);
+            material.SetFloat("_Blend", 2f);
+            material.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.One);
+            material.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.One);
+            material.SetFloat("_SrcBlendAlpha", (float)UnityEngine.Rendering.BlendMode.One);
+            material.SetFloat("_DstBlendAlpha", (float)UnityEngine.Rendering.BlendMode.One);
+            material.SetFloat("_ZWrite", 0f);
+            material.SetFloat("_Cull", 2f);
+            material.SetColor("_BaseColor", new Color(0.4f, 0.95f, 0.9f, 0.45f));
+            material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            material.SetOverrideTag("RenderType", "Transparent");
+            material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(BeamMaterialPath));
+            AssetDatabase.CreateAsset(material, BeamMaterialPath);
+            return material;
+        }
 
         private static Vector3 Flat(Vector3 v)
         {
