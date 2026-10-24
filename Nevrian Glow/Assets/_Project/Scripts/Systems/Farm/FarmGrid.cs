@@ -14,7 +14,7 @@ namespace NevrianGlowFarm.Systems.Farm
     /// 칸 상태 · 규칙은 Logic(FarmState · FarmRules · NightPipeline), 여기는 칸 표시 생성 · 입력 전달 · 밤 처리 연결만 한다.
     /// 밤 처리는 일차가 바뀌는 단계 전환(PhaseChange.DayChanged) 때 1회.
     /// </summary>
-    public class FarmGrid : MonoBehaviour
+    public class FarmGrid : MonoBehaviour, Tutorial.ITutorialHighlightSource
     {
         [Header("참조")]
         [Tooltip("구획 수 · 칸 간격 · 개간 작업량 (Data/Stats/GameStartSettings)")]
@@ -90,12 +90,51 @@ namespace NevrianGlowFarm.Systems.Farm
         {
             GameEvents.PhaseChanged += OnPhaseChanged;
             GameEvents.StatsChanged += OnStatsChanged;
+            Tutorial.TutorialHighlights.Register(this);
         }
 
         private void OnDisable()
         {
             GameEvents.PhaseChanged -= OnPhaseChanged;
             GameEvents.StatsChanged -= OnStatsChanged;
+            Tutorial.TutorialHighlights.Unregister(this);
+        }
+
+        // 튜토리얼 강조 (5-7): bed_tutorial[:cell_N] = 첫 밭(4칸) 가운데 또는 N번 칸, bed_next = 둘째 밭, planted_cells = 작물이 있는 첫 칸
+        public bool TryGetHighlight(string name, string arg, out Tutorial.HighlightHit hit)
+        {
+            hit = default;
+            if (state == null)
+                return false;
+            int bed = name == "bed_tutorial" ? 0 : name == "bed_next" ? 1 : -1;
+            if (bed >= 0)
+            {
+                if (!string.IsNullOrEmpty(arg) && arg.StartsWith("cell_") && int.TryParse(arg.Substring(5), out int cell) && cell >= 0 && cell < state.Cells.Count)
+                {
+                    hit = Tutorial.HighlightHit.At(CellPosition(cell) + Vector3.up * 0.9f);
+                    return true;
+                }
+                int first = bed * FarmLayout.CellsPerBed;
+                if (first >= state.Cells.Count)
+                    return false;
+                Vector3 center = Vector3.zero;
+                int n = Mathf.Min(FarmLayout.CellsPerBed, state.Cells.Count - first);
+                for (int i = 0; i < n; i++)
+                    center += CellPosition(first + i);
+                hit = Tutorial.HighlightHit.At(center / n + Vector3.up * 0.9f);
+                return true;
+            }
+            if (name == "planted_cells")
+            {
+                for (int i = 0; i < state.Cells.Count; i++)
+                    if (state.Cells[i].HasCrop)
+                    {
+                        hit = Tutorial.HighlightHit.At(CellPosition(i) + Vector3.up * 0.9f);
+                        return true;
+                    }
+                return false;
+            }
+            return false;
         }
 
         // 성장일이 줄면 이미 자란 칸이 바로 다 자람이 될 수 있다 → 겉모습만 다시 (성장 처리는 밤에만)

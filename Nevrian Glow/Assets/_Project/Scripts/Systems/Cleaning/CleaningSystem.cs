@@ -17,7 +17,7 @@ namespace NevrianGlowFarm.Systems.Cleaning
     /// 흩어진 상품(진열대에서 빼서 바닥에, 진짜 재고) · 흐트러진 진열 칸. 놓을 자리는 포아송 배치(금지 구역 · 바닥 아이템 · 서로 사이 간격).
     /// 쓰레기 · 바닥 상품은 날이 지나도 남고(바닥 아이템), 얼룩 · 흐트러짐은 날마다 새로. 청결도 · 정돈도는 장사 단계가 시작될 때 확정한다.
     /// </summary>
-    public class CleaningSystem : MonoBehaviour
+    public class CleaningSystem : MonoBehaviour, Tutorial.ITutorialHighlightSource
     {
         private const int ScatterPurpose = 3; // 쓰레기 · 얼룩 · 흩어진 상품 배치용 난수 흐름
         private const int MessPurpose = 7;    // 흩어질 상품 · 흐트러질 칸 고르기
@@ -115,8 +115,54 @@ namespace NevrianGlowFarm.Systems.Cleaning
                 instance = null;
         }
 
-        private void OnEnable() => GameEvents.PhaseChanged += OnPhaseChanged;
-        private void OnDisable() => GameEvents.PhaseChanged -= OnPhaseChanged;
+        private void OnEnable()
+        {
+            GameEvents.PhaseChanged += OnPhaseChanged;
+            Tutorial.TutorialHighlights.Register(this);
+        }
+
+        private void OnDisable()
+        {
+            GameEvents.PhaseChanged -= OnPhaseChanged;
+            Tutorial.TutorialHighlights.Unregister(this);
+        }
+
+        // 튜토리얼 강조 (5-7): stains = 플레이어에게 가장 가까운 남은 얼룩, trash_nearest = 가장 가까운 바닥 쓰레기
+        public bool TryGetHighlight(string name, string arg, out Tutorial.HighlightHit hit)
+        {
+            hit = default;
+            if (name != "stains" && name != "trash_nearest")
+                return false;
+            var cam = Camera.main;
+            Vector3 from = cam != null ? cam.transform.position : transform.position;
+            Transform best = null;
+            float bestDist = float.MaxValue;
+            if (name == "stains")
+            {
+                foreach (var s in stains)
+                    if (s != null && !s.IsClean && Nearer(s.transform, from, ref bestDist))
+                        best = s.transform;
+            }
+            else
+            {
+                foreach (var item in WorldItem.All)
+                    if (item != null && item.Item == settings.TrashItem && item.gameObject.scene == gameObject.scene && Nearer(item.transform, from, ref bestDist))
+                        best = item.transform;
+            }
+            if (best == null)
+                return false;
+            hit = Tutorial.HighlightHit.At(best.position + Vector3.up * 0.6f);
+            return true;
+        }
+
+        private static bool Nearer(Transform t, Vector3 from, ref float bestDist)
+        {
+            float d = (t.position - from).sqrMagnitude;
+            if (d >= bestDist)
+                return false;
+            bestDist = d;
+            return true;
+        }
 
         private void OnPhaseChanged(PhaseChange change)
         {

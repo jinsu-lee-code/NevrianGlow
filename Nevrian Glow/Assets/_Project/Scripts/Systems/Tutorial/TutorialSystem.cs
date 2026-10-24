@@ -28,6 +28,8 @@ namespace NevrianGlowFarm.Systems.Tutorial
         [Header("조정값")]
         [Tooltip("한 프레임에 이보다 멀리 움직이면 순간이동으로 보고 걸은 거리에 더하지 않는다 (m)")]
         [SerializeField, Min(0.5f)] private float teleportThreshold = 5f;
+        [Tooltip("강조 대상을 다시 찾는 간격 — 상점 줄처럼 나중에 생기는 대상 (초)")]
+        [SerializeField, Min(0.05f)] private float highlightRefresh = 0.2f;
 
         [Header("디버그")]
         [Tooltip("상태 · 현재 단계 (읽기 전용)")]
@@ -44,6 +46,10 @@ namespace NevrianGlowFarm.Systems.Tutorial
         private string pendingLetter;
         private bool pendingSkill;
         private bool pushing;
+        private UI.TutorialHighlightView highlightView;
+        private readonly System.Collections.Generic.List<string> highlightNames = new System.Collections.Generic.List<string>();
+        private readonly System.Collections.Generic.List<HighlightHit> highlightHits = new System.Collections.Generic.List<HighlightHit>();
+        private float nextHighlightRefresh;
 
         public static TutorialSystem Instance => instance;
 
@@ -168,6 +174,7 @@ namespace NevrianGlowFarm.Systems.Tutorial
                 inventory.Changed += OnInventoryChanged;
             var controller = FindFirstObjectByType<PlayerController>();
             player = controller != null ? controller.transform : null;
+            highlightView = FindFirstObjectByType<UI.TutorialHighlightView>(FindObjectsInactive.Include); // Core UICanvas — 없으면 강조 없음
         }
 
         // ── GameEvents → 완료 이벤트 이름 ──
@@ -219,6 +226,11 @@ namespace NevrianGlowFarm.Systems.Tutorial
         {
             pendingLetter = null;
             pendingSkill = false;
+            highlightNames.Clear();
+            if (step != null)
+                highlightNames.AddRange(Logic.Data.PlanCsv.SplitList(step.Highlight));
+            nextHighlightRefresh = 0f;
+            RefreshHighlights();
             if (step != null)
             {
                 // 단계가 기다리는 것에 맞춰 화면을 연다 (편지 · 스킬 트리). id가 아니라 완료 이벤트 종류로 정한다
@@ -291,6 +303,22 @@ namespace NevrianGlowFarm.Systems.Tutorial
             if (pendingLetter != null || (pendingSkill && SkillScreen.Instance != null && !SkillScreen.Instance.IsOpen))
                 TryOpenPending();
             TrackMovement();
+            if (Time.unscaledTime >= nextHighlightRefresh)
+                RefreshHighlights();
+        }
+
+        // 강조 대상(기획 highlight 열)을 이름으로 다시 찾아 표시에 넘긴다 — 상점 줄 · 손님처럼 그때그때 생기는 대상이 있어 간격마다
+        private void RefreshHighlights()
+        {
+            nextHighlightRefresh = Time.unscaledTime + highlightRefresh;
+            if (highlightView == null)
+                return;
+            highlightHits.Clear();
+            if (progress.IsRunning)
+                foreach (var name in highlightNames)
+                    if (TutorialHighlights.TryResolve(name, out var hit))
+                        highlightHits.Add(hit);
+            highlightView.SetTargets(highlightHits);
         }
 
         // 걸은 거리: 조건이 moved인 동안만 수평 이동량을 더한다 (순간이동 · 장소 이동은 뺌)

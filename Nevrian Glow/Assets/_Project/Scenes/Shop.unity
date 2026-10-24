@@ -389,7 +389,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7130760301262184053, guid: 849ad32aef6b6764fa6925338878165d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 129250892}
   m_SourcePrefab: {fileID: 100100000, guid: 849ad32aef6b6764fa6925338878165d, type: 3}
 --- !u!4 &129250889 stripped
 Transform:
@@ -401,12 +404,31 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3391755816587949873, guid: 849ad32aef6b6764fa6925338878165d, type: 3}
   m_PrefabInstance: {fileID: 129250888}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 129250891}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 43785dfac0566254c9384621e8681491, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Systems.Shop.ShelfDisplay
+--- !u!1 &129250891 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7130760301262184053, guid: 849ad32aef6b6764fa6925338878165d, type: 3}
+  m_PrefabInstance: {fileID: 129250888}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &129250892
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 129250891}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1316361089}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Systems.Tutorial.TutorialHighlightTarget
+  targetName: fruit_shelf_1
+  height: 1.9
 --- !u!1 &153725163
 GameObject:
   m_ObjectHideFlags: 0
@@ -1950,6 +1972,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1903633347}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!115 &1316361089
+MonoScript:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  serializedVersion: 7
+  m_DefaultReferences: {}
+  m_Icon: {fileID: 0}
+  m_Type: 0
+  m_ExecutionOrder: 0
+  m_ClassName: TutorialHighlightTarget
+  m_Namespace: NevrianGlowFarm.Systems.Tutorial
+  m_AssemblyName: Assembly-CSharp
 --- !u!1 &1345297654
 GameObject:
   m_ObjectHideFlags: 0
@@ -2052,7 +2089,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7130760301262184053, guid: 849ad32aef6b6764fa6925338878165d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1359165625}
   m_SourcePrefab: {fileID: 100100000, guid: 849ad32aef6b6764fa6925338878165d, type: 3}
 --- !u!4 &1359165622 stripped
 Transform:
@@ -2064,12 +2104,31 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3391755816587949873, guid: 849ad32aef6b6764fa6925338878165d, type: 3}
   m_PrefabInstance: {fileID: 1359165621}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 1359165624}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 43785dfac0566254c9384621e8681491, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Systems.Shop.ShelfDisplay
+--- !u!1 &1359165624 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7130760301262184053, guid: 849ad32aef6b6764fa6925338878165d, type: 3}
+  m_PrefabInstance: {fileID: 1359165621}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1359165625
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1359165624}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1316361089}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Systems.Tutorial.TutorialHighlightTarget
+  targetName: fruit_shelf_3
+  height: 1.9
 --- !u!1 &1371557244
 GameObject:
   m_ObjectHideFlags: 0
@@ -2857,13 +2916,35 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5998195114360203147, guid: a43ed1ab6298538459a455d1bb745314, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1945892057}
   m_SourcePrefab: {fileID: 100100000, guid: a43ed1ab6298538459a455d1bb745314, type: 3}
 --- !u!4 &1945892055 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6764631987474591553, guid: a43ed1ab6298538459a455d1bb745314, type: 3}
   m_PrefabInstance: {fileID: 1945892054}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1945892056 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5998195114360203147, guid: a43ed1ab6298538459a455d1bb745314, type: 3}
+  m_PrefabInstance: {fileID: 1945892054}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1945892057
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1945892056}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1316361089}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Systems.Tutorial.TutorialHighlightTarget
+  targetName: signboard
+  height: 1.8
 --- !u!1 &2003378852
 GameObject:
   m_ObjectHideFlags: 0
@@ -2969,13 +3050,35 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4255729645154063845, guid: cbf7ea0c2cc133144a77dcac3338a2f0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2081728892}
   m_SourcePrefab: {fileID: 100100000, guid: cbf7ea0c2cc133144a77dcac3338a2f0, type: 3}
 --- !u!4 &2081728890 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4285260820898712609, guid: cbf7ea0c2cc133144a77dcac3338a2f0, type: 3}
   m_PrefabInstance: {fileID: 2081728889}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &2081728891 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4255729645154063845, guid: cbf7ea0c2cc133144a77dcac3338a2f0, type: 3}
+  m_PrefabInstance: {fileID: 2081728889}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2081728892
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2081728891}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1316361089}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Systems.Tutorial.TutorialHighlightTarget
+  targetName: trash_bin
+  height: 1.4
 --- !u!1001 &2124707864
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3031,7 +3134,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6894668897593443472, guid: be30430c753738a4e9af168735e0ecf6, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2124707868}
   m_SourcePrefab: {fileID: 100100000, guid: be30430c753738a4e9af168735e0ecf6, type: 3}
 --- !u!4 &2124707865 stripped
 Transform:
@@ -3043,12 +3149,31 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1318054486649581012, guid: be30430c753738a4e9af168735e0ecf6, type: 3}
   m_PrefabInstance: {fileID: 2124707864}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 2124707867}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 43785dfac0566254c9384621e8681491, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Systems.Shop.ShelfDisplay
+--- !u!1 &2124707867 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6894668897593443472, guid: be30430c753738a4e9af168735e0ecf6, type: 3}
+  m_PrefabInstance: {fileID: 2124707864}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2124707868
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2124707867}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1316361089}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Systems.Tutorial.TutorialHighlightTarget
+  targetName: fruit_shelf_2
+  height: 1.9
 --- !u!1 &2133656213
 GameObject:
   m_ObjectHideFlags: 0

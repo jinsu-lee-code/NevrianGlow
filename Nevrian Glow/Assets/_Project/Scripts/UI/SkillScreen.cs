@@ -15,7 +15,7 @@ namespace NevrianGlowFarm.UI
     /// [현재/최대] 이름 / 둘째 줄 다음 단계 효과 · 잠김 조건 … 비용 [SP]. 마우스를 올리면 단계별 효과 툴팁. 줄을 누르면 다음 단계를 배운다. K · Esc로 닫는다.
     /// 탭 UI가 없으면(참조 비움) 예전처럼 한 목록에 [탭] 글자를 붙인다.
     /// </summary>
-    public class SkillScreen : GameScreen
+    public class SkillScreen : GameScreen, Systems.Tutorial.ITutorialHighlightSource
     {
         [Header("참조")]
         [Tooltip("스킬 배우기 (Core SkillSystem)")]
@@ -88,9 +88,29 @@ namespace NevrianGlowFarm.UI
             toggleAction.action.Enable();
             cancelAction.action.Enable();
             skills.Changed += Rebuild;
+            Systems.Tutorial.TutorialHighlights.Register(this);
         }
 
-        private void OnDisable() => skills.Changed -= Rebuild;
+        private void OnDisable()
+        {
+            skills.Changed -= Rebuild;
+            Systems.Tutorial.TutorialHighlights.Unregister(this);
+        }
+
+        // 튜토리얼 강조 (5-7): skill_node:<스킬 id> · btn_learn = 그 스킬 줄 (줄을 눌러 배운다, 열려 있을 때만)
+        public bool TryGetHighlight(string name, string arg, out Systems.Tutorial.HighlightHit hit)
+        {
+            hit = default;
+            if (!IsOpen || name != "skill_node" || string.IsNullOrEmpty(arg))
+                return false;
+            for (int i = 0; i < rowSkills.Count && i < entries.Count; i++)
+                if (rowSkills[i].Id == arg)
+                {
+                    hit = Systems.Tutorial.HighlightHit.On(entries[i].GetComponent<RectTransform>());
+                    return true;
+                }
+            return false;
+        }
 
         private void Update()
         {

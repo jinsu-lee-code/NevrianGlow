@@ -18,7 +18,7 @@ namespace NevrianGlowFarm.UI
     /// 장사: "장사 건너뛰기 [Space]" = SalesSystem이 키를 받는다(여기는 표시 · 클릭만).
     /// 튜토리얼(5-7)이 그 버튼의 잠금 이름을 잠그면 누를 수 없다(회색).
     /// </summary>
-    public class PhaseActionHud : MonoBehaviour
+    public class PhaseActionHud : MonoBehaviour, ITutorialHighlightSource
     {
         /// <summary>버튼이 하는 일. 끝에만 추가.</summary>
         public enum ActionKind
@@ -86,9 +86,28 @@ namespace NevrianGlowFarm.UI
             GameEvents.PhaseChanged += OnPhaseChanged;
             var game = GameManager.Instance;
             Show(game != null && game.IsStarted ? game.Phase : (DayPhase?)null);
+            TutorialHighlights.Register(this);
         }
 
-        private void OnDisable() => GameEvents.PhaseChanged -= OnPhaseChanged;
+        private void OnDisable()
+        {
+            GameEvents.PhaseChanged -= OnPhaseChanged;
+            TutorialHighlights.Unregister(this);
+        }
+
+        // 튜토리얼 강조 (5-7): btn_end_farming = 농사 끝내기 버튼, btn_open_sales = 장사 시작 버튼 (그 단계에 보일 때만)
+        public bool TryGetHighlight(string name, string arg, out HighlightHit hit)
+        {
+            hit = default;
+            if (current == null || !button.gameObject.activeSelf)
+                return false;
+            bool match = (name == "btn_end_farming" && current.Action == ActionKind.UseDoor)
+                || (name == "btn_open_sales" && current.Action == ActionKind.OpenSales);
+            if (!match)
+                return false;
+            hit = HighlightHit.On(button.GetComponent<RectTransform>());
+            return true;
+        }
 
         private void OnPhaseChanged(PhaseChange change) => Show(change.Phase);
 

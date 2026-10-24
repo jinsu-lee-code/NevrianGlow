@@ -91,6 +91,8 @@ namespace NevrianGlowFarm.Editor
             notes.Add(BuildLevelUpBanner(canvas, font));
             notes.Add(BuildSpeechBubbles(canvas, font));
             notes.Add($"손님 대사 {FillCustomerLines()}개 채움");
+            notes.Add(BuildHighlightView(canvas));
+            notes.Add(MarkSceneTargets());
             notes.Add(FixPhaseButtons(canvas, Ref("Player", "EndPhase")));
             notes.Add(AddLetterCloseKey(letter, Ref("Player", "Interact")));
 
@@ -420,6 +422,176 @@ namespace NevrianGlowFarm.Editor
                 filled++;
             }
             return filled;
+        }
+
+        // ── 강조 표시: UICanvas/TutorialHighlights (화살표 · 테두리 원본) + Farm · Shop 씬의 고정 대상 ──
+
+        private const string ArrowDev = "Assets/_Project/Art/UI/ui_tutorial_arrow.png"; // 개발이 만든 아래쪽 화살표 (시안 · 알파)
+        private const string FrameSprite = "Assets/Art/UI/Panels/ui_slot_inventory_selected.png";
+        private const string FarmPath = "Assets/_Project/Scenes/Farm.unity";
+        private const string ShopPath = "Assets/_Project/Scenes/Shop.unity";
+
+        private static string BuildHighlightView(Transform canvas)
+        {
+            var existing = canvas.Find("TutorialHighlights");
+            string note = "강조 표시 유지";
+            RectTransform root;
+            if (existing == null)
+            {
+                root = new GameObject("TutorialHighlights", typeof(RectTransform), typeof(TutorialHighlightView)).GetComponent<RectTransform>();
+                root.SetParent(canvas, false);
+                root.anchorMin = Vector2.zero;
+                root.anchorMax = Vector2.one;
+                root.offsetMin = root.offsetMax = Vector2.zero;
+
+                var arrow = new GameObject("ArrowTemplate", typeof(RectTransform), typeof(Image)).GetComponent<RectTransform>();
+                arrow.SetParent(root, false);
+                arrow.sizeDelta = new Vector2(56f, 56f);
+                var arrowImage = arrow.GetComponent<Image>();
+                arrowImage.sprite = LoadOrMakeArrow();
+                arrowImage.raycastTarget = false;
+                arrowImage.color = new Color(0.38f, 0.95f, 0.88f, 1f);
+                arrow.gameObject.SetActive(false);
+
+                var frame = new GameObject("FrameTemplate", typeof(RectTransform), typeof(Image)).GetComponent<RectTransform>();
+                frame.SetParent(root, false);
+                var frameImage = frame.GetComponent<Image>();
+                var frameSprite = AssetDatabase.LoadAssetAtPath<Sprite>(FrameSprite);
+                frameImage.sprite = frameSprite;
+                frameImage.type = Image.Type.Sliced;
+                frameImage.fillCenter = false;
+                frameImage.raycastTarget = false;
+                frameImage.color = new Color(0.38f, 0.95f, 0.88f, 1f);
+                frame.gameObject.SetActive(false);
+
+                var so = new SerializedObject(root.GetComponent<TutorialHighlightView>());
+                so.FindProperty("arrowTemplate").objectReferenceValue = arrow;
+                so.FindProperty("frameTemplate").objectReferenceValue = frame;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                Undo.RegisterCreatedObjectUndo(root.gameObject, "Create TutorialHighlights");
+                note = "강조 표시 생성" + (frameSprite == null ? " (테두리 그림 없음)" : string.Empty);
+            }
+            else
+                root = existing as RectTransform;
+
+            // 창들 위, 툴팁 아래 (상점 줄 · 스킬 줄 테두리가 창 위에 보이게)
+            var tooltip = canvas.Find("Tooltip");
+            var fader = canvas.Find("ScreenFader");
+            var anchor = tooltip != null ? tooltip : fader;
+            if (anchor != null)
+                root.SetSiblingIndex(anchor.GetSiblingIndex() - (anchor.GetSiblingIndex() > root.GetSiblingIndex() ? 1 : 0));
+            if (AddTitleHide(canvas, root.gameObject))
+                note += " · 타이틀 중 숨김";
+            return note;
+        }
+
+        // 아래를 가리키는 화살표 그림 64 × 64 (흰색 · 알파) — 없을 때만 만든다
+        private static Sprite LoadOrMakeArrow()
+        {
+            if (AssetDatabase.LoadAssetAtPath<Texture2D>(ArrowDev) == null)
+            {
+                const int size = 64;
+                var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+                var pixels = new Color[size * size];
+                for (int y = 0; y < size; y++)
+                    for (int x = 0; x < size; x++)
+                    {
+                        // 위 넓고 아래 뾰족한 삼각형 + 위쪽 기둥 — 머리(y 0~36)는 삼각형, 기둥(y 36~60)은 폭 16
+                        float cx = x + 0.5f - size * 0.5f;
+                        float fy = y + 0.5f;
+                        bool head = fy < 38f && Mathf.Abs(cx) <= 4f + (fy - 2f) * 0.7f;
+                        bool shaft = fy >= 34f && fy <= 60f && Mathf.Abs(cx) <= 8f;
+                        float a = (head || shaft) ? 1f : 0f;
+                        pixels[y * size + x] = new Color(1f, 1f, 1f, a);
+                    }
+                tex.SetPixels(pixels);
+                tex.Apply();
+                System.IO.File.WriteAllBytes(ArrowDev, tex.EncodeToPNG());
+                Object.DestroyImmediate(tex);
+                AssetDatabase.ImportAsset(ArrowDev);
+            }
+            if (AssetImporter.GetAtPath(ArrowDev) is TextureImporter importer
+                && (importer.textureType != TextureImporterType.Sprite || importer.mipmapEnabled || importer.textureCompression != TextureImporterCompression.Uncompressed))
+            {
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.mipmapEnabled = false;
+                importer.alphaIsTransparency = true;
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                importer.SaveAndReimport();
+            }
+            return AssetDatabase.LoadAssetAtPath<Sprite>(ArrowDev);
+        }
+
+        // Farm · Shop 씬의 고정 대상에 TutorialHighlightTarget 이름을 붙인다 (이미 있으면 그대로)
+        private static string MarkSceneTargets()
+        {
+            int added = 0;
+            added += MarkIn(FarmPath, scene =>
+            {
+                int n = 0;
+                foreach (var door in FindAll<NevrianGlowFarm.Systems.Zones.ZoneDoor>(scene))
+                    if (new SerializedObject(door).FindProperty("usablePhase").enumValueIndex == (int)DayPhase.Farming)
+                        n += Mark(door.gameObject, "door_shop", 2.4f);
+                foreach (var storage in FindAll<NevrianGlowFarm.Systems.Storage.StorageAccessPoint>(scene))
+                    n += Mark(storage.gameObject, "storage_farm", 1.6f);
+                return n;
+            });
+            added += MarkIn(ShopPath, scene =>
+            {
+                int n = 0;
+                foreach (var bin in FindAll<NevrianGlowFarm.Systems.Cleaning.TrashBin>(scene))
+                    n += Mark(bin.gameObject, "trash_bin", 1.4f);
+                foreach (var sign in FindAll<NevrianGlowFarm.Systems.Sales.OpenSign>(scene))
+                    n += Mark(sign.gameObject, "signboard", 1.8f);
+                var shelves = FindAll<NevrianGlowFarm.Systems.Shop.ShelfDisplay>(scene);
+                shelves.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
+                for (int i = 0; i < shelves.Count; i++)
+                    n += Mark(shelves[i].gameObject, $"fruit_shelf_{i + 1}", 1.9f);
+                return n;
+            });
+            return added > 0 ? $"씬 강조 대상 {added}개 표시" : "씬 강조 대상 유지";
+        }
+
+        private static int MarkIn(string scenePath, System.Func<UnityEngine.SceneManagement.Scene, int> mark)
+        {
+            var scene = EditorSceneManager.GetSceneByPath(scenePath);
+            bool opened = false;
+            if (!scene.isLoaded)
+            {
+                scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Additive);
+                opened = true;
+            }
+            int n = mark(scene);
+            if (n > 0)
+            {
+                EditorSceneManager.MarkSceneDirty(scene);
+                EditorSceneManager.SaveScene(scene);
+            }
+            if (opened)
+                EditorSceneManager.CloseScene(scene, true);
+            return n;
+        }
+
+        private static List<T> FindAll<T>(UnityEngine.SceneManagement.Scene scene) where T : Component
+        {
+            var list = new List<T>();
+            foreach (var root in scene.GetRootGameObjects())
+                list.AddRange(root.GetComponentsInChildren<T>(true));
+            return list;
+        }
+
+        private static int Mark(GameObject go, string name, float height)
+        {
+            foreach (var t in go.GetComponents<TutorialHighlightTarget>())
+                if (t.TargetName == name)
+                    return 0;
+            var target = go.AddComponent<TutorialHighlightTarget>();
+            var so = new SerializedObject(target);
+            so.FindProperty("targetName").stringValue = name;
+            so.FindProperty("height").floatValue = height;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return 1;
         }
 
         // 타이틀이 떠 있는 동안 숨길 목록에 더한다 (이미 있으면 false)

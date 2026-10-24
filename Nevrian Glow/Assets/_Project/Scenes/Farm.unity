@@ -630,13 +630,35 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 506251729548978906, guid: 5a79054614c0fd94a90a5d436d309b72, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 811572869}
   m_SourcePrefab: {fileID: 100100000, guid: 5a79054614c0fd94a90a5d436d309b72, type: 3}
 --- !u!4 &811572867 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4731547971654459878, guid: 5a79054614c0fd94a90a5d436d309b72, type: 3}
   m_PrefabInstance: {fileID: 811572866}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &811572868 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 506251729548978906, guid: 5a79054614c0fd94a90a5d436d309b72, type: 3}
+  m_PrefabInstance: {fileID: 811572866}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &811572869
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 811572868}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1316361089}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Systems.Tutorial.TutorialHighlightTarget
+  targetName: storage_farm
+  height: 1.6
 --- !u!1 &852481438
 GameObject:
   m_ObjectHideFlags: 0
@@ -895,6 +917,21 @@ MonoBehaviour:
   radius: 0
   boxSize: {x: 3, y: 2}
   allowsStains: 0
+--- !u!115 &1316361089
+MonoScript:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  serializedVersion: 7
+  m_DefaultReferences: {}
+  m_Icon: {fileID: 0}
+  m_Type: 0
+  m_ExecutionOrder: 0
+  m_ClassName: TutorialHighlightTarget
+  m_Namespace: NevrianGlowFarm.Systems.Tutorial
+  m_AssemblyName: Assembly-CSharp
 --- !u!1 &1324571861
 GameObject:
   m_ObjectHideFlags: 0
@@ -1210,13 +1247,35 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2576650582740279558, guid: 4e7ccce7384798e49a55e4149c4a0ed5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2003378855}
   m_SourcePrefab: {fileID: 100100000, guid: 4e7ccce7384798e49a55e4149c4a0ed5, type: 3}
 --- !u!4 &2003378853 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4086820225858882256, guid: 4e7ccce7384798e49a55e4149c4a0ed5, type: 3}
   m_PrefabInstance: {fileID: 2003378852}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &2003378854 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2576650582740279558, guid: 4e7ccce7384798e49a55e4149c4a0ed5, type: 3}
+  m_PrefabInstance: {fileID: 2003378852}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2003378855
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2003378854}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1316361089}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Systems.Tutorial.TutorialHighlightTarget
+  targetName: door_shop
+  height: 2.4
 --- !u!1 &2056224140
 GameObject:
   m_ObjectHideFlags: 0

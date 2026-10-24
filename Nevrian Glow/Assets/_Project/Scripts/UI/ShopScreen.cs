@@ -18,7 +18,7 @@ namespace NevrianGlowFarm.UI
     /// 줄을 누르면 산다. 잠긴 단계는 조건을 함께 적는다. B · Esc로 닫는다.
     /// 하루 시작(상점 단계)에는 저절로 열리고, 그때 닫으면 농사 단계로 넘어간다 (3-4).
     /// </summary>
-    public class ShopScreen : GameScreen
+    public class ShopScreen : GameScreen, Systems.Tutorial.ITutorialHighlightSource
     {
         [Header("참조")]
         [Tooltip("상점 (Core Shop)")]
@@ -137,6 +137,7 @@ namespace NevrianGlowFarm.UI
             GameEvents.PhaseChanged += OnPhaseChanged;
             if (inventory != null)
                 inventory.Changed += Rebuild;
+            Systems.Tutorial.TutorialHighlights.Register(this);
         }
 
         private void OnDisable()
@@ -145,6 +146,35 @@ namespace NevrianGlowFarm.UI
             GameEvents.PhaseChanged -= OnPhaseChanged;
             if (inventory != null)
                 inventory.Changed -= Rebuild;
+            Systems.Tutorial.TutorialHighlights.Unregister(this);
+        }
+
+        // 튜토리얼 강조 (5-7): shop_tab_seed = 씨앗 상품이 있는 탭, shop_row:<아이템 id> = 그 아이템을 주는 상품 줄 (열려 있을 때만)
+        public bool TryGetHighlight(string name, string arg, out Systems.Tutorial.HighlightHit hit)
+        {
+            hit = default;
+            if (!IsOpen)
+                return false;
+            if (name == "shop_tab_seed" && tabViews.Count > 0)
+            {
+                foreach (var p in shop.Products)
+                    if (p is ItemProductData ip && ip.Item is SeedData)
+                    {
+                        hit = Systems.Tutorial.HighlightHit.On(tabViews[TabOf(p)].GetComponent<RectTransform>());
+                        return true;
+                    }
+                return false;
+            }
+            if (name == "shop_row" && !string.IsNullOrEmpty(arg))
+            {
+                for (int i = 0; i < rowProducts.Count && i < entries.Count; i++)
+                    if (rowProducts[i] is ItemProductData ip && ip.Item != null && ip.Item.Id == arg)
+                    {
+                        hit = Systems.Tutorial.HighlightHit.On(entries[i].GetComponent<RectTransform>());
+                        return true;
+                    }
+            }
+            return false;
         }
 
         // 하루 시작(상점 단계)이면 저절로 연다 — 닫으면 농사 단계로 (GDD 4-1 "상점: 닫기", 결정 2026-10-11)

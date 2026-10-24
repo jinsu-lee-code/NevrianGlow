@@ -5,7 +5,7 @@ using UnityEngine;
 namespace NevrianGlowFarm.UI
 {
     /// <summary>핫바 표시. 칸 수만큼 칸을 만들고, 칸이 바뀔 때만 다시 그리고, 선택이 바뀔 때만 강조를 옮긴다.</summary>
-    public class HotbarView : MonoBehaviour
+    public class HotbarView : MonoBehaviour, Systems.Tutorial.ITutorialHighlightSource
     {
         [Header("참조")]
         [Tooltip("표시할 핫바")]
@@ -48,6 +48,22 @@ namespace NevrianGlowFarm.UI
                 return;
             hotbar.SlotsChanged -= Rebuild;
             hotbar.SelectionChanged -= Highlight;
+        }
+
+        private void OnEnable() => Systems.Tutorial.TutorialHighlights.Register(this);
+        private void OnDisable() => Systems.Tutorial.TutorialHighlights.Unregister(this);
+
+        // 튜토리얼 강조 (5-7): hotbar:<번호> = 그 칸 (1부터)
+        public bool TryGetHighlight(string name, string arg, out Systems.Tutorial.HighlightHit hit)
+        {
+            hit = default;
+            if (name != "hotbar" || !int.TryParse(arg, out int number))
+                return false;
+            int index = number - 1;
+            if (index < 0 || index >= slots.Count || !slots[index].gameObject.activeSelf)
+                return false;
+            hit = Systems.Tutorial.HighlightHit.On(slots[index].GetComponent<RectTransform>());
+            return true;
         }
 
         private void Rebuild()

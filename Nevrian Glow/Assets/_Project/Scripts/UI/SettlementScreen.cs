@@ -15,7 +15,7 @@ namespace NevrianGlowFarm.UI
     /// Esc · 다른 화면으로는 닫히지 않고 '다음 날' 버튼만 — 누르면 다음 날로 넘기고(밤 처리 · 상점 입고는 날 변경에 붙어 있음)
     /// ZoneTransition이 같은 페이드로 농장에 옮긴다. 디버그로 정산 단계를 벗어나면 같이 닫힌다.
     /// </summary>
-    public class SettlementScreen : GameScreen
+    public class SettlementScreen : GameScreen, Systems.Tutorial.ITutorialHighlightSource
     {
         [Header("참조")]
         [Tooltip("오늘 상점 지출 (Core Shop)")]
@@ -71,8 +71,32 @@ namespace NevrianGlowFarm.UI
                 Instance = null;
         }
 
-        private void OnEnable() => GameEvents.PhaseChanged += OnPhaseChanged;
-        private void OnDisable() => GameEvents.PhaseChanged -= OnPhaseChanged;
+        private void OnEnable()
+        {
+            GameEvents.PhaseChanged += OnPhaseChanged;
+            Systems.Tutorial.TutorialHighlights.Register(this);
+        }
+
+        private void OnDisable()
+        {
+            GameEvents.PhaseChanged -= OnPhaseChanged;
+            Systems.Tutorial.TutorialHighlights.Unregister(this);
+        }
+
+        // 튜토리얼 강조 (5-7): btn_next_day = 다음 날 버튼, settle_* = 정산 본문 (열려 있을 때만)
+        public bool TryGetHighlight(string name, string arg, out Systems.Tutorial.HighlightHit hit)
+        {
+            hit = default;
+            if (!IsOpen)
+                return false;
+            if (name == "btn_next_day")
+                hit = Systems.Tutorial.HighlightHit.On(nextDayButton.GetComponent<RectTransform>());
+            else if (name.StartsWith("settle_"))
+                hit = Systems.Tutorial.HighlightHit.On(bodyLabel.rectTransform);
+            else
+                return false;
+            return true;
+        }
 
         private void OnPhaseChanged(PhaseChange change)
         {

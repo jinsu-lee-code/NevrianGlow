@@ -50,7 +50,7 @@ namespace NevrianGlowFarm.Systems.Sales
     /// 매출은 계산 때 달러에 더한다. 모든 손님이 나가면(또는 Space 건너뛰기 · 시간 초과) 경험치를 더하고 정산 단계로 넘긴다.
     /// 건너뛰기 = 가게 안 손님은 지금 사고 내고, 아직 안 온 손님은 같은 함수로 즉시 처리.
     /// </summary>
-    public class SalesSystem : MonoBehaviour
+    public class SalesSystem : MonoBehaviour, Tutorial.ITutorialHighlightSource
     {
         private const int PurchasePurpose = 2; // 손님 구매용 난수 흐름 (청소 배치 = 3)
         private const int CustomerPurpose = 5; // 손님 종류 · 서는 자리용 난수 흐름
@@ -163,6 +163,7 @@ namespace NevrianGlowFarm.Systems.Sales
             GameEvents.DayChanged += OnDayChanged;
             if (skipAction != null)
                 skipAction.action.Enable();
+            Tutorial.TutorialHighlights.Register(this);
         }
 
         private void OnDisable()
@@ -170,6 +171,23 @@ namespace NevrianGlowFarm.Systems.Sales
             GameEvents.PhaseChanged -= OnPhaseChanged;
             GameEvents.DayChanged -= OnDayChanged;
             PlayerInputGate.ReleaseWorld(this);
+            Tutorial.TutorialHighlights.Unregister(this);
+        }
+
+        // 튜토리얼 강조 (5-7): customers = 가게 안 첫 손님, customer_<id> = 그 종류의 손님 (없으면 첫 손님)
+        public bool TryGetHighlight(string name, string arg, out Tutorial.HighlightHit hit)
+        {
+            hit = default;
+            if (!name.StartsWith("customer") || customers.Count == 0)
+                return false;
+            CustomerAI pick = null;
+            foreach (var c in customers)
+                if (c != null && (pick == null || (c.Data != null && c.Data.Id == name)))
+                    pick = c;
+            if (pick == null)
+                return false;
+            hit = Tutorial.HighlightHit.At(pick.transform.position + Vector3.up * ((pick.Data != null ? pick.Data.Height : 1.6f) + 0.9f));
+            return true;
         }
 
         // 새 게임(1일차 알림)이면 모델을 처음으로. 불러오기는 이 다음 LoadFrom이 덮는다.

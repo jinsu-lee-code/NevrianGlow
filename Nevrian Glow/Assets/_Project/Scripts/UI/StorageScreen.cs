@@ -15,7 +15,7 @@ namespace NevrianGlowFarm.UI
     /// 오른쪽 가방 · 핫바 칸을 누르면 그 칸을 통째로 넣는다. "전부 넣기" = 도구를 뺀 보관 가능 아이템 전부.
     /// 쓰레기 등 보관 불가 · 자리 없음은 안내 한 줄로 알린다. Tab · Esc로 닫는다.
     /// </summary>
-    public class StorageScreen : GameScreen
+    public class StorageScreen : GameScreen, Systems.Tutorial.ITutorialHighlightSource
     {
         [Header("참조")]
         [Tooltip("인벤토리 (Core Player)")]
@@ -81,11 +81,28 @@ namespace NevrianGlowFarm.UI
             toggleAction.action.Enable();
             cancelAction.action.Enable();
             storage.Changed += RebuildEntries;
+            Systems.Tutorial.TutorialHighlights.Register(this);
         }
 
         private void OnDisable()
         {
             storage.Changed -= RebuildEntries;
+            Systems.Tutorial.TutorialHighlights.Unregister(this);
+        }
+
+        // 튜토리얼 강조 (5-7): storage_row:<아이템 id> = 창고 목록의 그 줄 (열려 있을 때만)
+        public bool TryGetHighlight(string name, string arg, out Systems.Tutorial.HighlightHit hit)
+        {
+            hit = default;
+            if (!IsOpen || name != "storage_row" || string.IsNullOrEmpty(arg))
+                return false;
+            for (int i = 0; i < entryIds.Count && i < entries.Count; i++)
+                if (entryIds[i] == arg)
+                {
+                    hit = Systems.Tutorial.HighlightHit.On(entries[i].GetComponent<RectTransform>());
+                    return true;
+                }
+            return false;
         }
 
         private void Update()
