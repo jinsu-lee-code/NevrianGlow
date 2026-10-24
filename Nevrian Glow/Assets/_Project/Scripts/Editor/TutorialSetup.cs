@@ -89,6 +89,8 @@ namespace NevrianGlowFarm.Editor
             notes.Add(BuildSystem(scene, data, letter));
             notes.Add(BuildHud(canvas, font));
             notes.Add(BuildLevelUpBanner(canvas, font));
+            notes.Add(BuildSpeechBubbles(canvas, font));
+            notes.Add($"손님 대사 {FillCustomerLines()}개 채움");
             notes.Add(FixPhaseButtons(canvas, Ref("Player", "EndPhase")));
             notes.Add(AddLetterCloseKey(letter, Ref("Player", "Interact")));
 
@@ -216,7 +218,7 @@ namespace NevrianGlowFarm.Editor
             root.anchorMin = root.anchorMax = new Vector2(0.5f, 1f);
             root.pivot = new Vector2(0.5f, 1f);
             root.anchoredPosition = new Vector2(0f, -18f);
-            root.sizeDelta = new Vector2(900f, 64f);
+            root.sizeDelta = new Vector2(720f, 64f); // 캡처 기준 HUD(왼쪽) · 오늘의 정리(오른쪽) 사이 폭 — 900은 오른쪽과 겹쳤음
             EditorUtility.SetDirty(root);
 
             // 순서: 툴팁 바로 아래 (없으면 페이드 바로 아래) — 상점 · 정산 창 위에 보이게
@@ -316,6 +318,108 @@ namespace NevrianGlowFarm.Editor
             if (AddTitleHide(canvas, root.gameObject))
                 note += " · 타이틀 중 숨김";
             return note;
+        }
+
+        // 말풍선: UICanvas/SpeechBubbles (화면 전체) + 풍선 원본(아트 패널 테두리 반 + 글자, 비활성) — 창(상점 · 정산)보다 아래, HUD 위
+        private static string BuildSpeechBubbles(Transform canvas, TMP_FontAsset font)
+        {
+            var existing = canvas.Find("SpeechBubbles");
+            if (existing != null)
+                return "말풍선 유지";
+            var root = new GameObject("SpeechBubbles", typeof(RectTransform), typeof(SpeechBubbleView)).GetComponent<RectTransform>();
+            root.SetParent(canvas, false);
+            root.anchorMin = Vector2.zero;
+            root.anchorMax = Vector2.one;
+            root.offsetMin = root.offsetMax = Vector2.zero;
+
+            var bubble = new GameObject("BubbleTemplate", typeof(RectTransform), typeof(Image), typeof(CanvasGroup)).GetComponent<RectTransform>();
+            bubble.SetParent(root, false);
+            bubble.anchorMin = bubble.anchorMax = new Vector2(0.5f, 0.5f);
+            bubble.pivot = new Vector2(0.5f, 0f); // 아래 가운데가 머리 위에 닿게
+            bubble.sizeDelta = new Vector2(520f, 72f);
+            var image = bubble.GetComponent<Image>();
+            image.raycastTarget = false;
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(PanelSprite);
+            if (sprite != null)
+            {
+                image.sprite = sprite;
+                image.type = Image.Type.Sliced;
+                image.pixelsPerUnitMultiplier = 2f;
+                image.color = Color.white;
+            }
+            else
+                image.color = new Color(0.02f, 0.09f, 0.12f, 0.92f);
+            var label = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI)).GetComponent<TextMeshProUGUI>();
+            label.rectTransform.SetParent(bubble, false);
+            label.rectTransform.anchorMin = Vector2.zero;
+            label.rectTransform.anchorMax = Vector2.one;
+            label.rectTransform.offsetMin = new Vector2(26f, 8f);
+            label.rectTransform.offsetMax = new Vector2(-26f, -8f);
+            if (font != null)
+                label.font = font;
+            label.fontSize = 24f;
+            label.fontSizeMin = 16f;
+            label.fontSizeMax = 24f;
+            label.enableAutoSizing = true;
+            label.color = new Color(0.96f, 0.98f, 1f, 1f);
+            label.alignment = TextAlignmentOptions.Center;
+            label.textWrappingMode = TextWrappingModes.Normal;
+            label.raycastTarget = false;
+            label.text = string.Empty;
+            bubble.gameObject.SetActive(false);
+
+            var so = new SerializedObject(root.GetComponent<SpeechBubbleView>());
+            so.FindProperty("bubbleTemplate").objectReferenceValue = bubble;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            // HUD 바로 뒤(위에 그려짐) — 창들은 그 뒤에 있어 말풍선을 덮는다
+            var hud = canvas.Find("HUD");
+            if (hud != null)
+                root.SetSiblingIndex(hud.GetSiblingIndex() + 1);
+            Undo.RegisterCreatedObjectUndo(root.gameObject, "Create SpeechBubbles");
+            return "말풍선 생성";
+        }
+
+        // 기획 튜토리얼 4 · 5절 손님 대사 — 들어올 때 줄이 비어 있는 손님만 채운다 (피피 1 · 2일차, 루미안 손님 오르)
+        private static readonly (string Id, string[] Enter, string Buy, string Leave)[] DefaultCustomerLines =
+        {
+            ("customer_pipi",
+                new[] { "와아, 네아 할머니 가게가 다시 열렸다! 진짜 오랜만이에요!", "친구들 데려왔어요! 여기 월광 뿌리 진짜 맛있대요!" },
+                "두 개 다 주세요! 친구들한테 자랑할래요!",
+                "내일 또 올게요! 가게 다시 열었다고 다 말할래요!"),
+            ("customer_or",
+                new[] { "할머니 가게에 다시 불이 켜졌구나... 반갑네." },
+                string.Empty,
+                string.Empty),
+        };
+
+        private static int FillCustomerLines()
+        {
+            int filled = 0;
+            foreach (var (id, enter, buy, leave) in DefaultCustomerLines)
+            {
+                var guids = AssetDatabase.FindAssets($"t:CustomerData {id}", new[] { "Assets/_Project/Data/Customers" });
+                CustomerData data = null;
+                foreach (var g in guids)
+                {
+                    var c = AssetDatabase.LoadAssetAtPath<CustomerData>(AssetDatabase.GUIDToAssetPath(g));
+                    if (c != null && c.Id == id)
+                        data = c;
+                }
+                if (data == null || data.EnterLines.Count > 0)
+                    continue;
+                var so = new SerializedObject(data);
+                var lines = so.FindProperty("enterLines");
+                lines.arraySize = enter.Length;
+                for (int i = 0; i < enter.Length; i++)
+                    lines.GetArrayElementAtIndex(i).stringValue = enter[i];
+                so.FindProperty("buyLine").stringValue = buy;
+                so.FindProperty("leaveLine").stringValue = leave;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(data);
+                filled++;
+            }
+            return filled;
         }
 
         // 타이틀이 떠 있는 동안 숨길 목록에 더한다 (이미 있으면 false)

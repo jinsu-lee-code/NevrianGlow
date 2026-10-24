@@ -70,6 +70,10 @@ namespace NevrianGlowFarm.Systems.Sales
         [SerializeField, Min(0f)] private float happyHop = 0.15f;
         [Tooltip("발소리 간격 — 걸은 거리 (m). 걷기 클립에 OnFootstep 이벤트가 있으면 이벤트로 바뀐다 (animation.md B-1)")]
         [SerializeField, Min(0.1f)] private float stepDistance = 1.05f;
+        [Tooltip("말풍선(튜토리얼 대사)이 보이는 시간 (초)")]
+        [SerializeField, Min(0.5f)] private float speechDuration = 3.5f;
+        [Tooltip("말풍선 높이 — 체형 키 위로 (m)")]
+        [SerializeField, Min(0f)] private float speechHeight = 0.35f;
 
         [Header("디버그")]
         [Tooltip("지금 상태 (읽기 전용)")]
@@ -201,9 +205,18 @@ namespace NevrianGlowFarm.Systems.Sales
             }
         }
 
+        // 튜토리얼이 진행 중인 동안만 손님 데이터의 대사를 머리 위 말풍선으로 (기획 튜토리얼 4 · 5절 — 피피 등장 · 구매 · 퇴장)
+        private void Say(string line)
+        {
+            if (string.IsNullOrWhiteSpace(line) || !Systems.Tutorial.TutorialSystem.IsActive)
+                return;
+            UI.SpeechBubbleView.Say(transform, (data != null ? data.Height : 1.6f) + speechHeight, line, speechDuration);
+        }
+
         private IEnumerator Run(SalesSettingsData settings)
         {
             state = CustomerState.Entering;
+            Say(data.EnterLineFor(GameManager.Instance != null ? GameManager.Instance.Day : 1));
             yield return WalkTo(system.BasketStandPosition);
 
             state = CustomerState.PickingBasket;
@@ -228,6 +241,8 @@ namespace NevrianGlowFarm.Systems.Sales
             items = system.FillBasket();
             UpdateBasketView();
             state = CustomerState.Putting;
+            if (items.Count > 0)
+                Say(data.BuyLine);
             for (int i = 0; i < items.Count; i++)
             {
                 SetTrigger(PutItemId);
@@ -285,6 +300,8 @@ namespace NevrianGlowFarm.Systems.Sales
         private IEnumerator LeaveStore()
         {
             state = CustomerState.Leaving;
+            if (paid && items != null && items.Count > 0)
+                Say(data.LeaveLine);
             yield return WalkTo(system.EntrancePosition);
             system.Despawn(this);
         }
