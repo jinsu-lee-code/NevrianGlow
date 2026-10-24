@@ -53,6 +53,8 @@ namespace NevrianGlowFarm.UI
         [SerializeField] private List<string> tabs = new List<string> { "씨앗", "도구", "확장", "가구", "소모품 · 장치" };
         [Tooltip("탭에 보이는 상품이 없을 때 안내 (결정 2026-10-21, 사용자)")]
         [SerializeField] private string emptyTabMessage = "데모버전에서는 해금되지 않은 컨텐츠입니다.";
+        [Tooltip("튜토리얼이 닫기를 잠갔을 때 안내 (5-7 close_shop, 게임 화면 글자 - '—' 쓰지 않음)")]
+        [SerializeField] private string tutorialCloseMessage = "먼저 안내한 것을 사고 닫아요";
         [Tooltip("살 수 있는 줄 색")]
         [SerializeField] private Color availableColor = new Color(0.05f, 0.25f, 0.3f, 0.9f);
         [Tooltip("살 수 없는 줄 색 (잠김 · 품절 · 달러 부족 · 최대 · 보기만)")]
@@ -155,7 +157,16 @@ namespace NevrianGlowFarm.UI
             if (IsOpen)
             {
                 if (toggleAction.action.WasPressedThisFrame() || cancelAction.action.WasPressedThisFrame())
-                    Close();
+                {
+                    // 튜토리얼(5-7): 안내한 것을 사기 전에는 닫히지 않는다
+                    if (Systems.Tutorial.TutorialSystem.IsLocked(Logic.Tutorial.TutorialLocks.CloseShop))
+                    {
+                        messageLabel.text = tutorialCloseMessage;
+                        AudioManager.Play(SoundCues.UiBuyFail);
+                    }
+                    else
+                        Close();
+                }
                 return;
             }
             if (openForDayStart && Current == null)
@@ -251,7 +262,7 @@ namespace NevrianGlowFarm.UI
                 view.SetDetail(UiText.Join(UiText.Offer(offer.Status, offer.StockLeft, LockReason(product, offer), StockFromTomorrow(product)), UiText.Owned(OwnedCount(product))));
                 view.SetValue(offer.Status == OfferStatus.MaxedOut ? string.Empty : $"{offer.Price:N0}", priceIcon);
                 view.BindTooltip(() => Tooltip(product));
-                bool available = offer.Status == OfferStatus.Available && canBuy;
+                bool available = offer.Status == OfferStatus.Available && canBuy && !shop.IsTutorialLocked(product);
                 var color = available ? availableColor : unavailableColor;
                 view.SetSelected(false, color, color);
                 view.SetDimmed(!available);

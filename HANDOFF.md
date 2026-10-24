@@ -41,7 +41,7 @@ Setup 메뉴 (모두 여러 번 실행해도 같음): `Connect Art (1) ~ (10)`, 
    - UI: 마우스 올림 · 누름 버튼 그림, 칸 집기 · 놓기, 해상도별 모습
    - 타이틀 투어 · 로고 연출 세기(값 조정만 하면 됨)
 2. **7-2 빌드 메뉴 → 4-5 알파 빌드 (마일스톤 10/25 토)** — 백경민 1차 플레이 테스트용. 빌드 설정에 씬 4개(Core · Farm · Shop · BackGroundScene), 앱 아이콘 들어감
-3. **5-7 튜토리얼 (10/27까지)** — 기획 `CSV/plan/data_csv/tutorial_steps.csv`(D1-01 ~ D2-14, 완료 이벤트 · 잠금 이름 = 개발 제안 그대로) + `game_settings`의 `tutorial_*` 5개(지금 '시스템 대기 설정'). 개발 검토 문서 `Docs/기획확정/튜토리얼_플로우_1-2일차_개발검토.md`
+3. ~~**5-7 튜토리얼 (10/27까지)**~~ — 구현됨 (10/24, TASKS 5-7 일지) — 남은 것: 사용자 플레이 확인(실제 키 조작), 기획 대본(10/28)은 `tutorial_steps.csv` 교체 + `Import Plan CSV`, 강조(외곽선 · 화살표) · 손님 말풍선 · 레벨업 배너는 P1. Setup 메뉴 순서에 `Create Tutorial HUD (5-7)` 추가(P-7 UI 뒤)
 4. 남은 아이콘 3개 위치 정하기 — `icon_customer`(정산 '손님 n명'?) · `icon_tool_hand`(빈손 · E 안내?) · `icon_tool_seedbag`(씨앗 탭?) — 사용자 결정 대기
 5. 10/28 기능 동결 전 P1: 거대 작물 4-4(`vfx_merge_burst` · 거대 Variant 준비됨), 스프링클러 등 — TASKS 기획 확정 반영 P1 줄
 

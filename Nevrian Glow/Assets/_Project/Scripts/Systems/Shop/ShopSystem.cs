@@ -34,6 +34,8 @@ namespace NevrianGlowFarm.Systems.Shop
         [SerializeField] private List<DayPhase> buyPhases = new List<DayPhase> { DayPhase.Shop, DayPhase.Farming };
         [Tooltip("보기만 할 때 안내 (게임 화면 글자 — '—' 쓰지 않음)")]
         [SerializeField] private string viewOnlyMessage = "농사 단계에서 살 수 있어요";
+        [Tooltip("튜토리얼이 다른 상품을 잠갔을 때 안내 (5-7 buy_other)")]
+        [SerializeField] private string tutorialLockMessage = "지금은 안내한 것만 살 수 있어요";
 
         [Header("디버그")]
         [Tooltip("상품 상태 (읽기 전용)")]
@@ -191,6 +193,10 @@ namespace NevrianGlowFarm.Systems.Shop
 
         public string ViewOnlyMessage => viewOnlyMessage;
 
+        /// <summary>튜토리얼(5-7)이 이 상품을 잠갔는지 — 안내한 아이템을 주는 상품만 살 수 있는 단계.</summary>
+        public bool IsTutorialLocked(ShopProductData product) =>
+            Systems.Tutorial.TutorialSystem.IsLockedFor(Logic.Tutorial.TutorialLocks.BuyOther, product is ItemProductData ip && ip.Item != null ? ip.Item.Id : null);
+
         /// <summary>산다. 결과 문구(화면 안내 한 줄)를 돌려준다.</summary>
         public bool TryBuy(ShopProductData product, out string message)
         {
@@ -203,6 +209,11 @@ namespace NevrianGlowFarm.Systems.Shop
             if (!CanBuyNow)
             {
                 message = viewOnlyMessage;
+                return false;
+            }
+            if (IsTutorialLocked(product))
+            {
+                message = tutorialLockMessage;
                 return false;
             }
             var spec = product.ToSpec();

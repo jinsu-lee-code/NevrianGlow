@@ -208,11 +208,13 @@ namespace NevrianGlowFarm.Systems.Sales
             var countRandom = new SeededRandom(SeededRandom.SeedFor(seed, CountPurpose, today));
             int count = model.TodayCount(today, clean, settings.FurnitureSpots, countRandom.NextDouble(), customerSpec);
             double extra = StatSystem.Apply(extraBuyStat, 0.0); // 단골의 장바구니
-            session = new SalesSession(count, spec, today <= 1 ? settings.Day1FirstBuy : 0, extra, settings.PurchaseExtraMax);
-            purchaseRandom = new SeededRandom(SeededRandom.SeedFor(seed, PurchasePurpose, today));
-            customerRandom = new SeededRandom(SeededRandom.SeedFor(seed, CustomerPurpose, today));
             CollectTypes(today);
             CollectShelves();
+            // 튜토리얼(5-7)이 오늘 레벨업을 안내하면(기획 고정값: 2일차 손님이 진열된 월광 뿌리를 모두 구매 → 누적 108 ≥ 100) 손님마다 진열 수만큼 사려 한다
+            int everyWanted = Systems.Tutorial.TutorialSystem.RequiredToday(Logic.Tutorial.TutorialEvents.LeveledUp) > 0f ? Mathf.Max(1, DisplayedCount()) : 0;
+            session = new SalesSession(count, spec, today <= 1 ? settings.Day1FirstBuy : 0, extra, settings.PurchaseExtraMax, everyWanted);
+            purchaseRandom = new SeededRandom(SeededRandom.SeedFor(seed, PurchasePurpose, today));
+            customerRandom = new SeededRandom(SeededRandom.SeedFor(seed, CustomerPurpose, today));
             elapsed = 0f;
             spawnedNumber = 0;
             lastResult = null;
@@ -286,6 +288,7 @@ namespace NevrianGlowFarm.Systems.Sales
             Debug.Log($"[SalesSystem] {day}일차 장사 끝{(skipped ? " (건너뛰기)" : "")}: 손님 {result.Customers}명 (구매 {result.Buyers} · 빈손 {result.EmptyHanded}) · 판매 {result.ItemsSold}개 · 매출 {result.Revenue}달러 · 만족도 {model.Satisfaction:P0}");
             UpdateDebugView();
             Finished?.Invoke(result);
+            GameEvents.RaiseSalesFinished();
             if (advancePhase && GameManager.Instance != null && GameManager.Instance.Phase == DayPhase.Sales)
                 GameManager.Instance.AdvancePhase();
         }

@@ -231,13 +231,20 @@ namespace NevrianGlowFarm.Systems.Farm
                     }
                 }
                 if (watered > 0)
+                {
                     UpdateSummary();
+                    GameEvents.RaiseCellsWatered(watered);
+                }
                 AudioManager.Play(SoundCues.WaterPour, CellPosition(index)); // 기울인 뒤 물이 나오는 순간 (마른 땅이어도 붓는 소리)
                 return;
             }
 
             if (held is HoeData hoe)
+            {
                 changed = FarmRules.TryTill(cell, hoe.WorkPerUse, settings.TillWorkRequired);
+                if (changed && FarmRules.GetStatus(cell, default) == FarmCellStatus.Tilled)
+                    GameEvents.RaiseCellTilled(index); // 마지막 괭이질 — 칸 개간 완료
+            }
             else if (held is SeedData seed && seed.Crop != null && FarmRules.GetStatus(cell, default) == FarmCellStatus.Tilled)
             {
                 // 씨앗을 먼저 쓰고 심는다 — 씨앗이 없으면 심지 않는다. 데이터베이스에 없는 작물은 심지 않는다(성장 규칙을 찾을 수 없음).
@@ -247,7 +254,10 @@ namespace NevrianGlowFarm.Systems.Farm
                 {
                     changed = FarmRules.TryPlant(cell, seed.Crop.Id);
                     if (changed)
+                    {
                         AudioManager.Play(SoundCues.SeedPlant, CellPosition(index));
+                        GameEvents.RaiseCropPlanted(seed.Crop.Id);
+                    }
                 }
             }
 
@@ -315,6 +325,7 @@ namespace NevrianGlowFarm.Systems.Farm
                 AudioManager.Play(SoundCues.HarvestPull, CellPosition(index));
                 if (GameManager.Instance != null)
                     GameManager.Instance.RecordHarvest(crop.Id); // 해금 조건 "첫 수확"
+                GameEvents.RaiseCropHarvested(crop.Id, result.Yield);
             }
         }
 

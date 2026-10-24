@@ -1,0 +1,293 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59da1af0855d73147abe2f108875767d, type: 3}
+  m_Name: TutorialSteps
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.TutorialStepsData
+  steps:
+  - id: D1-01
+    day: 1
+    phase: shop
+    text: "(\uCC3D\uACE0 \uC704 \uD3B8\uC9C0 \uAFB8\uB7EC\uBBF8\uC5D0\uC11C \uD3B8\uC9C0
+      \u2460\uC774 \uC790\uB3D9\uC73C\uB85C \uC5F4\uB9BC)"
+    highlight: letter_ui
+    completeEvent: letter_closed:letter_1
+    locks: move
+  - id: D1-02
+    day: 1
+    phase: shop
+    text: "\uC0C1\uC810\uC5D0\uC11C \uC6D4\uAD11 \uBFCC\uB9AC \uC528\uC557\uC744
+      4\uBC88 \uB20C\uB7EC 4\uAC1C \uC0AC \uBCF4\uC138\uC694"
+    highlight: shop_tab_seed;shop_row:item_seed_moonroot
+    completeEvent: owned:item_seed_moonroot:4
+    locks: buy_other;close_shop
+  - id: D1-03
+    day: 1
+    phase: farming
+    text: "\uB9C8\uC6B0\uC2A4\uB85C \uB458\uB7EC\uBCF4\uACE0 W A S D\uB85C \uAC78\uC5B4
+      \uBCF4\uC138\uC694"
+    highlight: 
+    completeEvent: moved:3
+    locks: end_farming
+  - id: D1-04
+    day: 1
+    phase: farming
+    text: "1\uBC88\uC744 \uB20C\uB7EC \uAD2D\uC774\uB97C \uB4E4\uC5B4\uC694"
+    highlight: hotbar:1
+    completeEvent: selected:tool_hoe_1
+    locks: end_farming
+  - id: D1-05
+    day: 1
+    phase: farming
+    text: "\uBC2D \uD55C \uCE78\uC744 \uC88C\uD074\uB9AD\uC73C\uB85C \uC138 \uBC88
+      \uC77C\uAD88\uC694"
+    highlight: bed_tutorial:cell_0
+    completeEvent: tilled:1
+    locks: end_farming
+  - id: D1-06
+    day: 1
+    phase: farming
+    text: "\uAC19\uC740 \uBC2D\uC758 \uB098\uBA38\uC9C0 3\uCE78\uB3C4 \uC77C\uAD88\uC694"
+    highlight: bed_tutorial
+    completeEvent: tilled:4
+    locks: end_farming
+  - id: D1-07
+    day: 1
+    phase: farming
+    text: "4\uBC88 \uC528\uC557\uC744 \uB4E4\uACE0 \uC77C\uAD70 \uCE78\uC5D0 \uC88C\uD074\uB9AD\uC73C\uB85C
+      \uC2EC\uC5B4\uC694"
+    highlight: hotbar:4;bed_tutorial
+    completeEvent: planted:4
+    locks: end_farming
+  - id: D1-08
+    day: 1
+    phase: farming
+    text: "2\uBC88 \uBB3C\uBFCC\uB9AC\uAC1C\uB85C \uC2EC\uC740 \uCE78\uC5D0 \uBB3C\uC744
+      \uC918\uC694"
+    highlight: hotbar:2;bed_tutorial
+    completeEvent: watered:4
+    locks: end_farming
+  - id: D1-09
+    day: 1
+    phase: farming
+    text: "\uB18D\uC7A5 \uBB38 \uC606 \uCC3D\uACE0\uB97C E\uB85C \uC5F4\uACE0 \uD560\uBA38\uB2C8\uC758
+      \uC6D4\uAD11 \uBFCC\uB9AC 2\uAC1C\uB97C \uAEBC\uB0B4\uC694"
+    highlight: storage_farm;storage_row:crop_moonroot
+    completeEvent: owned:crop_moonroot:2
+    locks: end_farming
+  - id: D1-10
+    day: 1
+    phase: farming
+    text: "\uB18D\uC0AC \uB05D\uB0B4\uAE30 [Enter] \uB610\uB294 \uAC00\uAC8C \uBB38(E)\uC73C\uB85C
+      \uAC00\uC694"
+    highlight: btn_end_farming;door_shop
+    completeEvent: zone:zone_shop
+    locks: 
+  - id: D1-11
+    day: 1
+    phase: tidy
+    text: "\uC624\uB7AB\uB3D9\uC548 \uB2EB\uD600 \uC788\uB358 \uAC00\uAC8C\uC608\uC694.
+      \uC4F0\uB808\uAE30 3\uAC1C\uB97C E\uB85C \uC8FC\uC6CC \uC4F0\uB808\uAE30\uD1B5(E)\uC5D0
+      \uBC84\uB824\uC694"
+    highlight: trash_nearest:3;trash_bin
+    completeEvent: trashed:3
+    locks: open_sales
+  - id: D1-12
+    day: 1
+    phase: tidy
+    text: "\uB0A8\uC740 \uC4F0\uB808\uAE30\uC640 \uC5BC\uB8E9\uC740 \uC6D0\uD558\uB294
+      \uB9CC\uD07C \uCE58\uC6CC\uC694. \uAE68\uB057\uD560\uC218\uB85D \uB0B4\uC77C
+      \uC190\uB2D8\uC774 \uB298\uC5B4\uC694"
+    highlight: hud_tidy_grade
+    completeEvent: auto
+    locks: 
+  - id: D1-13
+    day: 1
+    phase: tidy
+    text: "\uC6D4\uAD11 \uBFCC\uB9AC\uB97C \uB4E4\uACE0 \uACFC\uC77C \uC9C4\uC5F4\uB300\uC5D0
+      \uC88C\uD074\uB9AD\uC73C\uB85C \uC9C4\uC5F4\uD574\uC694 (2\uAC1C)"
+    highlight: fruit_shelf_1
+    completeEvent: displayed:2
+    locks: open_sales
+  - id: D1-14
+    day: 1
+    phase: tidy
+    text: "\uC900\uBE44 \uB05D! \uC7A5\uC0AC \uC2DC\uC791 [Enter] \uBC84\uD2BC \uB610\uB294
+      \uAC04\uD310 E\uB85C \uC7A5\uC0AC\uB97C \uC2DC\uC791\uD574\uC694"
+    highlight: btn_open_sales;signboard
+    completeEvent: phase:sales
+    locks: 
+  - id: D1-15
+    day: 1
+    phase: sales
+    text: "(\uD53C\uD53C \uB4F1\uC7A5) \uC7A5\uC0AC\uB294 \uC190\uB2D8\uC774 \uC54C\uC544\uC11C
+      \uC0AC \uAC00\uC694"
+    highlight: customer_pipi
+    completeEvent: sales_done
+    locks: 
+  - id: D1-16
+    day: 1
+    phase: settlement
+    text: "\uC624\uB298\uC758 \uACB0\uACFC\uC608\uC694. \uACBD\uD5D8\uCE58\uAC00
+      100\uC774 \uB418\uBA74 \uB808\uBCA8\uC5C5\uD574\uC694"
+    highlight: settle_revenue;settle_grade;settle_xp
+    completeEvent: next_day
+    locks: 
+  - id: D2-01
+    day: 2
+    phase: shop
+    text: "(\uD3B8\uC9C0 \u2461)"
+    highlight: letter_ui
+    completeEvent: letter_closed:letter_2
+    locks: move
+  - id: D2-02
+    day: 2
+    phase: shop
+    text: "\uC624\uB298\uC740 \uC6D4\uAD11 \uBFCC\uB9AC \uC528\uC557\uC744 \uB109\uB109\uD788
+      \uC0AC\uC694 (\uCD94\uCC9C 10\uAC1C)"
+    highlight: shop_row:item_seed_moonroot
+    completeEvent: owned:item_seed_moonroot:4
+    locks: close_shop
+  - id: D2-03
+    day: 2
+    phase: farming
+    text: "\uBE5B\uB098\uB294 \uC6D4\uAD11 \uBFCC\uB9AC\uB97C E\uB85C \uC218\uD655\uD574\uC694"
+    highlight: bed_tutorial
+    completeEvent: harvested:4
+    locks: end_farming
+  - id: D2-04
+    day: 2
+    phase: farming
+    text: "\uC218\uD655\uD55C \uCE78\uC740 \uD759\uC774 \uB2E4\uC2DC \uAD73\uC5C8\uC5B4\uC694.
+      \uB2E4\uC2DC \uC77C\uAD6C\uACE0 \uC2EC\uC5B4\uC694 (\uC606 \uBC2D\uC5D0\uB3C4
+      \uC2EC\uC5B4\uB3C4 \uC88B\uC544\uC694)"
+    highlight: bed_tutorial;bed_next
+    completeEvent: planted:4
+    locks: end_farming
+  - id: D2-05
+    day: 2
+    phase: farming
+    text: "\uC2EC\uC740 \uCE78\uC5D0 \uBB3C\uC744 \uC918\uC694"
+    highlight: planted_cells
+    completeEvent: watered:4
+    locks: end_farming
+  - id: D2-06
+    day: 2
+    phase: farming
+    text: "\uB18D\uC0AC \uB05D\uB0B4\uAE30 [Enter] \uB610\uB294 \uAC00\uAC8C \uBB38\uC73C\uB85C
+      \uAC00\uC694"
+    highlight: btn_end_farming;door_shop
+    completeEvent: zone:zone_shop
+    locks: 
+  - id: D2-07
+    day: 2
+    phase: tidy
+    text: "\uC5B4\uC81C \uC190\uB2D8 \uBC1C\uC790\uAD6D\uC774 \uD1B5\uB85C\uC5D0
+      \uB0A8\uC558\uC5B4\uC694. 3\uBC88 \uB300\uAC78\uB808\uB97C \uB4E4\uACE0 \uC88C\uD074\uB9AD\uC744
+      \uB204\uB978 \uCC44 \uBB38\uC9C8\uB7EC\uC694"
+    highlight: stains;hotbar:3
+    completeEvent: stains_cleared:2
+    locks: open_sales
+  - id: D2-08
+    day: 2
+    phase: tidy
+    text: "\uC624\uB298 \uC218\uD655\uD55C \uC6D4\uAD11 \uBFCC\uB9AC 4\uAC1C\uB97C
+      \uACFC\uC77C \uC9C4\uC5F4\uB300\uC5D0 \uC9C4\uC5F4\uD574\uC694"
+    highlight: fruit_shelf_1
+    completeEvent: displayed:4
+    locks: open_sales
+  - id: D2-09
+    day: 2
+    phase: tidy
+    text: "\uC7A5\uC0AC \uC2DC\uC791 [Enter] \uBC84\uD2BC \uB610\uB294 \uAC04\uD310
+      E\uB85C \uC7A5\uC0AC\uB97C \uC2DC\uC791\uD574\uC694"
+    highlight: btn_open_sales;signboard
+    completeEvent: phase:sales
+    locks: 
+  - id: D2-10
+    day: 2
+    phase: sales
+    text: "(\uC190\uB2D8 3\uBA85, \uD53C\uD53C \uD3EC\uD568)"
+    highlight: customers
+    completeEvent: sales_done
+    locks: 
+  - id: D2-11
+    day: 2
+    phase: settlement
+    text: "\uACBD\uD5D8\uCE58\uAC00 \uAC00\uB4DD \uCC3C\uC5B4\uC694! \uB808\uBCA8\uC5C5!"
+    highlight: settle_xp;levelup_banner
+    completeEvent: leveled_up
+    locks: 
+  - id: D2-12
+    day: 2
+    phase: settlement
+    text: "SP 3\uC73C\uB85C \uC0C8 \uC791\uBB3C\uC744 \uBC30\uC6B8 \uC218 \uC788\uC5B4\uC694.
+      \uBC84\uC12F\uAF43 \uD574\uAE08\uC744 \uB20C\uB7EC\uC694"
+    highlight: skill_node:skill_unlock_mushroom;btn_learn
+    completeEvent: skill:skill_unlock_mushroom
+    locks: close_skill;other_skills
+  - id: D2-13
+    day: 2
+    phase: settlement
+    text: "(\uD3B8\uC9C0 \u2462)"
+    highlight: letter_ui
+    completeEvent: letter_closed:letter_3
+    locks: 
+  - id: D2-14
+    day: 2
+    phase: settlement
+    text: "\uB0B4\uC77C \uC544\uCE68\uBD80\uD130 \uC0C1\uC810\uC5D0 \uBC84\uC12F\uAF43
+      \uC528\uC557\uC774 \uB4E4\uC5B4\uC640\uC694. \uB2E4\uC74C \uB0A0\uC744 \uB20C\uB7EC\uC694"
+    highlight: btn_next_day
+    completeEvent: next_day
+    locks: 
+  letters:
+  - id: letter_1
+    title: "\uC598\uC57C, \uB18D\uC7A5\uC5D0 \uC628 \uCCAB\uB0A0 \uC5F4\uC5B4 \uBCF4\uB834"
+    body: "\uC0AC\uB791\uD558\uB294 \uC6B0\uB9AC \uC598\uC57C,\n\n\uC774 \uD3B8\uC9C0\uB97C
+      \uC77D\uACE0 \uC788\uB2E4\uBA74, \uD560\uBA38\uB2C8 \uB300\uC2E0 \uB124\uAC00
+      \uAE00\uB85C\uC6B0 \uD31C\uC5D0 \uC640 \uC8FC\uC5C8\uAD6C\uB098. \uC815\uB9D0
+      \uACE0\uB9D9\uB2E4.\n\uC544\uB9C8 \uC624\uB7AB\uB3D9\uC548 \uC544\uBB34\uB3C4
+      \uB3CC\uBCF4\uC9C0 \uBABB\uD574\uC11C \uBC2D\uB3C4 \uAC00\uAC8C\uB3C4 \uB9CE\uC774
+      \uC4F8\uC4F8\uD574\uC84C\uC744 \uAC70\uC57C.\n\n\uADF8\uB798\uB3C4 \uAC71\uC815
+      \uB9D0\uB834. \uC774\uACF3 \uD759\uC740 \uC190\uAE38\uB9CC \uB2FF\uC73C\uBA74
+      \uAE08\uBC29 \uB2E4\uC2DC \uBE5B\uB09C\uB2E8\uB2E4.\n\uAD2D\uC774\uB85C \uAD73\uC740
+      \uD759\uC744 \uBD80\uB4DC\uB7FD\uAC8C \uC77C\uAD6C\uACE0, \uC6D4\uAD11 \uBFCC\uB9AC\uB97C
+      \uC2EC\uC5B4 \uBCF4\uB834. \uBB3C\uB9CC \uC798 \uC8FC\uBA74 \uD558\uB8FB\uBC24
+      \uC0AC\uC774\uC5D0 \uC608\uC058\uAC8C \uBE5B\uB0A0 \uAC70\uC57C.\n\uCC3D\uACE0
+      \uC0C1\uC790\uC5D0 \uC6D4\uAD11 \uBFCC\uB9AC \uB450 \uAC1C\uB97C \uB0A8\uACA8
+      \uB450\uC5C8\uC5B4. \uC6D4\uAD11 \uBFCC\uB9AC\uB294 \uC624\uB798 \uB450\uC5B4\uB3C4
+      \uC0C1\uD558\uC9C0 \uC54A\uAC70\uB4E0. \uAC00\uAC8C\uC5D0 \uB0B4\uB193\uC73C\uBA74
+      \uBC18\uAC00\uC6B4 \uC190\uB2D8\uC774 \uC62C \uAC70\uC57C.\n\n\uAC00\uAC8C\uB294...
+      \uBA3C\uC9C0\uAC00 \uAF64 \uC313\uC600\uACA0\uC9C0? \uCC9C\uCC9C\uD788, \uB124
+      \uC18D\uB3C4\uB300\uB85C \uD558\uBA74 \uB3FC.\n\n\uC5B8\uC81C\uB098 \uB124
+      \uD3B8\uC778, \uB124\uC544 \uD560\uBA38\uB2C8\uAC00\n\uCD94\uC2E0. \uC606\uC9D1
+      \uAF2C\uB9C8 \uD53C\uD53C\uAC00 \uC6B0\uB9AC \uAC00\uAC8C\uB97C \uCC38 \uC88B\uC544\uD588\uB2E8\uB2E4."
+  - id: letter_2
+    title: "\uCCAB \uC218\uD655 \uB0A0 \uC5F4\uC5B4 \uBCF4\uB834"
+    body: "\uC598\uC57C, \uBC24\uC0AC\uC774 \uBC2D\uC5D0\uC11C \uBE5B\uC774 \uC62C\uB77C\uC654\uB2C8?\n\n\uADF8\uB7FC
+      \uC6D4\uAD11 \uBFCC\uB9AC\uAC00 \uB2E4 \uC790\uB780 \uAC70\uC57C. \uC190\uC73C\uB85C
+      \uC0B4\uC9DD \uBF51\uC544 \uAC70\uB450\uACE0, \uBE44\uC5B4 \uC788\uB294 \uBC2D\uC740
+      \uB2E4\uC2DC \uC77C\uAD88\uC11C \uC0C8\uB85C \uC2EC\uC73C\uB834.\n\uAC00\uAC8C\uAC00
+      \uB2E4\uC2DC \uC5F4\uB838\uB2E4\uB294 \uC18C\uBB38\uC774 \uB098\uBA74, \uC190\uB2D8\uC774
+      \uD558\uB098\uB458 \uB3CC\uC544\uC62C \uAC70\uC57C. \uD560\uBA38\uB2C8 \uB54C\uCC98\uB7FC.\n\n\uB124\uC544
+      \uD560\uBA38\uB2C8\uAC00"
+  - id: letter_3
+    title: "\uC0C8 \uC528\uC557\uC744 \uACE0\uB978 \uB0A0 \uC5F4\uC5B4 \uBCF4\uB834"
+    body: "\uC6B0\uB9AC \uC598\uC57C, \uBC8C\uC368 \uC0C8 \uC528\uC557\uC744 \uACE0\uB97C
+      \uC904 \uC54C\uAC8C \uB410\uAD6C\uB098!\n\n\uBC84\uC12F\uAF43\uC740 \uBB3C\uC744
+      \uC8FC\uC9C0 \uC54A\uC544\uB3C4 \uD63C\uC790 \uC798 \uC790\uB77C\uB294 \uCC29\uD55C
+      \uAF43\uC774\uC57C. \uB0B4\uC77C \uC544\uCE68\uBD80\uD130 \uC0C1\uC810\uC5D0
+      \uB4E4\uC5B4\uC62C \uAC70\uB780\uB2E4.\n\uC774\uC81C \uAE00\uB85C\uC6B0 \uD31C\uC740
+      \uB124 \uB18D\uC7A5\uC774\uC57C. \uB124 \uB9C8\uC74C \uAC00\uB294 \uB300\uB85C
+      \uAC00\uAFD4 \uC8FC\uB834. \uB2E4\uC2DC \uBE5B\uB098\uB294 \uC6B0\uB9AC \uB18D\uC7A5\uC744,
+      \uD560\uBA38\uB2C8\uB294 \uB298 \uC751\uC6D0\uD558\uACE0 \uC788\uC744\uAC8C.\n\n\uB124\uC544
+      \uD560\uBA38\uB2C8\uAC00"

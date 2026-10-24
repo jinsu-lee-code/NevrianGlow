@@ -189,6 +189,7 @@ namespace NevrianGlowFarm.Systems.Zones
                 LogCollector.Instance.SetZone(zone.Id);
             UpdateMusic();
             ZoneChanged?.Invoke(zone);
+            GameEvents.RaiseZoneArrived(zone.Id);
         }
 
         /// <summary>

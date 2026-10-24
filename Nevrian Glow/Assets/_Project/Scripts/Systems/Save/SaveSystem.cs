@@ -109,6 +109,8 @@ namespace NevrianGlowFarm.Systems.Save
                 ShopSystem.Instance.CaptureTo(s);
             if (SalesSystem.Instance != null)
                 SalesSystem.Instance.CaptureTo(s);
+            if (Tutorial.TutorialSystem.Instance != null)
+                Tutorial.TutorialSystem.Instance.CaptureTo(s);
             foreach (var w in WorldItem.All)
             {
                 if (w == null || string.IsNullOrEmpty(w.ItemId) || w.Count <= 0)
@@ -266,6 +268,9 @@ namespace NevrianGlowFarm.Systems.Save
                 SalesSystem.Instance.LoadFrom(s);
             foreach (var w in s.WorldItems)
                 SpawnWorldItem(w);
+            // 튜토리얼 단계 (5-7) — 인벤토리가 돌아온 뒤 (가진 개수 조건을 바로 본다). 없던 저장이면 끔
+            if (Tutorial.TutorialSystem.Instance != null)
+                Tutorial.TutorialSystem.Instance.LoadFrom(s);
 
             // 4) 하루 시작 지점으로
             if (ZoneTransition.Instance != null)

@@ -51,6 +51,9 @@ namespace NevrianGlowFarm.Systems.Zones
         // 문을 열고(아트 연출 0.9초 — 페이드와 함께 보임) 이동한다. 화면이 어두워진 순간(플레이어가 떠난 뒤) 문을 다시 닫아 다음에 올 때 닫혀 있게.
         private bool Go(GameManager game, ZoneTransition transition)
         {
+            // 튜토리얼(5-7): 개간 · 심기 전에는 농사를 끝낼 수 없다
+            if (advancesPhase && Systems.Tutorial.TutorialSystem.IsLocked(Logic.Tutorial.TutorialLocks.EndFarming))
+                return false;
             bool started = transition.Request(destination, () =>
             {
                 if (advancesPhase)
@@ -75,6 +78,8 @@ namespace NevrianGlowFarm.Systems.Zones
                 return null;
             if (game.Phase != usablePhase)
                 return $"{destination.DisplayName} 문 - {DayPhaseNames.ToKorean(usablePhase)} 단계에 열림 (지금 {DayPhaseNames.ToKorean(game.Phase)})";
+            if (advancesPhase && Systems.Tutorial.TutorialSystem.IsLocked(Logic.Tutorial.TutorialLocks.EndFarming))
+                return $"{destination.DisplayName} 문 - 먼저: {Systems.Tutorial.TutorialSystem.LockedHint}";
             return advancesPhase
                 ? $"{DayPhaseNames.ToKorean(usablePhase)} 끝내고 {destination.DisplayName}(으)로 가기"
                 : $"{destination.DisplayName}(으)로 가기";

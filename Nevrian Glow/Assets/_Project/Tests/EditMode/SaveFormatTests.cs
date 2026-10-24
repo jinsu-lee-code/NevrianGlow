@@ -4,6 +4,7 @@ using NevrianGlowFarm.Logic.Game;
 using NevrianGlowFarm.Logic.Inventory;
 using NevrianGlowFarm.Logic.Save;
 using NevrianGlowFarm.Logic.Shop;
+using NevrianGlowFarm.Logic.Tutorial;
 using NUnit.Framework;
 
 namespace NevrianGlowFarm.Tests
@@ -34,13 +35,14 @@ namespace NevrianGlowFarm.Tests
             public Storage Storage = new Storage(id => id != "item_trash");
             public ShelfState Shelf = new ShelfState(6, 4);
             public ShopState Shop = new ShopState();
+            public TutorialProgress Tutorial = new TutorialProgress(TutorialSteps());
 
             public SaveSnapshot Capture()
             {
                 var s = new SaveSnapshot
                 {
                     Day = Cycle.Day, Phase = Cycle.Phase, Money = Wallet.Money, SkillPoints = Wallet.SkillPoints,
-                    Level = Progress.Level, Exp = Progress.Exp,
+                    Level = Progress.Level, Exp = Progress.Exp, TutorialStep = Tutorial.SaveKey,
                 };
                 SaveState.CaptureProgress(Skills, Record, Run, s);
                 SaveState.CaptureFarm(Farm, s);
@@ -68,7 +70,18 @@ namespace NevrianGlowFarm.Tests
                 SaveState.Apply(m.Storage, s.Storage);
                 m.Shelf.Load(s.Shelves[0]);
                 SaveState.ApplyShop(m.Shop, s);
+                m.Tutorial.Restore(s.TutorialStep, s.Day);
                 return m;
+            }
+
+            // 튜토리얼 단계 (5-7): 날마다 두 단계 — 상점 닫기(씨앗 2개) · 다음 날
+            private static IEnumerable<TutorialStep> TutorialSteps()
+            {
+                for (int day = 1; day <= 3; day++)
+                {
+                    yield return new TutorialStep($"D{day}-01", day, "shop", "씨앗", "", "owned:item_seed_moonroot:2", "close_shop");
+                    yield return new TutorialStep($"D{day}-02", day, "settlement", "다음 날", "", "next_day", "");
+                }
             }
 
             /// <summary>하루를 정해진 순서로 보낸다 (난수 없음): 상점 → 농사(수확 · 갈기 · 심기 · 물) → 진열 → 장사(진열 1개씩 판매) → 정산 → 밤.</summary>
@@ -82,6 +95,7 @@ namespace NevrianGlowFarm.Tests
                     {
                         Wallet.TryChangeMoney(-offer.Price);
                         InventoryRules.TryAddAll(new[] { Hotbar, Bag }, "item_seed_moonroot", 1);
+                        Tutorial.SetState(TutorialEvents.Owned, "item_seed_moonroot", InventoryRules.CountOf(new[] { Hotbar, Bag }, "item_seed_moonroot"));
                     }
                 Cycle.Advance();
 
@@ -151,9 +165,10 @@ namespace NevrianGlowFarm.Tests
                 Cycle.Advance();
                 Cycle.Advance(); // 다음 날 아침
 
-                // 밤 처리 + 상점 입고 초기화 (게임과 같은 순서)
+                // 밤 처리 + 상점 입고 초기화 (게임과 같은 순서) + 튜토리얼 다음 날
                 Night.Run(Farm);
                 Shop.StartDay();
+                Tutorial.BeginDay(Cycle.Day); // = next_day + 하루 누적 비움
             }
 
             private static void RemoveOne(SlotInventory a, SlotInventory b, string id)
@@ -182,6 +197,7 @@ namespace NevrianGlowFarm.Tests
             m.Hotbar.TryPlace(2, "item_seed_moonroot", 10);
             m.Storage.TryDeposit("crop_moonroot", 2);
             m.Storage.TryDeposit("tool_mop_1", 1);
+            m.Tutorial.Start(1);
             m.PlayDay(); // 1일차를 보내 밭 · 진열 · 상점 · 정산 기록이 차게
             return m;
         }
@@ -194,10 +210,27 @@ namespace NevrianGlowFarm.Tests
 
             Assert.IsTrue(SaveFormat.TryRead(text, out var back, out string error), error);
             Assert.AreEqual(text, SaveFormat.Write(back));
+            StringAssert.StartsWith("ngf_save 2\n", text);
             Assert.AreEqual(2, back.Day);
             Assert.AreEqual(DayPhase.Shop, back.Phase);
             Assert.AreEqual(8, back.Cells.Count);
             Assert.AreEqual(137.5f, back.WorldItems[0].Yaw);
+            Assert.AreEqual("D2-01", back.TutorialStep, "2일차 아침 저장 = 2일차 첫 단계");
+        }
+
+        [Test]
+        public void OldVersion1_WithoutTutorial_LoadsAsOff()
+        {
+            string v1 = SaveFormat.Write(Started().Capture()).Replace("ngf_save 2", "ngf_save 1").Replace("tutorial D2-01\n", string.Empty);
+            Assert.IsTrue(SaveFormat.TryRead(v1, out var back, out string error), error);
+            Assert.IsNull(back.TutorialStep);
+            var m = Model.From(back);
+            Assert.AreEqual(Logic.Tutorial.TutorialStatus.Off, m.Tutorial.Status);
+            // 끝난 튜토리얼은 "done"으로 남고 되돌아온다
+            var done = Started();
+            done.Tutorial.Restore(TutorialProgress.DoneKey, done.Cycle.Day);
+            var backDone = ReadBack(SaveFormat.Write(done.Capture()));
+            Assert.AreEqual(TutorialProgress.DoneKey, backDone.TutorialStep);
         }
 
         [Test]
@@ -223,7 +256,7 @@ namespace NevrianGlowFarm.Tests
             string good = SaveFormat.Write(Started().Capture());
             Assert.IsFalse(SaveFormat.TryRead("", out _, out _), "빈 파일");
             Assert.IsFalse(SaveFormat.TryRead("hello 1\nend\n", out _, out _), "첫 줄이 다름");
-            Assert.IsFalse(SaveFormat.TryRead(good.Replace("ngf_save 1", "ngf_save 99"), out _, out string newer), "더 새 버전");
+            Assert.IsFalse(SaveFormat.TryRead(good.Replace("ngf_save 2", "ngf_save 99"), out _, out string newer), "더 새 버전");
             StringAssert.Contains("99", newer);
             Assert.IsFalse(SaveFormat.TryRead(good.Replace("end\n", string.Empty), out _, out string cut), "끝 표시 없음 = 쓰다 끊김");
             StringAssert.Contains("end", cut);

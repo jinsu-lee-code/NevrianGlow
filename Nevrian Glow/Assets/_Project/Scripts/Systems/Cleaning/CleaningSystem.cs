@@ -222,8 +222,10 @@ namespace NevrianGlowFarm.Systems.Cleaning
                 unsold += s.TotalCount;
             int scatter = TidyRules.ScatterCount(day, unsold, customers, messRate, spec);
             int filledAfter = Mathf.Max(0, TidyRules.FilledSlots(states)); // 흩어진 뒤 빈 칸이 생길 수 있어 실제 수는 배치 때 줄 수 있다
-            return new DayMess(TidyRules.TrashCount(day, spec, countRandom), TidyRules.StainCount(day, customers, messRate, spec),
-                scatter, TidyRules.DisorderCount(day, filledAfter, messRate, spec));
+            // 튜토리얼(5-7)이 오늘 "쓰레기 n개 버리기 · 얼룩 n개 닦기"를 안내하면 그만큼은 생기게 (기획 고정값: 2일차 발자국 2 — 손님 × 0.3으로는 0개)
+            int trash = Mathf.Max(TidyRules.TrashCount(day, spec, countRandom), Mathf.CeilToInt(Systems.Tutorial.TutorialSystem.RequiredToday(Logic.Tutorial.TutorialEvents.Trashed)));
+            int stains = Mathf.Max(TidyRules.StainCount(day, customers, messRate, spec), Mathf.CeilToInt(Systems.Tutorial.TutorialSystem.RequiredToday(Logic.Tutorial.TutorialEvents.StainsCleared)));
+            return new DayMess(trash, stains, scatter, TidyRules.DisorderCount(day, filledAfter, messRate, spec));
         }
 
         /// <summary>그날 놓을 자리를 계산만 한다 (배치 · 미리보기 공통). 지금 바닥 아이템을 피한다.</summary>
@@ -339,7 +341,7 @@ namespace NevrianGlowFarm.Systems.Cleaning
         /// <summary>닦는다: point에서 radius 안에 중심이 있는 얼룩마다 amount만큼 줄인다. 닦은 얼룩 수.</summary>
         public int Mop(Vector3 point, float radius, float amount)
         {
-            int wiped = 0;
+            int wiped = 0, cleared = 0;
             foreach (var s in stains)
             {
                 if (s == null || s.IsClean)
@@ -347,8 +349,14 @@ namespace NevrianGlowFarm.Systems.Cleaning
                 Vector3 d = s.transform.position - point;
                 d.y = 0f;
                 if (d.magnitude <= radius && s.Wipe(amount) > 0f)
+                {
                     wiped++;
+                    if (s.IsClean)
+                        cleared++;
+                }
             }
+            if (cleared > 0)
+                GameEvents.RaiseStainsCleared(cleared);
             return wiped;
         }
 

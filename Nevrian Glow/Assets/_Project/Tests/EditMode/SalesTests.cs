@@ -47,6 +47,22 @@ namespace NevrianGlowFarm.Tests
         }
 
         [Test]
+        public void EveryWanted_BuysAllDisplayed()
+        {
+            // 튜토리얼 고정값(5-7): 레벨업을 안내하는 날은 손님마다 진열 수만큼 사려 해 진열이 다 팔린다 (2일차 월광 4개 → 매출 보장)
+            var shelves = new List<ShelfState> { Shelf((0, "a", 4)) };
+            var session = new SalesSession(3, Spec, everyWanted: 4);
+            session.SkipRemaining(shelves, new SeededRandom(7), PriceOf);
+            Assert.AreEqual(4, session.ItemsSold);
+            Assert.AreEqual(60, session.Revenue);
+            Assert.AreEqual(0, shelves[0].TotalCount);
+            // 첫 손님 고정 개수가 있으면 그쪽이 먼저
+            var first = new SalesSession(2, Spec, firstWanted: 1, everyWanted: 4);
+            Assert.AreEqual(1, first.NextWanted(new SeededRandom(1)));
+            Assert.AreEqual(4, first.NextWanted(new SeededRandom(1)));
+        }
+
+        [Test]
         public void EmptyShelf_LeavesImmediately_NoRevenue()
         {
             var shelves = new List<ShelfState> { new ShelfState(6, 4) };

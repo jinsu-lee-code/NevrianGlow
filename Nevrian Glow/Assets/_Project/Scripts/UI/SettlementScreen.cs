@@ -41,8 +41,12 @@ namespace NevrianGlowFarm.UI
 
         private bool advancing;
         private bool pending;
+        private bool yielding;
 
         public static SettlementScreen Instance { get; private set; }
+
+        /// <summary>정산 단계라 열릴 차례인데 아직 안 열렸는지 (다른 화면이 닫히기를 기다리는 중 포함).</summary>
+        public bool IsPending => pending && !IsOpen;
 
         /// <summary>지금 보여 주는 정산 (열린 동안 유효).</summary>
         public SettlementReport Report { get; private set; }
@@ -77,6 +81,7 @@ namespace NevrianGlowFarm.UI
             else
             {
                 pending = false;
+                yielding = false;
                 if (IsOpen)
                     ForceClose();
             }
@@ -86,8 +91,9 @@ namespace NevrianGlowFarm.UI
         {
             if (!pending || IsOpen)
                 return;
-            // 다른 화면(가방 등)이 열려 있으면 먼저 닫아 본다 — 닫을 수 없는 상태면 다음 프레임에 다시
-            if (Current != null)
+            // 다른 화면(가방 등)이 열려 있으면 먼저 닫아 본다 — 닫을 수 없는 상태면 다음 프레임에 다시.
+            // 비켜 준 동안(튜토리얼이 연 스킬 트리 · 편지)은 닫지 않고 그 화면이 스스로 닫히기를 기다린다
+            if (Current != null && !yielding)
                 Current.Close();
             if (Current == null)
                 Open();
@@ -97,6 +103,7 @@ namespace NevrianGlowFarm.UI
         public void Open()
         {
             pending = false;
+            yielding = false;
             Show();
         }
 
@@ -143,6 +150,18 @@ namespace NevrianGlowFarm.UI
             advancing = true;
             Close();
             advancing = false;
+        }
+
+        /// <summary>
+        /// 잠깐 비켜 준다 (튜토리얼 5-7: 정산 위에 스킬 트리 · 편지를 연다) — 다른 화면이 닫히면 정산이 다시 뜬다 (같은 날 정산이면 다시 기록하지 않음).
+        /// </summary>
+        public void CloseTemporarily()
+        {
+            if (!IsOpen)
+                return;
+            ForceClose();
+            pending = GameManager.Instance != null && GameManager.Instance.Phase == DayPhase.Settlement;
+            yielding = pending;
         }
 
         private SettlementReport BuildReport()

@@ -97,7 +97,16 @@ namespace NevrianGlowFarm.UI
             if (IsOpen)
             {
                 if (toggleAction.action.WasPressedThisFrame() || cancelAction.action.WasPressedThisFrame())
-                    Close();
+                {
+                    // 튜토리얼(5-7): 안내한 스킬을 배우기 전에는 닫히지 않는다
+                    if (Systems.Tutorial.TutorialSystem.IsLocked(Logic.Tutorial.TutorialLocks.CloseSkill))
+                    {
+                        messageLabel.text = "먼저 안내한 스킬을 배워요";
+                        AudioManager.Play(SoundCues.UiBuyFail);
+                    }
+                    else
+                        Close();
+                }
                 return;
             }
             // 다른 화면이 열려 있거나 이번 프레임에 닫혔으면 열지 않는다.
@@ -220,6 +229,8 @@ namespace NevrianGlowFarm.UI
                     continue;
                 var skill = rowSkills[i];
                 var check = skills.Check(skill);
+                if (check == LearnCheck.Ok && skills.IsTutorialLocked(skill))
+                    check = LearnCheck.Prerequisite; // 튜토리얼이 잠근 스킬은 못 배우는 줄로 (회색)
                 int level = skills.LevelOf(skill);
                 var view = entries[i];
                 view.SetIcon(null);

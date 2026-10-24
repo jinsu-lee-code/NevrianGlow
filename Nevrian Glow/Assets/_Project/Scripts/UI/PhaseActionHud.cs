@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using NevrianGlowFarm.Core;
 using NevrianGlowFarm.Logic.Game;
+using NevrianGlowFarm.Systems.Tutorial;
 using NevrianGlowFarm.Systems.Zones;
 using TMPro;
 using UnityEngine;
@@ -13,7 +14,9 @@ namespace NevrianGlowFarm.UI
     /// <summary>
     /// 단계 넘기기 HUD 버튼 (TASKS P-7, 회신2 4절 #1 · 결정 2026-10-21): 그 단계에서만 보이는 버튼 + 단축키 표시.
     /// 1인칭이라 평소 커서가 잠겨 있어 단축키로 누른다 (버튼 클릭도 같은 일 — 커서가 보일 때).
-    /// 농사: "농사 끝내기 [Enter]" = 농장 문과 같은 길(페이드 → 가게, 확인 없이). 장사: "장사 건너뛰기 [Space]" = SalesSystem이 키를 받는다(여기는 표시 · 클릭만).
+    /// 농사: "농사 끝내기 [Enter]" = 농장 문과 같은 길(페이드 → 가게, 확인 없이). 청소·진열: "장사 시작 [Enter]" = 간판과 같은 길(5-7).
+    /// 장사: "장사 건너뛰기 [Space]" = SalesSystem이 키를 받는다(여기는 표시 · 클릭만).
+    /// 튜토리얼(5-7)이 그 버튼의 잠금 이름을 잠그면 누를 수 없다(회색).
     /// </summary>
     public class PhaseActionHud : MonoBehaviour
     {
@@ -24,6 +27,8 @@ namespace NevrianGlowFarm.UI
             UseDoor,
             /// <summary>장사 건너뛰기 (SalesSystem.FinishNow).</summary>
             SkipSales,
+            /// <summary>영업 팻말을 쓴다 — 장사 시작 (OpenSign.TryUseFor).</summary>
+            OpenSales,
         }
 
         [Serializable]
@@ -39,12 +44,15 @@ namespace NevrianGlowFarm.UI
             [SerializeField] private ActionKind action;
             [Tooltip("단축키 — 비우면 키는 다른 곳이 받는다 (예: 장사 건너뛰기 Space는 SalesSystem)")]
             [SerializeField] private InputActionReference key;
+            [Tooltip("튜토리얼 잠금 이름 — 잠겨 있으면 버튼을 누를 수 없다 (예: end_farming · open_sales, 비우면 잠금 없음)")]
+            [SerializeField] private string tutorialLock;
 
             public DayPhase Phase => phase;
             public string Label => label;
             public string KeyHint => keyHint;
             public ActionKind Action => action;
             public InputActionReference Key => key;
+            public string TutorialLock => tutorialLock;
         }
 
         [Header("참조")]
@@ -99,10 +107,17 @@ namespace NevrianGlowFarm.UI
                 label.text = string.IsNullOrEmpty(current.KeyHint) ? current.Label : $"{current.Label} [{current.KeyHint}]";
         }
 
+        private bool IsLocked => current != null && !string.IsNullOrEmpty(current.TutorialLock) && TutorialSystem.IsLocked(current.TutorialLock);
+
         private void Update()
         {
+            if (current == null)
+                return;
+            bool locked = IsLocked;
+            if (button.interactable == locked)
+                button.interactable = !locked;
             // 화면이 열려 있거나 이동 중이면 키를 받지 않는다 (Enter가 화면 안 입력과 겹치지 않게)
-            if (current == null || current.Key == null || PlayerInputGate.IsBlocked || GameScreen.Current != null)
+            if (locked || current.Key == null || PlayerInputGate.IsBlocked || GameScreen.Current != null)
                 return;
             if (current.Key.action.WasPressedThisFrame())
                 Run();
@@ -110,7 +125,7 @@ namespace NevrianGlowFarm.UI
 
         private void Run()
         {
-            if (current == null)
+            if (current == null || IsLocked)
                 return;
             switch (current.Action)
             {
@@ -121,6 +136,9 @@ namespace NevrianGlowFarm.UI
                     var sales = Systems.Sales.SalesSystem.Instance;
                     if (sales != null && sales.IsRunning)
                         sales.FinishNow(advancePhase: true);
+                    break;
+                case ActionKind.OpenSales:
+                    Systems.Sales.OpenSign.TryUseFor(current.Phase);
                     break;
             }
         }

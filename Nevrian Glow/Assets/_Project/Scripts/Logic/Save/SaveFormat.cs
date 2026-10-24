@@ -15,7 +15,7 @@ namespace NevrianGlowFarm.Logic.Save
     public static class SaveFormat
     {
         public const string Magic = "ngf_save";
-        public const int CurrentVersion = 1;
+        public const int CurrentVersion = 2; // 2: 튜토리얼 단계 (5-7, 2026-10-24)
         private const string None = "-";
 
         public static string Write(SaveSnapshot s)
@@ -67,6 +67,8 @@ namespace NevrianGlowFarm.Logic.Save
 
             foreach (var w in s.WorldItems)
                 Line(sb, "world", w.ItemId, w.Count, w.Zone, F(w.X), F(w.Y), F(w.Z), F(w.Yaw));
+            if (!string.IsNullOrEmpty(s.TutorialStep))
+                Line(sb, "tutorial", s.TutorialStep); // 형식 2 (5-7) — 없으면 튜토리얼 안 켜짐
             sb.Append("end\n");
             return sb.ToString();
         }
@@ -164,6 +166,7 @@ namespace NevrianGlowFarm.Logic.Save
                         case "world":
                             s.WorldItems.Add(new WorldItemSave { ItemId = t[1], Count = I(t[2]), Zone = t[3], X = Fl(t[4]), Y = Fl(t[5]), Z = Fl(t[6]), Yaw = Fl(t[7]) });
                             break;
+                        case "tutorial": s.TutorialStep = t[1]; break;
                         default:
                             warnings?.Add($"{n + 1}번째 줄: 모르는 키 '{t[0]}' - 건너뜀");
                             break;
