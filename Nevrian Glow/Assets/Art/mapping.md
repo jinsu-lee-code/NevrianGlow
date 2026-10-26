@@ -78,6 +78,12 @@
 | `Environment/Scripts/LakeWaveSim.cs` + `Shaders/LakeWaveSim.shader` | 10/26. 호수 파동 시뮬레이션(`Lake`에 붙어 있음). 폭포 발치에서 생긴 파동이 퍼지고 물가에서 반사됨(512² 높이장, 초당 18단계). Play가 아니어도 에디터에서 계속 돎(`runInEditor`) |
 | `Environment/Sky/Textures/tex_env_sky_pano_95_{bg,cloud_low,cloud_high}.png` | 10/26. 그림 하늘(지브리풍 구름) — 원본 FreeStylized `sky_95`(상업 사용 가능, 출처 표기 불필요, 원본 그대로 재배포 금지, AI + 수작업 제작). 배경 / 낮은 구름 / 높은 구름으로 나눠 구름이 흐르고 별이 반짝임(`ToonSky`의 Painted Sky) |
 | `Environment/plot/pf_env_plot_cell.prefab` (`Models/env_plot_cell.fbx`) | 10/26. 밭 1칸(2 × 2 m 칸에 1.96 m) 두둑 — 원래 `env_plot`(2×2칸)이 게임 구획(4×4칸)과 안 맞아서. `farm_cell` 자식으로 (0,0,0)에 넣으면 됨. 흙은 기존 `pf_env_plot_soil` |
+| `Environment/shop_decor/pf_env_shop_decor.prefab` (+ `Models/` · `Materials/` · `Textures/`) | 10/27. 상점 내부 장식 한 묶음("넓고 비어 보인다" 평가 → 코덱스 시안 A). 피벗 = 상점 바닥 가운데. 천장 천 · 깃발 3장 · 매달린 화분 · 등나무 꽃송이 8개(믹사르 모델, 아래 끝만 발광) · 유리 구슬 등 · 벽 선반 · 액자 · 러그 · 화분 · 통 · 작은 수정 무리 · 점광원(위는 차가운 은은한 빛, 아래는 따뜻한 빛 웅덩이 5개). 콜라이더 없음, 게임 배치(계산대 · 진열대 · 동선)는 안 건드림 |
+| `Environment/shop_wall/Textures/tex_env_shop_wall_albedo.png` | 10/27. 상점 벽 전용 나무 텍스처(주황 → 탁한 보라갈색). 수정 빛과 벽이 안 어울리던 원인이 주황 벽이라서. `mat_env_shop_wall`만 이걸 씀, 공용 나무 텍스처는 그대로 |
+| `Environment/Scripts/RuntimeVirtualTexture.cs` + `Shaders/RuntimeVirtualTexture.hlsl` | 10/27. 지형 색 런타임 가상 텍스처(언리얼 RVT 방식: 쿼드트리 페이지 · 타일 아틀라스 · 간접 텍스처 · 페이지 스트리밍). `Terrain_LookDev`에 붙어 있음. 풀(`ToonFoliage`) 뿌리와 절벽(`ToonCliff`) 밑동이 땅 색을 읽음. 기존 `GroundColorBaker`는 풀 덮임 지도만 담당 |
+| `Environment/Shaders/ToonCliff.shader` | 10/27. 배경 절벽 셰이더: 높이 그라데이션 · 지층 띠 · 위를 향한 면 이끼 · 밑동이 땅 색으로 녹아듦(RVT). `mat_env_cliff_bg_rock/top`이 사용 |
+| `Environment/Shaders/ToonLeafShell.shader` | 10/27. 나무 · 덤불 속 덩어리를 잎 껍질로(잎 모양 셀 · 가장자리 잘라냄). `mat_env_tree_bg_inner`가 사용 |
+| `Environment/tree_bg/Materials/mat_env_tree_bg_leaf_{teal,violet}.mat` | 10/27. 잎 색 변형 2종 — 숲이 단색으로 보이지 않게 나무마다 파랑 / 청록 / 보라를 섞음 |
 
 ## 이름을 안 바꾼 것
 

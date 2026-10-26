@@ -125,6 +125,7 @@ Shader "DSEWA/ToonFoliage"
 
         TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
         TEXTURE2D(_DSEWA_GroundColor); SAMPLER(sampler_DSEWA_GroundColor);
+        #include "Assets/Art/Environment/Shaders/RuntimeVirtualTexture.hlsl"
         float4 _DSEWA_GrassCoverageRect;             // global: (minX, minZ, 1/sizeX, 1/sizeZ); z = 0 -> no coverage
         TEXTURE2D(_DSEWA_GrassCoverage); SAMPLER(sampler_DSEWA_GrassCoverage);
 
@@ -144,6 +145,9 @@ Shader "DSEWA/ToonFoliage"
         // a = 1 where ground was baked, 0 outside the area or with no baker.
         half4 SampleGroundColor(float2 xz)
         {
+            // real RVT first (RuntimeVirtualTexture: albedo pages -> x the ground's lit colour, as the bake below)
+            half4 rvt;
+            if (SampleRVT(xz, rvt)) return half4(rvt.rgb * (_DSEWA_GroundLight.w > 0 ? _DSEWA_GroundLitColor.rgb : half3(1, 1, 1)), 1);
             if (_DSEWA_GroundColorRect.z == 0) return 0;
             float2 uv = (xz - _DSEWA_GroundColorRect.xy) * _DSEWA_GroundColorRect.zw;
             if (any(uv != saturate(uv))) return 0;

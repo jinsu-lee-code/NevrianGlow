@@ -83,6 +83,8 @@ Shader "DSEWA/ToonLakeWater"
         _FoamWaveSpeed ("Wave Lines Per Second", Range(0, 1)) = 0.18
         _FoamWaveWidth ("Wave Line Width (m of depth)", Range(0.001, 0.1)) = 0.018
         _FoamWaveBreak ("Wave Line Gaps", Range(0, 1)) = 0.4
+        _ContactFoam ("Contact Foam Around Stones (m along the view)", Range(0, 0.6)) = 0.18
+        _ContactFoamBreak ("Contact Foam Gaps", Range(0, 1)) = 0.3
         _DebugTime ("Debug Fixed Time (-1 = live)", Float) = -1
         [Header(Depth cues)]
         _SkyColor ("Sky Color Seen At Grazing Angles", Color) = (0.2, 0.18, 0.4, 1)
@@ -144,6 +146,7 @@ Shader "DSEWA/ToonLakeWater"
                 float _CausticTilingFine, _CausticFineWeight, _CausticFineNear, _CausticFineFar;
                 float _FoamBreath, _FoamWaveReach, _FoamWaveSpeed, _FoamWaveWidth, _FoamWaveBreak, _DebugTime;
                 float _FoamWaves, _RimGlowMin, _RimGlowMax, _RimGlowPeriod, _RimStrength;
+                float _ContactFoam, _ContactFoamBreak;
             CBUFFER_END
             // simulated wave height field (LakeWaveSim.cs) and the flow ripple noise
             TEXTURE2D(_DSEWA_WaveTex); SAMPLER(sampler_DSEWA_WaveTex);
@@ -348,6 +351,18 @@ Shader "DSEWA/ToonLakeWater"
                     half wave = 1 - step(_FoamWaveWidth * lerp(0.4, 1, phase), abs(depthV - waveD));
                     foam = max(foam, wave * phase * gaps * step(0.15, phase) * _FoamWaves);
                 }
+                // contact foam (2026-10-27, user: "nothing happens where the stones meet the water"): the shore band
+                // above is measured in vertical water depth, which is only a hair wide on a steep stone side, so
+                // also foam where the scene is close behind the water along the view (eye depth difference): a ring
+                // round every stone, post or bank that pierces the surface. It breathes and breaks up with noise
+                // and swells where the simulated waves run high against the stone
+                float eyeScene = LinearEyeDepth(rawD, _ZBufferParams);
+                float eyeWater = LinearEyeDepth(i.positionCS.z, _ZBufferParams);
+                float gap = eyeScene - eyeWater;
+                float nc = Noise3(float3(sp * 1.6, t * 0.6));
+                float cfw = _ContactFoam * lerp(0.55, 1.25, nc) * (1 + saturate(wh * 6));
+                half contact = (1 - step(cfw, gap)) * step(_ContactFoamBreak, Noise3(float3(sp * 2.3, t * 0.35 + 4.2)) + 0.25) * step(0.0005, gap);
+                foam = max(foam, contact);
                 // rim glow breathes slowly, each stretch of shore a little out of step (light drifting along it)
                 float breath = sin((t / _RimGlowPeriod + Noise3(float3(sp * 0.05, 1.7)) * 1.5) * 6.2831853) * 0.5 + 0.5;
                 half rimGlow = _FoamEmission * lerp(_RimGlowMin, _RimGlowMax, breath);

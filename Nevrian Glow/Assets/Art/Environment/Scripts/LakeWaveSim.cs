@@ -44,6 +44,16 @@ public class LakeWaveSim : MonoBehaviour
     [Tooltip("Impacts per step (fractional = random)")]
     public float impactsPerStep = 1.3f;
 
+    [Header("Stones in the water (2026-10-27)")]
+    [Tooltip("Every renderer under these that pierces the water level becomes a wall for the waves (they bounce off and bend round it)")]
+    public Transform[] obstacleRoots;
+    [Tooltip("Stone footprint = its bounds at the water line times this (bounds are boxes, stones are round)")]
+    [Range(0.4f, 1f)] public float obstacleShrink = 0.75f;
+    [Tooltip("Water lapping against the stones: small rings starting at a random stone edge, per second")]
+    public float lapsPerSecond = 4f;
+    public float lapStrength = 0.1f;
+    public Vector2 lapRadius = new Vector2(0.15f, 0.3f);
+
     [Header("Stray drops over the whole lake (life)")]
     public float straysPerSecond = 0.6f;
     public float strayStrength = 0.12f;
@@ -53,6 +63,7 @@ public class LakeWaveSim : MonoBehaviour
     Texture2D mask;
     float acc;
     readonly Vector4[] drops = new Vector4[8];
+    readonly System.Collections.Generic.List<Vector2> lapPoints = new System.Collections.Generic.List<Vector2>();
     static readonly int TexId = Shader.PropertyToID("_DSEWA_WaveTex");
     static readonly int RectId = Shader.PropertyToID("_DSEWA_WaveRect");
     static readonly int OnId = Shader.PropertyToID("_DSEWA_WaveOn");
@@ -127,6 +138,34 @@ public class LakeWaveSim : MonoBehaviour
                 byte v = (byte)(Mathf.Clamp01((waterLevel - g) / 0.08f) * 255);
                 px[j * resolution + i] = new Color32(v, v, v, 255);
             }
+        lapPoints.Clear();
+        if (obstacleRoots != null)
+            foreach (var root in obstacleRoots)
+            {
+                if (root == null) continue;
+                foreach (var r in root.GetComponentsInChildren<Renderer>())
+                {
+                    if (r is ParticleSystemRenderer) continue;
+                    var b = r.bounds;
+                    if (b.min.y > waterLevel + 0.02f || b.max.y < waterLevel) continue;   // fully under or above the water
+                    float rx = Mathf.Max(b.extents.x * obstacleShrink, 0.05f), rz = Mathf.Max(b.extents.z * obstacleShrink, 0.05f);
+                    int i0 = Mathf.FloorToInt((b.center.x - rx - x0) / size * resolution), i1 = Mathf.CeilToInt((b.center.x + rx - x0) / size * resolution);
+                    int j0 = Mathf.FloorToInt((b.center.z - rz - z0) / size * resolution), j1 = Mathf.CeilToInt((b.center.z + rz - z0) / size * resolution);
+                    if (i1 < 0 || j1 < 0 || i0 >= resolution || j0 >= resolution) continue;
+                    for (int j = Mathf.Max(j0, 0); j <= Mathf.Min(j1, resolution - 1); j++)
+                        for (int i = Mathf.Max(i0, 0); i <= Mathf.Min(i1, resolution - 1); i++)
+                        {
+                            float x = x0 + (i + 0.5f) / resolution * size - b.center.x, z = z0 + (j + 0.5f) / resolution * size - b.center.z;
+                            if ((x * x) / (rx * rx) + (z * z) / (rz * rz) <= 1f) px[j * resolution + i] = new Color32(0, 0, 0, 255);
+                        }
+                    // a few points just outside the stone where the water laps against it
+                    for (int k = 0; k < 6; k++)
+                    {
+                        float a = k / 6f * Mathf.PI * 2f;
+                        lapPoints.Add(new Vector2((b.center.x + Mathf.Cos(a) * rx * 1.15f - x0) / size, (b.center.z + Mathf.Sin(a) * rz * 1.15f - z0) / size));
+                    }
+                }
+            }
         mask.SetPixels32(px); mask.Apply();
     }
 
@@ -173,6 +212,11 @@ public class LakeWaveSim : MonoBehaviour
                         Random.Range(impactRadius.x, impactRadius.y), Random.Range(impactStrength.x, impactStrength.y));
                     k -= 1;
                 }
+            }
+            if (lapPoints.Count > 0 && count < 8 && Random.value < lapsPerSecond / Mathf.Max(stepsPerSecond, 1f))
+            {
+                var lp = lapPoints[Random.Range(0, lapPoints.Count)];
+                drops[count++] = new Vector4(lp.x, lp.y, Random.Range(lapRadius.x, lapRadius.y), lapStrength * Random.Range(0.6f, 1.2f));
             }
             if (Random.value < straysPerSecond / Mathf.Max(stepsPerSecond, 1f) && count < 8)
                 drops[count++] = new Vector4(Random.value, Random.value, 0.3f, strayStrength);

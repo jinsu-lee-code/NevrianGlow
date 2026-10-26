@@ -110,7 +110,7 @@ Material:
     - _GlowPower: 9.114443
     - _GradientPower: 1
     - _GroundFade: 12
-    - _HaloAmount: 0.1645777
+    - _HaloAmount: 0.09373308
     - _HaloSize: 0.101144426
     - _MidHeight: 0.3
     - _Moon2Size: 0.03
@@ -138,7 +138,7 @@ Material:
     - _StarTwinkle: 0.55
     - _SunBrightness: 3.7861059
     - _SunSize: 0.035572212
-    - _SunsetAmount: 0.34632173
+    - _SunsetAmount: 0.24005483
     - _SunsetHeight: 0.22
     - _SunsetSpread: 2.5
     - _VolAmount: 0
@@ -218,7 +218,7 @@ Material:
     - _PanoCloudMask: {r: 0.25, g: 0.45, b: 0, a: 0}
     - _PanoCloudSpeed: {r: 0.15, g: 0.35, b: 0, a: 0}
     - _PanoStarTwinkle: {r: 1.5, g: 0.8, b: 1, a: 0}
-    - _PanoTint: {r: 0.9057221, g: 0.8468665, b: 0.98, a: 1}
+    - _PanoTint: {r: 0.67547715, g: 0.669755, b: 0.96228886, a: 1}
     - _PlanetBand: {r: 0.5026662, g: 0.42310053, b: 0.8264573, a: 1}
     - _PlanetDir: {r: 0.53289515, g: 0.5591929, b: -0.6350796, a: 0}
     - _PlanetLit: {r: 0.8049582, g: 0.76101947, b: 0.9914729, a: 1}

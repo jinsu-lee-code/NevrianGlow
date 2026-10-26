@@ -30,6 +30,12 @@ Material:
     m_Ints: []
     m_Floats:
     - _AmbientShade: 0.1
+    - _CapBreath: 0.5
+    - _CapFlutter: 0.12
+    - _CapRadius: 0.26
+    - _CapSpeed: 0.9
+    - _CapStart: 0.47
+    - _CapWaves: 2
     - _Delight: 1
     - _DelightLevel: 0.75
     - _OutlineWidth: 0.006

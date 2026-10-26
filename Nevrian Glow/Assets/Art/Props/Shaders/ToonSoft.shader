@@ -28,6 +28,9 @@ Shader "DSEWA/ToonSoft"
         _ShadowSaturation ("Shadow Saturation", Range(0.5, 2)) = 1.3
         _LightColorAmount ("Light Color Influence", Range(0, 1)) = 0.5
         _PointLightStrength ("Point / Spot Light Strength (0 = main light only)", Range(0, 2)) = 1
+        _PointBands ("Point Light Toon Steps (0 = smooth falloff)", Range(0, 6)) = 3
+        _PointBandSoft ("Point Light Step Edge Softness", Range(0.01, 1)) = 0.75
+        _PointBandGain ("Point Light Falloff Gain Before Steps", Range(1, 10)) = 2.5
         [ToggleUI] _ReceiveShadows ("Receive Shadows (cast + cloud)", Float) = 1
         _ShadowBlur ("Cast Shadow Smoothing (texels)", Range(0, 4)) = 1.5
         [Header(Sky and Ground Ambient)]
@@ -73,6 +76,9 @@ Shader "DSEWA/ToonSoft"
             half4 _ShadowTint;
             half _ShadowSaturation, _LightColorAmount, _ReceiveShadows, _ShadowBlur;
             half _PointLightStrength;
+            half _PointBands;
+            half _PointBandSoft;
+            half _PointBandGain;
             half4 _SkyColor, _GroundColor;
             half _AmbientStrength;
             half _SceneAmbient;
@@ -197,7 +203,16 @@ Shader "DSEWA/ToonSoft"
                         Light al = GetAdditionalLight(lightIndex, i.positionWS);
                         half aw = (dot(N, al.direction) + _Wrap) / (1.0 + _Wrap);
                         half alit = smoothstep(0.5 - _Softness, 0.5 + _Softness, aw) * lerp(1.0h, occ, _OcclusionDirect);
-                        addCol += base * al.color * (al.distanceAttenuation * al.shadowAttenuation * alit);
+                        // toon: the falloff is cut into a few flat steps and capped at 1, so a lamp gives rings of
+                        // flat colour instead of a smooth hot spot (2026-10-26, user: rim and shine fight the toon look)
+                        half at = al.distanceAttenuation * al.shadowAttenuation;
+                        if (_PointBands > 0.5)
+                        {
+                            half sB = saturate(at * _PointBandGain) * _PointBands;   // gain first, so a faint far light still reaches a step
+                            half fwB = fwidth(sB) + 1e-3h;
+                            at = (floor(sB) + smoothstep(1.0h - _PointBandSoft - fwB, 1.0h, frac(sB))) / _PointBands;
+                        }
+                        addCol += base * al.color * (at * alit);
                     LIGHT_LOOP_END
                     col += addCol * _PointLightStrength;
                 }

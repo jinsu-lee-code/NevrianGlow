@@ -48,6 +48,13 @@ Shader "DSEWA/ToonProp"
         [Header(Outline)]
         _OutlineColor ("Outline Color", Color) = (0.1, 0.1, 0.26, 1)
         _OutlineWidth ("Outline Width (m at the model's own size, 0 = off)", Float) = 0.006
+        [Header(Cap Flutter for mushroom caps   0 is off)]
+        _CapFlutter ("Sway Tilt (radians, 0 = off)", Range(0, 0.4)) = 0
+        _CapStart ("Stem Top Height (object y, the cap pivot)", Range(0, 1)) = 0.45
+        _CapRadius ("Cap Rim Radius (object units)", Range(0.05, 1)) = 0.35
+        _CapSpeed ("Flutter Speed", Range(0, 5)) = 1.3
+        _CapWaves ("Waves Round The Rim", Range(0, 6)) = 2
+        _CapBreath ("Breathing (whole rim up / down)", Range(0, 1)) = 0.5
     }
 
     SubShader
@@ -72,6 +79,7 @@ Shader "DSEWA/ToonProp"
             float _PulsePeriod;
             half4 _OutlineColor;
             float _OutlineWidth;
+            float _CapFlutter, _CapStart, _CapRadius, _CapSpeed, _CapWaves, _CapBreath;
         CBUFFER_END
                 // outline width is in metres at the model's own size: a prefab scaled to 0.18 gets a 0.18x line
         // (geometric mean of the object scale, so non-uniform boxes do not blow up)
@@ -79,6 +87,30 @@ Shader "DSEWA/ToonProp"
         {
             float3x3 m = (float3x3)GetObjectToWorldMatrix();
             return pow(abs(determinant(m)), 1.0 / 3.0);
+        }
+
+        // cap sway (2026-10-27, user: "caps that keep flapping", then "the jelly wobble is no good"): the cap moves
+        // as one solid piece. It tilts round the top of the stem, the stem bending into it gradually (no deforming of
+        // the cap itself), with a slow nod plus a smaller cross sway, and a slight bob. Each mushroom has its own phase
+        // from its position. _CapFlutter = tilt in radians at full sway; 0 = off (rocks, trunks and props untouched)
+        float3 CapFlutter(float3 p)
+        {
+            if (_CapFlutter <= 0) return p;
+            float3 piv = GetObjectToWorldMatrix()._m03_m13_m23;
+            float ph = frac(sin(dot(piv.xz, float2(12.9898, 78.233))) * 43758.5453) * 6.2832;
+            float t = _Time.y * _CapSpeed + ph;
+            float h = saturate(p.y / max(_CapStart, 0.05));                      // stem: 0 at the ground, 1 at the cap
+            float bend = h * h;                                                  // the stem bends more near the top
+            float ax = (sin(t) * 0.75 + sin(t * 2.3 + 1.3) * 0.25) * _CapFlutter * bend;
+            float az = sin(t * 0.8 + 2.1) * 0.6 * _CapFlutter * bend;
+            float3 c = float3(0, _CapStart * h, 0);                              // pivot follows the stem
+            float3 q = p - c;
+            float ca = cos(ax), sa = sin(ax);
+            q = float3(q.x, q.y * ca - q.z * sa, q.y * sa + q.z * ca);
+            ca = cos(az); sa = sin(az);
+            q = float3(q.x * ca - q.y * sa, q.x * sa + q.y * ca, q.z);
+            q.y += sin(t * 1.6) * _CapFlutter * 0.08 * bend;                      // slight bob
+            return q + c;
         }
         ENDHLSL
 
@@ -118,7 +150,7 @@ Shader "DSEWA/ToonProp"
                 Varyings o = (Varyings)0;
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-                VertexPositionInputs pos = GetVertexPositionInputs(input.positionOS.xyz);
+                VertexPositionInputs pos = GetVertexPositionInputs(CapFlutter(input.positionOS.xyz));
                 o.positionCS = pos.positionCS;
                 o.positionWS = pos.positionWS;
                 o.normalWS = TransformObjectToWorldNormal(input.normalOS);
@@ -198,7 +230,7 @@ Shader "DSEWA/ToonProp"
                 Varyings o = (Varyings)0;
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-                float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
+                float3 positionWS = TransformObjectToWorld(CapFlutter(input.positionOS.xyz));
                 positionWS += TransformObjectToWorldNormal(input.normalOS) * _OutlineWidth * OutlineObjectScale();
                 o.positionCS = TransformWorldToHClip(positionWS);
                 o.fogFactor = ComputeFogFactor(o.positionCS.z);
@@ -230,7 +262,7 @@ Shader "DSEWA/ToonProp"
             float4 vert(Attributes input) : SV_POSITION
             {
                 UNITY_SETUP_INSTANCE_ID(input);
-                float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
+                float3 positionWS = TransformObjectToWorld(CapFlutter(input.positionOS.xyz));
                 float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
             #if _CASTING_PUNCTUAL_LIGHT_SHADOW
                 float3 lightDir = normalize(_LightPosition - positionWS);
@@ -266,7 +298,7 @@ Shader "DSEWA/ToonProp"
             float4 vert(Attributes input) : SV_POSITION
             {
                 UNITY_SETUP_INSTANCE_ID(input);
-                return TransformObjectToHClip(input.positionOS.xyz);
+                return TransformObjectToHClip(CapFlutter(input.positionOS.xyz));
             }
 
             half frag() : SV_Target { return 0; }
@@ -292,7 +324,7 @@ Shader "DSEWA/ToonProp"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 Varyings o;
-                o.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                o.positionCS = TransformObjectToHClip(CapFlutter(input.positionOS.xyz));
                 o.normalWS = TransformObjectToWorldNormal(input.normalOS);
                 return o;
             }

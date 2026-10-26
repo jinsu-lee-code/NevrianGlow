@@ -31,7 +31,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _AmbientShade: 0.105
-    - _Brightness: 0.858011
+    - _Brightness: 1.0725137
     - _ClumpHueVar: 0.025
     - _ClumpValueVar: 0.1
     - _Contrast: 0
@@ -58,7 +58,7 @@ Material:
     - _ShineStrength: 0.25
     - _Softness: 0.053
     - _Threshold: 0.393
-    - _TipGlow: 0
+    - _TipGlow: 0.22
     - _TipGlowStart: 0.5614442
     - _TransStrength: 0.4
     - _TransThreshold: 0.6
@@ -77,13 +77,13 @@ Material:
     m_Colors:
     - _EdgeShrinkRange: {r: 0.1, g: 0.6, b: 0, a: 0}
     - _PatchTint: {r: 0.9098039, g: 0.9411765, b: 1, a: 1}
-    - _RootColor: {r: 0.020954225, g: 0.0419083, b: 0.1570961, a: 1}
+    - _RootColor: {r: 0.11, g: 0.17, b: 0.46, a: 1}
     - _RootErodeScale: {r: 55, g: 9, b: 0, a: 0}
     - _ShadowTint: {r: 0.16470589, g: 0.18431373, b: 0.43137255, a: 1}
     - _SheenColor: {r: 0.38345748, g: 0.534036, b: 0.90869266, a: 1}
     - _ShineColor: {r: 0.46581042, g: 0.61762047, b: 1, a: 1}
     - _Tint: {r: 1, g: 1, b: 1, a: 1}
-    - _TipColor: {r: 0.106446974, g: 0.3034229, b: 0.7914944, a: 1}
+    - _TipColor: {r: 0.027150264, g: 0.3515757, b: 0.8864738, a: 1}
     - _TipGlowColor: {r: 0.43855575, g: 0.7213894, b: 2.3084462, a: 1}
     - _TransColor: {r: 0.7254902, g: 0.78431374, b: 1, a: 1}
     - _WindColor: {r: 0.26859903, g: 0.45548818, b: 0.85782987, a: 1}

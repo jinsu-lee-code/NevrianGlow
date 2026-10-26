@@ -163,7 +163,7 @@ public class CharacterShadow : MonoBehaviour
                 foreach (Renderer r in root.GetComponentsInChildren<Renderer>())
                     if (r.enabled && r.gameObject.activeInHierarchy && !(r is ParticleSystemRenderer)) casters.Add(r);
             }
-        if (casters.Count == 0) { Report("none", "no character renderers."); RestoreSceneShadows(); return false; }
+        if (casters.Count == 0) { RestoreSceneShadows(); return false; }   // no characters in the scene yet is normal (background scene alone), not worth a warning
         if (removeFromSceneShadows)
         {
             foreach (Renderer r in casters)

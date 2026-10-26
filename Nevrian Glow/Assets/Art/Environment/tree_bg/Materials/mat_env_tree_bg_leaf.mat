@@ -35,30 +35,30 @@ Material:
     m_Floats:
     - _AmbientShade: 0.105
     - _BackFaceDarken: 0
-    - _BacklightPower: 3
-    - _BacklightStrength: 0.9
-    - _Brightness: 1
+    - _BacklightPower: 2.2
+    - _BacklightStrength: 1.5
+    - _Brightness: 0.8
     - _Cutoff: 0.4
-    - _Desaturation: 0
-    - _EdgeStrength: 0
+    - _Desaturation: 0.15
+    - _EdgeStrength: 0.35
     - _EdgeWidth: 0.45
-    - _Flutter: 0.02
+    - _Flutter: 0.035
     - _FlutterSpeed: 4
     - _NormalUp: 0.15
-    - _PaintStrength: 0
+    - _PaintStrength: 0.3
     - _ReceiveShadowBias: 0.03
     - _ShadowBlur: 1.5
     - _Softness: 0.053
     - _Threshold: 0.393
-    - _VeinStrength: 0
+    - _VeinStrength: 0.25
     - _VeinTaper: 0.7
     - _VeinWidth: 0.028
     - _WindFreq: 0.35
     - _WindSpeed: 1.6
-    - _WindStrength: 0.04
+    - _WindStrength: 0.06
     m_Colors:
     - _BacklightColor: {r: 0.62, g: 0.75, b: 1, a: 1}
-    - _EdgeColor: {r: 0.45, g: 0.45, b: 0.8, a: 1}
+    - _EdgeColor: {r: 0.6, g: 0.72, b: 1, a: 1}
     - _RootColor: {r: 0.07, g: 0.13, b: 0.4, a: 1}
     - _ShadowTint: {r: 0.45, g: 0.44, b: 0.85, a: 1}
     - _Tint: {r: 1, g: 1, b: 1, a: 1}

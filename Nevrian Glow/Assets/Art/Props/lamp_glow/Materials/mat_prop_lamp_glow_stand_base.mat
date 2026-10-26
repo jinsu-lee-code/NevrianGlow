@@ -27,19 +27,36 @@ Material:
         m_Texture: {fileID: 2800000, guid: c2b464827eb4a7c4fbb37c54e0966e0b, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _BumpMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _GlowMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _AmbientStrength: 0.3
+    - _BumpScale: 1
     - _GlossSize: 0.06
     - _GlossSoftness: 0.04
-    - _GlossStrength: 0.15
+    - _GlossStrength: 0
     - _LightColorAmount: 0.3
+    - _OcclusionDirect: 0.5
+    - _OcclusionStrength: 1
     - _OutlineWidth: 0.006
     - _Pastel: 0.05
+    - _PointLightStrength: 1
     - _PulsePeriod: 4.5
     - _ReceiveShadows: 1
     - _RimPower: 2.5
     - _RimStrength: 0
+    - _SceneAmbient: 0
     - _ShadowBlur: 1.5
     - _ShadowSaturation: 1.35
     - _Softness: 0.3

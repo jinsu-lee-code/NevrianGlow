@@ -222,7 +222,7 @@ Shader "DSEWA/ToonSky"
         _CloudHorizonFade ("Horizon Fade Height", Range(0.01, 0.5)) = 0.12
         _CloudOpacity ("Opacity (> 1 extrapolates)", Range(0, 2)) = 1
 
-        [Header(Painted Sky (equirect layers under the sun, moons and planets))]
+        [Header(Painted Sky   equirect layers under the sun and moons and planets)]
         _PanoTex ("Background (equirect 2:1, RGB sky without clouds, A star mask)", 2D) = "black" {}
         _PanoCloudLow ("Cloud Layer Low (RGBA)", 2D) = "clear" {}
         _PanoCloudHigh ("Cloud Layer High (RGBA)", 2D) = "clear" {}
