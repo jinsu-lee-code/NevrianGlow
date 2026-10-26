@@ -39,6 +39,7 @@ Shader "DSEWA/ToonCliff"
         [Header(Foot Blend Into The Ground)]
         _BaseBlend ("Blend Height (m above the foot)", Range(0, 4)) = 1.4
         _GroundY ("Ground Y Around The Foot", Float) = 0
+        [Toggle] _GroundFromTerrain ("Use Terrain Height (rocks on uneven ground)", Float) = 0
         [Header(Rim And Outline)]
         _RimColor ("Rim Color", Color) = (0.75, 0.8, 1, 1)
         _RimStrength ("Rim Strength", Range(0, 1)) = 0
@@ -59,6 +60,7 @@ Shader "DSEWA/ToonCliff"
             float _StrataScale, _StrataStrength, _StrataWobble;
             half _MossStart, _MossNoise, _MossAmount, _UnderDark;
             float _StrokeScale, _StrokeStrength, _BaseBlend, _GroundY, _RimStrength, _OutlineWidth;
+            float _GroundFromTerrain;
         CBUFFER_END
 
         float OutlineObjectScale()
@@ -148,7 +150,9 @@ Shader "DSEWA/ToonCliff"
                 if (_BaseBlend > 0 && SampleRVT(P.xz, g))
                 {
                     half3 ground = g.rgb * (_DSEWA_GroundLight.w > 0 ? _DSEWA_GroundLitColor.rgb : half3(1, 1, 1));
-                    float fb = 1 - smoothstep(0, _BaseBlend, P.y - _GroundY + (mn - 0.5) * _BaseBlend * 0.8);
+                    float gy = _GroundY, ty;
+                    if (_GroundFromTerrain > 0 && TerrainGroundY(P.xz, ty)) gy = ty;   // 2026-10-26: real ground under each rock
+                    float fb = 1 - smoothstep(0, _BaseBlend, P.y - gy + (mn - 0.5) * _BaseBlend * 0.8);
                     color = lerp(color, ground * lerp(0.75, 1, lit), fb * saturate(1 - N.y * 0.3));
                 }
 

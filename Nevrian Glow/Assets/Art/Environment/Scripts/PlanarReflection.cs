@@ -37,7 +37,7 @@ public class PlanarReflection : MonoBehaviour
         RenderPipelineManager.beginCameraRendering -= OnBeginCamera;
         Shader.SetGlobalFloat(OnId, 0);
         if (reflCam) DestroyImmediate(reflCam.gameObject);
-        if (rt) { rt.Release(); DestroyImmediate(rt); }
+        if (rt) { if (RenderTexture.active == rt) RenderTexture.active = null; rt.Release(); DestroyImmediate(rt); }
     }
 
     void OnBeginCamera(ScriptableRenderContext ctx, Camera cam)
@@ -62,7 +62,7 @@ public class PlanarReflection : MonoBehaviour
         int w = Mathf.Max(16, (int)(cam.pixelWidth * resolutionScale)), h = Mathf.Max(16, (int)(cam.pixelHeight * resolutionScale));
         if (rt == null || rt.width != w || rt.height != h)
         {
-            if (rt) { rt.Release(); DestroyImmediate(rt); }
+            if (rt) { if (RenderTexture.active == rt) RenderTexture.active = null; rt.Release(); DestroyImmediate(rt); }
             rt = new RenderTexture(w, h, 24, RenderTextureFormat.DefaultHDR) { name = "_DSEWA_PlanarReflTex", hideFlags = HideFlags.HideAndDontSave };
             rt.Create();
         }

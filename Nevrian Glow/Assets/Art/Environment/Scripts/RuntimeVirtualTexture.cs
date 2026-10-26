@@ -47,6 +47,8 @@ public class RuntimeVirtualTexture : MonoBehaviour
     static readonly int IndirId = Shader.PropertyToID("_DSEWA_RVT_Indirection");
     static readonly int RectId = Shader.PropertyToID("_DSEWA_RVT_Rect");
     static readonly int ParamsId = Shader.PropertyToID("_DSEWA_RVT_Params");
+    static readonly int HeightTexId = Shader.PropertyToID("_DSEWA_TerrainHeight");
+    static readonly int HeightParamsId = Shader.PropertyToID("_DSEWA_TerrainHeightParams");
     static readonly int GroundShadowId = Shader.PropertyToID("_DSEWA_GroundShadowColor");
     static readonly int GroundLitId = Shader.PropertyToID("_DSEWA_GroundLitColor");
     static readonly int GroundLightId = Shader.PropertyToID("_DSEWA_GroundLight");
@@ -73,7 +75,7 @@ public class RuntimeVirtualTexture : MonoBehaviour
     readonly List<Slot> slots = new List<Slot>();
     readonly List<Page> wanted = new List<Page>();
     readonly List<Page> missing = new List<Page>();
-    int frame, levels, dirtyStamp = int.MinValue;
+    int frame, levels, dirtyStamp = int.MinValue, materialCrc;
     bool indirDirty;
 
     static long Key(int level, int x, int y) => ((long)level << 40) | ((long)x << 20) | (long)y;
@@ -117,7 +119,7 @@ public class RuntimeVirtualTexture : MonoBehaviour
     void Release()
     {
         Shader.SetGlobalVector(RectId, Vector4.zero);
-        if (atlas != null) { atlas.Release(); DestroySafe(atlas); atlas = null; }
+        if (atlas != null) { if (RenderTexture.active == atlas) RenderTexture.active = null; atlas.Release(); DestroySafe(atlas); atlas = null; }
         DestroySafe(indirection); indirection = null;
         DestroySafe(quad); quad = null;
         cmd?.Release(); cmd = null;
@@ -142,7 +144,7 @@ public class RuntimeVirtualTexture : MonoBehaviour
         int atlasPx = slotPx * atlasSlots;
         if (atlas == null || !atlas.IsCreated() || atlas.width != atlasPx)
         {
-            if (atlas != null) { atlas.Release(); DestroySafe(atlas); }
+            if (atlas != null) { if (RenderTexture.active == atlas) RenderTexture.active = null; atlas.Release(); DestroySafe(atlas); }
             atlas = new RenderTexture(atlasPx, atlasPx, GraphicsFormat.R8G8B8A8_SRGB, GraphicsFormat.None)
             { name = "_DSEWA_RVT_Atlas", filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp, hideFlags = HideFlags.HideAndDontSave };
             atlas.Create();
@@ -190,6 +192,10 @@ public class RuntimeVirtualTexture : MonoBehaviour
             int stamp = EditorUtility.GetDirtyCount(td);
             if (stamp != dirtyStamp) { if (dirtyStamp != int.MinValue) Invalidate(); dirtyStamp = stamp; }
 #endif
+            // the pages also bake the ground material (grass tint, layers): re-render them when it changes
+            // (2026-10-26, the ground colour edit left the grass roots on the old colour)
+            int crc = terrain.materialTemplate.ComputeCRC();
+            if (crc != materialCrc) { if (materialCrc != 0) Invalidate(); materialCrc = crc; }
             SelectPages();
             RenderMissing();
             if (indirDirty) BuildIndirection();
@@ -327,6 +333,13 @@ public class RuntimeVirtualTexture : MonoBehaviour
         Shader.SetGlobalTexture(IndirId, indirection);
         Shader.SetGlobalVector(RectId, new Vector4(p0.x, p0.z, 1f / td.size.x, 1f / td.size.z));
         Shader.SetGlobalVector(ParamsId, new Vector4(finestPages, tilePixels / atlasPx, 0, 0));
+        // terrain height for shaders (2026-10-26: rock feet blend into the ground at the real ground height, not a
+        // fixed level). The heightmap texture holds 0..0.5 for 0..size.y, so height = r * 2 * size.y + terrain y
+        if (td.heightmapTexture != null)
+        {
+            Shader.SetGlobalTexture(HeightTexId, td.heightmapTexture);
+            Shader.SetGlobalVector(HeightParamsId, new Vector4(p0.y, td.size.y * 2f, 1, td.heightmapResolution));
+        }
         // the ground's lit / shadow colour and toon ramp, read live so day / night needs no re-render
         var m = terrain.materialTemplate;
         Shader.SetGlobalColor(GroundShadowId, m.HasProperty(ShadowColorId) ? m.GetColor(ShadowColorId) : Color.white);

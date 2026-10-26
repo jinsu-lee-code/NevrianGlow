@@ -21,6 +21,7 @@ Shader "DSEWA/ToonFoliage"
         _WindSpeed ("Wind Speed", Float) = 1.6
         _WindFreq ("Wind Wave Frequency", Float) = 0.35
         _PushStrength ("Cat Push Strength (m)", Float) = 0.6
+        _ObstacleLean ("Lean Away From Rocks (m at the tip)", Range(0, 1)) = 0
         _WindRadius ("Wind Radius around the player (m, 0 = everywhere)", Float) = 25
         _WindFade ("Wind Fade Width (m)", Float) = 10
         [Header(Color Controls (SurvivalKit MF_ColorControls order))]
@@ -93,6 +94,7 @@ Shader "DSEWA/ToonFoliage"
             half _ShadowBlur;
             float4 _WindDir;
             float _WindStrength, _WindSpeed, _WindFreq, _PushStrength;
+            float _ObstacleLean;
             float _WindRadius, _WindFade;
             half4 _Tint;
             half _Desaturation, _HueShift, _Brightness, _Contrast;
@@ -117,6 +119,10 @@ Shader "DSEWA/ToonFoliage"
             half _TipGlow, _TipGlowStart;
         CBUFFER_END
         float4 _DSEWA_CatPush;                       // global: xyz = cat position, w = radius
+        // obstacle field (2026-10-26, user: grass round a rock leans naturally outwards): LayerGrassSpawner bakes, per
+        // texel, the direction away from the nearest rock foot (rg, 0..1 -> -1..1) and how close it is (b, 1 at the foot)
+        TEXTURE2D(_DSEWA_ObstacleField); SAMPLER(s_dsewa_obstacle_linear_clamp_sampler);
+        float4 _DSEWA_ObstacleRect;                  // (minX, minZ, 1/sizeX, 1/sizeZ); z = 0 -> off
         float4 _DSEWA_WindCenter;                    // global: xyz = player position, w = 1 when set (else the camera)
         float4 _DSEWA_GroundColorRect;               // global: (minX, minZ, 1/sizeX, 1/sizeZ); z = 0 -> no baker
         float4 _DSEWA_GroundShadowColor;             // global: the ground material's shadow multiply, so shaded roots match it
@@ -187,6 +193,19 @@ Shader "DSEWA/ToonFoliage"
                 k *= k;
                 offset += (away / max(d, 1e-3)) * k * _PushStrength * h;
                 positionWS.y -= k * _PushStrength * 0.5 * h;               // lie down a little
+            }
+            // lean away from rocks: the whole clump tilts out, more at the tip, and sinks a touch as it leans
+            if (_ObstacleLean > 0 && _DSEWA_ObstacleRect.z > 0)
+            {
+                float2 ouv = (pivot.xz - _DSEWA_ObstacleRect.xy) * _DSEWA_ObstacleRect.zw;
+                if (all(ouv == saturate(ouv)))
+                {
+                    half4 o = SAMPLE_TEXTURE2D_LOD(_DSEWA_ObstacleField, s_dsewa_obstacle_linear_clamp_sampler, ouv, 0);
+                    float near = o.b * o.b * (3 - 2 * o.b);
+                    float2 away = o.rg * 2 - 1;
+                    offset += away * near * _ObstacleLean * h;
+                    positionWS.y -= near * _ObstacleLean * 0.35 * h;
+                }
             }
             positionWS.xz += offset;
             return positionWS;

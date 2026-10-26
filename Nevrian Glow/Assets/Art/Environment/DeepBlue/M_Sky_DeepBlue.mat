@@ -94,6 +94,8 @@ Material:
     - _CloudOpacity: 0
     - _CloudScale: 1.2
     - _CloudSpeed: 1
+    - _DayEdgeAmount: 0.6
+    - _DaySide: 1
     - _Dither: 1
     - _GalaxyAmount: 1
     - _GalaxyBright: 0.18
@@ -188,6 +190,11 @@ Material:
     - _CloudLitColor: {r: 1, g: 1, b: 1, a: 1}
     - _CloudShadowColor: {r: 1, g: 1, b: 1, a: 1}
     - _CloudWind: {r: 0.012, g: 0.004, b: 0, a: 0}
+    - _DayCloudTint: {r: 1.1, g: 1.05, b: 1.1, a: 1}
+    - _DayEdgeColor: {r: 1, g: 0.38, b: 0.16, a: 1}
+    - _DayHorizonColor: {r: 0.82, g: 0.86, b: 1, a: 1}
+    - _DaySideRange: {r: 0.3, g: 0.8, b: 0, a: 0}
+    - _DayZenithColor: {r: 0.35999998, g: 0.52, b: 0.9, a: 1}
     - _GalBig: {r: -0.44939703, g: 0.52991927, b: -0.7191856, a: 0.26}
     - _GalBigShape: {r: 0.45, g: 0.5, b: 0, a: 1}
     - _GalGroup: {r: 0.76312935, g: 0.6427875, b: 0.06676528, a: 0.16}
@@ -218,7 +225,7 @@ Material:
     - _PanoCloudMask: {r: 0.25, g: 0.45, b: 0, a: 0}
     - _PanoCloudSpeed: {r: 0.15, g: 0.35, b: 0, a: 0}
     - _PanoStarTwinkle: {r: 1.5, g: 0.8, b: 1, a: 0}
-    - _PanoTint: {r: 0.64, g: 0.64, b: 0.96, a: 1}
+    - _PanoTint: {r: 0.8, g: 0.76, b: 1, a: 1}
     - _PlanetBand: {r: 0.47843128, g: 0.40784135, b: 0.8156863, a: 1}
     - _PlanetDir: {r: 0.53289515, g: 0.5591929, b: -0.6350796, a: 0}
     - _PlanetLit: {r: 0.78431374, g: 0.7529412, b: 1, a: 1}

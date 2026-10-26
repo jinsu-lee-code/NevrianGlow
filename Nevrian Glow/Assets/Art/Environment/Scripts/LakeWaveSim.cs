@@ -171,8 +171,8 @@ public class LakeWaveSim : MonoBehaviour
 
     void Release()
     {
-        if (a) { a.Release(); DestroyImmediate(a); }
-        if (b) { b.Release(); DestroyImmediate(b); }
+        if (a) { if (RenderTexture.active == a) RenderTexture.active = null; a.Release(); DestroyImmediate(a); }
+        if (b) { if (RenderTexture.active == b) RenderTexture.active = null; b.Release(); DestroyImmediate(b); }
         if (mask) DestroyImmediate(mask);
         if (mat) DestroyImmediate(mat);
     }
@@ -236,5 +236,7 @@ public class LakeWaveSim : MonoBehaviour
         Shader.SetGlobalTexture(TexId, a);
         Shader.SetGlobalVector(RectId, new Vector4(center.x - size * 0.5f, center.y - size * 0.5f, size, 1f / resolution));
         Shader.SetGlobalFloat(OnId, 1);
+        if (mask) Shader.SetGlobalTexture(MaskId, mask);   // wet shore band in DSEWA/ToonTerrain
     }
+    static readonly int MaskId = Shader.PropertyToID("_DSEWA_WaterMask");
 }

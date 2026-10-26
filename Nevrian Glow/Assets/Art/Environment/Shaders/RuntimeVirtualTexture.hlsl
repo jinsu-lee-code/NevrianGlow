@@ -23,4 +23,20 @@ bool SampleRVT(float2 xz, out half4 c)
     c = SAMPLE_TEXTURE2D_LOD(_DSEWA_RVT_Atlas, sampler_DSEWA_RVT_Atlas, e.xy + local * _DSEWA_RVT_Params.y, 0);
     return true;
 }
+
+// Terrain height under xz (2026-10-26), published by RuntimeVirtualTexture.cs from the terrain's heightmap texture
+// (texels sit on the heightmap vertices, values 0..0.5 = 0..size.y). Same rect as the RVT. False when not published.
+TEXTURE2D(_DSEWA_TerrainHeight); SAMPLER(s_dsewa_linear_clamp_sampler);
+float4 _DSEWA_TerrainHeightParams;   // (terrain y, 2 * size.y, 1 = set, heightmap resolution)
+bool TerrainGroundY(float2 xz, out float y)
+{
+    y = 0;
+    if (_DSEWA_RVT_Rect.z == 0 || _DSEWA_TerrainHeightParams.z <= 0) return false;
+    float2 uv = (xz - _DSEWA_RVT_Rect.xy) * _DSEWA_RVT_Rect.zw;
+    if (any(uv != saturate(uv))) return false;
+    float n = max(_DSEWA_TerrainHeightParams.w, 2);
+    uv = uv * (n - 1) / n + 0.5 / n;
+    y = SAMPLE_TEXTURE2D_LOD(_DSEWA_TerrainHeight, s_dsewa_linear_clamp_sampler, uv, 0).r * _DSEWA_TerrainHeightParams.y + _DSEWA_TerrainHeightParams.x;
+    return true;
+}
 #endif

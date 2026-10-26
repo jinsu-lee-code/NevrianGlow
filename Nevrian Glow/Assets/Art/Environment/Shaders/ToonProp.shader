@@ -45,6 +45,10 @@ Shader "DSEWA/ToonProp"
         [HDR] _TexGlowTint ("Texture Glow Tint", Color) = (1, 1, 1, 1)
         _TexGlowPulse ("Glow Min / Max Over The Breath (1, 1 = steady)", Vector) = (1, 1, 0, 0)
         _PulsePeriod ("Breath Period (s)", Range(0.2, 20)) = 4.5
+        _DistGlowBoost ("Glow x At Distance (1 = off)", Range(1, 6)) = 1
+        _DistGlowRange ("Distance Boost Start / End (m)", Vector) = (10, 60, 0, 0)
+        _GlowMax ("Brightest Channel Cap (0 = off)", Range(0, 8)) = 0
+        _FootBlend ("Foot Blend Into Ground (m above terrain, 0 = off)", Range(0, 2)) = 0
         [Header(Outline)]
         _OutlineColor ("Outline Color", Color) = (0.1, 0.1, 0.26, 1)
         _OutlineWidth ("Outline Width (m at the model's own size, 0 = off)", Float) = 0.006
@@ -55,6 +59,10 @@ Shader "DSEWA/ToonProp"
         _CapSpeed ("Flutter Speed", Range(0, 5)) = 1.3
         _CapWaves ("Waves Round The Rim", Range(0, 6)) = 2
         _CapBreath ("Breathing (whole rim up / down)", Range(0, 1)) = 0.5
+        [Header(Fruit Sway for hanging fruit   0 is off)]
+        _FruitSway ("Swing (radians, 0 = off)", Range(0, 0.6)) = 0
+        _FruitSwaySpeed ("Swing Speed", Range(0, 5)) = 1.4
+        _FruitWindDir ("Wind Direction (world xz)", Vector) = (1, 0, 0.3, 0)
     }
 
     SubShader
@@ -77,9 +85,13 @@ Shader "DSEWA/ToonProp"
             half4 _TexGlowTint;
             float4 _TexGlowPulse;
             float _PulsePeriod;
+            half _DistGlowBoost, _GlowMax, _FootBlend;
+            float4 _DistGlowRange;
             half4 _OutlineColor;
             float _OutlineWidth;
             float _CapFlutter, _CapStart, _CapRadius, _CapSpeed, _CapWaves, _CapBreath;
+            float _FruitSway, _FruitSwaySpeed;
+            float4 _FruitWindDir;
         CBUFFER_END
                 // outline width is in metres at the model's own size: a prefab scaled to 0.18 gets a 0.18x line
         // (geometric mean of the object scale, so non-uniform boxes do not blow up)
@@ -112,6 +124,30 @@ Shader "DSEWA/ToonProp"
             q.y += sin(t * 1.6) * _CapFlutter * 0.08 * bend;                      // slight bob
             return q + c;
         }
+
+        // fruit sway (2026-10-26, user: "fruit swinging with the wind"): hanging fruit and their stalks swing like a
+        // pendulum from the point where the stalk meets the branch. The tree export writes per vertex colour
+        // r = 1 on fruit / stalk, g = phase, b = distance below that point / 2 (model units). A steady lean downwind,
+        // a swing and a smaller cross swing, with slow gusts. Trunk and branches (r = 0) do not move.
+        float3 FruitSway(float3 p, half4 col)
+        {
+            if (_FruitSway <= 0 || col.r < 0.5) return p;
+            float d = col.b * 2.0;
+            float3 piv = GetObjectToWorldMatrix()._m03_m13_m23;
+            float ph = col.g * 6.2832 + frac(sin(dot(piv.xz, float2(12.9898, 78.233))) * 43758.5453) * 6.2832;
+            float t = _Time.y * _FruitSwaySpeed + ph;
+            float2 dirW = normalize(_FruitWindDir.xz + 1e-5);
+            float gust = 0.6 + 0.4 * sin(_Time.y * 0.37 + dot(piv.xz, dirW) * 0.05);
+            float a = ((sin(t) * 0.7 + sin(t * 2.3 + 1.7) * 0.3) + 0.35) * _FruitSway * gust;
+            float b = sin(t * 0.83 + 2.1) * 0.45 * _FruitSway * gust;
+            float3 dirO = normalize(TransformWorldToObjectDir(float3(dirW.x, 0, dirW.y)));
+            float3 sideO = normalize(cross(float3(0, 1, 0), dirO));
+            p += dirO * sin(a) * d + sideO * sin(b) * d;
+            p.y += d * ((1 - cos(a)) + (1 - cos(b)));
+            return p;
+        }
+
+        float3 Deform(float3 p, half4 col) { return FruitSway(CapFlutter(p), col); }
         ENDHLSL
 
         Pass
@@ -131,10 +167,13 @@ Shader "DSEWA/ToonProp"
             #include "Assets/Art/Environment/Shaders/CloudShadow.hlsl"
             #include "Assets/Art/Environment/Shaders/ToonShadow.hlsl"
             #include "Assets/Art/Environment/Shaders/GroundFog.hlsl"
+            float4 _DSEWA_GroundLitColor;
+            float4 _DSEWA_GroundLight;
+            #include "Assets/Art/Environment/Shaders/RuntimeVirtualTexture.hlsl"
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
 
-            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; UNITY_VERTEX_INPUT_INSTANCE_ID };
+            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; half4 color : COLOR; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct Varyings
             {
                 float4 positionCS : SV_POSITION;
@@ -150,7 +189,7 @@ Shader "DSEWA/ToonProp"
                 Varyings o = (Varyings)0;
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-                VertexPositionInputs pos = GetVertexPositionInputs(CapFlutter(input.positionOS.xyz));
+                VertexPositionInputs pos = GetVertexPositionInputs(Deform(input.positionOS.xyz, input.color));
                 o.positionCS = pos.positionCS;
                 o.positionWS = pos.positionWS;
                 o.normalWS = TransformObjectToWorldNormal(input.normalOS);
@@ -188,7 +227,10 @@ Shader "DSEWA/ToonProp"
                 float shade = saturate(dot(N, light.direction)) * direct + _AmbientShade;
                 float lit = smoothstep(_Threshold, _Threshold + _Softness, shade);
                 half3 color = lerp(_ShadowColor.rgb, _LitColor.rgb, lit) * albedo;
-                color += _RimColor.rgb * smoothstep(_RimMin, _RimMax, 1.0 - saturate(dot(N, V))) * _RimStrength;
+                // far away the glow (and the glowing rim) gets stronger, so small distant fruit still read as lights
+                // (2026-10-26, user: "the further the tree fruit, the brighter it should glow")
+                half distK = lerp(1.0h, _DistGlowBoost, smoothstep(_DistGlowRange.x, max(_DistGlowRange.y, _DistGlowRange.x + 0.01), distance(i.positionWS, _WorldSpaceCameraPos)));
+                color += _RimColor.rgb * smoothstep(_RimMin, _RimMax, 1.0 - saturate(dot(N, V))) * _RimStrength * distK;
 
                 // 5: glow from the original painting's brightest parts
                 float3 objPos = GetObjectToWorldMatrix()._m03_m13_m23;
@@ -200,7 +242,23 @@ Shader "DSEWA/ToonProp"
                 half3 glowCol = albedo / max(max(albedo.r, max(albedo.g, albedo.b)), 1e-3);
                 half mask = smoothstep(_TexGlowThreshold, _TexGlowThreshold + _TexGlowSoftness, texV);
                 if (_PosterizeSteps >= 1) mask = step(0.5, mask);   // hard-edged glow shapes, like painted cel highlights
-                color += glowCol * _TexGlowTint.rgb * mask * _TexGlowStrength * 0.6 * glowK;
+                color += glowCol * _TexGlowTint.rgb * mask * _TexGlowStrength * 0.6 * glowK * distK;
+                // cap the brightest channel, keeping the hue: past ~2 the tonemapper turns teal into white and the
+                // few pixels of a far fruit sparkle under bloom (2026-10-26 check: 29 white pixels, max 4.4)
+                if (_GlowMax > 0) color *= min(1.0h, _GlowMax / max(max(color.r, max(color.g, color.b)), 1e-3h));
+
+                // foot blend (2026-10-26, rocks on the meadow): the lowest _FootBlend metres above the real terrain take
+                // the ground colour from the runtime virtual texture, so the rock grows out of the ground
+                if (_FootBlend > 0)
+                {
+                    half4 g; float gy;
+                    if (SampleRVT(i.positionWS.xz, g) && TerrainGroundY(i.positionWS.xz, gy))
+                    {
+                        half3 ground = g.rgb * (_DSEWA_GroundLight.w > 0 ? _DSEWA_GroundLitColor.rgb : half3(1, 1, 1));
+                        float fb = 1 - smoothstep(0, _FootBlend, i.positionWS.y - gy);
+                        color = lerp(color, ground * lerp(0.75h, 1.0h, lit), fb * saturate(1 - N.y * 0.3));
+                    }
+                }
 
                 color = ApplyGroundFog(color, i.positionWS);
                 color = MixFog(color, i.fogFactor);
@@ -222,7 +280,7 @@ Shader "DSEWA/ToonProp"
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
 
-            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; UNITY_VERTEX_INPUT_INSTANCE_ID };
+            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; half4 color : COLOR; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct Varyings { float4 positionCS : SV_POSITION; half fogFactor : TEXCOORD0; UNITY_VERTEX_OUTPUT_STEREO };
 
             Varyings vert(Attributes input)
@@ -230,7 +288,7 @@ Shader "DSEWA/ToonProp"
                 Varyings o = (Varyings)0;
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-                float3 positionWS = TransformObjectToWorld(CapFlutter(input.positionOS.xyz));
+                float3 positionWS = TransformObjectToWorld(Deform(input.positionOS.xyz, input.color));
                 positionWS += TransformObjectToWorldNormal(input.normalOS) * _OutlineWidth * OutlineObjectScale();
                 o.positionCS = TransformWorldToHClip(positionWS);
                 o.fogFactor = ComputeFogFactor(o.positionCS.z);
@@ -257,12 +315,12 @@ Shader "DSEWA/ToonProp"
             float3 _LightDirection;
             float3 _LightPosition;
 
-            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; UNITY_VERTEX_INPUT_INSTANCE_ID };
+            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; half4 color : COLOR; UNITY_VERTEX_INPUT_INSTANCE_ID };
 
             float4 vert(Attributes input) : SV_POSITION
             {
                 UNITY_SETUP_INSTANCE_ID(input);
-                float3 positionWS = TransformObjectToWorld(CapFlutter(input.positionOS.xyz));
+                float3 positionWS = TransformObjectToWorld(Deform(input.positionOS.xyz, input.color));
                 float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
             #if _CASTING_PUNCTUAL_LIGHT_SHADOW
                 float3 lightDir = normalize(_LightPosition - positionWS);
@@ -293,12 +351,12 @@ Shader "DSEWA/ToonProp"
             #pragma fragment frag
             #pragma multi_compile_instancing
 
-            struct Attributes { float4 positionOS : POSITION; UNITY_VERTEX_INPUT_INSTANCE_ID };
+            struct Attributes { float4 positionOS : POSITION; half4 color : COLOR; UNITY_VERTEX_INPUT_INSTANCE_ID };
 
             float4 vert(Attributes input) : SV_POSITION
             {
                 UNITY_SETUP_INSTANCE_ID(input);
-                return TransformObjectToHClip(CapFlutter(input.positionOS.xyz));
+                return TransformObjectToHClip(Deform(input.positionOS.xyz, input.color));
             }
 
             half frag() : SV_Target { return 0; }
@@ -317,14 +375,14 @@ Shader "DSEWA/ToonProp"
             #pragma multi_compile_instancing
             #pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
 
-            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; UNITY_VERTEX_INPUT_INSTANCE_ID };
+            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; half4 color : COLOR; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct Varyings { float4 positionCS : SV_POSITION; float3 normalWS : TEXCOORD0; };
 
             Varyings vert(Attributes input)
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 Varyings o;
-                o.positionCS = TransformObjectToHClip(CapFlutter(input.positionOS.xyz));
+                o.positionCS = TransformObjectToHClip(Deform(input.positionOS.xyz, input.color));
                 o.normalWS = TransformObjectToWorldNormal(input.normalOS);
                 return o;
             }

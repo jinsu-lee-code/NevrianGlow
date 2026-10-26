@@ -36,12 +36,12 @@ Material:
     - _AmbientShade: 0.3
     - _BackFaceDarken: 0
     - _BacklightPower: 2.2
-    - _BacklightStrength: 0.7
+    - _BacklightStrength: 0.45
     - _Brightness: 1.05
     - _CardNormal: 0.45
-    - _CrownRim: 0.55
+    - _CrownRim: 0.35
     - _CrownRimWidth: 0.22
-    - _CrownSky: 0.3
+    - _CrownSky: 0.12
     - _CrownUnder: 0.6
     - _Cutoff: 0.35
     - _Desaturation: 0.15

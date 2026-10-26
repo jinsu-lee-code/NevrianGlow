@@ -41,6 +41,9 @@ Shader "DSEWA/ToonTerrain"
         _GrassTintColor ("Ground Tint Under Grass (multiply)", Color) = (0.62, 0.54, 0.86, 1)
         _GrassTintAmount ("Ground Tint Amount", Range(0, 1)) = 1
         _GrassTintRange ("Ground Tint Range (coverage lo, hi)", Vector) = (0.03, 0.55, 0, 0)
+        [Header(Ground Hue (layers 0 to 2 not the path))]
+        _GroundHueShift ("Hue Shift (turns)", Range(-0.5, 0.5)) = 0
+        _GroundSaturation ("Saturation", Range(0, 2)) = 1
     }
 
     SubShader
@@ -60,7 +63,11 @@ Shader "DSEWA/ToonTerrain"
             half _HeightBlend, _HeightBlendScale, _HeightBlendWidth;
             half4 _GrassTintColor, _GrassTintRange;
             half _GrassTintAmount;
+            half _GroundHueShift, _GroundSaturation;
         CBUFFER_END
+        TEXTURE2D(_DSEWA_WaterMask); SAMPLER(sampler_DSEWA_WaterMask);
+        float4 _DSEWA_WaveRect;
+        float _DSEWA_WaveOn;
 
         // global from GroundColorBaker: blurred grass detail density over the terrain (uv = terrain 0..1); rect.z == 0 = off
         TEXTURE2D(_DSEWA_GrassCoverage); SAMPLER(sampler_DSEWA_GrassCoverage);
@@ -168,6 +175,19 @@ Shader "DSEWA/ToonTerrain"
             return result;
         }
 
+        // ground recolour (2026-10-26, user: "can the ground be purple?"): the deepblue tiles are painted blue, so a
+        // colour multiply only darkens them; rotate the hue around the grey axis instead, keeping the painted detail
+        half3 GroundHue(half3 c)
+        {
+            if (_GroundHueShift == 0 && _GroundSaturation == 1) return c;
+            float a = _GroundHueShift * 6.2832;
+            float3 k = float3(0.57735, 0.57735, 0.57735);
+            float ca = cos(a), sa = sin(a);
+            c = c * ca + cross(k, c) * sa + k * dot(k, c) * (1 - ca);
+            half lum = dot(c, half3(0.2126, 0.7152, 0.0722));
+            return max(lerp(lum.xxx, c, _GroundSaturation), 0);
+        }
+
         // Splat-weighted albedo (4 layers); uv = terrain 0..1. Layers with no paint here are skipped.
         half3 TerrainAlbedo(float2 uv, out half4 w)
         {
@@ -181,6 +201,7 @@ Shader "DSEWA/ToonTerrain"
             UNITY_BRANCH if (w.a > 0.002) s3 = LayerSample(TEXTURE2D_ARGS(_Splat3, sampler_Splat0), TEXTURE2D_ARGS(_Mask3, sampler_Splat0), uv, duv, _Splat3_ST);
             if (_HeightBlend > 0.5)
                 w = HeightBlendWeights(w, half4(s0.a, s1.a, s2.a, s3.a));   // the normals use these weights too
+            s0.rgb = GroundHue(s0.rgb); s1.rgb = GroundHue(s1.rgb); s2.rgb = GroundHue(s2.rgb);
             half3 albedo = s0.rgb * w.r + s1.rgb * w.g + s2.rgb * w.b + s3.rgb * w.a;
             // ground darkens towards the grass roots near grass -> the border fades from both sides
             if (_DSEWA_GrassCoverageRect.z > 0 && _GrassTintAmount > 0)
@@ -251,6 +272,28 @@ Shader "DSEWA/ToonTerrain"
                 float shade = saturate(dot(N, light.direction)) * direct + _AmbientShade;
                 float lit = smoothstep(_Threshold, _Threshold + _Softness, shade);
                 half3 color = lerp(_ShadowColor.rgb, _LitColor.rgb, lit) * albedo;
+                // wet shore (2026-10-27): ground within ~1.2 m of the lake / pool water (LakeWaveSim's baked water mask,
+                // sampled on a small ring) is darker and bluer with a thin bright toon line at the waterline
+                if (_DSEWA_WaveOn > 0.5)
+                {
+                    float2 muv = (i.positionWS.xz - _DSEWA_WaveRect.xy) / max(_DSEWA_WaveRect.z, 1e-3);
+                    if (all(muv > 0) && all(muv < 1))
+                    {
+                        float rr = 1.2 / max(_DSEWA_WaveRect.z, 1e-3);
+                        half near = SAMPLE_TEXTURE2D_LOD(_DSEWA_WaterMask, sampler_DSEWA_WaterMask, muv, 0).r;
+                        UNITY_UNROLL for (int k = 0; k < 8; k++)
+                        {
+                            float a = k * 0.785398;
+                            near = max(near, SAMPLE_TEXTURE2D_LOD(_DSEWA_WaterMask, sampler_DSEWA_WaterMask, muv + float2(cos(a), sin(a)) * rr, 0).r * 0.75);
+                            near = max(near, SAMPLE_TEXTURE2D_LOD(_DSEWA_WaterMask, sampler_DSEWA_WaterMask, muv + float2(cos(a), sin(a)) * rr * 0.5, 0).r);
+                        }
+                        half wet = saturate(near) * step(i.positionWS.y, 0.8);
+                        color = lerp(color, color * half3(0.55, 0.62, 0.85), wet * 0.8);
+                        half here = SAMPLE_TEXTURE2D_LOD(_DSEWA_WaterMask, sampler_DSEWA_WaterMask, muv, 0).r;
+                        half wline = smoothstep(0.02, 0.12, here) * (1 - smoothstep(0.25, 0.5, here));
+                        color += half3(0.25, 0.4, 0.55) * wline * 0.6;
+                    }
+                }
                 color = ApplyGroundFog(color, i.positionWS);
                 return half4(MixFog(color, i.fogFactor), 1);
             }

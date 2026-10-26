@@ -94,7 +94,7 @@ public class CharacterShadow : MonoBehaviour
         PublishOff();
         RestoreSceneShadows();
         cmd?.Release(); cmd = null;
-        if (rt != null) { rt.Release(); DestroySafe(rt); rt = null; }
+        if (rt != null) { if (RenderTexture.active == rt) RenderTexture.active = null; rt.Release(); DestroySafe(rt); rt = null; }
         DestroySafe(casterMat); casterMat = null;
     }
 
@@ -233,7 +233,7 @@ public class CharacterShadow : MonoBehaviour
     {
         int res = Mathf.Clamp(resolution, 64, Mathf.Max(64, SystemInfo.maxTextureSize));
         if (rt != null && rt.width == res && rt.IsCreated()) return true;
-        if (rt != null) { rt.Release(); DestroySafe(rt); rt = null; }
+        if (rt != null) { if (RenderTexture.active == rt) RenderTexture.active = null; rt.Release(); DestroySafe(rt); rt = null; }
         if (!SystemInfo.IsFormatSupported(GraphicsFormat.R32_SFloat, GraphicsFormatUsage.Render))
         {
             Report("fmt", "R32 float render targets are not supported on this device.");
