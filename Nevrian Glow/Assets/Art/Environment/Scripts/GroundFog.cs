@@ -18,6 +18,10 @@ public class GroundFog : MonoBehaviour
     public float heightFalloff = 0.01f;
     [Tooltip("0 = sky horizon colour, 1 = horizon haze band colour")]
     [Range(0f, 1f)] public float bandMix = 0.5f;
+    [Tooltip("Pull the fog colour towards this tint (e.g. lavender: far hills melt into a dreamy violet haze " +
+             "instead of a plain blue mass)")]
+    public Color tint = new Color(0.62f, 0.5f, 0.85f, 1f);
+    [Range(0f, 1f)] public float tintAmount = 0f;
     [Header("Night")]
     [Tooltip("Max Amount at night; blended by the night post volume's weight (DayNightBlend drives it)")]
     [Range(0f, 1f)] public float nightAmount = 0.25f;
@@ -44,6 +48,7 @@ public class GroundFog : MonoBehaviour
         var sky = RenderSettings.skybox;
         if (sky != null && sky.HasProperty(HorizonId))
             c = sky.HasProperty(BandId) ? Color.Lerp(sky.GetColor(HorizonId), sky.GetColor(BandId), bandMix) : sky.GetColor(HorizonId);
+        c = Color.Lerp(c, tint, tintAmount);
         float amount = nightVolume != null ? Mathf.Lerp(maxAmount, nightAmount, nightVolume.weight) : maxAmount;
         Shader.SetGlobalVector(FogId, new Vector4(start, end, amount, heightFalloff));
         Shader.SetGlobalVector(ColorId, new Vector4(c.r, c.g, c.b, 1f));

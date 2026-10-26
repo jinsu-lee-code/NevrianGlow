@@ -112,6 +112,7 @@ Shader "DSEWA/ToonLeaf"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Assets/Art/Environment/Shaders/CloudShadow.hlsl"
             #include "Assets/Art/Environment/Shaders/ToonShadow.hlsl"
+            #include "Assets/Art/Environment/Shaders/GroundFog.hlsl"      // same distance haze as terrain / props
 
             struct Attributes
             {
@@ -200,6 +201,7 @@ Shader "DSEWA/ToonLeaf"
                 color += _BacklightColor.rgb * bl * _BacklightStrength;
 
                 color = ColorControls(color);
+                color = ApplyGroundFog(color, i.positionWS);   // far canopies melt into the haze like the hills
                 color = MixFog(color, i.fogFactor);
                 return half4(color, 1);
             }

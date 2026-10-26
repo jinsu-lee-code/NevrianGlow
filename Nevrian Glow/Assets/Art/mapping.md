@@ -68,6 +68,16 @@
 | `Environment/Grass/`, `DeepBlue/` 풀 프리팹 | 지형 위 풀 |
 | `Environment/FX/` `tex_vfx_*` | 배경 먼지 · 빛줄기 (요청서 H의 `vfx_*`와는 별개) |
 | `Props/_Shared/Textures/tex_prop_wood*` · `Props/_Shared/Materials/mat_prop_shared_*` | 나무판 · 나무결 공용 텍스처, 소품 공용 재질 (쓰레기통 · 물뿌리개 등) |
+| `Environment/lake/` (+ `Shaders/ToonLakeWater` · `ToonCaustic.hlsl`) | 10/26. 호수 맵(배경 업데이트 3, 팀 확인 후 가져옴): 물 재질 `mat_env_lake_water`, 반딧불 · 물안개 · 거품 VFX, 바닥 물빛 텍스처. 농장 구역(높이 0) 지형은 그대로 |
+| `Environment/mushroom_bg/` | 10/26. 배경 버섯 3종(`pf` 없이 모델 + 재질, 씬 `Mushrooms`에 92개) |
+| `Environment/tree_bg/` (+ `Shaders/ToonProp` · `ToonLeaf` 지면 안개) | 10/26. 배경 나무 3종 → 숲(`TreesBG/Forest` 약 360그루, 콜라이더 없음). 잎은 푸른색, 줄기는 나무껍질 텍스처. 90 m 밖은 그림자 끔. **삼각형이 많음(약 76만)** — 프레임이 떨어지면 알려 주세요 |
+| `Environment/bush_bg/` | 10/26. 덤불 3종(나무와 같은 재질), 씬 `BushesBG` 517개 |
+| `Environment/cliff_bg/` | 10/26. 절벽 3종 + 바위 무더기. 호수 남쪽 대지(높이 약 15 m) 가장자리 `CliffsBG`, 폭포 협곡 `CliffsBG/Gorge` |
+| `Environment/rock_bg/` | 10/26. 젖은 강돌 3종 · 이끼 바위 2종. 폭포 웅덩이 · 강가 · 호숫가 `RocksBG` |
+| `Environment/waterfall_bg/` (+ `Shaders/ToonWaterfall` · `ToonRipple` · `ToonErode`) | 10/26. 폭포(`WaterfallBG`: 앞 · 뒤 · 하이라이트 물줄기, 물결 원판, 왕관 물튀김 · 물방울 · 거품 · 안개 2층, 턱 물보라) + 대지 위 강(`RiverBG`, 85 m, 여울에서 좁아지며 폭포로 이어짐). 마스크 텍스처는 Substance Designer(`DSEWA_63/Art/Environment/WaterfallFX/WaterfallFX.sbs`), 물결 원판 · 왕관 메시는 Mixar |
+| `Environment/Scripts/LakeWaveSim.cs` + `Shaders/LakeWaveSim.shader` | 10/26. 호수 파동 시뮬레이션(`Lake`에 붙어 있음). 폭포 발치에서 생긴 파동이 퍼지고 물가에서 반사됨(512² 높이장, 초당 18단계). Play가 아니어도 에디터에서 계속 돎(`runInEditor`) |
+| `Environment/Sky/Textures/tex_env_sky_pano_95_{bg,cloud_low,cloud_high}.png` | 10/26. 그림 하늘(지브리풍 구름) — 원본 FreeStylized `sky_95`(상업 사용 가능, 출처 표기 불필요, 원본 그대로 재배포 금지, AI + 수작업 제작). 배경 / 낮은 구름 / 높은 구름으로 나눠 구름이 흐르고 별이 반짝임(`ToonSky`의 Painted Sky) |
+| `Environment/plot/pf_env_plot_cell.prefab` (`Models/env_plot_cell.fbx`) | 10/26. 밭 1칸(2 × 2 m 칸에 1.96 m) 두둑 — 원래 `env_plot`(2×2칸)이 게임 구획(4×4칸)과 안 맞아서. `farm_cell` 자식으로 (0,0,0)에 넣으면 됨. 흙은 기존 `pf_env_plot_soil` |
 
 ## 이름을 안 바꾼 것
 
