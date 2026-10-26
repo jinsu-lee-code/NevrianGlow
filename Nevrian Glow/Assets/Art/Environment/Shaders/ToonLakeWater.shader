@@ -69,6 +69,9 @@ Shader "DSEWA/ToonLakeWater"
         _CausticFadeIn ("Caustics Fade In From Waterline (m)", Range(0.001, 1)) = 0.12
         _CausticFadePower ("Caustic Fade Curve", Range(0.5, 4)) = 1.8
         _CausticPatch ("Caustic Patchiness (slow noise)", Range(0, 1)) = 0.55
+        _CausticWaveWarp ("Caustics Follow The Waves (m of shift per unit slope)", Range(0, 3)) = 1.2
+        _CausticWaveFocus ("Caustics Brighten Under Wave Crests", Range(0, 3)) = 1.4
+        _CausticToonSteps ("Caustic Toon Steps (0 = smooth)", Range(0, 4)) = 2
         [Header(Shore foam)]
         _FoamColor ("Foam Color", Color) = (0.82, 0.78, 1, 1)
         _FoamWidth ("Foam Width (m of depth)", Range(0.001, 0.5)) = 0.06
@@ -90,6 +93,13 @@ Shader "DSEWA/ToonLakeWater"
         _SkyColor ("Sky Color Seen At Grazing Angles", Color) = (0.2, 0.18, 0.4, 1)
         _FresnelStrength ("Fresnel Sky Strength", Range(0, 1)) = 0.7
         _FresnelPower ("Fresnel Power", Range(1, 10)) = 4
+        [Header(Probe Reflection)]
+        _ProbeReflect ("Reflection Probe Amount", Range(0, 1)) = 0.6
+        _ProbeReflectBase ("Reflection Looking Down (0) .. Only At Grazing (1)", Range(0, 1)) = 0.35
+        _ProbeRoughness ("Reflection Blur (0 sharp .. 1 soft)", Range(0, 1)) = 0.25
+        _ProbeWaveBend ("Waves Bend The Reflection", Range(0, 6)) = 2.5
+        _ProbeToonSteps ("Reflection Toon Steps (0 = smooth)", Range(0, 6)) = 3
+        _ProbeTint ("Reflection Tint", Color) = (0.85, 0.9, 1.1, 1)
         _Parallax ("Bed Parallax (refraction-ish)", Range(0, 1)) = 0.35
         _Refraction ("Screen Refraction Of The Bed (UV)", Range(0, 0.05)) = 0.012
         _BankShade ("Underwater Bank Darkening (steep bed)", Range(0, 1)) = 0.5
@@ -122,6 +132,9 @@ Shader "DSEWA/ToonLakeWater"
             #pragma multi_compile_fog
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
             #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
+            #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
@@ -131,6 +144,8 @@ Shader "DSEWA/ToonLakeWater"
                 half4 _SkyColor, _PathColor;
                 float _Refraction;
                 float _FresnelStrength, _FresnelPower, _Parallax, _BankShade, _BedShadow;
+                float _ProbeReflect, _ProbeReflectBase, _ProbeRoughness, _ProbeWaveBend, _ProbeToonSteps;
+                half4 _ProbeTint;
                 float _PathStrength, _PathPower, _PathWobble, _PathGlintBoost, _PathCustom;
                 float4 _PathDir;
                 float _WaterLevel, _DepthMax, _GlintScale, _WarpScale, _WarpMix, _GlintSmooth, _GlintSize, _WSpeed, _GlintFadeDepth;
@@ -144,12 +159,15 @@ Shader "DSEWA/ToonLakeWater"
                 float4 _CausticSpeed1, _CausticSpeed2;
                 float _CausticFadeIn, _CausticFadePower, _CausticPatch;
                 float _CausticTilingFine, _CausticFineWeight, _CausticFineNear, _CausticFineFar;
+                float _CausticWaveWarp, _CausticWaveFocus, _CausticToonSteps;
                 float _FoamBreath, _FoamWaveReach, _FoamWaveSpeed, _FoamWaveWidth, _FoamWaveBreak, _DebugTime;
                 float _FoamWaves, _RimGlowMin, _RimGlowMax, _RimGlowPeriod, _RimStrength;
                 float _ContactFoam, _ContactFoamBreak;
             CBUFFER_END
             // simulated wave height field (LakeWaveSim.cs) and the flow ripple noise
             TEXTURE2D(_DSEWA_WaveTex); SAMPLER(sampler_DSEWA_WaveTex);
+            TEXTURE2D(_DSEWA_PlanarReflTex); SAMPLER(sampler_DSEWA_PlanarReflTex);
+            float _DSEWA_PlanarOn;
             float4 _DSEWA_WaveRect;     // x0, z0, size, 1 / resolution
             float _DSEWA_WaveOn;
             TEXTURE2D(_FlowTex); SAMPLER(sampler_FlowTex);
@@ -234,6 +252,22 @@ Shader "DSEWA/ToonLakeWater"
                 // the caustics already sit on the real bed (true parallax); refraction makes the bed look shallower,
                 // i.e. shifted toward the viewer by depth / view slope
                 bedXZ += V.xz / max(V.y, 0.25) * depthV * _Parallax;
+                // caustics ride the simulated waves (2026-10-27, user: "the waves and the caustics don't match"): the
+                // bed pattern is shifted by the wave slope (light bent by the tilted surface) and brightened where the
+                // surface curves like a lens (negative laplacian = crest focusing the moonlight), so the light web moves
+                // and pulses with the rings instead of drifting on its own
+                float2 cwuv = (behind.xz - _DSEWA_WaveRect.xy) / max(_DSEWA_WaveRect.z, 1e-3);
+                float cIn = _DSEWA_WaveOn * step(0, cwuv.x) * step(cwuv.x, 1) * step(0, cwuv.y) * step(cwuv.y, 1);
+                float ctx = _DSEWA_WaveRect.w * 2;
+                float ch0 = SAMPLE_TEXTURE2D_LOD(_DSEWA_WaveTex, sampler_DSEWA_WaveTex, cwuv, 0).r;
+                float chx1 = SAMPLE_TEXTURE2D_LOD(_DSEWA_WaveTex, sampler_DSEWA_WaveTex, cwuv + float2(ctx, 0), 0).r;
+                float chx0 = SAMPLE_TEXTURE2D_LOD(_DSEWA_WaveTex, sampler_DSEWA_WaveTex, cwuv - float2(ctx, 0), 0).r;
+                float chz1 = SAMPLE_TEXTURE2D_LOD(_DSEWA_WaveTex, sampler_DSEWA_WaveTex, cwuv + float2(0, ctx), 0).r;
+                float chz0 = SAMPLE_TEXTURE2D_LOD(_DSEWA_WaveTex, sampler_DSEWA_WaveTex, cwuv - float2(0, ctx), 0).r;
+                float2 cGrad = float2(chx1 - chx0, chz1 - chz0) * cIn;
+                float cLap = (chx1 + chx0 + chz1 + chz0 - 4 * ch0) * cIn;
+                bedXZ += cGrad * _CausticWaveWarp * depthV * 4;
+                half cFocus = saturate(1 - cLap * _CausticWaveFocus * 8);
                 half causticLarge = DoubleOffsetCaustic(TEXTURE2D_ARGS(_CausticMap, sampler_CausticMap), bedXZ, _CausticTiling,
                     t, _CausticSpeed1.xy, _CausticSpeed2.xy, 1.1, _CausticGain);
                 // two densities: a fine layer (own tiling, rotated drift, offset) adds small ripples, strongest
@@ -246,6 +280,8 @@ Shader "DSEWA/ToonLakeWater"
                     causticFine = DoubleOffsetCaustic(TEXTURE2D_ARGS(_CausticMap, sampler_CausticMap), bedXZ + 13.7, _CausticTilingFine,
                         t, _CausticSpeed1.yx * float2(-1.3, 1.1), _CausticSpeed2.yx * float2(1.2, -1.4), 1.13, _CausticGain);
                 half causticLine = saturate(causticLarge + causticFine * _CausticFineWeight * fineFade * (0.35 + 0.65 * causticLarge));
+                causticLine *= cFocus;
+                if (_CausticToonSteps >= 1) { float cs = causticLine * _CausticToonSteps; float cfw = fwidth(cs) + 1e-3; causticLine = (floor(cs) + smoothstep(1 - cfw, 1, frac(cs))) / _CausticToonSteps; }
                 // soft gradient: appears just off the waterline, long curved fade into the deep, and slow noise
                 // patches so it never reads as an even band around the shore
                 half fadeOut = pow(saturate(1 - depthV / _CausticDepth), _CausticFadePower);
@@ -304,6 +340,31 @@ Shader "DSEWA/ToonLakeWater"
                 col = lerp(col, _SimCrestColor.rgb * sceneLight, crest * 0.7);
                 alpha = max(alpha, crest * 0.7);
                 float2 wDirSlope = -slope;
+                // reflection probe (2026-10-27, research step 2): the scene around the lake (cliffs, forest, glow fruit)
+                // mirrored in the water; the wave slope bends the reflected ray so the image ripples with the sim,
+                // value cut into toon steps so it reads painted, strongest at grazing angles
+                {
+                    float3 Nw = normalize(float3(-slope.x * _ProbeWaveBend * 0.15, 1, -slope.y * _ProbeWaveBend * 0.15));
+                    float3 R = reflect(-V, Nw);
+                    R.y = abs(R.y);
+                    half3 refl = GlossyEnvironmentReflection(R, i.positionWS, _ProbeRoughness, 1.0, GetNormalizedScreenSpaceUV(i.positionCS));
+                    // planar reflection (PlanarReflection.cs) when it is running: the real mirrored scene, the screen
+                    // lookup pushed sideways by the wave slope so the image ripples with the waves
+                    UNITY_BRANCH if (_DSEWA_PlanarOn > 0.5)
+                    {
+                        float2 puv = GetNormalizedScreenSpaceUV(i.positionCS) + slope * _ProbeWaveBend * 0.02;
+                        refl = SAMPLE_TEXTURE2D_LOD(_DSEWA_PlanarReflTex, sampler_DSEWA_PlanarReflTex, saturate(puv), 0).rgb;
+                    }
+                    if (_ProbeToonSteps >= 1)
+                    {
+                        half lum = max(dot(refl, half3(0.299, 0.587, 0.114)), 1e-4);
+                        half q = (floor(lum * _ProbeToonSteps * 2) + 0.5) / (_ProbeToonSteps * 2);
+                        refl *= q / lum;
+                    }
+                    half rf = lerp(1, pow(1 - saturate(V.y), 2), _ProbeReflectBase) * _ProbeReflect;
+                    col = lerp(col, refl * _ProbeTint.rgb, saturate(rf));
+                    alpha = max(alpha, rf);
+                }
 
                 // moon path: the reflection of the moon (main light, or a custom direction) on a rippled surface;
                 // a soft streak plus bigger glints inside it

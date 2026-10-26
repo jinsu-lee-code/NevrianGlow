@@ -23,6 +23,13 @@ Shader "DSEWA/ToonLeaf"
         [Header(Paint Detail)]
         _PaintMap ("Paint Detail (leaf uv, linear grey, 0.5 = none)", 2D) = "grey" {}
         _PaintStrength ("Paint Strength (0 = off)", Range(0, 2)) = 0
+        [Header(Texture Leaf Detail for painted leaf cards)]
+        _TexDetail ("Painted Value From Texture (0 = alpha only)", Range(0, 1)) = 0
+        _TexDetailContrast ("Painted Value Contrast", Range(0.5, 4)) = 1.8
+        _TexDetailMid ("Painted Value Average (texture mean)", Range(0.05, 1)) = 0.5
+        _CardNormal ("Card Facing Mix (each card catches its own light)", Range(0, 1)) = 0
+        _LeafOutline ("Dark Outline Round Each Leaf (from alpha)", Range(0, 1)) = 0
+        _LeafOutlineWidth ("Outline Width (alpha range)", Range(0.02, 0.5)) = 0.18
         [Header(Vein)]
         _VeinColor ("Midrib Color (multiply)", Color) = (0.55, 0.60, 0.95, 1)
         _VeinWidth ("Midrib Half Width (uv)", Range(0, 0.1)) = 0.028
@@ -36,6 +43,14 @@ Shader "DSEWA/ToonLeaf"
         _BacklightColor ("Backlight Color", Color) = (0.55, 0.70, 1.0, 1)
         _BacklightStrength ("Backlight Strength", Range(0, 2)) = 0.6
         _BacklightPower ("Backlight Focus", Range(1, 16)) = 4
+        [Header(Crown only on tree cards with vertex alpha 0)]
+        _CrownSkyColor ("Crown Top Tint (sky light)", Color) = (0.55, 0.78, 1, 1)
+        _CrownSky ("Crown Top Tint Amount", Range(0, 1)) = 0.35
+        _CrownUnderColor ("Crown Underside Tint", Color) = (0.42, 0.36, 0.75, 1)
+        _CrownUnder ("Crown Underside Amount", Range(0, 1)) = 0.4
+        _CrownRimColor ("Crown Silhouette Rim", Color) = (0.7, 0.85, 1, 1)
+        _CrownRim ("Crown Rim Strength", Range(0, 2)) = 0.6
+        _CrownRimWidth ("Crown Rim Width", Range(0.01, 0.6)) = 0.22
         [Header(Wind)]
         _WindDir ("Wind Direction (xz)", Vector) = (1, 0, 0.35, 0)
         _WindStrength ("Sway (m at the tip)", Float) = 0.02
@@ -60,6 +75,7 @@ Shader "DSEWA/ToonLeaf"
         CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
             half _Cutoff, _PaintStrength;
+            half _TexDetail, _TexDetailContrast, _LeafOutline, _LeafOutlineWidth, _TexDetailMid, _CardNormal;
             half4 _RootColor, _TipColor, _ShadowTint;
             half _Threshold, _Softness, _ShadowBlur, _AmbientShade, _ReceiveShadowBias;
             half _BackFaceDarken, _NormalUp;
@@ -73,6 +89,8 @@ Shader "DSEWA/ToonLeaf"
             float _WindStrength, _WindSpeed, _WindFreq, _Flutter, _FlutterSpeed;
             half4 _Tint;
             half _Desaturation, _Brightness;
+            half4 _CrownSkyColor, _CrownUnderColor, _CrownRimColor;
+            half _CrownSky, _CrownUnder, _CrownRim, _CrownRimWidth;
         CBUFFER_END
 
         TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
@@ -164,6 +182,11 @@ Shader "DSEWA/ToonLeaf"
                 if (!isFront) N = -N;
                 // Canopy shading: pull the normal toward straight up (or down for the underside) so the leaves of a
                 // plant read as one lit mass instead of flickering individually.
+                // card facing (2026-10-27): mix in the card's own flat normal so neighbouring cards break the crown's
+                // single light / shadow into leaf-sized pieces
+                float3 cardN = normalize(cross(ddy(i.positionWS), ddx(i.positionWS)));
+                cardN *= sign(dot(cardN, N) + 1e-4);
+                N = normalize(lerp(N, cardN, _CardNormal));
                 float3 up = float3(0, N.y >= 0 ? 1 : -1, 0);
                 N = normalize(lerp(N, up, _NormalUp));
                 float3 V = GetWorldSpaceNormalizeViewDir(i.positionWS);
@@ -182,6 +205,14 @@ Shader "DSEWA/ToonLeaf"
                 half3 color = lerp(base * _ShadowTint.rgb, base, lit);
                 if (!isFront) color = lerp(color, color * _ShadowTint.rgb, _BackFaceDarken);
                 // Hand-painted detail (side veins, brush strokes) in leaf uv: grey 0.5 leaves the colour alone
+                // painted leaf cards (2026-10-27, user: "the leaf grain doesn't show"): the colour map's own value
+                // (brush strokes, leaf light / dark sides) modulates the palette colour, and a dark line follows the
+                // alpha edge round every leaf, so single leaves read inside the clump
+                half4 texC = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv);
+                half texV = max(texC.r, max(texC.g, texC.b));
+                half detail = max(0, 1 + (texV / _TexDetailMid - 1) * _TexDetailContrast);
+                color *= lerp(1, detail, _TexDetail);
+                color *= 1 - _LeafOutline * (1 - smoothstep(_Cutoff, _Cutoff + _LeafOutlineWidth, texC.a));
                 half3 paint = SAMPLE_TEXTURE2D(_PaintMap, sampler_PaintMap, i.uv).rgb;
                 color *= lerp(half3(1, 1, 1), paint * 2.0h, _PaintStrength);
 
@@ -197,6 +228,15 @@ Shader "DSEWA/ToonLeaf"
                 color = lerp(color, color * _EdgeColor.rgb, edge * _EdgeStrength);
 
                 // Back-light: with the light behind the leaf (toward the viewer) the thin tip glows through.
+                // crown (2026-10-27, foliage research step 3): tree cards carry one crown-wide normal (tree_kit crown=0.8);
+                // tint its top toward the sky, its underside cooler, and draw a thin toon rim round the crown silhouette
+                half crownK = 1 - i.color.a;
+                float3 Nc = normalize(i.normalWS) * (isFront ? 1 : -1);
+                color = lerp(color, color * _CrownSkyColor.rgb * 1.6, saturate(Nc.y) * _CrownSky * crownK);
+                color = lerp(color, color * _CrownUnderColor.rgb, saturate(-Nc.y) * _CrownUnder * crownK);
+                float rimT = 1 - saturate(abs(dot(Nc, V)));
+                float rimAA = fwidth(rimT) + 1e-3;
+                color += _CrownRimColor.rgb * smoothstep(1 - _CrownRimWidth - rimAA, 1 - _CrownRimWidth + rimAA, rimT) * _CrownRim * (0.35 + 0.65 * lit) * crownK;
                 float bl = pow(saturate(dot(-V, light.direction)), _BacklightPower) * direct * h;
                 color += _BacklightColor.rgb * bl * _BacklightStrength;
 

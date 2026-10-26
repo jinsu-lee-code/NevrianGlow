@@ -209,7 +209,7 @@ Shader "DSEWA/ToonSoft"
                         if (_PointBands > 0.5)
                         {
                             half sB = saturate(at * _PointBandGain) * _PointBands;   // gain first, so a faint far light still reaches a step
-                            half fwB = fwidth(sB) + 1e-3h;
+                            half fwB = 0.02h;   // no derivatives inside the light loop (varying trip count)
                             at = (floor(sB) + smoothstep(1.0h - _PointBandSoft - fwB, 1.0h, frac(sB))) / _PointBands;
                         }
                         addCol += base * al.color * (at * alit);

@@ -231,8 +231,6 @@ Shader "DSEWA/ToonFoliage"
         half WindColorMask(float3 positionWS, half height)
         {
             half near = WindMask(positionWS.xz);
-            UNITY_BRANCH
-            if (near <= 0) return 0;
             float2 dir = normalize(_WindDir.xz + 1e-5);
             float2 p = positionWS.xz * _WindColorScale - dir * _Time.y * _WindColorSpeed * _WindColorScale;
             float n = ValueNoise2(p) * 0.65 + ValueNoise2(p * 2.3 + 17.1) * 0.35;

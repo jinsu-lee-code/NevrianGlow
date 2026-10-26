@@ -27,21 +27,21 @@ Material:
     m_Floats:
     - _BottomShade: 0.25
     - _CameraShrink: 0.2
-    - _HazeAmount: 0.26144424
+    - _HazeAmount: 0.25
     - _HazeHeight: 0.18
     - _MinLight: 0.6
-    - _RimAmount: 0.58283365
+    - _RimAmount: 0.6
     - _RimWidth: 0.22
     - _ShadeNoiseAmount: 0.08
     - _ShadeNoiseScale: 0.004
-    - _SilverAmount: 1.5656673
+    - _SilverAmount: 1.6
     - _SilverFocus: 6
     - _Softness: 0.03
     - _Spherize: 0.6
     - _Threshold: 0.4
     m_Colors:
     - _LitColor: {r: 1, g: 1, b: 1, a: 1}
-    - _RimColor: {r: 0.66661364, g: 0.7395204, b: 0.9914729, a: 1}
+    - _RimColor: {r: 0.62352943, g: 0.72156864, b: 1, a: 1}
     - _ShadowColor: {r: 0.62, g: 0.65999997, b: 0.86, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

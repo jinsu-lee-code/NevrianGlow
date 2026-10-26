@@ -84,6 +84,10 @@
 | `Environment/Shaders/ToonCliff.shader` | 10/27. 배경 절벽 셰이더: 높이 그라데이션 · 지층 띠 · 위를 향한 면 이끼 · 밑동이 땅 색으로 녹아듦(RVT). `mat_env_cliff_bg_rock/top`이 사용 |
 | `Environment/Shaders/ToonLeafShell.shader` | 10/27. 나무 · 덤불 속 덩어리를 잎 껍질로(잎 모양 셀 · 가장자리 잘라냄). `mat_env_tree_bg_inner`가 사용 |
 | `Environment/tree_bg/Materials/mat_env_tree_bg_leaf_{teal,violet}.mat` | 10/27. 잎 색 변형 2종 — 숲이 단색으로 보이지 않게 나무마다 파랑 / 청록 / 보라를 섞음 |
+| `Environment/tree_bg/pf_env_tree_bg_qt_{common,twisted}_1~5` (`Models/qt/`, `Materials/mat_env_tree_bg_qt_*`, `Textures/tex_env_tree_bg_qt_*`) | 10/27. 숲 나무 교체 — **Quaternius Stylized Nature MegaKit (CC0, 출처 표기 의무 없음, @Quaternius)** 나무 10종을 우리 툰 잎 셰이더 · 팔레트로 바꾸고 발광 열매를 붙임(`TreesBG/Forest_QT` 400그루 + `Landmark`). 껍질 텍스처 `tex_env_tree_bg_bark_toon_albedo`는 Substance Designer로 새로 만듦(`DSEWA_63/Art/Environment/TreesBG/TreeTextures.sbs`). 우리 옛 나무 모델 파일은 남겨 둠(씬에서는 뺌) |
+| `Environment/Scripts/PlanarReflection.cs` + `lake/Reflection/` (리플렉션 프로브 2개) | 10/27. 호수 평면 반사(폭포 · 절벽 · 숲이 물결에 흔들리며 비침) + 프로브 반사 대체. `Lake`에 붙어 있음, 수면은 Water 레이어 |
+| `Environment/Shaders/ScreenOutline.shader` + `Materials_PP/mat_pp_screen_outline.mat` | 10/27. 화면 외곽선(깊이 · 노멀) — `PC_Renderer`에 Full Screen Pass 기능 「DSEWA Screen Outline」으로 등록(끄면 사라짐). 상점 · 캐릭터 화면에도 적용됨 |
+| `Environment/Scripts/ToonShadowSettings.cs` | 10/27. 툰 그림자 부드러움 전역 조절(해 오브젝트에 붙음) |
 
 ## 이름을 안 바꾼 것
 

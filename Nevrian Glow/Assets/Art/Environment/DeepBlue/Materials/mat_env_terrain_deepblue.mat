@@ -93,9 +93,9 @@ Material:
     - _Softness: 0.053
     - _Threshold: 0.12
     m_Colors:
-    - _GrassTintColor: {r: 0.25123516, g: 0.2952702, b: 0.586248, a: 1}
+    - _GrassTintColor: {r: 0.22744909, g: 0.27058634, b: 0.5647059, a: 1}
     - _GrassTintRange: {r: 0.02, g: 0.7, b: 0, a: 0}
-    - _LitColor: {r: 0.32720914, g: 0.37426797, b: 0.6734201, a: 1}
-    - _ShadowColor: {r: 0.18180427, g: 0.22232355, b: 0.47909603, a: 1}
+    - _LitColor: {r: 0.29803735, g: 0.34509617, b: 0.6509804, a: 1}
+    - _ShadowColor: {r: 0.16313444, g: 0.20078145, b: 0.4501934, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

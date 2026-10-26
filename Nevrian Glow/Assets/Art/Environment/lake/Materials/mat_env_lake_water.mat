@@ -42,14 +42,19 @@ Material:
     - _CausticFadePower: 1.8
     - _CausticFineFar: 25
     - _CausticFineNear: 6
-    - _CausticFineWeight: 0.6
+    - _CausticFineWeight: 0
     - _CausticGain: 3
     - _CausticPatch: 0.55
     - _CausticScale: 1.2
-    - _CausticStrength: 0.7
-    - _CausticTiling: 0.25
+    - _CausticStrength: 0.55
+    - _CausticTiling: 0.18
     - _CausticTilingFine: 0.9
-    - _CausticWidth: 0.06
+    - _CausticToonSteps: 2
+    - _CausticWaveFocus: 1.4
+    - _CausticWaveWarp: 1.2
+    - _CausticWidth: 0.1
+    - _ContactFoam: 0.18
+    - _ContactFoamBreak: 0.3
     - _DebugTime: -1
     - _DepthMax: 2
     - _FallsWaveAmount: 1
@@ -74,12 +79,12 @@ Material:
     - _FoamWidth: 0.025
     - _FresnelPower: 4
     - _FresnelStrength: 0.7
-    - _GlintCluster: 0.6
+    - _GlintCluster: 0.85
     - _GlintClusterScale: 0.12
-    - _GlintEmission: 1.5084461
+    - _GlintEmission: 0.9
     - _GlintFadeDepth: 0.15
     - _GlintScale: 1.5
-    - _GlintSize: 0.16
+    - _GlintSize: 0.09
     - _GlintSizeRandom: 0.7
     - _GlintSmooth: 0.6
     - _Parallax: 0.35
@@ -88,6 +93,11 @@ Material:
     - _PathPower: 60
     - _PathStrength: 0.9771115
     - _PathWobble: 0.18
+    - _ProbeReflect: 0.75
+    - _ProbeReflectBase: 0.85
+    - _ProbeRoughness: 0.15
+    - _ProbeToonSteps: 4
+    - _ProbeWaveBend: 2.5
     - _ReceiveLight: 0.6
     - _Refraction: 0.012
     - _RimGlowMax: 1.4
@@ -113,10 +123,11 @@ Material:
     - _FallsWaveColor: {r: 0.62, g: 0.86, b: 1, a: 1}
     - _FallsWaveOrigin: {r: 6, g: 0, b: -72.6, a: 0}
     - _FoamColor: {r: 0.8348775, g: 0.78801095, b: 0.9942779, a: 1}
-    - _GlintColorA: {r: 0.8051773, g: 0.5786106, b: 0.9885558, a: 1}
-    - _GlintColorB: {r: 0.49005482, g: 0.9942779, b: 0.8405996, a: 1}
+    - _GlintColorA: {r: 0.75, g: 0.9, b: 1, a: 1}
+    - _GlintColorB: {r: 0.62, g: 0.95, b: 0.92, a: 1}
     - _PathColor: {r: 0.7786106, g: 0.7114442, b: 0.9828336, a: 1}
     - _PathDir: {r: 0, g: 0.3, b: -1, a: 0}
+    - _ProbeTint: {r: 0.95, g: 1, b: 1.15, a: 1}
     - _RingCenter: {r: 0, g: 0, b: -47, a: 0}
     - _ShoreColor: {r: 0.36, g: 0.4, b: 0.7, a: 1}
     - _SimCrestColor: {r: 0.7, g: 0.9, b: 1, a: 1}

@@ -31,12 +31,12 @@ Material:
     m_Ints: []
     m_Floats:
     - _AmbientShade: 0.105
-    - _Brightness: 1.0725137
+    - _Brightness: 1.0625
     - _ClumpHueVar: 0.025
     - _ClumpValueVar: 0.1
     - _Contrast: 0
     - _Cutoff: 0.5
-    - _Desaturation: -0.26144424
+    - _Desaturation: -0.25
     - _EdgeShrink: 1
     - _EdgeShrinkMin: 0.35
     - _GroundBlend: 1
@@ -80,11 +80,11 @@ Material:
     - _RootColor: {r: 0.11, g: 0.17, b: 0.46, a: 1}
     - _RootErodeScale: {r: 55, g: 9, b: 0, a: 0}
     - _ShadowTint: {r: 0.16470589, g: 0.18431373, b: 0.43137255, a: 1}
-    - _SheenColor: {r: 0.38345748, g: 0.534036, b: 0.90869266, a: 1}
-    - _ShineColor: {r: 0.46581042, g: 0.61762047, b: 1, a: 1}
+    - _SheenColor: {r: 0.3529393, g: 0.50980073, b: 0.9019608, a: 1}
+    - _ShineColor: {r: 0.43529224, g: 0.5960784, b: 1, a: 1}
     - _Tint: {r: 1, g: 1, b: 1, a: 1}
-    - _TipColor: {r: 0.035900865, g: 0.41808867, b: 0.9856922, a: 1}
-    - _TipGlowColor: {r: 0.43855575, g: 0.7213894, b: 2.3084462, a: 1}
+    - _TipColor: {r: 0.029512862, g: 0.41547439, b: 0.98384315, a: 1}
+    - _TipGlowColor: {r: 0.45, g: 0.75, b: 2.4, a: 1}
     - _TransColor: {r: 0.7254902, g: 0.78431374, b: 1, a: 1}
     - _WindColor: {r: 0.26859903, g: 0.45548818, b: 0.85782987, a: 1}
     - _WindDir: {r: 1, g: 0, b: 0.35, a: 0}
