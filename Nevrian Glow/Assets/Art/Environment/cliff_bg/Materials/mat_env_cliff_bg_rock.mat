@@ -54,8 +54,8 @@ Material:
     - _Saturation: 1
     - _ShadowBlur: 1.5
     - _Softness: 0.04
-    - _StrataScale: 0.45
-    - _StrataStrength: 0.22
+    - _StrataScale: 0.28
+    - _StrataStrength: 0.1
     - _StrataWobble: 1.2
     - _StrokeScale: 0.6
     - _StrokeStrength: 0.16
