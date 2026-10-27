@@ -61,6 +61,7 @@ public class GroundColorBaker : MonoBehaviour
     static readonly int AmbientId = Shader.PropertyToID("_AmbientShade");
 
     static readonly int ControlId = Shader.PropertyToID("_Control");
+    static readonly int Control1Id = Shader.PropertyToID("_Control1");
     static readonly int[] SplatIds = { Shader.PropertyToID("_Splat0"), Shader.PropertyToID("_Splat1"), Shader.PropertyToID("_Splat2"), Shader.PropertyToID("_Splat3") };
     static readonly int[] SplatStIds = { Shader.PropertyToID("_Splat0_ST"), Shader.PropertyToID("_Splat1_ST"), Shader.PropertyToID("_Splat2_ST"), Shader.PropertyToID("_Splat3_ST") };
     static readonly int CoverageTexId = Shader.PropertyToID("_DSEWA_GrassCoverage");
@@ -284,8 +285,13 @@ public class GroundColorBaker : MonoBehaviour
                 Report("noctrl:" + t.GetHashCode(), $"terrain {t.name} has no splat map; baking layer 0 only.");
 
             TerrainLayer[] layers = td.terrainLayers ?? Array.Empty<TerrainLayer>();
-            if (layers.Length > TerrainLayersPerPass)
-                Report("layers:" + t.GetHashCode(), $"terrain {t.name} has {layers.Length} layers; only the first {TerrainLayersPerPass} are baked.");
+            // layers 5-6 come along through the material: TerrainExtraLayers puts the second alphamap (_Control1) and
+            // _Splat4 / _Splat5 on it and the bake pass shares TerrainAlbedo, so only warn when that link is missing
+            // or there are more layers than the shader reads (2026-10-27: the old 4-layer warning fired every bake)
+            if (layers.Length > TerrainLayersPerPass + 2)
+                Report("layers:" + t.GetHashCode(), $"terrain {t.name} has {layers.Length} layers; only the first {TerrainLayersPerPass + 2} are baked.");
+            else if (layers.Length > TerrainLayersPerPass && (!mat.HasProperty(Control1Id) || mat.GetTexture(Control1Id) == null))
+                Report("layers:" + t.GetHashCode(), $"terrain {t.name} has {layers.Length} layers but its material has no _Control1 (TerrainExtraLayers missing?); layers 5-6 bake grey.");
             for (int i = 0; i < TerrainLayersPerPass && i < layers.Length; i++)
             {
                 TerrainLayer layer = layers[i];

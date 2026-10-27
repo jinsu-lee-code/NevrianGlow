@@ -291,7 +291,7 @@ Shader "DSEWA/ToonProp"
                 half direct = lerp(1.0h, ToonMainLightShadow(i.positionWS, _ShadowBlur) * EvaluateCloudShadow(i.positionWS), _ReceiveShadows);
                 float shade = saturate(dot(N, light.direction)) * direct + _AmbientShade;
                 float lit = smoothstep(_Threshold, _Threshold + _Softness, shade);
-                half3 color = lerp(_ShadowColor.rgb, _LitColor.rgb, lit) * albedo;
+                half3 color = lerp(SceneShadowMul(_ShadowColor.rgb, _LitColor.rgb), _LitColor.rgb, lit) * albedo;
                 // glow palette (2026-10-26, user: flowers glowing in several colours): each object picks one of four
                 // colours from its position; the glowing part's own colour and its glow tint both take it
                 half3 glowTint = _TexGlowTint.rgb;

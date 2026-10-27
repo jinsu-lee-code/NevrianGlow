@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8922442108212626317}
+  - component: {fileID: 5100860256466040784}
   m_Layer: 0
   m_Name: pf_env_tree_bg_qt_common_1
   m_TagString: Untagged
@@ -32,6 +33,29 @@ Transform:
   - {fileID: 2727103076696414775}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!136 &5100860256466040784
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5573404791186976919}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.35814473
+  m_Height: 5
+  m_Direction: 1
+  m_Center: {x: -0.051887587, y: 2.5, z: 0.102055445}
 --- !u!1001 &2473079491612655068
 PrefabInstance:
   m_ObjectHideFlags: 0

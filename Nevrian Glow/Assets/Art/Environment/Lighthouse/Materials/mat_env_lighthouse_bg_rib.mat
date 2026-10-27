@@ -44,7 +44,7 @@ Material:
     - _DelightLevel: 0.75
     - _DistGlowBoost: 1
     - _DstBlend: 0
-    - _FootBlend: 0
+    - _FootBlend: 1.2
     - _FruitSway: 0
     - _FruitSwaySpeed: 1.4
     - _GlowMaskDotBreath: 3

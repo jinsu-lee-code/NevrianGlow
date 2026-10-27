@@ -313,7 +313,7 @@ Shader "DSEWA/ToonTerrain"
                 half direct = min(ToonMainLightShadow(i.positionWS, _ShadowBlur), ToonCharacterShadow(i.positionWS, _ShadowBlur)) * EvaluateCloudShadow(i.positionWS);
                 float shade = saturate(dot(N, light.direction)) * direct + _AmbientShade;
                 float lit = smoothstep(_Threshold, _Threshold + _Softness, shade);
-                half3 color = lerp(_ShadowColor.rgb, _LitColor.rgb, lit) * albedo;
+                half3 color = lerp(SceneShadowMul(_ShadowColor.rgb, _LitColor.rgb), _LitColor.rgb, lit) * albedo;
                 // wet shore (2026-10-27): ground within ~1.2 m of the lake / pool water (LakeWaveSim's baked water mask,
                 // sampled on a small ring) is darker and bluer with a thin bright toon line at the waterline
                 if (_DSEWA_WaveOn > 0.5)

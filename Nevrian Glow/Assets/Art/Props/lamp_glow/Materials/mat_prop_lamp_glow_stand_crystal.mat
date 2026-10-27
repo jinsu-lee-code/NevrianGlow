@@ -35,7 +35,7 @@ Material:
     - _FacetHue: 0.06
     - _Flicker: 0
     - _FlickerSpeed: 7
-    - _GlowStrength: 1.2
+    - _GlowStrength: 2
     - _Saturation: 1.15
     - _ShadeAmount: 0.25
     - _SparkleChance: 0

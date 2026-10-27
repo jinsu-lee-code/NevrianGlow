@@ -223,8 +223,9 @@ Shader "DSEWA/ToonLeaf"
 
                 half h = i.color.r;
                 half3 base = lerp(_RootColor.rgb, _TipColor.rgb, h);
-                half3 color = lerp(base * _ShadowTint.rgb, base, lit);
-                if (flip) color = lerp(color, color * _ShadowTint.rgb, _BackFaceDarken);
+                half3 shadowTint = SceneShadowMul(_ShadowTint.rgb, half3(1, 1, 1));
+                half3 color = lerp(base * shadowTint, base, lit);
+                if (flip) color = lerp(color, color * shadowTint, _BackFaceDarken);
                 // Hand-painted detail (side veins, brush strokes) in leaf uv: grey 0.5 leaves the colour alone
                 // painted leaf cards (2026-10-27, user: "the leaf grain doesn't show"): the colour map's own value
                 // (brush strokes, leaf light / dark sides) modulates the palette colour, and a dark line follows the

@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4602705263184074123}
+  - component: {fileID: 6025510513909063783}
   m_Layer: 0
   m_Name: pf_env_tree_bg_qt_twisted_4
   m_TagString: Untagged
@@ -32,6 +33,29 @@ Transform:
   - {fileID: 7079070142861288463}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!136 &6025510513909063783
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4549666152930929550}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.79197985
+  m_Height: 5
+  m_Direction: 1
+  m_Center: {x: 0.38822874, y: 2.5, z: 1.2494901}
 --- !u!1001 &7329416754989319140
 PrefabInstance:
   m_ObjectHideFlags: 0

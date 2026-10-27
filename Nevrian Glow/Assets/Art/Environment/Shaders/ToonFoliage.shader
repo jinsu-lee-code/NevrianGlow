@@ -360,7 +360,7 @@ Shader "DSEWA/ToonFoliage"
                 half patch = smoothstep(0.4, 0.6, ValueNoise2(i.restXZ * _PatchScale + 31.7));
                 color *= lerp(half3(1, 1, 1), _PatchTint.rgb, patch * _PatchAmount);
                 color = lerp(color, _WindColor.rgb, WindColorMask(i.positionWS, i.height) * _WindColorAmount);
-                color *= lerp(_ShadowTint.rgb, half3(1, 1, 1), lit);
+                color *= lerp(SceneShadowMul(_ShadowTint.rgb, half3(1, 1, 1)), half3(1, 1, 1), lit);
                 // bake = albedo x ground lit colour -> recover the albedo and apply the ground's own lit / shadow colour
                 half3 groundLit = _DSEWA_GroundLight.w > 0 ? max(_DSEWA_GroundLitColor.rgb, 0.05) : half3(1, 1, 1);
                 half3 rootColor = ground.rgb / groundLit * lerp(1, tex.rgb, _GroundBlendCardShade)

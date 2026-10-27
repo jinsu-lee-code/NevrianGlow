@@ -139,7 +139,7 @@ half4 CrystalFrag(Varyings i, bool frontFace : SV_IsFrontFace) : SV_Target
     shade += brush * _BrushEdge;                 // the light/shadow border wanders like a painted edge
     float lit = smoothstep(_Threshold, _Threshold + _Softness, shade);
     half3 litC = lerp(_LitColor.rgb, _TipColor.rgb, h01);
-    half3 shadowC = lerp(_ShadowColor.rgb, _TipColor.rgb * _TipShadow, h01);
+    half3 shadowC = SceneShadowMul(lerp(_ShadowColor.rgb, _TipColor.rgb * _TipShadow, h01), litC);
     half3 base = _BoxMap > 0.5 ? BoxMapBase(i.positionOS, i.normalOS) : SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv).rgb;
     half3 color = lerp(shadowC, litC, lit) * base;
 

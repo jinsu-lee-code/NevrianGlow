@@ -20,6 +20,19 @@ static const float2 kToonShadowDisk[12] =
 // toon line, 0.5 = fully soft gradient), y = extra blur multiplier on every material's blurTexels (0 = unset -> 1)
 float4 _DSEWA_ToonShadowSoft;
 
+// scene shadow colour (ToonShadowSettings.cs, 2026-10-27, after the shop shading pass): every toon shader's shadow
+// multiplier is pulled toward one scene-wide tint so all shadows share a colour family. rgb = tint, a = amount
+// (0 = unset -> each material keeps its own shadow colour). Only the hue is shared: the target is the tint rescaled
+// to the material's own shadow brightness (relative to its lit colour), so deliberately dark shadows stay dark
+float4 _DSEWA_SceneShadowTint;
+half3 SceneShadowMul(half3 materialShadow, half3 materialLit)
+{
+    half3 tint = (half3)_DSEWA_SceneShadowTint.rgb;
+    half3 lumW = half3(0.2126h, 0.7152h, 0.0722h);
+    half3 target = materialLit * tint * (dot(materialShadow, lumW) / max(dot(materialLit * tint, lumW), 1e-3h));
+    return lerp(materialShadow, target, (half)_DSEWA_SceneShadowTint.a);
+}
+
 half ToonMainLightShadow(float3 positionWS, half blurTexels)
 {
     // Single exit: early returns before the fwidth() below made FXC flag the result as "potentially

@@ -31,8 +31,25 @@ Shader "DSEWA/ToonSoft"
         _PointBands ("Point Light Toon Steps (0 = smooth falloff)", Range(0, 6)) = 3
         _PointBandSoft ("Point Light Step Edge Softness", Range(0.01, 1)) = 0.75
         _PointBandGain ("Point Light Falloff Gain Before Steps", Range(1, 10)) = 2.5
+        _PointLightCap ("Point Lights Add At Most x Surface Colour (0 = no cap)", Range(0, 4)) = 0.9
+        [Header(Cel Detail 2026 10 27 all zero means off)]
+        _MidBand ("Mid Tone Band Width (0 = two tones)", Range(0, 0.5)) = 0
+        _MidTone ("Mid Tone Brightness (0 shadow .. 1 lit)", Range(0, 1)) = 0.55
+        _EdgeBreakup ("Painted Edge Wobble", Range(0, 0.5)) = 0
+        _EdgeNoiseScale ("Painted Edge Noise Size (per m)", Range(0.5, 40)) = 9
+        _TermColor ("Terminator Colour Line", Color) = (0.95, 0.45, 0.55, 1)
+        _TermStrength ("Terminator Line Strength", Range(0, 1)) = 0
+        _TermWidth ("Terminator Line Width", Range(0.01, 0.3)) = 0.08
+        _CavityCut ("Cavity Cut (AO below this goes flat dark, 0 = off)", Range(0, 1)) = 0
+        _AlbedoSteps ("Texture Brightness Steps (0 = off, toon posterize)", Range(0, 8)) = 0
+        _PointLightHue ("Lamp Hue Over Surface Colour (0 = multiply, 1 = lamp colour x brightness)", Range(0, 1)) = 0
         [ToggleUI] _ReceiveShadows ("Receive Shadows (cast + cloud)", Float) = 1
         _ShadowBlur ("Cast Shadow Smoothing (texels)", Range(0, 4)) = 1.5
+        [Header(Height Gradient (2026 10 27 shop shading pass))]
+        _HeightGrad ("Height Gradient Amount (0 = off)", Range(0, 1)) = 0
+        _HeightRange ("World Y: Bottom / Top", Vector) = (0, 2.6, 0, 0)
+        _HeightBottom ("Bottom Tint (multiply)", Color) = (0.62, 0.6, 0.82, 1)
+        _HeightTopLift ("Top Lift", Range(0, 0.5)) = 0.12
         [Header(Sky and Ground Ambient)]
         _SkyColor ("Sky Color (up)", Color) = (0.72, 0.78, 1, 1)
         _GroundColor ("Ground Color (down)", Color) = (0.3, 0.26, 0.45, 1)
@@ -79,6 +96,14 @@ Shader "DSEWA/ToonSoft"
             half _PointBands;
             half _PointBandSoft;
             half _PointBandGain;
+            half _PointLightCap;
+            half _PointLightHue;
+            half _AlbedoSteps;
+            half _MidBand, _MidTone, _EdgeBreakup, _EdgeNoiseScale, _TermStrength, _TermWidth, _CavityCut;
+            half4 _TermColor;
+            half _HeightGrad, _HeightTopLift;
+            float4 _HeightRange;
+            half4 _HeightBottom;
             half4 _SkyColor, _GroundColor;
             half _AmbientStrength;
             half _SceneAmbient;
@@ -93,6 +118,11 @@ Shader "DSEWA/ToonSoft"
             half4 _OutlineColor;
             float _OutlineWidth;
         CBUFFER_END
+        // interior bounce globals (InteriorFill.cs): box min.xyz + edge fade (m), box max, up / down bounce colours (Up.a = amount)
+        float4 _DSEWA_InteriorBoxMin, _DSEWA_InteriorBoxMax;
+        half4 _DSEWA_InteriorFillUp, _DSEWA_InteriorFillDown;
+        float4 _DSEWA_InteriorKeyPos;   // xyz = key point (centre orb), w = strength (0 = off)
+        half4 _DSEWA_InteriorKeyColor;
                 // outline width is in metres at the model's own size: a prefab scaled to 0.18 gets a 0.18x line
         // (geometric mean of the object scale, so non-uniform boxes do not blow up)
         float OutlineObjectScale()
@@ -158,6 +188,31 @@ Shader "DSEWA/ToonSoft"
                 return o;
             }
 
+            // ---- cel detail helpers (2026-10-27, user: "detailed toon shading")
+            float CelHash(float3 p) { p = frac(p * 0.3183099 + 0.1); p *= 17.0; return frac(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+            float CelNoise(float3 x)   // value noise, -0.5..0.5
+            {
+                float3 i0 = floor(x); float3 f = frac(x); f = f * f * (3.0 - 2.0 * f);
+                float n = lerp(lerp(lerp(CelHash(i0), CelHash(i0 + float3(1,0,0)), f.x), lerp(CelHash(i0 + float3(0,1,0)), CelHash(i0 + float3(1,1,0)), f.x), f.y),
+                               lerp(lerp(CelHash(i0 + float3(0,0,1)), CelHash(i0 + float3(1,0,1)), f.x), lerp(CelHash(i0 + float3(0,1,1)), CelHash(i0 + float3(1,1,1)), f.x), f.y), f.z);
+                return n - 0.5;
+            }
+            // wrapped N.L -> cel steps: shadow (0), optional mid tone, lit (1); edge is pushed by a painted wobble
+            half CelLit(half w, float3 posWS)
+            {
+                w += _EdgeBreakup * (CelNoise(posWS * _EdgeNoiseScale) + 0.5 * CelNoise(posWS * _EdgeNoiseScale * 2.7));
+                if (_MidBand <= 0) return smoothstep(0.5 - _Softness, 0.5 + _Softness, w);
+                half lo = smoothstep(0.5 - _MidBand - _Softness, 0.5 - _MidBand + _Softness, w);
+                half hi = smoothstep(0.5 + _MidBand - _Softness, 0.5 + _MidBand + _Softness, w);
+                return lo * _MidTone + hi * (1.0h - _MidTone);
+            }
+            half CelTerm(half w, float3 posWS)   // 1 on the light/shadow boundary
+            {
+                w += _EdgeBreakup * (CelNoise(posWS * _EdgeNoiseScale) + 0.5 * CelNoise(posWS * _EdgeNoiseScale * 2.7));
+                half d = abs(w - (_MidBand > 0 ? 0.5 - _MidBand : 0.5));
+                return 1.0h - smoothstep(_TermWidth * 0.5, _TermWidth, d);
+            }
+
             half Blob(half nDotH)   // round soft-edged highlight
             {
                 return smoothstep(1.0 - _GlossSize - _GlossSoftness, 1.0 - _GlossSize + _GlossSoftness, nDotH);
@@ -177,12 +232,30 @@ Shader "DSEWA/ToonSoft"
                 half shadow = lerp(1.0h, ToonMainLightShadow(i.positionWS, _ShadowBlur) * EvaluateCloudShadow(i.positionWS), _ReceiveShadows);
 
                 half3 tex = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv).rgb;
+                // texture posterize (2026-10-27, user: "more toon"): the map's brightness is cut into a few flat steps,
+                // hue and saturation kept, so painted grain reads as cel bands instead of photo gradients
+                if (_AlbedoSteps > 0.5)
+                {
+                    half tl = dot(tex, half3(0.299h, 0.587h, 0.114h));
+                    half tq = (floor(tl * _AlbedoSteps) + 0.5h) / _AlbedoSteps;
+                    // dark texels are left alone: one fixed step would lift a navy board or dark stone into a flat
+                    // pale band, so the posterize fades in only above ~0.2 brightness (wood grain, painted accents)
+                    tex = lerp(tex, tex * (tq / max(tl, 1e-3h)), saturate((tl - 0.16h) / 0.12h));
+                }
                 half3 base = tex * _BaseColor.rgb;
                 base = lerp(base, half3(1, 1, 1), _Pastel);
+                half baseBright = max(base.r, max(base.g, base.b));   // before the height gradient (lamp hue below)
+                // height gradient (hand-painted rule: darker, cooler bottom, lighter top) so props sit on the floor
+                if (_HeightGrad > 0)
+                {
+                    half hh = smoothstep(_HeightRange.x, _HeightRange.y, i.positionWS.y);
+                    base *= lerp(half3(1, 1, 1), lerp(_HeightBottom.rgb, half3(1, 1, 1) * (1.0h + _HeightTopLift), hh), _HeightGrad);
+                }
 
                 // soft wrapped terminator
+                if (_CavityCut > 0) occ = lerp(0.35h, 1.0h, smoothstep(_CavityCut - 0.04h, _CavityCut + 0.04h, occ));
                 half wrap = (dot(N, light.direction) + _Wrap) / (1.0 + _Wrap);
-                half lit = smoothstep(0.5 - _Softness, 0.5 + _Softness, wrap) * shadow * lerp(1.0h, occ, _OcclusionDirect);
+                half lit = CelLit(wrap, i.positionWS) * shadow * lerp(1.0h, occ, _OcclusionDirect);
 
                 // shadow side: tinted and more saturated, the colour "sinks in"
                 half3 hsv = RgbToHsv(base * _ShadowTint.rgb);
@@ -190,6 +263,8 @@ Shader "DSEWA/ToonSoft"
                 half3 shadowCol = HsvToRgb(hsv);
                 half3 col = lerp(shadowCol, base, lit);
                 col *= lerp(half3(1, 1, 1), light.color, _LightColorAmount);
+                half termAll = 0;   // strongest light/shadow boundary over all lights (colour line drawn once below)
+                if (_TermStrength > 0) termAll = CelTerm(wrap, i.positionWS) * shadow;
 
                 // point / spot lights (shop lamps): the same soft wrapped terminator, added in the light's own colour
                 #if defined(_ADDITIONAL_LIGHTS) || defined(_ADDITIONAL_LIGHTS_VERTEX)
@@ -197,12 +272,13 @@ Shader "DSEWA/ToonSoft"
                     InputData inputData = (InputData)0;
                     inputData.positionWS = i.positionWS;
                     inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(i.positionCS);
-                    half3 addCol = 0;
+                    half3 addLight = 0;
                     uint pixelLightCount = GetAdditionalLightsCount();
                     LIGHT_LOOP_BEGIN(pixelLightCount)
                         Light al = GetAdditionalLight(lightIndex, i.positionWS);
                         half aw = (dot(N, al.direction) + _Wrap) / (1.0 + _Wrap);
-                        half alit = smoothstep(0.5 - _Softness, 0.5 + _Softness, aw) * lerp(1.0h, occ, _OcclusionDirect);
+                        half alit = CelLit(aw, i.positionWS) * lerp(1.0h, occ, _OcclusionDirect);
+                        if (_TermStrength > 0) termAll = max(termAll, CelTerm(aw, i.positionWS) * saturate(al.distanceAttenuation * 4.0));
                         // toon: the falloff is cut into a few flat steps and capped at 1, so a lamp gives rings of
                         // flat colour instead of a smooth hot spot (2026-10-26, user: rim and shine fight the toon look)
                         half at = al.distanceAttenuation * al.shadowAttenuation;
@@ -212,9 +288,18 @@ Shader "DSEWA/ToonSoft"
                             half fwB = 0.02h;   // no derivatives inside the light loop (varying trip count)
                             at = (floor(sB) + smoothstep(1.0h - _PointBandSoft - fwB, 1.0h, frac(sB))) / _PointBands;
                         }
-                        addCol += base * al.color * (at * alit);
+                        addLight += al.color * (at * alit);
                     LIGHT_LOOP_END
-                    col += addCol * _PointLightStrength;
+                    // cap (2026-10-27, user: "the counter is far too bright"): two lamps right on top of a prop added
+                    // up to several times its own colour and burnt it white. The summed lamp light is scaled down
+                    // (hue kept) so it never adds more than _PointLightCap x the surface colour. 0 = no cap
+                    half addMax = max(addLight.r, max(addLight.g, addLight.b)) * _PointLightStrength;
+                    if (_PointLightCap > 0 && addMax > _PointLightCap) addLight *= _PointLightCap / addMax;
+                    // lamp hue (2026-10-27, warm shop pools): 0 = lamp colour x surface colour (a warm lamp on navy
+                    // planks goes grey), 1 = lamp colour x surface brightness, so the pool reads in the lamp's hue
+                    // brightness taken before the height gradient and lifted (sqrt) so a dark floor still shows a pool
+                    half3 lampSurf = lerp(base, sqrt(baseBright).xxx, _PointLightHue);
+                    col += lampSurf * addLight * _PointLightStrength;
                 }
                 #endif
 
@@ -224,6 +309,37 @@ Shader "DSEWA/ToonSoft"
                 // follows that scene's brightness instead of the field's night sky colours
                 hemi = lerp(hemi, SampleSH(N), _SceneAmbient);
                 col += base * hemi * _AmbientStrength * lerp(1.0h, occ, _OcclusionStrength);
+
+
+                // interior bounce (2026-10-27, after the URP light-bake tutorial: the room is filled by baked indirect
+                // light, which a team scene cannot store). InteriorFill.cs publishes a world box and two bounce colours;
+                // inside the box, faces looking up get the ceiling bounce, faces looking down the floor bounce
+                if (_DSEWA_InteriorFillUp.a > 0)
+                {
+                    float3 dIn = min(i.positionWS - _DSEWA_InteriorBoxMin.xyz, _DSEWA_InteriorBoxMax.xyz - i.positionWS);
+                    // fade only toward the walls; height is a plain in/out test so the floor (box bottom) is fully lit
+                    half inside = saturate(min(dIn.x, dIn.z) / max(_DSEWA_InteriorBoxMin.w, 1e-3)) * step(-0.05, dIn.y);
+                    // indoors the moon never reaches the props, so this up/down fill is what shapes them: cut it into the
+                    // same cel steps (mid band, painted edge, colour line) when the cel detail options are on
+                    half fw = N.y * 0.5 + 0.5;
+                    half fstep = (_MidBand > 0 || _EdgeBreakup > 0) ? CelLit(fw, i.positionWS) : fw;
+                    half3 bounce = lerp(_DSEWA_InteriorFillDown.rgb, _DSEWA_InteriorFillUp.rgb, fstep);
+                    if (_TermStrength > 0) termAll = max(termAll, CelTerm(fw, i.positionWS) * inside);
+                    // key: one fake light from the centre orb (no light-count cost) so props get a real lit / shadow side
+                    // indoors; it is the light the cel steps, painted edge and colour line actually show on
+                    if (_DSEWA_InteriorKeyPos.w > 0)
+                    {
+                        float3 kL = normalize(_DSEWA_InteriorKeyPos.xyz - i.positionWS);
+                        half kw = (dot(N, kL) + _Wrap) / (1.0 + _Wrap);
+                        half kl = (_MidBand > 0 || _EdgeBreakup > 0) ? CelLit(kw, i.positionWS) : smoothstep(0.5 - _Softness, 0.5 + _Softness, kw);
+                        col += base * _DSEWA_InteriorKeyColor.rgb * (kl * _DSEWA_InteriorKeyPos.w * inside) * lerp(1.0h, occ, _OcclusionDirect);
+                        if (_TermStrength > 0) termAll = max(termAll, CelTerm(kw, i.positionWS) * inside);
+                    }
+                    col += base * bounce * (_DSEWA_InteriorFillUp.a * inside) * lerp(1.0h, occ, _OcclusionStrength);
+                }
+
+                // terminator colour line: a thin saturated band where light turns to shadow (cel painting "blood line")
+                if (_TermStrength > 0) col = lerp(col, col * (1.0h + _TermColor.rgb * 1.5h), saturate(termAll) * _TermStrength);
 
                 // gloss blobs: one from the main light, one from just above-left of the camera (always in view)
                 half glossLight = Blob(saturate(dot(N, normalize(light.direction + V)))) * lit;

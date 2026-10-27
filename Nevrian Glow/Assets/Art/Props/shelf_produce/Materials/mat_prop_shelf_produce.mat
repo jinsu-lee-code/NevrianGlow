@@ -24,7 +24,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 087d7c5f70a9a2c498113eba70ef3346, type: 3}
+        m_Texture: {fileID: 2800000, guid: 466bcc61f11ca5d4abc4bdccaa172266, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
@@ -32,7 +32,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _GlowMask:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 7b231cccb215e4a4eb5ce1c92d194eaa, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
@@ -41,39 +41,57 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AmbientStrength: 0.16
+    - _AlbedoSteps: 4
+    - _AmbientStrength: 0.7
     - _BumpScale: 1
+    - _CavityCut: 0.5
+    - _EdgeBreakup: 0.12
+    - _EdgeNoiseScale: 9
     - _GlossSize: 0.06
     - _GlossSoftness: 0.04
     - _GlossStrength: 0
+    - _HeightGrad: 0.5
+    - _HeightTopLift: 0.32
     - _LightColorAmount: 0.3
+    - _MidBand: 0.14
+    - _MidTone: 0.55
     - _OcclusionDirect: 0.8
     - _OcclusionStrength: 1
-    - _OutlineWidth: 0.006
+    - _OutlineWidth: 0.009
     - _Pastel: 0
+    - _PointBandGain: 2.5
+    - _PointBandSoft: 0.15
+    - _PointBands: 3
+    - _PointLightCap: 0.9
+    - _PointLightHue: 0.15
     - _PointLightStrength: 1
     - _PulsePeriod: 4.5
     - _ReceiveShadows: 1
     - _RimPower: 3
     - _RimStrength: 0
-    - _SceneAmbient: 0
+    - _SceneAmbient: 1
     - _ShadowBlur: 1.5
-    - _ShadowSaturation: 1.5
-    - _Softness: 0.08
+    - _ShadowSaturation: 1.3
+    - _Softness: 0.04
+    - _TermStrength: 0.45
+    - _TermWidth: 0.06
     - _TexGlowSoftness: 0.2
-    - _TexGlowStrength: 0
-    - _TexGlowThreshold: 0.5
+    - _TexGlowStrength: 0.7
+    - _TexGlowThreshold: 0.3
     - _ViewGloss: 0
-    - _Wrap: 0.05
+    - _Wrap: 0.15
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _GlossColor: {r: 1, g: 1, b: 1, a: 1}
     - _GroundColor: {r: 0.35, g: 0.3, b: 0.4, a: 1}
-    - _OutlineColor: {r: 0.09999997, g: 0.09999997, b: 0.25999996, a: 1}
+    - _HeightBottom: {r: 0.4, g: 0.38, b: 0.7, a: 1}
+    - _HeightRange: {r: -0.2, g: 3, b: 0, a: 0}
+    - _OutlineColor: {r: 0.06, g: 0.05, b: 0.14, a: 1}
     - _RimColor: {r: 1, g: 0.82, b: 0.6, a: 1}
-    - _ShadowTint: {r: 0.42, g: 0.38, b: 0.64, a: 1}
+    - _ShadowTint: {r: 0.56, g: 0.54, b: 0.86, a: 1}
     - _SkyColor: {r: 0.88, g: 0.9, b: 1, a: 1}
-    - _TexGlowPulse: {r: 1, g: 1, b: 0, a: 0}
+    - _TermColor: {r: 0.95, g: 0.45, b: 0.55, a: 1}
+    - _TexGlowPulse: {r: 0.7, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

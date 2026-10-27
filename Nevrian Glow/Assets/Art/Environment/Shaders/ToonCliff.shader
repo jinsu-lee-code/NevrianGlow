@@ -168,7 +168,7 @@ Shader "DSEWA/ToonCliff"
                 Light light = GetMainLight(TransformWorldToShadowCoord(P));
                 half direct = ToonMainLightShadow(P, _ShadowBlur) * EvaluateCloudShadow(P);
                 float lit = smoothstep(_Threshold, _Threshold + _Softness, saturate(dot(N, light.direction)) * direct + _AmbientShade);
-                half3 color = albedo * lerp(_ShadowColor.rgb, _LitColor.rgb, lit) * lerp(half3(1, 1, 1), light.color, 0.35);
+                half3 color = albedo * lerp(SceneShadowMul(_ShadowColor.rgb, _LitColor.rgb), _LitColor.rgb, lit) * lerp(half3(1, 1, 1), light.color, 0.35);
                 color += _RimColor.rgb * pow(1 - saturate(dot(N, V)), 4) * _RimStrength;
                 color += _WetColor.rgb * pow(1 - saturate(dot(N, V)), 3) * 0.12 * wet;   // faint wet sheen at grazing angles
 
