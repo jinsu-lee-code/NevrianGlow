@@ -75,6 +75,21 @@ public class LayerGrassSpawner : MonoBehaviour
     [Tooltip("Grass back to full at this fraction of the crown radius")]
     [Range(0f, 1.5f)] public float shadeEdge = 0.95f;
 
+    [Header("Grass rhythm (2026-10-27, layout pass)")]
+    [Tooltip("Tall blades (prototype 1+) x (1 + this) in the band where the tree shade fades out, i.e. round the crown edge")]
+    public float shadeEdgeTall = 1.6f;
+    [Tooltip("Tall blades x (1 + this) along path edges (path layers at partial weight)")]
+    public float pathEdgeTall = 1.4f;
+    [Tooltip("Path layer indices counted as path for the edge band (terrain layer order)")]
+    public int[] pathLayers = { 3, 4 };
+    [Tooltip("Ridges: where the ground stands this much (m) above its surroundings (ridgeRadius) the grass is short and sparse")]
+    public float ridgeHeight = 0.6f;
+    public float ridgeRadius = 6f;
+    [Range(0f, 1f)] public float ridgeKeep = 0.55f;
+    [Tooltip("Flowers under this root keep a low patch round them so they show above the grass")]
+    public Transform flowerRoot;
+    public float flowerClear = 0.9f;
+
     Texture2D obstacleField;
     [Tooltip("Obstacle field baked in the editor and used in play mode / builds, where the rock meshes cannot be read (2026-10-27)")]
     public Texture2D bakedField;
@@ -357,6 +372,21 @@ public class LayerGrassSpawner : MonoBehaviour
             for (int by = by0; by <= by1; by++) for (int bx = bx0; bx <= bx1; bx++)
                 (crownBuckets[by * cbw + bx] ??= new System.Collections.Generic.List<int>()).Add(i);
         }
+        // flowers bucketed on the same grid
+        System.Collections.Generic.List<Vector2> flowerPts = null;
+        var flowerBuckets = new System.Collections.Generic.List<int>[cbw * cbh];
+        if (flowerRoot != null)
+        {
+            flowerPts = new System.Collections.Generic.List<Vector2>();
+            foreach (Transform f in flowerRoot) if (f.gameObject.activeInHierarchy) flowerPts.Add(new Vector2(f.position.x, f.position.z));
+            for (int i = 0; i < flowerPts.Count; i++)
+            {
+                int bx0 = Mathf.Max(0, (int)((flowerPts[i].x - flowerClear - rminX) / CB)), bx1 = Mathf.Min(cbw - 1, (int)((flowerPts[i].x + flowerClear - rminX) / CB));
+                int by0 = Mathf.Max(0, (int)((flowerPts[i].y - flowerClear - rminZ) / CB)), by1 = Mathf.Min(cbh - 1, (int)((flowerPts[i].y + flowerClear - rminZ) / CB));
+                for (int by = by0; by <= by1; by++) for (int bx = bx0; bx <= bx1; bx++)
+                    (flowerBuckets[by * cbw + bx] ??= new System.Collections.Generic.List<int>()).Add(i);
+            }
+        }
 
         for (int y = 0; y < h; y++)
         for (int x = 0; x < w; x++)
@@ -404,6 +434,29 @@ public class LayerGrassSpawner : MonoBehaviour
                 }
             if (shade <= 0.001f) continue;
 
+            // rhythm: tall band round crown edges and path edges, short sparse grass on ridges, low patch round flowers
+            float shadeBand = shade < 0.999f ? 4f * shade * (1f - shade) : 0f;
+            float pathW = 0f;
+            {
+                int cx = Mathf.Clamp(Mathf.FloorToInt((dx + 0.5f) * a) - ax0, 0, aw - 1), cy = Mathf.Clamp(Mathf.FloorToInt((dy + 0.5f) * a) - ay0, 0, ah - 1);
+                foreach (int li in pathLayers) if (li >= 0 && li < td.alphamapLayers) pathW += alpha[cy, cx, li];
+            }
+            float pathBand = Mathf.Clamp01(pathW * 4f) * Mathf.Clamp01((0.6f - pathW) * 4f);
+            float ridge = 0f;
+            if (ridgeHeight > 0f)
+            {
+                float h0 = terrain.SampleHeight(new Vector3(wx, 0, wz));
+                float hs = (terrain.SampleHeight(new Vector3(wx + ridgeRadius, 0, wz)) + terrain.SampleHeight(new Vector3(wx - ridgeRadius, 0, wz))
+                          + terrain.SampleHeight(new Vector3(wx, 0, wz + ridgeRadius)) + terrain.SampleHeight(new Vector3(wx, 0, wz - ridgeRadius))) * 0.25f;
+                ridge = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(ridgeHeight * 0.5f, ridgeHeight * 1.5f, h0 - hs));
+            }
+            float flower = 0f;
+            if (flowerPts != null)
+            {
+                var fl = flowerBuckets[Mathf.Clamp((int)((wz - rminZ) / CB), 0, cbh - 1) * cbw + Mathf.Clamp((int)((wx - rminX) / CB), 0, cbw - 1)];
+                if (fl != null) foreach (int i in fl) { float d = Vector2.Distance(new Vector2(wx, wz), flowerPts[i]); flower = Mathf.Max(flower, 1f - Mathf.SmoothStep(0f, 1f, d / flowerClear)); }
+            }
+
             for (int p = 0; p < protoCount; p++)
             {
                 float count = 0f;
@@ -423,6 +476,8 @@ public class LayerGrassSpawner : MonoBehaviour
                 }
                 if (ring > 0f) count = count * (1f + ringBoost * ring) + (p < ringAdd.Length ? ringAdd[p] : 0f) * ring;
                 count *= area * shade;
+                if (p > 0) count *= (1f + shadeEdgeTall * shadeBand + pathEdgeTall * pathBand) * (1f - ridge) * (1f - flower);
+                else count *= Mathf.Lerp(1f, ridgeKeep, ridge) * (1f - 0.6f * flower);
                 // dither the fraction with a stable per-cell hash so regeneration is deterministic
                 float hash = Frac(Mathf.Sin((dx * 12.9898f + dy * 78.233f + p * 37.719f + seed) ) * 43758.5453f);
                 outLayers[p][y, x] = Mathf.Clamp(Mathf.FloorToInt(count + hash), 0, maxPerCell);

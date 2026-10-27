@@ -114,7 +114,7 @@ Material:
     - _GroundSaturation: 0.85
     - _HeightBlend: 1
     - _HeightBlendScale: 0.3
-    - _HeightBlendWidth: 0.08
+    - _HeightBlendWidth: 0.16
     - _HexCellSize: 1
     - _HexEnable: 1
     - _HexRotation: 1

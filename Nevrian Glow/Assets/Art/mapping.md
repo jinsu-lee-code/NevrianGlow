@@ -107,6 +107,7 @@
 | `Environment/Lighthouse/` (`env_lighthouse_bg.fbx` + 재질 3) | 10/27. 외계 등대 블록아웃(높이 약 50 m, 도자기 톤 몸통 + 발광 구슬). 지금은 농장 북쪽 40 m(x −5, z 32). **위치 · 용도(숲 너머 랜드마크 / 상점 외관) 미정** |
 | `flower_bg/Models/env_flower_bg_{bluebell,candle,moonstar,seedpuff,sunsetstar}_fixed.asset` | 10/27. 줄기가 따로 떨어져 있던 꽃 메시를 한 줄기로 모은 사본. 꽃 프리팹이 이걸 씀 |
 | `DeepBlue/tex_env_grass_obstacle_field.asset` | 10/27. `LayerGrassSpawner`가 구운 풀 기울기 · 장애물 필드(Play용). 풀 가장자리는 1 m에 걸쳐 성기게(`edgeBlur`) |
+| `DeepBlue/Textures/tex_env_ground_alien_litter_{albedo,normal,mask}.png` | 10/27. 나무 밑 숲 바닥(낙엽 + 부엽토 + 이끼 + 작은 청록 점). 무늬는 Substance Designer(`DSEWA_63/.../ground_alien/forest_floor.sbs`), 낙엽은 스크립트로 그려 합성. `TL_Ground_Alien_Soil` 레이어가 갈라진 흙 대신 이걸 씀(옛 흙 텍스처는 남겨 둠) |
 | `Shaders/ToonCliff.shader` Wet Rock + 씬 `WaterfallBaseRocks` · `CliffRimBushes` | 10/27. 폭포 주변 절벽이 젖은 색(기본 꺼짐, `mat_env_cliff_bg_rock`만 켬). 폭포 밑 각진 바위 7개, 절벽 윗선 덤불 15개 |
 
 ## 이름을 안 바꾼 것
