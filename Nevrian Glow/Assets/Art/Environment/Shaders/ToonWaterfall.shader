@@ -38,6 +38,16 @@ Shader "DSEWA/ToonWaterfall"
         _Wobble ("Vertex Wobble (m, along the normal)", Range(0, 0.5)) = 0
         _FresnelAmount ("Fresnel Glow (thin water)", Range(0, 1)) = 0
         _FresnelMax ("Fresnel Glow Cap", Range(0, 1)) = 0.35
+        [Header(River Run Into The Falls   0 is off)]
+        _LipStartV ("Transition Starts At v", Float) = 0
+        _LipEndV ("Transition Ends At v (the lip)", Float) = 0
+        _LipDeep ("Deep Water At The Lip", Color) = (0.16, 0.28, 0.70, 1)
+        _LipMid ("Mid Water At The Lip", Color) = (0.38, 0.58, 0.95, 1)
+        _LipFoam ("Foam At The Lip", Color) = (0.85, 0.94, 1, 1)
+        _LipSpeed ("Fast Streak Speed (v per second)", Float) = 0.6
+        _LipStreak ("Fast Streak Tiling (x across, y along)", Vector) = (1.5, 0.6, 0, 0)
+        _LipFoamAdd ("White Water At The Lip", Range(0, 1)) = 0.35
+        _LipGlow ("Glow At The Lip", Range(0, 2)) = 0.12
         // unused since v2 (kept so older materials keep their values)
         [HideInInspector] _Alpha ("Opacity", Range(0, 1)) = 1
     }
@@ -58,7 +68,13 @@ Shader "DSEWA/ToonWaterfall"
                 half _SideShade, _HighlightU, _HighlightWidth, _HighlightAmount, _Wobble, _FresnelAmount, _FresnelMax;
                 float4 _StreakScale;
                 float _Speed, _VPower, _Layer2;
+                float _LipStartV, _LipEndV, _LipSpeed, _LipFoamAdd, _LipGlow;
+                half4 _LipDeep, _LipMid, _LipFoam;
+                float4 _LipStreak;
             CBUFFER_END
+
+            // 0 on the slow river, 1 at the lip (2026-10-27, user: the river and the falls do not match)
+            float LipK(float v) { return _LipEndV > _LipStartV ? smoothstep(_LipStartV, _LipEndV, v) : 0; }
 
             // uv2.x (optional) = rapids: extra foam where the river breaks up before the falls (0 on meshes without uv2)
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; float2 uv2 : TEXCOORD1; UNITY_VERTEX_INPUT_INSTANCE_ID };
@@ -88,6 +104,17 @@ Shader "DSEWA/ToonWaterfall"
                 float s1 = SAMPLE_TEXTURE2D(_MaskTex, sampler_MaskTex, float2(uv.x * _StreakScale.x, va * _StreakScale.y - t)).r;
                 float s2 = SAMPLE_TEXTURE2D(_MaskTex, sampler_MaskTex, float2(-uv.x * _StreakScale.x * 1.37 + 0.31, va * _StreakScale.y * 0.83 - t * 1.31)).r;
                 float n = lerp(s1, (s1 + s2) * 0.5, _Layer2);                              // fewer overlapping layers = calmer
+                // towards the lip: cross-fade into a second, fast and stretched streak layer (changing the speed itself
+                // along v would shear the pattern more every second) and add white water
+                float k = LipK(uv.y);
+                if (k > 0)
+                {
+                    float tf = _Time.y * _LipSpeed;
+                    float f1 = SAMPLE_TEXTURE2D(_MaskTex, sampler_MaskTex, float2(uv.x * _LipStreak.x, uv.y * _LipStreak.y - tf)).r;
+                    float f2 = SAMPLE_TEXTURE2D(_MaskTex, sampler_MaskTex, float2(-uv.x * _LipStreak.x * 1.37 + 0.31, uv.y * _LipStreak.y * 0.83 - tf * 1.31)).r;
+                    n = lerp(n, (f1 + f2) * 0.5, k);
+                    rapids += k * k * _LipFoamAdd;
+                }
                 float blobs = SAMPLE_TEXTURE2D(_MaskTex, sampler_MaskTex, float2(uv.x * 2.5, va * 2.0 - t * 0.7)).g;
                 // foam bands only where they are switched on (a zero width would turn every v > 1 into foam - the
                 // river mesh runs v 0..14)
@@ -118,8 +145,10 @@ Shader "DSEWA/ToonWaterfall"
             {
                 float n = WaterStreaks(i.uv, i.rapids);
                 float w = fwidth(n) + 0.01;
-                half3 col = lerp(_DeepColor.rgb, _MidColor.rgb, smoothstep(_MidLevel - w, _MidLevel + w, n));
-                col = lerp(col, _FoamColor.rgb, smoothstep(_FoamLevel - w, _FoamLevel + w, n));
+                float k = LipK(i.uv.y);
+                half3 deep = lerp(_DeepColor.rgb, _LipDeep.rgb, k), mid = lerp(_MidColor.rgb, _LipMid.rgb, k), foam = lerp(_FoamColor.rgb, _LipFoam.rgb, k);
+                half3 col = lerp(deep, mid, smoothstep(_MidLevel - w, _MidLevel + w, n));
+                col = lerp(col, foam, smoothstep(_FoamLevel - w, _FoamLevel + w, n));
                 // volume: side shade step + highlight band
                 float side = abs(i.uv.x - 0.5) * 2;
                 col *= 1 - _SideShade * step(0.62, side + (n - 0.5) * 0.25);
@@ -129,7 +158,7 @@ Shader "DSEWA/ToonWaterfall"
                 float3 N = normalize(i.normalWS) * (front ? 1 : -1);
                 float3 V = normalize(GetWorldSpaceViewDir(i.positionWS));
                 col += _FoamColor.rgb * min(pow(1 - saturate(dot(N, V)), 3) * _FresnelAmount, _FresnelMax);
-                col *= 1 + _Glow;
+                col *= 1 + lerp(_Glow, _LipGlow, k);
                 col = ApplyGroundFog(col, i.positionWS);
                 return half4(col, 1);
             }

@@ -95,6 +95,8 @@
 | `Environment/Shaders/StarGlare.shader` + `Materials_PP/mat_pp_star_glare.mat` | 10/27. 빛줄기 후처리 — 밝은 점(발광 꽃 · 열매)에서 가는 빛줄기가 방사형으로 퍼짐(별빛 필터처럼, 빛 색 그대로, 하늘은 제외). `PC_Renderer`에 Full Screen Pass 기능 「DSEWA Star Glare」로 등록(끄면 사라짐) |
 | `Environment/flower_bg/Models/env_flower_bg_jellyfish_sway.asset` | 10/27. 해파리꽃 메시 사본 — 촉수 21가닥 · 끝 구슬에만 정점 색(흔들림 거리 · 박자)을 넣어 촉수만 흔들림. `pf_env_flower_bg_jellyfish`가 사용 |
 | `Environment/flower_bg/Materials/mat_env_flower_bg_jelly_glow_{teal,violet}.mat` | 10/27. 해파리꽃 촉수 전용 발광 재질(흔들림 켬) — 다른 꽃의 발광 재질은 그대로 |
+| `Environment/rock_bg/pf_env_rock_bg_pebble.prefab` (`Models/env_rock_bg_pebble.fbx`) | 10/27. 잔돌(320 삼각형, 폭 최대 0.26 m). 씬 `RubbleBG`에 957개 — 큰 바위 · 절벽 발치에 흩어 땅이 너무 깔끔하게 끊겨 보이지 않게 |
+| `Environment/Scripts/RockBedding.cs` · `RockBeddingMeshes.cs` + `Shaders/ToonBedding.shader` + `rock_bg/Materials/mat_env_rock_bg_bedding.mat` · `rock_bg/Models/env_rock_bg_bedding.asset` | 10/27. 바위가 땅에 박힌 선을 따라 흙이 밀려 올라온 둔덕을 굽는 도구(씬 `RockBeddingBG`, 바위 203개, 메시 19개 · 약 9.7만 삼각형). 색은 RVT 땅 색 + 바위 쪽 젖은 진흙. 바위를 옮기면 `RockBeddingBG` 컴포넌트 우클릭 → Bake |
 
 ## 이름을 안 바꾼 것
 
