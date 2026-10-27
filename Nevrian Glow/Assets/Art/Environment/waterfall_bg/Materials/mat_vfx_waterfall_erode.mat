@@ -30,7 +30,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _EdgeWidth: 0.12
-    - _Glow: 0.3
+    - _Glow: 0.15
     - _NoiseTiling: 0.6
     - _Shape: 0
     m_Colors:

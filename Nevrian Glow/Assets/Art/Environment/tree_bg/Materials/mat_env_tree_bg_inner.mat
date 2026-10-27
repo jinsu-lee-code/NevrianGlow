@@ -29,10 +29,10 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AmbientShade: 0.105
+    - _AmbientShade: 0.24
     - _BacklightPower: 2.5
-    - _BacklightStrength: 0.15
-    - _Brightness: 0.55
+    - _BacklightStrength: 0.08
+    - _Brightness: 0.75
     - _Delight: 1
     - _DelightLevel: 0.75
     - _Desaturation: 0.15
@@ -67,12 +67,12 @@ Material:
     - _PaletteLight: {r: 0.76, g: 0.86, b: 1, a: 1}
     - _PaletteMid: {r: 0.45, g: 0.45, b: 0.86, a: 1}
     - _RimColor: {r: 0.75, g: 0.8, b: 1, a: 1}
-    - _RootColor: {r: 0.06999998, g: 0.12999997, b: 0.39999998, a: 1}
+    - _RootColor: {r: 0.22, g: 0.24, b: 0.6, a: 1}
     - _ShadowColor: {r: 0.09, g: 0.14, b: 0.38, a: 1}
-    - _ShadowTint: {r: 0.45, g: 0.43999997, b: 0.85, a: 1}
+    - _ShadowTint: {r: 0.58, g: 0.54, b: 0.94, a: 1}
     - _TexGlowPulse: {r: 0.35, g: 1.2, b: 0, a: 0}
     - _TexGlowTint: {r: 1, g: 1, b: 1, a: 1}
     - _Tint: {r: 1, g: 1, b: 1, a: 1}
-    - _TipColor: {r: 0.3, g: 0.4, b: 0.85, a: 1}
+    - _TipColor: {r: 0.6, g: 0.66, b: 0.92, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

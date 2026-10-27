@@ -32,6 +32,12 @@ Shader "DSEWA/ToonCliff"
         _MossStart ("Moss From Up Facing (N.y)", Range(-1, 1)) = 0.45
         _MossNoise ("Moss Edge Noise", Range(0, 1)) = 0.35
         _MossAmount ("Moss Amount", Range(0, 1)) = 1
+        [Header(Wet Rock (2026 10 27 review))]
+        _WetAmount ("Wet Amount (0 = off)", Range(0, 1)) = 0
+        _WetColor ("Wet Multiply", Color) = (0.55, 0.6, 0.85, 1)
+        _WetLevel ("Water Surface Y", Float) = 0
+        _WetHeight ("Wet Band Height Above The Water (m)", Range(0, 4)) = 1.2
+        _WetFall ("Waterfall Spray Zone (world x, z, radius, top y)", Vector) = (0, 0, 0, 0)
         [Header(Undersides And Strokes)]
         _UnderDark ("Downward Faces Darken", Range(0, 1)) = 0.45
         _StrokeScale ("Stroke Size (per metre)", Range(0.05, 3)) = 0.6
@@ -61,6 +67,10 @@ Shader "DSEWA/ToonCliff"
             half _MossStart, _MossNoise, _MossAmount, _UnderDark;
             float _StrokeScale, _StrokeStrength, _BaseBlend, _GroundY, _RimStrength, _OutlineWidth;
             float _GroundFromTerrain;
+            half4 _WetColor;
+            half _WetAmount;
+            float _WetLevel, _WetHeight;
+            float4 _WetFall;
         CBUFFER_END
 
         float OutlineObjectScale()
@@ -137,6 +147,22 @@ Shader "DSEWA/ToonCliff"
                 float mn = Noise3(P * 0.9) * 0.6 + Noise3(P * 2.7) * 0.4;
                 half moss = step(_MossStart, N.y + (mn - 0.5) * _MossNoise) * _MossAmount;
                 albedo = lerp(albedo, _MossColor.rgb, moss);
+                // 5b) wet rock: a band just above the water and the spray zone round a waterfall go darker and bluer,
+                // with a ragged noisy top edge (toon step, not a gradient)
+                half wet = 0;
+                if (_WetAmount > 0)
+                {
+                    float above = P.y - _WetLevel;
+                    half band = step(above + (mn - 0.5) * _WetHeight * 0.9, _WetHeight) * step(-0.5, above);
+                    half fall = 0;
+                    if (_WetFall.z > 0)
+                    {
+                        float d = length(P.xz - _WetFall.xy) / _WetFall.z;
+                        fall = step(d + (mn - 0.5) * 0.35, 1) * step(P.y, _WetFall.w);
+                    }
+                    wet = max(band, fall) * _WetAmount;
+                    albedo = lerp(albedo, albedo * _WetColor.rgb, wet);
+                }
 
                 // toon ramp
                 Light light = GetMainLight(TransformWorldToShadowCoord(P));
@@ -144,6 +170,7 @@ Shader "DSEWA/ToonCliff"
                 float lit = smoothstep(_Threshold, _Threshold + _Softness, saturate(dot(N, light.direction)) * direct + _AmbientShade);
                 half3 color = albedo * lerp(_ShadowColor.rgb, _LitColor.rgb, lit) * lerp(half3(1, 1, 1), light.color, 0.35);
                 color += _RimColor.rgb * pow(1 - saturate(dot(N, V)), 4) * _RimStrength;
+                color += _WetColor.rgb * pow(1 - saturate(dot(N, V)), 3) * 0.12 * wet;   // faint wet sheen at grazing angles
 
                 // 6) foot fades into the ground colour (runtime virtual texture), broken by noise
                 half4 g;

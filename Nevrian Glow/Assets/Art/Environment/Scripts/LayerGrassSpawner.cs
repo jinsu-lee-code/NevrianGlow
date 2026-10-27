@@ -32,6 +32,12 @@ public class LayerGrassSpawner : MonoBehaviour
     [Range(0f, 1f)] public float weightMin = 0.15f;
     [Range(0f, 1f)] public float weightMax = 0.7f;
 
+    [Header("Soft field edges (2026-10-27, review: grass stops like a cut carpet)")]
+    [Tooltip("Layer weights are averaged over this radius (m), so the grass thins out over a band instead of a line")]
+    public float edgeBlur = 1.5f;
+    [Tooltip("Tall blades (prototype 1+) follow weight^this, so a field edge keeps only short clumps")]
+    public float tallEdgePower = 2.5f;
+
     [Header("Patch noise (bush shapes)")]
     public float patchScale = 7f;
     [Range(0f, 1f)] public float patchThreshold = 0.45f;
@@ -70,6 +76,10 @@ public class LayerGrassSpawner : MonoBehaviour
     [Range(0f, 1.5f)] public float shadeEdge = 0.95f;
 
     Texture2D obstacleField;
+    [Tooltip("Obstacle field baked in the editor and used in play mode / builds, where the rock meshes cannot be read (2026-10-27)")]
+    public Texture2D bakedField;
+    [HideInInspector] public Vector4 bakedRect;
+    const string BakedFieldPath = "Assets/Art/Environment/DeepBlue/tex_env_grass_obstacle_field.asset";
 
     struct Crown { public Vector2 c; public float r; }
 
@@ -116,6 +126,7 @@ public class LayerGrassSpawner : MonoBehaviour
             {
                 var mesh = mf.sharedMesh; var mr = mf.GetComponent<MeshRenderer>();
                 if (mesh == null || mr == null || !mr.enabled) continue;
+                if (Application.isPlaying && !mesh.isReadable) continue;     // only readable in the editor
                 if (mr.sharedMaterial != null && mr.sharedMaterial.shader.name.Contains("Foliage")) continue;   // grass / plants are not obstacles
                 Bounds b = mr.bounds;
                 var c = new Vector2(b.center.x, b.center.z);
@@ -155,6 +166,13 @@ public class LayerGrassSpawner : MonoBehaviour
     {
         terrain = GetComponent<Terrain>();
         TerrainCallbacks.textureChanged += OnTextureChanged;
+        if (Application.isPlaying && bakedField != null)
+        {
+            // play mode / build: the rock meshes are not readable there, use the field baked in the editor
+            Shader.SetGlobalTexture(FieldId, bakedField);
+            Shader.SetGlobalVector(FieldRectId, bakedRect);
+            return;
+        }
         BakeObstacleField(BuildFeet());
     }
 
@@ -163,6 +181,34 @@ public class LayerGrassSpawner : MonoBehaviour
         TerrainCallbacks.textureChanged -= OnTextureChanged;
         Shader.SetGlobalVector(FieldRectId, Vector4.zero);
         if (obstacleField != null) { if (Application.isPlaying) Destroy(obstacleField); else DestroyImmediate(obstacleField); obstacleField = null; }
+    }
+
+    // editor: keep a copy of the field as an asset for play mode / builds (written only when it changed)
+    void SaveBakedField(Color32[] px, int w, int h, Vector4 rect)
+    {
+#if UNITY_EDITOR
+        if (Application.isPlaying) return;
+        var tex = bakedField != null ? bakedField : UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(BakedFieldPath);
+        if (tex != null && tex.width == w && tex.height == h && bakedRect == rect)
+        {
+            var old = tex.GetPixels32();
+            bool same = old.Length == px.Length;
+            for (int i = 0; same && i < px.Length; i++) same = old[i].r == px[i].r && old[i].g == px[i].g && old[i].b == px[i].b;
+            if (same) { if (bakedField != tex) { bakedField = tex; UnityEditor.EditorUtility.SetDirty(this); } return; }
+        }
+        if (tex == null || tex.width != w || tex.height != h)
+        {
+            var t2 = new Texture2D(w, h, TextureFormat.RGBA32, false, true) { name = "tex_env_grass_obstacle_field", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+            t2.SetPixels32(px); t2.Apply(false, false);
+            if (tex == null) UnityEditor.AssetDatabase.CreateAsset(t2, BakedFieldPath);
+            else { UnityEditor.EditorUtility.CopySerialized(t2, tex); DestroyImmediate(t2); }
+            tex = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(BakedFieldPath);
+        }
+        else { tex.SetPixels32(px); tex.Apply(false, false); }
+        UnityEditor.EditorUtility.SetDirty(tex);
+        bakedField = tex; bakedRect = rect;
+        UnityEditor.EditorUtility.SetDirty(this);
+#endif
     }
 
     // Per texel over the grass area: direction away from the nearest rock foot (rg) and closeness (b: 1 at / inside the
@@ -218,6 +264,7 @@ public class LayerGrassSpawner : MonoBehaviour
         obstacleField.SetPixels32(px); obstacleField.Apply(false, false);
         Shader.SetGlobalTexture(FieldId, obstacleField);
         Shader.SetGlobalVector(FieldRectId, new Vector4(minX, minZ, 1f / sizeX, 1f / sizeZ));
+        SaveBakedField(px, w, h, new Vector4(minX, minZ, 1f / sizeX, 1f / sizeZ));
     }
 
     void OnTextureChanged(Terrain t, string textureName, RectInt region, bool synced)
@@ -271,10 +318,26 @@ public class LayerGrassSpawner : MonoBehaviour
 
         // alphamap block covering the region
         float a = (float)td.alphamapResolution / res;
-        int ax0 = Mathf.Clamp(Mathf.FloorToInt(x0 * a), 0, td.alphamapWidth - 1), ay0 = Mathf.Clamp(Mathf.FloorToInt(y0 * a), 0, td.alphamapHeight - 1);
-        int ax1 = Mathf.Clamp(Mathf.CeilToInt(x1 * a), ax0 + 1, td.alphamapWidth), ay1 = Mathf.Clamp(Mathf.CeilToInt(y1 * a), ay0 + 1, td.alphamapHeight);
+        // (with a margin of edgeBlur so the averaging window is complete at the region border)
+        int margin = Mathf.CeilToInt(Mathf.Max(0f, edgeBlur) / (td.size.x / td.alphamapWidth));
+        int ax0 = Mathf.Clamp(Mathf.FloorToInt(x0 * a) - margin, 0, td.alphamapWidth - 1), ay0 = Mathf.Clamp(Mathf.FloorToInt(y0 * a) - margin, 0, td.alphamapHeight - 1);
+        int ax1 = Mathf.Clamp(Mathf.CeilToInt(x1 * a) + margin, ax0 + 1, td.alphamapWidth), ay1 = Mathf.Clamp(Mathf.CeilToInt(y1 * a) + margin, ay0 + 1, td.alphamapHeight);
         float[,,] alpha = td.GetAlphamaps(ax0, ay0, ax1 - ax0, ay1 - ay0);
         int aw = ax1 - ax0, ah = ay1 - ay0;
+        // summed-area table per rule layer for the blurred weights
+        var sat = new float[rules.Length][,];
+        for (int r = 0; r < rules.Length; r++)
+        {
+            int li = ruleLayer[r];
+            if (li < 0 || li >= td.alphamapLayers) continue;
+            var s = new float[ah + 1, aw + 1];
+            for (int yy = 0; yy < ah; yy++)
+            {
+                float row = 0f;
+                for (int xx = 0; xx < aw; xx++) { row += alpha[yy, xx, li]; s[yy + 1, xx + 1] = s[yy, xx + 1] + row; }
+            }
+            sat[r] = s;
+        }
 
         var outLayers = new int[protoCount][,];
         for (int p = 0; p < protoCount; p++) outLayers[p] = new int[h, w];
@@ -310,8 +373,8 @@ public class LayerGrassSpawner : MonoBehaviour
             }
 
             // average the alphamap texels that fall in this detail cell
-            int sx = Mathf.Clamp(Mathf.FloorToInt(dx * a) - ax0, 0, aw - 1), sy = Mathf.Clamp(Mathf.FloorToInt(dy * a) - ay0, 0, ah - 1);
-            int ex = Mathf.Clamp(Mathf.CeilToInt((dx + 1) * a) - ax0, sx + 1, aw), ey = Mathf.Clamp(Mathf.CeilToInt((dy + 1) * a) - ay0, sy + 1, ah);
+            int sx = Mathf.Clamp(Mathf.FloorToInt(dx * a) - ax0 - margin, 0, aw - 1), sy = Mathf.Clamp(Mathf.FloorToInt(dy * a) - ay0 - margin, 0, ah - 1);
+            int ex = Mathf.Clamp(Mathf.CeilToInt((dx + 1) * a) - ax0 + margin, sx + 1, aw), ey = Mathf.Clamp(Mathf.CeilToInt((dy + 1) * a) - ay0 + margin, sy + 1, ah);
 
             float n = Mathf.PerlinNoise(wx / patchScale + ox, wz / patchScale + oz) * 0.7f
                     + Mathf.PerlinNoise(wx / (patchScale * 0.37f) + oz, wz / (patchScale * 0.37f) + ox) * 0.3f;
@@ -351,11 +414,11 @@ public class LayerGrassSpawner : MonoBehaviour
                     LayerRule rule = rules[r];
                     float dens = p < rule.density.Length ? rule.density[p] : 0f;
                     if (dens <= 0f) continue;
-                    float wsum = 0f; int nn = 0;
-                    for (int yy = sy; yy < ey; yy++) for (int xx = sx; xx < ex; xx++) { wsum += alpha[yy, xx, li]; nn++; }
+                    var s = sat[r];
+                    float wsum = s[ey, ex] - s[sy, ex] - s[ey, sx] + s[sy, sx]; int nn = (ex - sx) * (ey - sy);
                     float weight = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(weightMin, weightMax, wsum / nn));
                     float mask = Mathf.Lerp(1f, patch, rule.patchiness);
-                    if (p > 0) mask = Mathf.Pow(mask, rule.tallPatchPower);
+                    if (p > 0) { mask = Mathf.Pow(mask, rule.tallPatchPower); weight = Mathf.Pow(weight, tallEdgePower); }
                     count += weight * dens * mask;
                 }
                 if (ring > 0f) count = count * (1f + ringBoost * ring) + (p < ringAdd.Length ? ringAdd[p] : 0f) * ring;

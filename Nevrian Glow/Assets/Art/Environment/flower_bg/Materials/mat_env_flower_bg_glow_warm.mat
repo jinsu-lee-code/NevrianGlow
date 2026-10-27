@@ -45,10 +45,16 @@ Material:
     - _FruitSwaySpeed: 1.4
     - _GlowMax: 3.2
     - _GlowPalette: 0
+    - _GlowRandomHue: 0
+    - _GlowRandomSat: 0.75
     - _Opacity: 1
     - _OpacityEdge: 0
     - _OutlineWidth: 0.0015
     - _PaletteMix: 0
+    - _PlantNod: 0.06
+    - _PlantNodSpeed: 2.4
+    - _PlantSway: 0
+    - _PlantSwaySpeed: 1.1
     - _PosterizeSteps: 0
     - _PulsePeriod: 4.5
     - _ReceiveShadows: 1
@@ -71,6 +77,7 @@ Material:
     - _GlowColor2: {r: 0.25, g: 0.6, b: 1, a: 1}
     - _GlowColor3: {r: 0.65, g: 0.35, b: 1, a: 1}
     - _GlowColor4: {r: 1, g: 0.35, b: 0.75, a: 1}
+    - _GlowHueRange: {r: 0, g: 1, b: 0, a: 0}
     - _LitColor: {r: 1, g: 0.8, b: 0.45, a: 1}
     - _OutlineColor: {r: 0.09999997, g: 0.09999997, b: 0.25999996, a: 1}
     - _PaletteDark: {r: 0.11999995, g: 0.13999996, b: 0.33999997, a: 1}

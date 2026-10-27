@@ -30,20 +30,33 @@ public class PlanarReflection : MonoBehaviour
     RenderTexture rt;
     bool rendering;
 
-    void OnEnable() { RenderPipelineManager.beginCameraRendering += OnBeginCamera; }
+    // the reflection is rendered once per context, before any camera of it starts (2026-10-27 fix): rendering it
+    // from beginCameraRendering nests a second camera inside the first one's frame, which URP 17 refuses for
+    // Camera.Render() / offscreen and overlay cameras ("UniversalCameraData has already been created") and that
+    // frame then comes out broken (toon passes missing)
+    void OnEnable() { RenderPipelineManager.beginContextRendering += OnBeginContext; }
 
     void OnDisable()
     {
-        RenderPipelineManager.beginCameraRendering -= OnBeginCamera;
+        RenderPipelineManager.beginContextRendering -= OnBeginContext;
         Shader.SetGlobalFloat(OnId, 0);
         if (reflCam) DestroyImmediate(reflCam.gameObject);
         if (rt) { if (RenderTexture.active == rt) RenderTexture.active = null; rt.Release(); DestroyImmediate(rt); }
     }
 
-    void OnBeginCamera(ScriptableRenderContext ctx, Camera cam)
+    void OnBeginContext(ScriptableRenderContext ctx, System.Collections.Generic.List<Camera> cams)
     {
-        if (rendering || cam == reflCam) return;
-        if (cam.cameraType != CameraType.Game && cam.cameraType != CameraType.SceneView) return;
+        if (rendering) return;
+        // the first base game / scene-view camera of this context (overlay cameras share their base's reflection)
+        Camera cam = null;
+        foreach (var c in cams)
+        {
+            if (c == null || c == reflCam) continue;
+            if (c.cameraType != CameraType.Game && c.cameraType != CameraType.SceneView) continue;
+            if (c.TryGetComponent(out UniversalAdditionalCameraData ad) && ad.renderType == CameraRenderType.Overlay) continue;
+            cam = c; break;
+        }
+        if (cam == null) return;
         rendering = true;
         try { Render(ctx, cam); }
         finally { rendering = false; }

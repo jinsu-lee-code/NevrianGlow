@@ -84,6 +84,10 @@ PrefabInstance:
       propertyPath: m_CastShadows
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -5754084199372789682, guid: 9e449ff1cea87744ba28b7eae825a088, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 4300000, guid: b366215faee4add47908f0d06eab94a7, type: 2}
     - target: {fileID: 919132149155446097, guid: 9e449ff1cea87744ba28b7eae825a088, type: 3}
       propertyPath: m_Name
       value: Model

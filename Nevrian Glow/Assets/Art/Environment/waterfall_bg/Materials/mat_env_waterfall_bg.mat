@@ -37,11 +37,16 @@ Material:
     - _FoamTop: 0.07
     - _FresnelAmount: 0.45
     - _FresnelMax: 0.18
-    - _Glow: 0.12
+    - _Glow: 0.05
     - _HighlightAmount: 0.35
     - _HighlightU: 0.36
     - _HighlightWidth: 0.07
     - _Layer2: 1
+    - _LipEndV: 0
+    - _LipFoamAdd: 0.35
+    - _LipGlow: 0.06
+    - _LipSpeed: 0.6
+    - _LipStartV: 0
     - _MidLevel: 0.5
     - _SideShade: 0.28
     - _Speed: 0.9
@@ -50,8 +55,12 @@ Material:
     - _Wobble: 0.12
     m_Colors:
     - _DeepColor: {r: 0.15999997, g: 0.27999997, b: 0.7, a: 1}
-    - _FoamColor: {r: 0.85, g: 0.94, b: 1, a: 1}
-    - _MidColor: {r: 0.37999994, g: 0.58, b: 0.95, a: 1}
+    - _FoamColor: {r: 0.6, g: 0.72, b: 0.92, a: 1}
+    - _LipDeep: {r: 0.15999997, g: 0.27999997, b: 0.7, a: 1}
+    - _LipFoam: {r: 0.62, g: 0.74, b: 0.94, a: 1}
+    - _LipMid: {r: 0.37999994, g: 0.58, b: 0.95, a: 1}
+    - _LipStreak: {r: 1.5, g: 0.6, b: 0, a: 0}
+    - _MidColor: {r: 0.32, g: 0.5, b: 0.88, a: 1}
     - _StreakScale: {r: 1.5, g: 1.2, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

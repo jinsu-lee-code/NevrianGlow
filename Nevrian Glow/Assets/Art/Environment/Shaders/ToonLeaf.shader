@@ -27,6 +27,9 @@ Shader "DSEWA/ToonLeaf"
         _TexDetail ("Painted Value From Texture (0 = alpha only)", Range(0, 1)) = 0
         _TexDetailContrast ("Painted Value Contrast", Range(0.5, 4)) = 1.8
         _TexDetailMid ("Painted Value Average (texture mean)", Range(0.05, 1)) = 0.5
+        _TexDetailFloor ("Painted Value Floor (darkest the texture can make a leaf)", Range(0, 1)) = 0
+        _SphereNormal ("Round Bush Normal (0 = off; plain cards light as one ball from the object centre)", Range(0, 1)) = 0
+        _SphereCenterY ("Round Bush Centre Height (object units)", Float) = 0.5
         _CardNormal ("Card Facing Mix (each card catches its own light)", Range(0, 1)) = 0
         _LeafOutline ("Dark Outline Round Each Leaf (from alpha)", Range(0, 1)) = 0
         _LeafOutlineWidth ("Outline Width (alpha range)", Range(0.02, 0.5)) = 0.18
@@ -75,7 +78,8 @@ Shader "DSEWA/ToonLeaf"
         CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
             half _Cutoff, _PaintStrength;
-            half _TexDetail, _TexDetailContrast, _LeafOutline, _LeafOutlineWidth, _TexDetailMid, _CardNormal;
+            half _TexDetail, _TexDetailContrast, _LeafOutline, _LeafOutlineWidth, _TexDetailMid, _CardNormal, _TexDetailFloor, _SphereNormal;
+            float _SphereCenterY;
             half4 _RootColor, _TipColor, _ShadowTint;
             half _Threshold, _Softness, _ShadowBlur, _AmbientShade, _ReceiveShadowBias;
             half _BackFaceDarken, _NormalUp;
@@ -179,7 +183,24 @@ Shader "DSEWA/ToonLeaf"
             {
                 ClipAlpha(i.uv);
                 float3 N = normalize(i.normalWS);
-                if (!isFront) N = -N;
+                // tree cards carry one outward crown normal (vertex alpha 0): flipping it for the back face pointed it into
+                // the crown, so a lit leaf went dark whenever its back was seen (2026-10-27, user: "leaves fall into shadow
+                // depending on the view angle as I pass"). Only flip plain two-sided cards.
+                half crownCard = step(0.5, 1 - i.color.a);
+                bool flip = !isFront && crownCard < 0.5;
+                // round bushes (2026-10-27, user: "fix the bushes too"): plain two-sided cards have no crown normal, so the
+                // back-face flip made them change with the view. Point them away from the bush centre instead - the
+                // same for every view - and light the clump as one ball.
+                float3 bushOut = 0;
+                if (_SphereNormal > 0 && crownCard < 0.5)
+                {
+                    float3 ctr = TransformObjectToWorld(float3(0, _SphereCenterY, 0));
+                    bushOut = normalize(i.positionWS - ctr + float3(0, 1e-4, 0));
+                    flip = false;
+                    N *= sign(dot(N, bushOut) + 1e-4);
+                    N = normalize(lerp(N, bushOut, _SphereNormal));
+                }
+                if (flip) N = -N;
                 // Canopy shading: pull the normal toward straight up (or down for the underside) so the leaves of a
                 // plant read as one lit mass instead of flickering individually.
                 // card facing (2026-10-27): mix in the card's own flat normal so neighbouring cards break the crown's
@@ -203,14 +224,16 @@ Shader "DSEWA/ToonLeaf"
                 half h = i.color.r;
                 half3 base = lerp(_RootColor.rgb, _TipColor.rgb, h);
                 half3 color = lerp(base * _ShadowTint.rgb, base, lit);
-                if (!isFront) color = lerp(color, color * _ShadowTint.rgb, _BackFaceDarken);
+                if (flip) color = lerp(color, color * _ShadowTint.rgb, _BackFaceDarken);
                 // Hand-painted detail (side veins, brush strokes) in leaf uv: grey 0.5 leaves the colour alone
                 // painted leaf cards (2026-10-27, user: "the leaf grain doesn't show"): the colour map's own value
                 // (brush strokes, leaf light / dark sides) modulates the palette colour, and a dark line follows the
                 // alpha edge round every leaf, so single leaves read inside the clump
                 half4 texC = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv);
                 half texV = max(texC.r, max(texC.g, texC.b));
-                half detail = max(0, 1 + (texV / _TexDetailMid - 1) * _TexDetailContrast);
+                // 2026-10-27 (user: "leaves turn black even in the light"): high contrast pushed the darkest texels to 0,
+                // which no light can lift; the floor keeps them as a darker shade instead of black
+                half detail = max(_TexDetailFloor, 1 + (texV / _TexDetailMid - 1) * _TexDetailContrast);
                 color *= lerp(1, detail, _TexDetail);
                 color *= 1 - _LeafOutline * (1 - smoothstep(_Cutoff, _Cutoff + _LeafOutlineWidth, texC.a));
                 half3 paint = SAMPLE_TEXTURE2D(_PaintMap, sampler_PaintMap, i.uv).rgb;
@@ -231,7 +254,7 @@ Shader "DSEWA/ToonLeaf"
                 // crown (2026-10-27, foliage research step 3): tree cards carry one crown-wide normal (tree_kit crown=0.8);
                 // tint its top toward the sky, its underside cooler, and draw a thin toon rim round the crown silhouette
                 half crownK = 1 - i.color.a;
-                float3 Nc = normalize(i.normalWS) * (isFront ? 1 : -1);
+                float3 Nc = normalize(i.normalWS) * (flip ? -1 : 1);
                 color = lerp(color, color * _CrownSkyColor.rgb * 1.6, saturate(Nc.y) * _CrownSky * crownK);
                 color = lerp(color, color * _CrownUnderColor.rgb, saturate(-Nc.y) * _CrownUnder * crownK);
                 float rimT = 1 - saturate(abs(dot(Nc, V)));

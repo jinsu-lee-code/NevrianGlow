@@ -95,8 +95,19 @@
 | `Environment/Shaders/StarGlare.shader` + `Materials_PP/mat_pp_star_glare.mat` | 10/27. 빛줄기 후처리 — 밝은 점(발광 꽃 · 열매)에서 가는 빛줄기가 방사형으로 퍼짐(별빛 필터처럼, 빛 색 그대로, 하늘은 제외). `PC_Renderer`에 Full Screen Pass 기능 「DSEWA Star Glare」로 등록(끄면 사라짐) |
 | `Environment/flower_bg/Models/env_flower_bg_jellyfish_sway.asset` | 10/27. 해파리꽃 메시 사본 — 촉수 21가닥 · 끝 구슬에만 정점 색(흔들림 거리 · 박자)을 넣어 촉수만 흔들림. `pf_env_flower_bg_jellyfish`가 사용 |
 | `Environment/flower_bg/Materials/mat_env_flower_bg_jelly_glow_{teal,violet}.mat` | 10/27. 해파리꽃 촉수 전용 발광 재질(흔들림 켬) — 다른 꽃의 발광 재질은 그대로 |
-| `Environment/rock_bg/pf_env_rock_bg_pebble.prefab` (`Models/env_rock_bg_pebble.fbx`) | 10/27. 잔돌(320 삼각형, 폭 최대 0.26 m). 씬 `RubbleBG`에 957개 — 큰 바위 · 절벽 발치에 흩어 땅이 너무 깔끔하게 끊겨 보이지 않게 |
-| `Environment/Scripts/RockBedding.cs` · `RockBeddingMeshes.cs` + `Shaders/ToonBedding.shader` + `rock_bg/Materials/mat_env_rock_bg_bedding.mat` · `rock_bg/Models/env_rock_bg_bedding.asset` | 10/27. 바위가 땅에 박힌 선을 따라 흙이 밀려 올라온 둔덕을 굽는 도구(씬 `RockBeddingBG`, 바위 203개, 메시 19개 · 약 9.7만 삼각형). 색은 RVT 땅 색 + 바위 쪽 젖은 진흙. 바위를 옮기면 `RockBeddingBG` 컴포넌트 우클릭 → Bake |
+| `Environment/rock_bg/pf_env_rock_bg_pebble.prefab` (`Models/env_rock_bg_pebble.fbx`) | 10/27. 잔돌(320 삼각형, 폭 최대 0.26 m). **10/27 오후: 둥근 돌 6종(잔돌 포함 1,200개)을 씬에서 모두 뺌** — 파일은 남아 있음 |
+| `Environment/Scripts/RockBedding.cs` · `RockBeddingMeshes.cs` + `Shaders/ToonBedding.shader` + `rock_bg/Materials/mat_env_rock_bg_bedding.mat` · `rock_bg/Models/env_rock_bg_bedding.asset` | 10/27. 바위가 땅에 박힌 선을 따라 흙이 밀려 올라온 둔덕을 굽는 도구. 바위를 옮기면 `RockBeddingBG` 컴포넌트 우클릭 → Bake. **10/27 오후: 둥근 돌을 빼면서 둔덕도 지우고 `RockBeddingBG`는 꺼 둠** |
+| `DeepBlue/TL_Ground_Alien_{Soil,Moss,Lush}.terrainlayer` + `DeepBlue/Textures/tex_env_ground_alien_{soil,moss,lush}_albedo.png` | 10/27. 지형 바닥 새 디자인(Substance Designer, `DSEWA_63/Art/Environment/Substance/ground_alien/`): 갈라진 흙(나무 밑), 이끼, 포자 풀밭. 예전 바닥 레이어 자리를 대신함 |
+| `DeepBlue/TL_Path_{Stone,Grass}.terrainlayer` + `DeepBlue/Textures/tex_env_ground_path_{stone,grass}_{albedo,normal,ao,mask}.png` + `Scripts/TerrainExtraLayers.cs` | 10/27. 직접 칠하는 길 2종(돌길 · 잔디길, 노말 · AO 포함). 지형 레이어가 6장이 되어 5 · 6번째 레이어는 `TerrainExtraLayers`(지형에 붙음)가 셰이더로 넘김(`ToonTerrain` 6레이어 지원). 돌길에는 풀이 안 남 |
+| `Ground/Textures/tex_env_ground_tile_path_lilac_albedo.png` | 10/27. 농장 둘레 흙길(`TL_Path_D`) 텍스처를 베이지 → 보라빛 회색으로 다시 칠한 것(무늬 그대로). 원래 베이지 파일은 남겨 둠 |
+| `tree_bg/Textures/tex_env_tree_bg_bark_vein_{albedo,glowmask}.png` | 10/27. 숲 나무 껍질 — 생체 혈관 무늬(Substance Designer, `DSEWA_63/.../bark_alien/bark_vein.sbs`) + 맥동하는 발광 마스크(`ToonProp` Glow Mask Pulse). 껍질 재질은 밑동 0.8 m가 땅 색으로 녹아듦(`_FootBlend`) |
+| `Scripts/RootVeinBaker.cs` + `DeepBlue/tex_env_ground_root_veins.asset` | 10/27. 나무 뿌리 혈관이 땅 위로 뻗어 맥동하던 효과 — **꺼 둠**(씬 `RootVeins`, 지형 재질 세기 0). 씬이 참조해서 파일은 같이 올림 |
+| `FX/creatures/` (`vfx_creature_butterfly.vfx` · `fish/vfx_creature_fish_{minnow,lantern}.vfx` + 메시 · 텍스처) + `Scripts/CreatureWander.cs` | 10/27. 이펙트로만 만든 생물: 날개 판 나비(꽃 근처에 모임), 호수 물고기(작은 빛 물고기 무리 3 · 랜턴 물고기 2, 수면 아래 얕게). `CreatureWander`가 무리 중심을 Play 중에 천천히 옮김. 씬 `CreaturesFX` |
+| `Scripts/GlareFatigue.cs` | 10/27. 같은 곳을 몇 초 보고 있으면 빛줄기 후처리가 서서히 약해짐(눈 피로 방지) |
+| `Environment/Lighthouse/` (`env_lighthouse_bg.fbx` + 재질 3) | 10/27. 외계 등대 블록아웃(높이 약 50 m, 도자기 톤 몸통 + 발광 구슬). 지금은 농장 북쪽 40 m(x −5, z 32). **위치 · 용도(숲 너머 랜드마크 / 상점 외관) 미정** |
+| `flower_bg/Models/env_flower_bg_{bluebell,candle,moonstar,seedpuff,sunsetstar}_fixed.asset` | 10/27. 줄기가 따로 떨어져 있던 꽃 메시를 한 줄기로 모은 사본. 꽃 프리팹이 이걸 씀 |
+| `DeepBlue/tex_env_grass_obstacle_field.asset` | 10/27. `LayerGrassSpawner`가 구운 풀 기울기 · 장애물 필드(Play용). 풀 가장자리는 1 m에 걸쳐 성기게(`edgeBlur`) |
+| `Shaders/ToonCliff.shader` Wet Rock + 씬 `WaterfallBaseRocks` · `CliffRimBushes` | 10/27. 폭포 주변 절벽이 젖은 색(기본 꺼짐, `mat_env_cliff_bg_rock`만 켬). 폭포 밑 각진 바위 7개, 절벽 윗선 덤불 15개 |
 
 ## 이름을 안 바꾼 것
 

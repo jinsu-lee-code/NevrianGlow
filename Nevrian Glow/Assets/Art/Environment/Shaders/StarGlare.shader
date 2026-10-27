@@ -29,6 +29,7 @@ Shader "Hidden/DSEWA/StarGlare"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
 
             float _Threshold, _Intensity, _Length, _Rays, _Rotation, _Spin, _Saturation;
+            float _DSEWA_GlareDim;   // set by GlareFatigue: 0 = full rays, 1 = gone (2026-10-27)
 
             half3 Bright(float2 uv)
             {
@@ -52,6 +53,7 @@ Shader "Hidden/DSEWA/StarGlare"
                 float aspect = _ScaledScreenParams.y / _ScaledScreenParams.x;
                 float baseA = radians(_Rotation + _Time.y * _Spin);
                 half3 acc = 0;
+                if (_DSEWA_GlareDim >= 0.999) return col;
                 [loop] for (int d = 0; d < dirs; d++)
                 {
                     float a = baseA + d * PI / dirs;
@@ -62,7 +64,7 @@ Shader "Hidden/DSEWA/StarGlare"
                         acc += (Bright(uv + dir * s) + Bright(uv - dir * s)) * w;
                     }
                 }
-                acc *= _Intensity / (dirs * STEPS * 0.35);
+                acc *= _Intensity / (dirs * STEPS * 0.35) * (1 - saturate(_DSEWA_GlareDim));
                 half lum = dot(acc, half3(0.2126, 0.7152, 0.0722));
                 acc = max(lerp(lum.xxx, acc, _Saturation), 0);
                 col.rgb += acc;

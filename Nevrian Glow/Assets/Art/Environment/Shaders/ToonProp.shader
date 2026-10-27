@@ -45,6 +45,13 @@ Shader "DSEWA/ToonProp"
         [HDR] _TexGlowTint ("Texture Glow Tint", Color) = (1, 1, 1, 1)
         _TexGlowPulse ("Glow Min / Max Over The Breath (1, 1 = steady)", Vector) = (1, 1, 0, 0)
         _PulsePeriod ("Breath Period (s)", Range(0.2, 20)) = 4.5
+        [Header(Glow Mask Pulse   R veins  G dots  B halo  same UV as Base Map)]
+        [NoScaleOffset] _GlowMaskMap ("Glow Mask (black = off)", 2D) = "black" {}
+        _GlowMaskStrength ("Mask Glow Strength (0 = off)", Range(0, 6)) = 0
+        [HDR] _GlowMaskColor ("Vein Colour", Color) = (0.45, 1, 1, 1)
+        [HDR] _GlowMaskDotColor ("Dot Colour", Color) = (0.8, 0.6, 1, 1)
+        _GlowMaskWave ("Wave: per UV-v, speed (UV-v / s), sharpness, base", Vector) = (1.5, 0.35, 6, 0.2)
+        _GlowMaskDotBreath ("Dot Breath Period (s)", Range(0.5, 10)) = 3
         _DistGlowBoost ("Glow x At Distance (1 = off)", Range(1, 6)) = 1
         _DistGlowRange ("Distance Boost Start / End (m)", Vector) = (10, 60, 0, 0)
         _GlowMax ("Brightest Channel Cap (0 = off)", Range(0, 8)) = 0
@@ -58,6 +65,7 @@ Shader "DSEWA/ToonProp"
         [Toggle] _GlowPalette ("Glow Colour Per Object From Palette", Float) = 0
         [Toggle] _GlowRandomHue ("Random Hue Per Object Instead Of The Palette", Float) = 0
         _GlowRandomSat ("Random Hue Saturation", Range(0, 1)) = 0.75
+        _GlowHueRange ("Random Hue Range (from, to; >1 wraps to red)", Vector) = (0, 1, 0, 0)
         [HDR] _GlowColor1 ("Palette 1", Color) = (0.1, 1, 0.8, 1)
         [HDR] _GlowColor2 ("Palette 2", Color) = (0.25, 0.6, 1, 1)
         [HDR] _GlowColor3 ("Palette 3", Color) = (0.65, 0.35, 1, 1)
@@ -76,6 +84,11 @@ Shader "DSEWA/ToonProp"
         _FruitSway ("Swing (radians, 0 = off)", Range(0, 0.6)) = 0
         _FruitSwaySpeed ("Swing Speed", Range(0, 5)) = 1.4
         _FruitWindDir ("Wind Direction (world xz)", Vector) = (1, 0, 0.3, 0)
+        [Header(Plant Sway for flowers   0 is off)]
+        _PlantSway ("Sway (top offset per unit of height at 1 unit tall, 0 = off)", Range(0, 0.5)) = 0
+        _PlantSwaySpeed ("Sway Speed", Range(0, 5)) = 1.1
+        _PlantNod ("Head Nod (extra, upper part only)", Range(0, 0.5)) = 0
+        _PlantNodSpeed ("Nod Speed", Range(0, 6)) = 2.4
     }
 
     SubShader
@@ -98,8 +111,12 @@ Shader "DSEWA/ToonProp"
             half4 _TexGlowTint;
             float4 _TexGlowPulse;
             float _PulsePeriod;
+            half _GlowMaskStrength, _GlowMaskDotBreath;
+            half4 _GlowMaskColor, _GlowMaskDotColor;
+            float4 _GlowMaskWave;
             half _DistGlowBoost, _GlowMax, _FootBlend;
             half _GlowPalette, _Opacity, _OpacityEdge, _GlowRandomHue, _GlowRandomSat;
+            float4 _GlowHueRange;
             half4 _GlowColor1, _GlowColor2, _GlowColor3, _GlowColor4;
             float4 _DistGlowRange;
             half4 _OutlineColor;
@@ -107,6 +124,7 @@ Shader "DSEWA/ToonProp"
             float _CapFlutter, _CapStart, _CapRadius, _CapSpeed, _CapWaves, _CapBreath;
             float _FruitSway, _FruitSwaySpeed;
             float4 _FruitWindDir;
+            float _PlantSway, _PlantSwaySpeed, _PlantNod, _PlantNodSpeed;
         CBUFFER_END
                 // outline width is in metres at the model's own size: a prefab scaled to 0.18 gets a 0.18x line
         // (geometric mean of the object scale, so non-uniform boxes do not blow up)
@@ -163,7 +181,35 @@ Shader "DSEWA/ToonProp"
             return p;
         }
 
-        float3 Deform(float3 p, half4 col) { return FruitSway(CapFlutter(p), col); }
+        // plant sway (2026-10-27, user: "make all the flowers sway or nod"): the whole plant bends from the ground,
+        // more towards the top (offset grows with height squared, in object units, so every part of one plant -
+        // stem, leaves, petals, glow - moves together whatever material it uses). A lean downwind, a sway and a
+        // smaller cross sway with slow gusts, plus a quicker nod of the upper part. Phase per plant from its position.
+        float3 PlantSway(float3 p)
+        {
+            if (_PlantSway <= 0 && _PlantNod <= 0) return p;
+            float3 piv = GetObjectToWorldMatrix()._m03_m13_m23;
+            float3 p3 = frac(piv * 0.1031); p3 += dot(p3, p3.yzx + 33.33);
+            float ph = frac((p3.x + p3.y) * p3.z) * 6.2832;
+            float2 dirW = normalize(_FruitWindDir.xz + 1e-5);
+            float3 upO = normalize(TransformWorldToObjectDir(float3(0, 1, 0)));
+            float3 dirO = normalize(TransformWorldToObjectDir(float3(dirW.x, 0, dirW.y)));
+            float3 sideO = normalize(cross(upO, dirO));
+            float h = max(dot(p, upO), 0);
+            float t = _Time.y * _PlantSwaySpeed + ph;
+            float gust = 0.55 + 0.45 * sin(_Time.y * 0.31 + dot(piv.xz, dirW) * 0.06);
+            float bend = h * h / (h + 0.15);                                     // small plants still move
+            float a = ((sin(t) * 0.7 + sin(t * 2.1 + 1.3) * 0.3) + 0.4) * _PlantSway * gust * bend;
+            float b = sin(t * 0.77 + 2.3) * 0.4 * _PlantSway * gust * bend;
+            float tn = _Time.y * _PlantNodSpeed + ph * 1.7;
+            float n = sin(tn) * _PlantNod * bend * saturate(h * 4);                           // nod: only the upper part, quicker
+            float2 off = float2(a + n, b);
+            p += dirO * off.x + sideO * off.y;
+            p -= upO * dot(off, off) / max(2 * h, 0.02);                            // keep the stem length (tip dips)
+            return p;
+        }
+
+        float3 Deform(float3 p, half4 col) { return PlantSway(FruitSway(CapFlutter(p), col)); }
         ENDHLSL
 
         Pass
@@ -190,6 +236,7 @@ Shader "DSEWA/ToonProp"
             #include "Assets/Art/Environment/Shaders/RuntimeVirtualTexture.hlsl"
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
+            TEXTURE2D(_GlowMaskMap);
 
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; half4 color : COLOR; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct Varyings
@@ -255,7 +302,7 @@ Shader "DSEWA/ToonProp"
                     p3 += dot(p3, p3.yzx + 33.33);
                     float pick = frac((p3.x + p3.y) * p3.z);
                     half3 pc = pick < 0.25 ? _GlowColor1.rgb : (pick < 0.5 ? _GlowColor2.rgb : (pick < 0.75 ? _GlowColor3.rgb : _GlowColor4.rgb));
-                    if (_GlowRandomHue > 0) pc = HsvToRgb(half3(frac(pick * 7.13 + 0.37), _GlowRandomSat, 1));   // any hue
+                    if (_GlowRandomHue > 0) pc = HsvToRgb(half3(frac(lerp(_GlowHueRange.x, _GlowHueRange.y, frac(pick * 7.13 + 0.37))), _GlowRandomSat, 1));   // hue inside the range (2026-10-27: no lime / mustard)
                     half3 pn = pc / max(max(pc.r, max(pc.g, pc.b)), 1e-3h);
                     color = pn * lerp(0.35h, 0.7h, lit) * albedo;
                     // squared so the weaker channels drop: a strong glow keeps its hue instead of tonemapping to white
@@ -279,6 +326,19 @@ Shader "DSEWA/ToonProp"
                 color += glowCol * glowTint * mask * _TexGlowStrength * 0.6 * glowK * distK;
                 // cap the brightest channel, keeping the hue: past ~2 the tonemapper turns teal into white and the
                 // few pixels of a far fruit sparkle under bloom (2026-10-26 check: 29 white pixels, max 4.4)
+                // glow mask pulse (2026-10-27, user: "make the mask in Substance Designer and let it pulse"): veins carry
+                // bright waves that travel up the trunk (UV v runs up the trunk), dots breathe on their own beat, the
+                // soft halo follows the waves. Mask from DSEWA_63/Art/Environment/Substance/bark_alien.
+                if (_GlowMaskStrength > 0)
+                {
+                    half3 gm = SAMPLE_TEXTURE2D(_GlowMaskMap, sampler_BaseMap, i.uv).rgb;
+                    float w = frac(i.uv.y * _GlowMaskWave.x - _Time.y * _GlowMaskWave.y + phase);
+                    w = pow(saturate(1 - abs(w * 2 - 1)), _GlowMaskWave.z);                // a narrow bright band
+                    float wave = _GlowMaskWave.w + (1 - _GlowMaskWave.w) * w;
+                    float dotK = 0.35 + 0.65 * (0.5 + 0.5 * sin((_Time.y / max(_GlowMaskDotBreath, 0.01) + phase + i.uv.x * 3.1 + i.uv.y * 1.7) * TWO_PI));
+                    half3 em = _GlowMaskColor.rgb * gm.r * wave + _GlowMaskDotColor.rgb * gm.g * dotK + _GlowMaskColor.rgb * gm.b * (0.25 + 0.75 * w) * 0.6;
+                    color += em * _GlowMaskStrength * distK;
+                }
                 if (_GlowMax > 0) color *= min(1.0h, _GlowMax / max(max(color.r, max(color.g, color.b)), 1e-3h));
 
                 // foot blend (2026-10-26, rocks on the meadow): the lowest _FootBlend metres above the real terrain take

@@ -29,6 +29,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _Control1:
+        m_Texture: {fileID: 7688840811950220173, guid: 973f711a8aa200f48aebe88e5ca3129a, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _Mask0:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -43,6 +47,14 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _Mask3:
         m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Mask4:
+        m_Texture: {fileID: 2800000, guid: 712fb55602bf1914e96f3617a46677d1, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Mask5:
+        m_Texture: {fileID: 2800000, guid: bdbfe6f962e99d947b381eae798c585e, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Normal0:
@@ -61,6 +73,14 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _Normal4:
+        m_Texture: {fileID: 2800000, guid: d3f52021636fa644f9dbf4c2680adc55, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Normal5:
+        m_Texture: {fileID: 2800000, guid: 70d82981081517d43a0ee736394be23c, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _Splat0:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -77,6 +97,14 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _Splat4:
+        m_Texture: {fileID: 2800000, guid: 18ecca5b6396f9a45910e78a02a38a20, type: 3}
+        m_Scale: {x: 142.85715, y: 142.85715}
+        m_Offset: {x: 0, y: 0}
+    - _Splat5:
+        m_Texture: {fileID: 2800000, guid: 7d1b3fdc1b5465b44a4ec36f7f3b5067, type: 3}
+        m_Scale: {x: 125, y: 125}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _AmbientShade: 0.105
@@ -91,6 +119,9 @@ Material:
     - _HexEnable: 1
     - _HexRotation: 1
     - _HexSharpness: 8
+    - _PathAO: 0.7
+    - _RootVeinDark: 0.3
+    - _RootVeinStrength: 0
     - _ShadowBlur: 1.5
     - _Softness: 0.053
     - _Threshold: 0.12
@@ -98,6 +129,8 @@ Material:
     - _GrassTintColor: {r: 0.56, g: 0.56, b: 0.82, a: 1}
     - _GrassTintRange: {r: 0.02, g: 0.7, b: 0, a: 0}
     - _LitColor: {r: 0.46, g: 0.5, b: 0.82, a: 1}
+    - _RootVeinColor: {r: 0.45, g: 1, b: 1, a: 1}
+    - _RootVeinWave: {r: 0.25, g: 0.35, b: 5, a: 0.25}
     - _ShadowColor: {r: 0.25, g: 0.27, b: 0.54, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

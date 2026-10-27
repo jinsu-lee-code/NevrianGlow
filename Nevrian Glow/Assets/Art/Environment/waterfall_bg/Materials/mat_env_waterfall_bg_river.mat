@@ -49,7 +49,7 @@ Material:
     - _LipStartV: 12.801845
     - _MidLevel: 0.55
     - _SideShade: 0
-    - _Speed: 0.036
+    - _Speed: 0.26
     - _StreakCut: 0
     - _VPower: 1
     - _Wobble: 0
@@ -61,6 +61,6 @@ Material:
     - _LipMid: {r: 0.3799999, g: 0.58, b: 0.95, a: 1}
     - _LipStreak: {r: 1.5, g: 0.5455059, b: 0, a: 0}
     - _MidColor: {r: 0.14, g: 0.27, b: 0.62, a: 1}
-    - _StreakScale: {r: 1.8, g: 0.12, b: 0, a: 0}
+    - _StreakScale: {r: 1, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

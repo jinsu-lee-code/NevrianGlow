@@ -33,31 +33,32 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AmbientShade: 0.3
+    - _AmbientShade: 0.24
     - _BackFaceDarken: 0
     - _BacklightPower: 2.2
-    - _BacklightStrength: 0.45
-    - _Brightness: 1.05
-    - _CardNormal: 0.45
-    - _CrownRim: 0.35
+    - _BacklightStrength: 0.12
+    - _Brightness: 1.1
+    - _CardNormal: 0.3
+    - _CrownRim: 0.18
     - _CrownRimWidth: 0.22
-    - _CrownSky: 0.12
-    - _CrownUnder: 0.6
+    - _CrownSky: 0.25
+    - _CrownUnder: 0.8
     - _Cutoff: 0.35
-    - _Desaturation: 0.15
+    - _Desaturation: 0.18
     - _EdgeStrength: 0
     - _EdgeWidth: 0.45
     - _Flutter: 0.035
     - _FlutterSpeed: 4
-    - _LeafOutline: 0.3
+    - _LeafOutline: 0.45
     - _LeafOutlineWidth: 0.2
-    - _NormalUp: 0.15
+    - _NormalUp: 0.05
     - _PaintStrength: 0
     - _ReceiveShadowBias: 0.03
     - _ShadowBlur: 1.5
     - _Softness: 0.053
     - _TexDetail: 1
-    - _TexDetailContrast: 1.2
+    - _TexDetailContrast: 1.6
+    - _TexDetailFloor: 0.45
     - _TexDetailMid: 0.654902
     - _Threshold: 0.393
     - _VeinStrength: 0
@@ -72,10 +73,10 @@ Material:
     - _CrownSkyColor: {r: 0.54999995, g: 0.78, b: 1, a: 1}
     - _CrownUnderColor: {r: 0.41999996, g: 0.35999998, b: 0.75, a: 1}
     - _EdgeColor: {r: 0.6, g: 0.72, b: 1, a: 1}
-    - _RootColor: {r: 0.12, g: 0.2, b: 0.5, a: 1}
-    - _ShadowTint: {r: 0.62, g: 0.6, b: 0.95, a: 1}
+    - _RootColor: {r: 0.28, g: 0.3, b: 0.7, a: 1}
+    - _ShadowTint: {r: 0.58, g: 0.54, b: 0.94, a: 1}
     - _Tint: {r: 0.9, g: 0.86, b: 1, a: 1}
-    - _TipColor: {r: 0.36, g: 0.52, b: 0.92, a: 1}
+    - _TipColor: {r: 0.8, g: 0.85, b: 0.98, a: 1}
     - _VeinColor: {r: 0.54999995, g: 0.6, b: 0.95, a: 1}
     - _WindDir: {r: 1, g: 0, b: 0.35, a: 0}
   m_BuildTextureStacks: []
