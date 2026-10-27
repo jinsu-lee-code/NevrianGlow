@@ -92,6 +92,9 @@
 | `Environment/flower_bg/pf_env_flower_bg_{bluebell,moonstar,jellyfish,seedpuff,candle,sunsetstar}` (+ `Models/` 6 · `Materials/mat_env_flower_bg_*` 9) | 10/27. 배경 꽃 6종(빛종꽃 · 달맞이 별꽃 · 해파리꽃 · 홀씨꽃 · 촛대꽃 · 노을 별꽃). Mixar에서 만들어 꽃당 약 4천~1만 삼각형으로 줄임, `ToonProp` 재질(발광 부분은 밝기 상한 · 먼 거리 밝기 올림), 그림자 안 드리움 · 콜라이더 없음. 배경 씬 `FlowersBG`에 144개 |
 | `Environment/tree_bg/Materials/mat_env_tree_bg_glow_husk.mat` | 10/27. 숲 나무 발광 열매를 꽈리 모양으로 바꾸며 생긴 껍질 재질(보라 툰 + 빛나는 테두리). 나무 프리팹 10종의 4번째 재질 칸 |
 | `Environment/rock_bg/Materials/mat_env_rock_bg_moss_ground.mat` | 10/27. 이끼 바위용 `ToonCliff` 재질 — 밑동이 실제 지형 높이에서 땅 색으로 섞임(`Use Terrain Height`). `pf_env_rock_bg_moss_a/b`가 사용(절벽 재질은 그대로) |
+| `Environment/Shaders/StarGlare.shader` + `Materials_PP/mat_pp_star_glare.mat` | 10/27. 빛줄기 후처리 — 밝은 점(발광 꽃 · 열매)에서 가는 빛줄기가 방사형으로 퍼짐(별빛 필터처럼, 빛 색 그대로, 하늘은 제외). `PC_Renderer`에 Full Screen Pass 기능 「DSEWA Star Glare」로 등록(끄면 사라짐) |
+| `Environment/flower_bg/Models/env_flower_bg_jellyfish_sway.asset` | 10/27. 해파리꽃 메시 사본 — 촉수 21가닥 · 끝 구슬에만 정점 색(흔들림 거리 · 박자)을 넣어 촉수만 흔들림. `pf_env_flower_bg_jellyfish`가 사용 |
+| `Environment/flower_bg/Materials/mat_env_flower_bg_jelly_glow_{teal,violet}.mat` | 10/27. 해파리꽃 촉수 전용 발광 재질(흔들림 켬) — 다른 꽃의 발광 재질은 그대로 |
 
 ## 이름을 안 바꾼 것
 

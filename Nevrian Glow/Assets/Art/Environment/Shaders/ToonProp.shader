@@ -49,6 +49,19 @@ Shader "DSEWA/ToonProp"
         _DistGlowRange ("Distance Boost Start / End (m)", Vector) = (10, 60, 0, 0)
         _GlowMax ("Brightest Channel Cap (0 = off)", Range(0, 8)) = 0
         _FootBlend ("Foot Blend Into Ground (m above terrain, 0 = off)", Range(0, 2)) = 0
+        [Header(Transparency   blend One Zero and ZWrite 1 is opaque)]
+        _Opacity ("Opacity (face middle)", Range(0, 1)) = 1
+        _OpacityEdge ("Extra Opacity At The Silhouette", Range(0, 1)) = 0
+        [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend ("Src Blend", Float) = 1
+        [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend ("Dst Blend", Float) = 0
+        [Enum(Off, 0, On, 1)] _ZWrite ("Z Write", Float) = 1
+        [Toggle] _GlowPalette ("Glow Colour Per Object From Palette", Float) = 0
+        [Toggle] _GlowRandomHue ("Random Hue Per Object Instead Of The Palette", Float) = 0
+        _GlowRandomSat ("Random Hue Saturation", Range(0, 1)) = 0.75
+        [HDR] _GlowColor1 ("Palette 1", Color) = (0.1, 1, 0.8, 1)
+        [HDR] _GlowColor2 ("Palette 2", Color) = (0.25, 0.6, 1, 1)
+        [HDR] _GlowColor3 ("Palette 3", Color) = (0.65, 0.35, 1, 1)
+        [HDR] _GlowColor4 ("Palette 4", Color) = (1, 0.35, 0.75, 1)
         [Header(Outline)]
         _OutlineColor ("Outline Color", Color) = (0.1, 0.1, 0.26, 1)
         _OutlineWidth ("Outline Width (m at the model's own size, 0 = off)", Float) = 0.006
@@ -86,6 +99,8 @@ Shader "DSEWA/ToonProp"
             float4 _TexGlowPulse;
             float _PulsePeriod;
             half _DistGlowBoost, _GlowMax, _FootBlend;
+            half _GlowPalette, _Opacity, _OpacityEdge, _GlowRandomHue, _GlowRandomSat;
+            half4 _GlowColor1, _GlowColor2, _GlowColor3, _GlowColor4;
             float4 _DistGlowRange;
             half4 _OutlineColor;
             float _OutlineWidth;
@@ -140,10 +155,11 @@ Shader "DSEWA/ToonProp"
             float gust = 0.6 + 0.4 * sin(_Time.y * 0.37 + dot(piv.xz, dirW) * 0.05);
             float a = ((sin(t) * 0.7 + sin(t * 2.3 + 1.7) * 0.3) + 0.35) * _FruitSway * gust;
             float b = sin(t * 0.83 + 2.1) * 0.45 * _FruitSway * gust;
+            float3 upO = normalize(TransformWorldToObjectDir(float3(0, 1, 0)));     // object up (Z-up FBX meshes too)
             float3 dirO = normalize(TransformWorldToObjectDir(float3(dirW.x, 0, dirW.y)));
-            float3 sideO = normalize(cross(float3(0, 1, 0), dirO));
+            float3 sideO = normalize(cross(upO, dirO));
             p += dirO * sin(a) * d + sideO * sin(b) * d;
-            p.y += d * ((1 - cos(a)) + (1 - cos(b)));
+            p += upO * d * ((1 - cos(a)) + (1 - cos(b)));
             return p;
         }
 
@@ -154,6 +170,8 @@ Shader "DSEWA/ToonProp"
         {
             Name "ForwardLit"
             Tags { "LightMode" = "UniversalForward" }
+            Blend [_SrcBlend] [_DstBlend]
+            ZWrite [_ZWrite]
 
             HLSLPROGRAM
             #pragma vertex vert
@@ -227,6 +245,22 @@ Shader "DSEWA/ToonProp"
                 float shade = saturate(dot(N, light.direction)) * direct + _AmbientShade;
                 float lit = smoothstep(_Threshold, _Threshold + _Softness, shade);
                 half3 color = lerp(_ShadowColor.rgb, _LitColor.rgb, lit) * albedo;
+                // glow palette (2026-10-26, user: flowers glowing in several colours): each object picks one of four
+                // colours from its position; the glowing part's own colour and its glow tint both take it
+                half3 glowTint = _TexGlowTint.rgb;
+                if (_GlowPalette > 0)
+                {
+                    float3 op = GetObjectToWorldMatrix()._m03_m13_m23;
+                    float3 p3 = frac(op * 0.1031);                                  // hash without sine (stable in float)
+                    p3 += dot(p3, p3.yzx + 33.33);
+                    float pick = frac((p3.x + p3.y) * p3.z);
+                    half3 pc = pick < 0.25 ? _GlowColor1.rgb : (pick < 0.5 ? _GlowColor2.rgb : (pick < 0.75 ? _GlowColor3.rgb : _GlowColor4.rgb));
+                    if (_GlowRandomHue > 0) pc = HsvToRgb(half3(frac(pick * 7.13 + 0.37), _GlowRandomSat, 1));   // any hue
+                    half3 pn = pc / max(max(pc.r, max(pc.g, pc.b)), 1e-3h);
+                    color = pn * lerp(0.35h, 0.7h, lit) * albedo;
+                    // squared so the weaker channels drop: a strong glow keeps its hue instead of tonemapping to white
+                    glowTint = pn * pn * max(_TexGlowTint.r, max(_TexGlowTint.g, _TexGlowTint.b));
+                }
                 // far away the glow (and the glowing rim) gets stronger, so small distant fruit still read as lights
                 // (2026-10-26, user: "the further the tree fruit, the brighter it should glow")
                 half distK = lerp(1.0h, _DistGlowBoost, smoothstep(_DistGlowRange.x, max(_DistGlowRange.y, _DistGlowRange.x + 0.01), distance(i.positionWS, _WorldSpaceCameraPos)));
@@ -242,7 +276,7 @@ Shader "DSEWA/ToonProp"
                 half3 glowCol = albedo / max(max(albedo.r, max(albedo.g, albedo.b)), 1e-3);
                 half mask = smoothstep(_TexGlowThreshold, _TexGlowThreshold + _TexGlowSoftness, texV);
                 if (_PosterizeSteps >= 1) mask = step(0.5, mask);   // hard-edged glow shapes, like painted cel highlights
-                color += glowCol * _TexGlowTint.rgb * mask * _TexGlowStrength * 0.6 * glowK * distK;
+                color += glowCol * glowTint * mask * _TexGlowStrength * 0.6 * glowK * distK;
                 // cap the brightest channel, keeping the hue: past ~2 the tonemapper turns teal into white and the
                 // few pixels of a far fruit sparkle under bloom (2026-10-26 check: 29 white pixels, max 4.4)
                 if (_GlowMax > 0) color *= min(1.0h, _GlowMax / max(max(color.r, max(color.g, color.b)), 1e-3h));
@@ -262,7 +296,10 @@ Shader "DSEWA/ToonProp"
 
                 color = ApplyGroundFog(color, i.positionWS);
                 color = MixFog(color, i.fogFactor);
-                return half4(color, 1);
+                // see-through (2026-10-26, user: the jellyfish flower's body transparent): with the transparent blend
+                // set on the material, _Opacity in the middle of a face, more solid towards the silhouette
+                half alpha = saturate(_Opacity + pow(1.0h - saturate(dot(N, V)), 2.0h) * _OpacityEdge);
+                return half4(color, alpha);
             }
             ENDHLSL
         }
