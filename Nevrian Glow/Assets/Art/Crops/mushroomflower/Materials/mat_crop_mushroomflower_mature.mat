@@ -60,14 +60,14 @@ Material:
     - _IriStrength: 0.8
     - _LightColorAmount: 0
     - _NormalInRamp: 0.3
-    - _OutlineWidth: 0.004
+    - _OutlineWidth: 0.006
     - _PhaseScatter: 0
     - _ReliefAmount: 0
     - _ReliefSteps: 3
-    - _RimInShadow: 0.6
-    - _RimMax: 0.84
-    - _RimMin: 0.78
-    - _RimStrength: 0.25
+    - _RimInShadow: 0.9
+    - _RimMax: 0.76
+    - _RimMin: 0.68
+    - _RimStrength: 0.7
     - _ShadowBlur: 1.5
     - _ShadowFormLift: 0.45
     - _Softness: 0.053
@@ -78,12 +78,12 @@ Material:
     - _WindStrength: 0.035
     m_Colors:
     - _AOColor: {r: 0.34999996, g: 0.29999998, b: 0.24999997, a: 1}
-    - _EmissionColor: {r: 1.0031999, g: 0.87200004, b: 1.6, a: 1.6}
+    - _EmissionColor: {r: 1.3041599, g: 1.1336, b: 2.08, a: 2.08}
     - _IriColorA: {r: 0.35, g: 0.95, b: 1, a: 1}
     - _IriColorB: {r: 1, g: 0.45, b: 0.95, a: 1}
     - _LitColor: {r: 1, g: 1, b: 1, a: 1}
     - _OutlineColor: {r: 0.12, g: 0.1, b: 0.25, a: 1}
-    - _RimColor: {r: 0.35, g: 0.4, b: 0.7, a: 1}
+    - _RimColor: {r: 0.62, g: 0.82, b: 1.15, a: 1}
     - _ShadowColor: {r: 0.62, g: 0.6, b: 0.82, a: 1}
     - _WindDir: {r: 1, g: 0, b: 0.35, a: 0}
   m_BuildTextureStacks: []

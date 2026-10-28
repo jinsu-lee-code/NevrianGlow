@@ -163,6 +163,7 @@ Shader "DSEWA/ToonLeafShell"
                 color *= _Tint.rgb;
                 half lum = dot(color, half3(0.2126, 0.7152, 0.0722));
                 color = lerp(color, lum.xxx, _Desaturation) * _Brightness;
+                color = ApplyWorldWake(color, i.positionWS);
                 color = ApplyGroundFog(color, i.positionWS);
                 color = MixFog(color, i.fogFactor);
                 return half4(color, 1);

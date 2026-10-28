@@ -13,6 +13,7 @@ Shader "DSEWA/ToonSoil"
     {
         _BaseMap ("Base Map (optional)", 2D) = "white" {}
         _BaseColor ("Base Color", Color) = (0.6, 0.8, 0.8, 1)
+        _WorldTile ("World Tiling (m per texture repeat, 0 = mesh UV)", Float) = 0
         _Pastel ("Pastel (lift toward white)", Range(0, 1)) = 0.25
         [Header(Soil State)]
         _Till ("Till (whole cell, 0 = crust, 1 = dug)", Range(0, 1)) = 0
@@ -24,6 +25,8 @@ Shader "DSEWA/ToonSoil"
         _FurrowHeight ("Furrow Height (m)", Range(0, 0.1)) = 0.035
         _FurrowCount ("Furrows Across The Cell", Range(1, 6)) = 3
         _CellHalf ("Cell Half Size (m)", Float) = 0.8
+        _EdgeFade ("Flat Rim Width (fraction of the half size)", Range(0.01, 0.5)) = 0.18
+        _EdgeOpen ("Open Sides (+x, -x, +z, -z: 1 = a cell snapped there, no rim; set by SoilFX)", Vector) = (0, 0, 0, 0)
         _CrustContrast ("Crust Texture Contrast", Range(0, 1)) = 0.35
         _Hole ("Planting Pit (0..1)", Range(0, 1)) = 0
         _Mound ("Covered Seed Mound (0..1)", Range(0, 1)) = 0
@@ -87,9 +90,11 @@ Shader "DSEWA/ToonSoil"
 
         CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
+            float _WorldTile;
             half4 _BaseColor;
             half _Pastel, _Wrap, _Softness;
-            float _Till, _DigRadius, _FurrowHeight, _FurrowCount, _CellHalf, _CrustContrast, _Hole, _Mound;
+            float _Till, _DigRadius, _FurrowHeight, _FurrowCount, _CellHalf, _CrustContrast, _Hole, _Mound, _EdgeFade;
+            float4 _EdgeOpen;
             float4 _Hit0, _Hit1, _Hit2, _Hit3;
             float _Wet, _WetDarken, _WetGloss, _WetPuddle, _WetSparkle;
             float4 _WetOrigin;
@@ -128,7 +133,15 @@ Shader "DSEWA/ToonSoil"
                 m = max(m, hits[k].w * smoothstep(_DigRadius, _DigRadius * 0.35, distance(p, hits[k].xy)));
             return saturate(m);
         }
-        float SoilEdge(float2 p) { return saturate((1.0 - max(abs(p.x), abs(p.y)) / _CellHalf) / 0.18); }
+        // flat rim round the dug area, only on the sides with no cell snapped next to it (2026-10-28, user: "when cells
+        // snap together the lines should disappear") - joined cells read as one field with a rim round the outside
+        float SoilEdge(float2 p)
+        {
+            float h = _CellHalf;
+            float d = min(min(lerp(h - p.x, 1e3, _EdgeOpen.x), lerp(h + p.x, 1e3, _EdgeOpen.y)),
+                          min(lerp(h - p.y, 1e3, _EdgeOpen.z), lerp(h + p.y, 1e3, _EdgeOpen.w)));
+            return saturate(d / h / max(_EdgeFade, 0.01));
+        }
         float SoilFurrow(float2 p) { return cos(p.y / _CellHalf * 3.14159 * _FurrowCount); }
         float SoilHeight(float2 p)
         {
@@ -242,15 +255,18 @@ Shader "DSEWA/ToonSoil"
                 UNITY_SETUP_INSTANCE_ID(i);
                 float3 Ngeo = normalize(i.normalWS);
                 // normal map (planks bevel, grain ridges): bends the lighting only; the rim keeps the mesh normal
-                half3 nTS = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, i.uv), _BumpScale);
+                // world-space texture (2026-10-28, team: "match the farm soil to the ground round it"): the same terrain
+                // layer texture at the terrain's tiling, continuous across neighbouring cells
+                float2 buv = _WorldTile > 0 ? i.positionWS.xz / _WorldTile : i.uv;
+                half3 nTS = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, buv), _BumpScale);
                 float3 bitangent = i.tangentWS.w * cross(Ngeo, i.tangentWS.xyz);
                 float3 N = normalize(TransformTangentToWorld(nTS, float3x3(i.tangentWS.xyz, bitangent, Ngeo)));
-                half occ = SAMPLE_TEXTURE2D(_OcclusionMap, sampler_OcclusionMap, i.uv).r;
+                half occ = SAMPLE_TEXTURE2D(_OcclusionMap, sampler_OcclusionMap, buv).r;
                 float3 V = GetWorldSpaceNormalizeViewDir(i.positionWS);
                 Light light = GetMainLight(TransformWorldToShadowCoord(i.positionWS));
                 half shadow = lerp(1.0h, ToonMainLightShadow(i.positionWS, _ShadowBlur) * EvaluateCloudShadow(i.positionWS), _ReceiveShadows);
 
-                half3 tex = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv).rgb;
+                half3 tex = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, buv).rgb;
                 // crust (flat, faint clods) -> dug (full-contrast clods, darker in the furrow troughs)
                 float dig = SoilDig(i.positionOS.xz) * SoilEdge(i.positionOS.xz);
                 half3 crust = lerp(half3(0.85, 0.85, 0.85), tex, _CrustContrast);

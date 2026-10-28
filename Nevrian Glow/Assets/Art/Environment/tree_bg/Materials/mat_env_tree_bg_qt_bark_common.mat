@@ -34,6 +34,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _AmbientShade: 0.1
+    - _AwakeResponse: 1
     - _CapBreath: 0.5
     - _CapFlutter: 0
     - _CapRadius: 0.35
@@ -64,6 +65,10 @@ Material:
     - _PosterizeSteps: 0
     - _PulsePeriod: 4.5
     - _ReceiveShadows: 1
+    - _RevealFlash: 0
+    - _RevealFlicker: 0
+    - _RevealSoft: 0.6
+    - _RevealY: 99999
     - _RimMax: 0.84
     - _RimMin: 0.78
     - _RimStrength: 0.15
@@ -92,6 +97,7 @@ Material:
     - _PaletteDark: {r: 0.11999995, g: 0.13999996, b: 0.33999997, a: 1}
     - _PaletteLight: {r: 0.76, g: 0.86, b: 1, a: 1}
     - _PaletteMid: {r: 0.45, g: 0.45, b: 0.86, a: 1}
+    - _RevealDark: {r: 0.11999995, g: 0.11999995, b: 0.19999996, a: 1}
     - _RimColor: {r: 0.75, g: 0.8, b: 1, a: 1}
     - _ShadowColor: {r: 0.55, g: 0.5, b: 0.8, a: 1}
     - _TexGlowPulse: {r: 0.35, g: 1.2, b: 0, a: 0}

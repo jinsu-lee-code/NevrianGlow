@@ -8,6 +8,7 @@ Shader "DSEWA/ToonLeaf"
     Properties
     {
         _BaseMap ("Silhouette (alpha)", 2D) = "white" {}
+        [ToggleUI] _WakeExempt ("Keep Colour Outside The Waking Circle (crops)", Float) = 0
         _Cutoff ("Alpha Clip", Range(0, 1)) = 0.5
         _RootColor ("Root Color", Color) = (0.02, 0.04, 0.16, 1)
         _TipColor ("Tip Color", Color) = (0.20, 0.34, 0.91, 1)
@@ -94,7 +95,8 @@ Shader "DSEWA/ToonLeaf"
             half4 _Tint;
             half _Desaturation, _Brightness;
             half4 _CrownSkyColor, _CrownUnderColor, _CrownRimColor;
-            half _CrownSky, _CrownUnder, _CrownRim, _CrownRimWidth;
+            half _CrownSky, _CrownUnder, _CrownRim, _CrownRimWidth;
+            half _WakeExempt;
         CBUFFER_END
 
         TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
@@ -265,6 +267,7 @@ Shader "DSEWA/ToonLeaf"
                 color += _BacklightColor.rgb * bl * _BacklightStrength;
 
                 color = ColorControls(color);
+                color = lerp(ApplyWorldWake(color, i.positionWS), color, _WakeExempt);
                 color = ApplyGroundFog(color, i.positionWS);   // far canopies melt into the haze like the hills
                 color = MixFog(color, i.fogFactor);
                 return half4(color, 1);

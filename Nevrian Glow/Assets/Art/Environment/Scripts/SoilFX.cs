@@ -9,6 +9,8 @@ using UnityEngine;
 ///   SetTill(0..1) (no effects, e.g. after loading), ResetSoil() (back to crust after harvest).
 ///   OnWater(point)             - watered: a dark wet patch spreads from where the water landed (2026-10-28).
 ///   SetWet(bool) (no effects: after loading, or dry again in the morning).
+/// Snapping: each cell looks for cells right next to it (one cell size away along its own x / z) and drops its flat
+/// rim on those sides, so a block of cells reads as one field with a rim only round the outside (2026-10-28).
 /// Writes only its own shader values through the renderer's MaterialPropertyBlock and keeps whatever else is in it
 /// (FarmCellView's _BaseColor). The game's wet colour still applies through _BaseColor; OnWater adds the wet surface on top. Call OnTillHit when the blade touches the ground (about 35 % into the swing),
 /// not on the click. All timings / sizes are my own starting values.
@@ -40,6 +42,9 @@ public class SoilFX : MonoBehaviour
     static readonly int HoleId = Shader.PropertyToID("_Hole");
     static readonly int MoundId = Shader.PropertyToID("_Mound");
     static readonly int WetId = Shader.PropertyToID("_Wet");
+    static readonly int EdgeOpenId = Shader.PropertyToID("_EdgeOpen");
+    static readonly System.Collections.Generic.List<SoilFX> All = new System.Collections.Generic.List<SoilFX>();
+    static int _layoutVersion;
     static readonly int WetOriginId = Shader.PropertyToID("_WetOrigin");
     static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
     static readonly int[] HitIds =
@@ -52,10 +57,35 @@ public class SoilFX : MonoBehaviour
     readonly Vector4[] _hits = new Vector4[4];
     int _nextHit;
     float _till, _hole, _mound, _wet;
+    Vector4 _edgeOpen;
+    int _seenVersion = -1;
+    Vector3 _lastPos;
     Vector4 _wetOrigin;
     Coroutine _wetting;
     Vector3 _baseScale;
     ParticleSystem _clods;
+
+    void OnEnable() { All.Add(this); _layoutVersion++; }
+    void OnDisable() { All.Remove(this); _layoutVersion++; }
+
+    // which sides have a cell snapped next to them (+x, -x, +z, -z of this cell's own axes)
+    void FindNeighbours()
+    {
+        _seenVersion = _layoutVersion;
+        _lastPos = transform.position;
+        var mf = GetComponent<MeshFilter>();
+        Vector3 size = mf != null && mf.sharedMesh != null ? Vector3.Scale(mf.sharedMesh.bounds.size, transform.lossyScale) : Vector3.one * 2f;
+        Vector3[] dirs = { transform.right * size.x, -transform.right * size.x, transform.forward * size.z, -transform.forward * size.z };
+        for (int s = 0; s < 4; s++)
+        {
+            Vector3 want = transform.position + dirs[s];
+            float tol = dirs[s].magnitude * 0.2f;
+            bool found = false;
+            foreach (var o in All)
+                if (o != this && o != null && Vector3.Distance(o.transform.position, want) < tol) { found = true; break; }
+            _edgeOpen[s] = found ? 1f : 0f;
+        }
+    }
 
     void Awake()
     {
@@ -233,6 +263,8 @@ public class SoilFX : MonoBehaviour
         _block.SetFloat(MoundId, _mound);
         _block.SetFloat(WetId, _wet);
         _block.SetVector(WetOriginId, _wetOrigin);
+        if (_seenVersion != _layoutVersion || (transform.position - _lastPos).sqrMagnitude > 1e-4f) FindNeighbours();
+        _block.SetVector(EdgeOpenId, _edgeOpen);
         for (int i = 0; i < _hits.Length; i++) _block.SetVector(HitIds[i], _hits[i]);
         _renderer.SetPropertyBlock(_block);
     }

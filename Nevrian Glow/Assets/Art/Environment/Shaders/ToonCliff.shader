@@ -183,6 +183,7 @@ Shader "DSEWA/ToonCliff"
                     color = lerp(color, ground * lerp(0.75, 1, lit), fb * saturate(1 - N.y * 0.3));
                 }
 
+                color = ApplyWorldWake(color, P);
                 color = ApplyGroundFog(color, P);
                 color = MixFog(color, i.fogFactor);
                 return half4(color, 1);

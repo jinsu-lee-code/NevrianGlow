@@ -37,7 +37,16 @@ public class CreatureWander : MonoBehaviour
     [Tooltip("Slow down within this distance of the spot (m)")]
     public float arriveRadius = 2.5f;
 
+    [Header("Visit lures (ready crops etc., CreatureLure)")]
+    [Tooltip("Now and then fly to a CreatureLure instead (e.g. butterflies to the ready crops on the farm)")]
+    public bool visitLures;
+    [Tooltip("Only lures within this distance of the area centre (m)")]
+    public float lureRange = 80f;
+    [Tooltip("Chance to pick a lure when a lure is in range")]
+    [Range(0f, 1f)] public float lureChance = 0.65f;
+
     Vector3 target, velocity;
+    bool atLure;
     float seed, nextPick;
     readonly System.Collections.Generic.List<Vector3> spots = new System.Collections.Generic.List<Vector3>();
     int spotIndex = -1;
@@ -57,6 +66,27 @@ public class CreatureWander : MonoBehaviour
 
     void PickTarget()
     {
+        atLure = false;
+        if (visitLures && CreatureLure.All.Count > 0 && Random.value < lureChance)
+        {
+            CreatureLure pick = null; float total = 0f;
+            foreach (var l in CreatureLure.All)          // weighted random among the lures in range
+            {
+                if (l == null) continue;
+                var lp = l.transform.position;
+                if (Vector2.Distance(new Vector2(lp.x, lp.z), new Vector2(areaCenter.x, areaCenter.z)) > lureRange) continue;
+                total += Mathf.Max(l.weight, 0.01f);
+                if (Random.value * total < Mathf.Max(l.weight, 0.01f)) pick = l;
+            }
+            if (pick != null)
+            {
+                atLure = true;
+                target = pick.transform.position + new Vector3(Random.Range(-0.4f, 0.4f), 0, Random.Range(-0.4f, 0.4f));
+                float travel = Vector3.Distance(target, transform.position) / Mathf.Max(speed, 0.05f);
+                nextPick = Time.time + travel + Random.Range(dwell.x, dwell.y);
+                return;
+            }
+        }
         if (spots.Count > 0)
         {
             // next spot: a random one, preferring nearer spots so the flock hops between neighbouring flowers
@@ -91,9 +121,10 @@ public class CreatureWander : MonoBehaviour
     {
         var p = transform.position;
         var flat = new Vector3(target.x - p.x, 0, target.z - p.z);
-        if (spots.Count > 0) { if (Time.time > nextPick) PickTarget(); }     // hover at a spot until the dwell ends
+        bool hover = spots.Count > 0 || atLure;
+        if (hover) { if (Time.time > nextPick) PickTarget(); }     // hover at a spot until the dwell ends
         else if (flat.magnitude < 1.5f || Time.time > nextPick) PickTarget();
-        float arrive = spots.Count > 0 ? Mathf.Clamp01(flat.magnitude / Mathf.Max(arriveRadius, 0.1f)) : 1f;
+        float arrive = hover ? Mathf.Clamp01(flat.magnitude / Mathf.Max(arriveRadius, 0.1f)) : 1f;
         var want = flat.normalized * speed * arrive;
         velocity = Vector3.Lerp(velocity, want, 1f - Mathf.Exp(-turnRate * Time.deltaTime));
         p += velocity * Time.deltaTime;

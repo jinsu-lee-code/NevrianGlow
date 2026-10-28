@@ -62,6 +62,9 @@ Shader "DSEWA/ToonProp"
         _RevealDark ("Unlit Colour (multiply)", Color) = (0.12, 0.12, 0.2, 1)
         _RevealFlash ("Bright Band At The Front", Range(0, 6)) = 0
         _RevealFlicker ("Unlit Faint Flicker", Range(0, 1)) = 0
+        [Header(World Awakening   WorldAwakening   default off)]
+        _AwakeResponse ("Glow Follows The World Waking (0 = off)", Range(0, 1)) = 0
+        [ToggleUI] _WakeExempt ("Keep Colour Outside The Waking Circle (lighthouse)", Float) = 0
         [Header(Transparency   blend One Zero and ZWrite 1 is opaque)]
         _Opacity ("Opacity (face middle)", Range(0, 1)) = 1
         _OpacityEdge ("Extra Opacity At The Silhouette", Range(0, 1)) = 0
@@ -133,7 +136,10 @@ Shader "DSEWA/ToonProp"
             float _PlantSway, _PlantSwaySpeed, _PlantNod, _PlantNodSpeed;
             float _RevealY, _RevealSoft, _RevealFlash, _RevealFlicker;
             half4 _RevealDark;
+            half _AwakeResponse, _WakeExempt;
         CBUFFER_END
+        // set by WorldAwakening: 1 = the world still asleep (glows dimmed), 0 = awake (unset = 0, so nothing changes)
+        float _DSEWA_WorldSleep;
                 // outline width is in metres at the model's own size: a prefab scaled to 0.18 gets a 0.18x line
         // (geometric mean of the object scale, so non-uniform boxes do not blow up)
         float OutlineObjectScale()
@@ -331,7 +337,12 @@ Shader "DSEWA/ToonProp"
                 half3 glowCol = albedo / max(max(albedo.r, max(albedo.g, albedo.b)), 1e-3);
                 half mask = smoothstep(_TexGlowThreshold, _TexGlowThreshold + _TexGlowSoftness, texV);
                 if (_PosterizeSteps >= 1) mask = step(0.5, mask);   // hard-edged glow shapes, like painted cel highlights
-                color += glowCol * glowTint * mask * _TexGlowStrength * 0.6 * glowK * distK;
+                // world awakening (2026-10-28): opted-in glows (flowers, mushrooms, tree fruit) start dim and wake
+                // with the lighthouse progress
+                half sleepK = _AwakeResponse * WorldWakeOutside(i.positionWS) * (1.0h - _WakeExempt);   // asleep outside the colour circle
+                half awakeK = 1.0h - 0.95h * sleepK;
+                color *= 1.0h - 0.7h * sleepK * mask;   // the painted glowing parts themselves sink too, not only the added glow
+                color += glowCol * glowTint * mask * _TexGlowStrength * 0.6 * glowK * distK * awakeK;
                 // cap the brightest channel, keeping the hue: past ~2 the tonemapper turns teal into white and the
                 // few pixels of a far fruit sparkle under bloom (2026-10-26 check: 29 white pixels, max 4.4)
                 // glow mask pulse (2026-10-27, user: "make the mask in Substance Designer and let it pulse"): veins carry
@@ -345,7 +356,7 @@ Shader "DSEWA/ToonProp"
                     float wave = _GlowMaskWave.w + (1 - _GlowMaskWave.w) * w;
                     float dotK = 0.35 + 0.65 * (0.5 + 0.5 * sin((_Time.y / max(_GlowMaskDotBreath, 0.01) + phase + i.uv.x * 3.1 + i.uv.y * 1.7) * TWO_PI));
                     half3 em = _GlowMaskColor.rgb * gm.r * wave + _GlowMaskDotColor.rgb * gm.g * dotK + _GlowMaskColor.rgb * gm.b * (0.25 + 0.75 * w) * 0.6;
-                    color += em * _GlowMaskStrength * distK;
+                    color += em * _GlowMaskStrength * distK * awakeK;
                 }
                 // reveal by height (2026-10-28, LighthouseGoal): only the part below _RevealY is lit, the rest sits in
                 // _RevealDark with an optional faint flicker; a bright band rides the front while it climbs
@@ -373,6 +384,7 @@ Shader "DSEWA/ToonProp"
                     }
                 }
 
+                color = lerp(ApplyWorldWake(color, i.positionWS), color, _WakeExempt);
                 color = ApplyGroundFog(color, i.positionWS);
                 color = MixFog(color, i.fogFactor);
                 // see-through (2026-10-26, user: the jellyfish flower's body transparent): with the transparent blend

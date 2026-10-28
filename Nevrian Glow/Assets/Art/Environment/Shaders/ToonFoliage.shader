@@ -389,6 +389,7 @@ Shader "DSEWA/ToonFoliage"
                 // Backlight: looking towards the sun, thin tips let the light through
                 half back = smoothstep(_TransThreshold, _TransThreshold + 0.05, saturate(dot(-V, light.direction)));
                 color += _TransColor.rgb * back * direct * smoothstep(0.3, 1, i.height) * _TransStrength;
+                color = ApplyWorldWake(color, i.positionWS);
                 color = ApplyGroundFog(color, i.positionWS);
                 // Bioluminescent tips: self-lit, after the fog so the far field still glows (HDR -> bloom)
                 color += _TipGlowColor.rgb * smoothstep(_TipGlowStart, 1, i.height) * (0.75 + 0.5 * i.clump) * _TipGlow;

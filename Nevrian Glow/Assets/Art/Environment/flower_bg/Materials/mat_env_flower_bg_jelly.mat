@@ -30,9 +30,14 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _GlowMaskMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _AmbientShade: 0.1
+    - _AwakeResponse: 1
     - _CapBreath: 0.5
     - _CapFlutter: 0
     - _CapRadius: 0.35
@@ -46,6 +51,8 @@ Material:
     - _FootBlend: 0
     - _FruitSway: 0
     - _FruitSwaySpeed: 1.4
+    - _GlowMaskDotBreath: 3
+    - _GlowMaskStrength: 0
     - _GlowMax: 2
     - _GlowPalette: 1
     - _GlowRandomHue: 1
@@ -61,6 +68,10 @@ Material:
     - _PosterizeSteps: 0
     - _PulsePeriod: 4.5
     - _ReceiveShadows: 1
+    - _RevealFlash: 0
+    - _RevealFlicker: 0
+    - _RevealSoft: 0.6
+    - _RevealY: 99999
     - _RimMax: 0.7
     - _RimMin: 0.45
     - _RimStrength: 0.9
@@ -81,11 +92,15 @@ Material:
     - _GlowColor3: {r: 0.7, g: 0.35, b: 1, a: 1}
     - _GlowColor4: {r: 1, g: 0.35, b: 0.7, a: 1}
     - _GlowHueRange: {r: 0.45, g: 1, b: 0, a: 0}
+    - _GlowMaskColor: {r: 0.45, g: 1, b: 1, a: 1}
+    - _GlowMaskDotColor: {r: 0.8, g: 0.6, b: 1, a: 1}
+    - _GlowMaskWave: {r: 1.5, g: 0.35, b: 6, a: 0.2}
     - _LitColor: {r: 0.55, g: 0.45, b: 0.95, a: 1}
     - _OutlineColor: {r: 0.09999997, g: 0.09999997, b: 0.25999996, a: 1}
     - _PaletteDark: {r: 0.11999995, g: 0.13999996, b: 0.33999997, a: 1}
     - _PaletteLight: {r: 0.76, g: 0.86, b: 1, a: 1}
     - _PaletteMid: {r: 0.45, g: 0.45, b: 0.86, a: 1}
+    - _RevealDark: {r: 0.11999995, g: 0.11999995, b: 0.19999996, a: 1}
     - _RimColor: {r: 0.55, g: 0.95, b: 1, a: 1}
     - _ShadowColor: {r: 0.3, g: 0.22, b: 0.62, a: 1}
     - _TexGlowPulse: {r: 0.6, g: 1, b: 0, a: 0}

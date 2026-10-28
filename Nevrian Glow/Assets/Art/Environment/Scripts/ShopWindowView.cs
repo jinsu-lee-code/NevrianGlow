@@ -59,6 +59,9 @@ public class ShopWindowView : MonoBehaviour
     {
         var src = Viewer();
         bool inside = src != null && room != null && room.bounds.Contains(src.transform.position);
+        // nothing to look at without the background terrain (Shop scene opened alone in the editor): the camera
+        // would only see Unity's default daylight sky, which glows yellow and blooms in the windows
+        if (Terrain.activeTerrain == null) inside = false;
         if (!inside)
         {
             Shader.SetGlobalFloat(OnId, 0);

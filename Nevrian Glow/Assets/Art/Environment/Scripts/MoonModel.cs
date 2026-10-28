@@ -51,6 +51,10 @@ public class MoonModel : MonoBehaviour
     [Tooltip("Animate in the editor too (Scene / Game view), not only in play mode")]
     public bool animateInEditor = true;
 
+    [Header("Sky clouds in front")]
+    [Tooltip("How much the sky's painted clouds cover the moon (1 = fully, like the planets; lower = it glows through)")]
+    [Range(0f, 1f)] public float cloudCover = 0.75f;
+
     [Header("Phase")]
     [Tooltip("With Opposite Sun on: shade the moon from the real light direction (the sun), so the terminator follows " +
              "the light and not the camera. Off = the artistic phase below")]
@@ -63,6 +67,11 @@ public class MoonModel : MonoBehaviour
     static readonly int PhaseId = Shader.PropertyToID("_PhaseDir");
     static readonly int ShrinkId = Shader.PropertyToID("_CameraShrink");
     static readonly int GlowId = Shader.PropertyToID("_GlowMul");
+    static readonly int CloudLowId = Shader.PropertyToID("_PanoCloudLow");
+    static readonly int CloudHighId = Shader.PropertyToID("_PanoCloudHigh");
+    static readonly int CloudParamsId = Shader.PropertyToID("_SkyCloudParams");
+    static readonly int CloudSpeedId = Shader.PropertyToID("_PanoCloudSpeed");
+    static readonly int CloudTintId = Shader.PropertyToID("_SkyCloudTint");
     MaterialPropertyBlock mpb;
 
     static float EditorTime()
@@ -125,6 +134,7 @@ public class MoonModel : MonoBehaviour
         mpb.SetVector(PhaseId, phase);
         mpb.SetFloat(ShrinkId, Mathf.Min(1f, cam.farClipPlane * 0.92f / distance));
         mpb.SetFloat(GlowId, glow);
+        CopySkyClouds();
         var rp = new RenderParams(material)
         {
             camera = cam,
@@ -135,5 +145,25 @@ public class MoonModel : MonoBehaviour
             layer = gameObject.layer
         };
         for (int s = 0; s < mesh.subMeshCount; s++) Graphics.RenderMesh(rp, mesh, s, m);
+    }
+
+    // the skybox's painted cloud layers (DSEWA/ToonSky), so the moon sits behind them like the sky's own planets
+    // (2026-10-28). Read every frame: DayNightBlend changes the sky material.
+    void CopySkyClouds()
+    {
+        var sky = RenderSettings.skybox;
+        if (sky == null || !sky.HasProperty(CloudLowId) || sky.GetTexture(CloudLowId) == null)
+        {
+            mpb.SetVector(CloudParamsId, Vector4.zero);
+            return;
+        }
+        mpb.SetTexture(CloudLowId, sky.GetTexture(CloudLowId));
+        mpb.SetTexture(CloudHighId, sky.GetTexture(CloudHighId) != null ? sky.GetTexture(CloudHighId) : Texture2D.blackTexture);
+        mpb.SetVector(CloudParamsId, new Vector4(sky.GetFloat("_PanoAmount"), sky.GetFloat("_PanoHorizon"), sky.GetFloat("_PanoRotation"),
+                                                 (sky.HasProperty("_PanoCloudFront") ? sky.GetFloat("_PanoCloudFront") : 1f) * cloudCover));
+        mpb.SetVector(CloudSpeedId, sky.GetVector("_PanoCloudSpeed"));
+        Color tint = sky.GetColor("_PanoTint");
+        if (sky.HasProperty("_OverallColor")) tint *= sky.GetColor("_OverallColor");
+        mpb.SetColor(CloudTintId, tint);
     }
 }

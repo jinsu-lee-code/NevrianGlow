@@ -82,6 +82,9 @@ public class LayerGrassSpawner : MonoBehaviour
     public float pathEdgeTall = 1.4f;
     [Tooltip("Path layer indices counted as path for the edge band (terrain layer order)")]
     public int[] pathLayers = { 3, 4 };
+    [Tooltip("No grass on the path itself (2026-10-28, user: clear the grass growing on the paths): fades out between " +
+             "these path weights (x = starts thinning, y = gone), so the blurred field edge does not creep onto the path")]
+    public Vector2 pathClear = new Vector2(0.3f, 0.55f);
     [Tooltip("Ridges: where the ground stands this much (m) above its surroundings (ridgeRadius) the grass is short and sparse")]
     public float ridgeHeight = 0.6f;
     public float ridgeRadius = 6f;
@@ -476,6 +479,7 @@ public class LayerGrassSpawner : MonoBehaviour
                 }
                 if (ring > 0f) count = count * (1f + ringBoost * ring) + (p < ringAdd.Length ? ringAdd[p] : 0f) * ring;
                 count *= area * shade;
+                if (pathClear.y > pathClear.x) count *= 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(pathClear.x, pathClear.y, pathW));
                 if (p > 0) count *= (1f + shadeEdgeTall * shadeBand + pathEdgeTall * pathBand) * (1f - ridge) * (1f - flower);
                 else count *= Mathf.Lerp(1f, ridgeKeep, ridge) * (1f - 0.6f * flower);
                 // dither the fraction with a stable per-cell hash so regeneration is deterministic

@@ -63,6 +63,8 @@ public class LighthouseGoal : MonoBehaviour
     bool ending;
 
     public bool IsEnding => ending;
+    /// <summary>The progress the climbing light has reached right now (WorldAwakening follows this).</summary>
+    public float ShownProgress => shown < 0f ? progress : shown;
 
     /// <summary>Progress 0..1 (e.g. level / target level). The light climbs there over climbSeconds.</summary>
     public void SetProgress(float value)

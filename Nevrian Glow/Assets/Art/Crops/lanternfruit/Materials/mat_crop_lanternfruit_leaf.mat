@@ -93,6 +93,7 @@ Material:
     - _VeinWidth: 0.028
     - _Volume: 0.3
     - _VolumeHeightScale: 0.4
+    - _WakeExempt: 1
     - _WindColorAmount: 0.25
     - _WindColorScale: 0.35
     - _WindColorSoftness: 0.04

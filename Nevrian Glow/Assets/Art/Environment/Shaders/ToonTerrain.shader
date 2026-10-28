@@ -352,6 +352,7 @@ Shader "DSEWA/ToonTerrain"
                         color += _RootVeinColor.rgb * rv.r * (_RootVeinWave.w + (1 - _RootVeinWave.w) * wv) * _RootVeinStrength;
                     }
                 }
+                color = ApplyWorldWake(color, i.positionWS);
                 color = ApplyGroundFog(color, i.positionWS);
                 return half4(MixFog(color, i.fogFactor), 1);
             }
