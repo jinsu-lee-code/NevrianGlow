@@ -7,8 +7,10 @@ using UnityEngine;
 ///                                 the soil squashes a little; at progress 1 the whole cell is dug.
 ///   OnPlant()                  - a pit opens in the middle, the seed goes in, the soil closes into a small mound.
 ///   SetTill(0..1) (no effects, e.g. after loading), ResetSoil() (back to crust after harvest).
+///   OnWater(point)             - watered: a dark wet patch spreads from where the water landed (2026-10-28).
+///   SetWet(bool) (no effects: after loading, or dry again in the morning).
 /// Writes only its own shader values through the renderer's MaterialPropertyBlock and keeps whatever else is in it
-/// (FarmCellView's _BaseColor). Wet soil stays the game's job (its wet colour), per the art request doc. Call OnTillHit when the blade touches the ground (about 35 % into the swing),
+/// (FarmCellView's _BaseColor). The game's wet colour still applies through _BaseColor; OnWater adds the wet surface on top. Call OnTillHit when the blade touches the ground (about 35 % into the swing),
 /// not on the click. All timings / sizes are my own starting values.
 /// </summary>
 [RequireComponent(typeof(Renderer))]
@@ -26,6 +28,9 @@ public class SoilFX : MonoBehaviour
     public float ClodSize = 0.045f;
     public float ClodSpeed = 1.6f;
 
+    [Header("Watering")]
+    [Tooltip("Seconds for the wet patch to cover the cell")] public float WetSpreadTime = 0.9f;
+
     [Header("Planting")]
     public float PitOpenTime = 0.16f;
     public float PitHoldTime = 0.18f;
@@ -34,6 +39,8 @@ public class SoilFX : MonoBehaviour
     static readonly int TillId = Shader.PropertyToID("_Till");
     static readonly int HoleId = Shader.PropertyToID("_Hole");
     static readonly int MoundId = Shader.PropertyToID("_Mound");
+    static readonly int WetId = Shader.PropertyToID("_Wet");
+    static readonly int WetOriginId = Shader.PropertyToID("_WetOrigin");
     static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
     static readonly int[] HitIds =
     {
@@ -44,7 +51,9 @@ public class SoilFX : MonoBehaviour
     MaterialPropertyBlock _block;
     readonly Vector4[] _hits = new Vector4[4];
     int _nextHit;
-    float _till, _hole, _mound;
+    float _till, _hole, _mound, _wet;
+    Vector4 _wetOrigin;
+    Coroutine _wetting;
     Vector3 _baseScale;
     ParticleSystem _clods;
 
@@ -71,6 +80,22 @@ public class SoilFX : MonoBehaviour
 
     public void OnPlant() => StartCoroutine(PlantRoutine());
 
+    public void OnWater(Vector3 worldPoint)
+    {
+        if (_wet >= 0.999f) return;                          // already soaked
+        Vector3 local = transform.InverseTransformPoint(worldPoint);
+        if (_wet <= 0.001f) _wetOrigin = new Vector4(local.x, local.z, 0f, 0f);
+        if (_wetting != null) StopCoroutine(_wetting);
+        _wetting = StartCoroutine(Tween(v => _wet = v, _wet, 1f, WetSpreadTime * (1f - _wet), 0f));
+    }
+
+    public void SetWet(bool wet)
+    {
+        if (_wetting != null) StopCoroutine(_wetting);
+        _wetting = null;
+        _wet = wet ? 1f : 0f;
+    }
+
     public void SetTill(float progress01)
     {
         _till = progress01 >= 0.999f ? 1f : 0f;
@@ -82,7 +107,7 @@ public class SoilFX : MonoBehaviour
     public void ResetSoil()
     {
         StopAllCoroutines();
-        _till = _hole = _mound = 0f;
+        _till = _hole = _mound = _wet = 0f;
         for (int i = 0; i < _hits.Length; i++) _hits[i] = Vector4.zero;
         transform.localScale = _baseScale;
     }
@@ -206,6 +231,8 @@ public class SoilFX : MonoBehaviour
         _block.SetFloat(TillId, _till);
         _block.SetFloat(HoleId, _hole);
         _block.SetFloat(MoundId, _mound);
+        _block.SetFloat(WetId, _wet);
+        _block.SetVector(WetOriginId, _wetOrigin);
         for (int i = 0; i < _hits.Length; i++) _block.SetVector(HitIds[i], _hits[i]);
         _renderer.SetPropertyBlock(_block);
     }

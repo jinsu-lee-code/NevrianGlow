@@ -44,9 +44,9 @@ Material:
     - _AmbientShade: 0.105
     - _BumpScale: 1
     - _FurFuzz: 0
-    - _GlowFlowAmount: 0.45
-    - _GlowFlowSpeed: 0.35
-    - _GlowStrength: 0.8
+    - _GlowFlowAmount: 0.8
+    - _GlowFlowSpeed: 0.3
+    - _GlowStrength: 1.1
     - _GradientEnd: 0.35
     - _LightColorAmount: 0
     - _MouthLineWidth: 0.007

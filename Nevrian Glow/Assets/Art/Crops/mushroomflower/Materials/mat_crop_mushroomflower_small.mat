@@ -45,12 +45,23 @@ Material:
     - _AOSoftness: 0.05
     - _AOThreshold: 0
     - _AmbientShade: 0.105
+    - _BreatheAmount: 0.07
+    - _BreatheHeight: 0.3
+    - _BreathePeriod: 7
     - _BumpScale: 0.6
     - _EmissionPeriod: 4.5
     - _EmissionPulse: 0.35
+    - _GlowFlow: 0.4
+    - _GlowFlowFreq: 8
+    - _GlowFlowSpeed: 0.25
+    - _IriBands: 1.5
+    - _IriMax: 0.95
+    - _IriMin: 0.4
+    - _IriStrength: 0.8
     - _LightColorAmount: 0
     - _NormalInRamp: 0.3
     - _OutlineWidth: 0.004
+    - _PhaseScatter: 0
     - _ReliefAmount: 0
     - _ReliefSteps: 3
     - _RimInShadow: 0.6
@@ -68,6 +79,8 @@ Material:
     m_Colors:
     - _AOColor: {r: 0.34999996, g: 0.29999998, b: 0.24999997, a: 1}
     - _EmissionColor: {r: 1.0031999, g: 0.87200004, b: 1.6, a: 1.6}
+    - _IriColorA: {r: 0.35, g: 0.95, b: 1, a: 1}
+    - _IriColorB: {r: 1, g: 0.45, b: 0.95, a: 1}
     - _LitColor: {r: 1, g: 1, b: 1, a: 1}
     - _OutlineColor: {r: 0.12, g: 0.1, b: 0.25, a: 1}
     - _RimColor: {r: 0.35, g: 0.4, b: 0.7, a: 1}

@@ -44,6 +44,20 @@ Shader "DSEWA/ToonWicker"
         [HDR] _EmissionColor ("Emission Color", Color) = (0, 0, 0, 1)
         _EmissionPulse ("Emission Breath (0 = steady)", Range(0, 1)) = 0
         _EmissionPeriod ("Breath Period (s)", Range(0.5, 20)) = 5
+        // 2026-10-28 crop mystery pass (all default 0 = off, so baskets / doors keep their look)
+        _PhaseScatter ("Breath Phase Per Object (0 = all in step)", Range(0, 1)) = 0
+        _GlowFlow ("Glow Flow (light climbing the mask, 0 = off)", Range(0, 1)) = 0
+        _GlowFlowSpeed ("Glow Flow Speed (waves/s)", Float) = 0.35
+        _GlowFlowFreq ("Glow Flow Waves Per Metre", Float) = 2.5
+        [HDR] _IriColorA ("Iridescent Rim Colour A", Color) = (0.35, 0.95, 1.0, 1)
+        [HDR] _IriColorB ("Iridescent Rim Colour B", Color) = (0.95, 0.45, 1.0, 1)
+        _IriStrength ("Iridescent Rim Strength (0 = off)", Range(0, 2)) = 0
+        _IriMin ("Iridescent Rim Start (fresnel)", Range(0, 1)) = 0.45
+        _IriMax ("Iridescent Rim End (fresnel)", Range(0, 1)) = 0.95
+        _IriBands ("Iridescent Colour Bands", Float) = 1.5
+        _BreatheAmount ("Breathe: Spread Open/Close (0 = off)", Range(0, 0.3)) = 0
+        _BreathePeriod ("Breathe Period (s)", Range(1, 20)) = 6
+        _BreatheHeight ("Breathe Full At Height (object units)", Float) = 0.5
         [Header(Outline)]
         _OutlineColor ("Outline Color", Color) = (0.22, 0.16, 0.10, 1)
         _OutlineWidth ("Outline Width (m)", Float) = 0.006
@@ -68,6 +82,11 @@ Shader "DSEWA/ToonWicker"
             half _RimStrength, _RimMin, _RimMax, _RimInShadow;
             half4 _EmissionColor;
             half _EmissionPulse, _EmissionPeriod;
+            half _PhaseScatter, _GlowFlow;
+            float _GlowFlowSpeed, _GlowFlowFreq;
+            half4 _IriColorA, _IriColorB;
+            half _IriStrength, _IriMin, _IriMax, _IriBands;
+            float _BreatheAmount, _BreathePeriod, _BreatheHeight;
             half4 _OutlineColor;
             float _OutlineWidth;
         CBUFFER_END
@@ -82,6 +101,31 @@ Shader "DSEWA/ToonWicker"
             float2 offset = dir * (sin(phase) * 0.7 + sin(phase * 2.3 + 1.7) * 0.3) * _WindStrength * h;
             positionWS.xz += offset;
             return positionWS;
+        }
+
+        // per-object phase from the object's world position, so a row of crops breathes out of step
+        float ObjectPhase()
+        {
+            // smooth in position (not a hash): the Grow / sway animation nudges the model's origin by millimetres
+            // every frame, and a hash turned that into a new random phase per frame = shaking (2026-10-28)
+            float3 o = GetObjectToWorldMatrix()._m03_m13_m23;
+            return dot(o.xz, float2(0.73, 1.37)) * 6.2832 * _PhaseScatter;
+        }
+
+        // Breathe: the plant opens and closes round its own pivot (more toward the top), like slow breathing
+        float3 Breathe(float3 positionOS)
+        {
+            if (_BreatheAmount <= 0) return positionOS;
+            float h = saturate(positionOS.y / max(_BreatheHeight, 1e-3));
+            float s = sin(_Time.y * 6.2832 / max(_BreathePeriod, 0.1) + ObjectPhase());
+            positionOS.xz *= 1.0 + _BreatheAmount * h * s;
+            positionOS.y *= 1.0 - 0.35 * _BreatheAmount * h * s;
+            return positionOS;
+        }
+
+        float3 PropDeform(float3 positionOS, float4 color)
+        {
+            return PropWindBend(TransformObjectToWorld(Breathe(positionOS)), color);
         }
                 // outline width is in metres at the model's own size: a prefab scaled to 0.18 gets a 0.18x line
         // (geometric mean of the object scale, so non-uniform boxes do not blow up)
@@ -131,6 +175,7 @@ Shader "DSEWA/ToonWicker"
                 float3 normalWS : TEXCOORD2;
                 half fogFactor : TEXCOORD3;
                 float4 tangentWS : TEXCOORD4;
+                float heightM : TEXCOORD5;   // height above the pivot in metres (glow flow)
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
@@ -140,12 +185,13 @@ Shader "DSEWA/ToonWicker"
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
                 VertexNormalInputs nrm = GetVertexNormalInputs(input.normalOS, input.tangentOS);
-                float3 positionWS = PropWindBend(TransformObjectToWorld(input.positionOS.xyz), input.color);
+                float3 positionWS = PropDeform(input.positionOS.xyz, input.color);
                 o.positionCS = TransformWorldToHClip(positionWS);
                 o.positionWS = positionWS;
                 o.normalWS = nrm.normalWS;
                 o.tangentWS = float4(nrm.tangentWS, input.tangentOS.w * GetOddNegativeScale());
                 o.uv = TRANSFORM_TEX(input.uv, _BaseMap);
+                o.heightM = input.positionOS.y * OutlineObjectScale();
                 o.fogFactor = ComputeFogFactor(o.positionCS.z);
                 return o;
             }
@@ -186,8 +232,19 @@ Shader "DSEWA/ToonWicker"
                 color *= lerp(half3(1, 1, 1), light.color, _LightColorAmount);
                 // emission: painted glass etc. glows in its own (base) colour, independent of light and shadow
                 half emask = SAMPLE_TEXTURE2D(_EmissionMap, sampler_BaseMap, i.uv).r;
-                half breath = 1.0 - _EmissionPulse * (0.5 - 0.5 * sin(_Time.y * TWO_PI / max(_EmissionPeriod, 0.01)));
-                color += base * _EmissionColor.rgb * emask * breath;
+                float phase = ObjectPhase();
+                half breath = 1.0 - _EmissionPulse * (0.5 - 0.5 * sin(_Time.y * TWO_PI / max(_EmissionPeriod, 0.01) + phase));
+                // glow flow: bright bands climb the glowing mask (veins) from the foot to the top
+                float wave = 0.5 + 0.5 * sin((i.heightM * _GlowFlowFreq - _Time.y * _GlowFlowSpeed) * TWO_PI + phase);
+                half flow = lerp(1.0, 0.35 + 1.15 * wave * wave, _GlowFlow);
+                color += base * _EmissionColor.rgb * emask * breath * flow;
+                // iridescent rim: a thin-film colour that slides between two hues with the view angle
+                if (_IriStrength > 0)
+                {
+                    float iri = smoothstep(_IriMin, _IriMax, facing);
+                    float t = 0.5 + 0.5 * sin((facing * _IriBands + _Time.y * 0.05) * TWO_PI + phase);
+                    color += lerp(_IriColorA.rgb, _IriColorB.rgb, t) * iri * _IriStrength * breath;
+                }
                 color = MixFog(color, i.fogFactor);
                 return half4(color, 1);
             }
@@ -226,7 +283,7 @@ Shader "DSEWA/ToonWicker"
                 Varyings o = (Varyings)0;
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-                float3 positionWS = PropWindBend(TransformObjectToWorld(input.positionOS.xyz), input.color);
+                float3 positionWS = PropDeform(input.positionOS.xyz, input.color);
                 float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
                 positionWS += normalWS * _OutlineWidth * OutlineObjectScale();
                 o.positionCS = TransformWorldToHClip(positionWS);
@@ -262,7 +319,7 @@ Shader "DSEWA/ToonWicker"
             float4 vert(Attributes input) : SV_POSITION
             {
                 UNITY_SETUP_INSTANCE_ID(input);
-                float3 positionWS = PropWindBend(TransformObjectToWorld(input.positionOS.xyz), input.color);
+                float3 positionWS = PropDeform(input.positionOS.xyz, input.color);
                 float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
             #if _CASTING_PUNCTUAL_LIGHT_SHADOW
                 float3 lightDir = normalize(_LightPosition - positionWS);
@@ -298,7 +355,7 @@ Shader "DSEWA/ToonWicker"
             float4 vert(Attributes input) : SV_POSITION
             {
                 UNITY_SETUP_INSTANCE_ID(input);
-                return TransformWorldToHClip(PropWindBend(TransformObjectToWorld(input.positionOS.xyz), input.color));
+                return TransformWorldToHClip(PropDeform(input.positionOS.xyz, input.color));
             }
 
             half frag() : SV_Target { return 0; }
@@ -324,7 +381,7 @@ Shader "DSEWA/ToonWicker"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 Varyings o;
-                o.positionCS = TransformWorldToHClip(PropWindBend(TransformObjectToWorld(input.positionOS.xyz), input.color));
+                o.positionCS = TransformWorldToHClip(PropDeform(input.positionOS.xyz, input.color));
                 o.normalWS = TransformObjectToWorldNormal(input.normalOS);
                 return o;
             }
