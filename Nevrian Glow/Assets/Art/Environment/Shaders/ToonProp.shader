@@ -56,6 +56,12 @@ Shader "DSEWA/ToonProp"
         _DistGlowRange ("Distance Boost Start / End (m)", Vector) = (10, 60, 0, 0)
         _GlowMax ("Brightest Channel Cap (0 = off)", Range(0, 8)) = 0
         _FootBlend ("Foot Blend Into Ground (m above terrain, 0 = off)", Range(0, 2)) = 0
+        [Header(Reveal By Height   LighthouseGoal   default off)]
+        _RevealY ("Lit Below World Y (99999 = all lit)", Float) = 99999
+        _RevealSoft ("Reveal Edge (m)", Float) = 0.6
+        _RevealDark ("Unlit Colour (multiply)", Color) = (0.12, 0.12, 0.2, 1)
+        _RevealFlash ("Bright Band At The Front", Range(0, 6)) = 0
+        _RevealFlicker ("Unlit Faint Flicker", Range(0, 1)) = 0
         [Header(Transparency   blend One Zero and ZWrite 1 is opaque)]
         _Opacity ("Opacity (face middle)", Range(0, 1)) = 1
         _OpacityEdge ("Extra Opacity At The Silhouette", Range(0, 1)) = 0
@@ -125,6 +131,8 @@ Shader "DSEWA/ToonProp"
             float _FruitSway, _FruitSwaySpeed;
             float4 _FruitWindDir;
             float _PlantSway, _PlantSwaySpeed, _PlantNod, _PlantNodSpeed;
+            float _RevealY, _RevealSoft, _RevealFlash, _RevealFlicker;
+            half4 _RevealDark;
         CBUFFER_END
                 // outline width is in metres at the model's own size: a prefab scaled to 0.18 gets a 0.18x line
         // (geometric mean of the object scale, so non-uniform boxes do not blow up)
@@ -338,6 +346,17 @@ Shader "DSEWA/ToonProp"
                     float dotK = 0.35 + 0.65 * (0.5 + 0.5 * sin((_Time.y / max(_GlowMaskDotBreath, 0.01) + phase + i.uv.x * 3.1 + i.uv.y * 1.7) * TWO_PI));
                     half3 em = _GlowMaskColor.rgb * gm.r * wave + _GlowMaskDotColor.rgb * gm.g * dotK + _GlowMaskColor.rgb * gm.b * (0.25 + 0.75 * w) * 0.6;
                     color += em * _GlowMaskStrength * distK;
+                }
+                // reveal by height (2026-10-28, LighthouseGoal): only the part below _RevealY is lit, the rest sits in
+                // _RevealDark with an optional faint flicker; a bright band rides the front while it climbs
+                if (_RevealY < 99990)
+                {
+                    float above = (i.positionWS.y - _RevealY) / max(_RevealSoft, 1e-3);
+                    half litK = 1 - smoothstep(-0.5, 0.5, above);
+                    half flick = _RevealFlicker * (0.5 + 0.5 * sin(_Time.y * 2.3 + phase * 6.2832)) * (0.6 + 0.4 * sin(_Time.y * 7.1));
+                    half3 dark = color * _RevealDark.rgb + glowCol * glowTint * flick * 0.25;
+                    color = lerp(dark, color, litK);
+                    color += glowCol * glowTint * _RevealFlash * exp(-above * above * 2.0);
                 }
                 if (_GlowMax > 0) color *= min(1.0h, _GlowMax / max(max(color.r, max(color.g, color.b)), 1e-3h));
 

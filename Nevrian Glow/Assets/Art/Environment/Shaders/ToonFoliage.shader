@@ -134,6 +134,17 @@ Shader "DSEWA/ToonFoliage"
         #include "Assets/Art/Environment/Shaders/RuntimeVirtualTexture.hlsl"
         float4 _DSEWA_GrassCoverageRect;             // global: (minX, minZ, 1/sizeX, 1/sizeZ); z = 0 -> no coverage
         TEXTURE2D(_DSEWA_GrassCoverage); SAMPLER(sampler_DSEWA_GrassCoverage);
+        // GrassClearZones (2026-10-28): farm cells publish a mask; grass whose root falls inside shrinks away
+        float4 _DSEWA_GrassClearRect;                // global: (minX, minZ, 1/sizeX, 1/sizeZ); z = 0 -> off
+        TEXTURE2D(_DSEWA_GrassClear); SAMPLER(sampler_DSEWA_GrassClear);
+
+        float GrassClearScale(float2 pivotXZ)
+        {
+            if (_DSEWA_GrassClearRect.z == 0) return 1;
+            float2 uv = (pivotXZ - _DSEWA_GrassClearRect.xy) * _DSEWA_GrassClearRect.zw;
+            if (any(uv != saturate(uv))) return 1;
+            return 1 - SAMPLE_TEXTURE2D_LOD(_DSEWA_GrassClear, sampler_DSEWA_GrassClear, uv, 0).r;
+        }
 
         // Clumps at the edge of a grass patch get smaller (coverage = blurred detail density), so patches fade out
         // instead of ending in a wall. No coverage here (hand-placed grass away from patches) = full size.
@@ -173,7 +184,7 @@ Shader "DSEWA/ToonFoliage"
         float3 FoliageBend(float3 positionWS, float4 color)
         {
             float3 pivot = TransformObjectToWorld(float3(0, 0, 0));
-            positionWS = pivot + (positionWS - pivot) * GrassEdgeScale(pivot.xz);   // every pass goes through here
+            positionWS = pivot + (positionWS - pivot) * (GrassEdgeScale(pivot.xz) * GrassClearScale(pivot.xz));   // every pass goes through here
             positionWS.y -= _RootSink;                                     // bottom edge hides under the ground
             float h = color.r * color.r;
             float2 offset = 0;
