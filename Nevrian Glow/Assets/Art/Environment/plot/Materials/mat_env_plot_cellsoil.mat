@@ -25,7 +25,7 @@ Material:
     m_TexEnvs:
     - _BaseMap:
         m_Texture: {fileID: 2800000, guid: 71adefa493e614846985171f48d65505, type: 3}
-        m_Scale: {x: 3, y: 3}
+        m_Scale: {x: 1.6, y: 1.6}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
         m_Texture: {fileID: 0}
@@ -40,7 +40,7 @@ Material:
     - _AmbientStrength: 0.7
     - _BumpScale: 1
     - _CellHalf: 0.8
-    - _CrustContrast: 0.25
+    - _CrustContrast: 0.85
     - _DigRadius: 0.55
     - _FurrowCount: 3
     - _FurrowHeight: 0.09
@@ -55,7 +55,7 @@ Material:
     - _OutlineWidth: 0.004
     - _Pastel: 0
     - _PointLightStrength: 1
-    - _PulsePeriod: 4.5
+    - _PulsePeriod: 5
     - _ReceiveShadows: 1
     - _RimPower: 2.5
     - _RimStrength: 0
@@ -63,15 +63,15 @@ Material:
     - _ShadowBlur: 1.5
     - _ShadowSaturation: 1.3
     - _Softness: 0.3
-    - _TexGlowSoftness: 0.2
-    - _TexGlowStrength: 0
-    - _TexGlowThreshold: 0.5
+    - _TexGlowSoftness: 0.03
+    - _TexGlowStrength: 1.4
+    - _TexGlowThreshold: 0.93
     - _Till: 0
     - _ViewGloss: 0
     - _Wet: 0
     - _Wrap: 0.5
     m_Colors:
-    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _BaseColor: {r: 0.32, g: 0.36, b: 0.6, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _GlossColor: {r: 1, g: 1, b: 1, a: 1}
     - _GroundColor: {r: 0.29999998, g: 0.25999996, b: 0.45, a: 1}
@@ -83,6 +83,6 @@ Material:
     - _RimColor: {r: 0.85, g: 0.9, b: 1, a: 1}
     - _ShadowTint: {r: 0.62, g: 0.6, b: 0.9, a: 1}
     - _SkyColor: {r: 0.72, g: 0.78, b: 1, a: 1}
-    - _TexGlowPulse: {r: 1, g: 1, b: 0, a: 0}
+    - _TexGlowPulse: {r: 0.6, g: 1.2, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
