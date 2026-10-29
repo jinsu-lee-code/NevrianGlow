@@ -56,6 +56,8 @@ Material:
     - _ReceiveShadowBias: 0.03
     - _ShadowBlur: 1.5
     - _Softness: 0.053
+    - _SphereCenterY: 0.5
+    - _SphereNormal: 0
     - _TexDetail: 1
     - _TexDetailContrast: 1.6
     - _TexDetailFloor: 0.45
@@ -64,20 +66,21 @@ Material:
     - _VeinStrength: 0
     - _VeinTaper: 0.7
     - _VeinWidth: 0.028
+    - _WakeExempt: 0
     - _WindFreq: 0.35
     - _WindSpeed: 1.6
     - _WindStrength: 0.06
     m_Colors:
-    - _BacklightColor: {r: 0.62, g: 0.75, b: 1, a: 1}
-    - _CrownRimColor: {r: 0.7, g: 0.85, b: 1, a: 1}
-    - _CrownSkyColor: {r: 0.54999995, g: 0.78, b: 1, a: 1}
-    - _CrownUnderColor: {r: 0.41999996, g: 0.35999998, b: 0.75, a: 1}
-    - _EdgeColor: {r: 0.6, g: 0.72, b: 1, a: 1}
-    - _RootColor: {r: 0.28, g: 0.3, b: 0.7, a: 1}
-    - _ShadowTint: {r: 0.58, g: 0.54, b: 0.94, a: 1}
-    - _Tint: {r: 0.9, g: 0.86, b: 1, a: 1}
-    - _TipColor: {r: 0.8, g: 0.85, b: 0.98, a: 1}
-    - _VeinColor: {r: 0.54999995, g: 0.6, b: 0.95, a: 1}
+    - _BacklightColor: {r: 0.55, g: 1, b: 0.92, a: 1}
+    - _CrownRimColor: {r: 0.75, g: 1, b: 0.95, a: 1}
+    - _CrownSkyColor: {r: 0.7, g: 1, b: 0.95, a: 1}
+    - _CrownUnderColor: {r: 0.22, g: 0.32, b: 0.62, a: 1}
+    - _EdgeColor: {r: 0.55, g: 0.95, b: 0.9, a: 1}
+    - _RootColor: {r: 0.12, g: 0.42, b: 0.5, a: 1}
+    - _ShadowTint: {r: 0.45, g: 0.62, b: 0.9, a: 1}
+    - _Tint: {r: 1, g: 1, b: 1, a: 1}
+    - _TipColor: {r: 0.62, g: 1, b: 0.92, a: 1}
+    - _VeinColor: {r: 0.4, g: 0.9, b: 0.85, a: 1}
     - _WindDir: {r: 1, g: 0, b: 0.35, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
