@@ -32,7 +32,30 @@ namespace NevrianGlowFarm.Editor
         [MenuItem("Glow Farm/Setup/Build Sound Library")]
         private static void BuildMenu()
         {
-            Debug.Log("[Setup] 소리 목록: " + Build() + " · " + AttachPlayerFootsteps());
+            Debug.Log("[Setup] 소리 목록: " + Build() + " · " + AttachPlayerFootsteps() + " · " + AttachLighthouseSound());
+        }
+
+        // 등대 공명음 (사운드 납품 10.29, BRANCH_SOUND 4-4) — 아트 등대 소리 칸은 라이브러리가 아니라 원본 파일 그대로. Core 씬 AudioManager 옆에 연결 컴포넌트
+        private const string LighthouseFloorClip = "Assets/Audio/SFX/sfx_lighthouse_floor.wav";
+        private const string LighthouseEndingClip = "Assets/Audio/SFX/sfx_lighthouse_ending.wav";
+
+        private static string AttachLighthouseSound()
+        {
+            var audio = Object.FindFirstObjectByType<NevrianGlowFarm.Core.AudioManager>(FindObjectsInactive.Include);
+            if (audio == null)
+                return "등대 소리: Core 씬이 열려 있지 않아 건너뜀";
+            var link = audio.GetComponent<NevrianGlowFarm.Core.LighthouseSoundLink>();
+            bool added = link == null;
+            if (added)
+                link = Undo.AddComponent<NevrianGlowFarm.Core.LighthouseSoundLink>(audio.gameObject);
+            var so = new SerializedObject(link);
+            so.FindProperty("floorClip").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>(LighthouseFloorClip);
+            so.FindProperty("endingClip").objectReferenceValue = AssetDatabase.LoadAssetAtPath<AudioClip>(LighthouseEndingClip);
+            so.ApplyModifiedPropertiesWithoutUndo();
+            UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(audio.gameObject.scene);
+            UnityEditor.SceneManagement.EditorSceneManager.SaveScene(audio.gameObject.scene);
+            bool ok = so.FindProperty("floorClip").objectReferenceValue != null && so.FindProperty("endingClip").objectReferenceValue != null;
+            return (added ? "등대 소리 붙임" : "등대 소리 유지") + (ok ? string.Empty : " (소리 파일 없음 — Sound 브랜치 가져오기 확인)");
         }
 
         // 플레이어 발소리 (사운드 납품 10.23) — Core 씬이 열려 있으면 Player에 PlayerFootsteps를 붙인다 (있으면 그대로)

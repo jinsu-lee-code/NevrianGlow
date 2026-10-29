@@ -64,6 +64,9 @@ namespace NevrianGlowFarm.Core
 
         public static AudioManager Instance => instance;
 
+        /// <summary>효과음 버스 볼륨 (기본 믹스 × 설정 화면) — 이 관리자를 거치지 않고 소리를 내는 곳(아트 등대)이 맞춘다. 관리자가 없으면 1.</summary>
+        public static float SfxBusVolume => instance != null ? instance.BusVolume(SoundBus.Sfx) : 1f;
+
         // ── 정적 호출 (어디서든) ─────────────────────────────
 
         /// <summary>2D 효과음 (플레이어 본인 행동 · UI).</summary>
