@@ -111,7 +111,7 @@ Material:
     - _BumpScale: 1
     - _GrassTintAmount: 1
     - _GroundHueShift: 0
-    - _GroundSaturation: 0.85
+    - _GroundSaturation: 0.75
     - _HeightBlend: 1
     - _HeightBlendScale: 0.3
     - _HeightBlendWidth: 0.16
@@ -119,7 +119,7 @@ Material:
     - _HexEnable: 1
     - _HexRotation: 1
     - _HexSharpness: 8
-    - _PathAO: 0.7
+    - _PathAO: 0.45
     - _RootVeinDark: 0.3
     - _RootVeinStrength: 0
     - _ShadowBlur: 1.5
