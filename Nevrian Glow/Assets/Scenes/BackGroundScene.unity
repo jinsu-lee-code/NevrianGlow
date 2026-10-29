@@ -5073,6 +5073,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: pf_env_tree_bg_qt_common_2
       objectReference: {fileID: 0}
+    - target: {fileID: 816657688747259845, guid: 990c224cf69cba54daa18ac6d530c6a3, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4317867818493890901, guid: 990c224cf69cba54daa18ac6d530c6a3, type: 3}
       propertyPath: 'm_Materials.Array.data[1]'
       value: 
@@ -5818,6 +5822,10 @@ PrefabInstance:
     - target: {fileID: 8606570924711268907, guid: a4f3f82b1fe67d647b75ca2e3ef4e765, type: 3}
       propertyPath: m_Name
       value: pf_env_tree_bg_qt_common_4
+      objectReference: {fileID: 0}
+    - target: {fileID: 8606570924711268907, guid: a4f3f82b1fe67d647b75ca2e3ef4e765, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -95065,6 +95073,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: pf_env_tree_bg_qt_twisted_1
       objectReference: {fileID: 0}
+    - target: {fileID: 43025370317943092, guid: 81f8f527e79abf542b0cfd3ff9e78221, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 537409914283889553, guid: 81f8f527e79abf542b0cfd3ff9e78221, type: 3}
       propertyPath: 'm_Materials.Array.data[1]'
       value: 
@@ -96130,6 +96142,10 @@ PrefabInstance:
     - target: {fileID: 7194455994801286278, guid: fdfa30fe3874af64e84e321f195be62b, type: 3}
       propertyPath: m_Name
       value: pf_env_tree_bg_qt_twisted_5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7194455994801286278, guid: fdfa30fe3874af64e84e321f195be62b, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -101539,6 +101555,10 @@ PrefabInstance:
     - target: {fileID: 5667327901903649322, guid: 2bdaa3f2feb886242a087e6f23ae111e, type: 3}
       propertyPath: m_Name
       value: pf_env_tree_bg_qt_twisted_2
+      objectReference: {fileID: 0}
+    - target: {fileID: 5667327901903649322, guid: 2bdaa3f2feb886242a087e6f23ae111e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -107632,6 +107652,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: pf_env_tree_bg_qt_twisted_1
       objectReference: {fileID: 0}
+    - target: {fileID: 43025370317943092, guid: 81f8f527e79abf542b0cfd3ff9e78221, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 537409914283889553, guid: 81f8f527e79abf542b0cfd3ff9e78221, type: 3}
       propertyPath: 'm_Materials.Array.data[1]'
       value: 
@@ -112038,15 +112062,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 329995023297623833, guid: 2bdaa3f2feb886242a087e6f23ae111e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -22
+      value: -30
       objectReference: {fileID: 0}
     - target: {fileID: 329995023297623833, guid: 2bdaa3f2feb886242a087e6f23ae111e, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.45
+      value: 16.11246
       objectReference: {fileID: 0}
     - target: {fileID: 329995023297623833, guid: 2bdaa3f2feb886242a087e6f23ae111e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 40
+      value: -95
       objectReference: {fileID: 0}
     - target: {fileID: 329995023297623833, guid: 2bdaa3f2feb886242a087e6f23ae111e, type: 3}
       propertyPath: m_LocalRotation.w
