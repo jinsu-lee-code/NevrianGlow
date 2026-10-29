@@ -92,6 +92,45 @@ namespace NevrianGlowFarm.Tests
         }
 
         [Test]
+        public void Refill_EmptiedHotbarSlot_TakesFirstSameStackFromBag()
+        {
+            // 핫바 씨앗 1개를 다 쓰면 가방의 같은 씨앗 첫 묶음이 그 칸으로 (2026-10-30 사용자 요청)
+            var hotbar = Make(2);
+            var bag = Make(3);
+            hotbar.TryPlace(1, "item_seed_moonroot", 1);
+            bag.TryPlace(0, "item_seed_glowcap", 10);
+            bag.TryPlace(1, "item_seed_moonroot", 10);
+            bag.TryPlace(2, "item_seed_moonroot", 4);
+
+            Assert.IsTrue(hotbar.TryRemoveAt(1, 1));
+            int moved = InventoryRules.RefillFrom(hotbar, 1, "item_seed_moonroot", new[] { bag });
+
+            Assert.AreEqual(10, moved);
+            Assert.AreEqual("item_seed_moonroot", hotbar[1].ItemId, "같은 칸에 같은 씨앗");
+            Assert.AreEqual(10, hotbar[1].Count, "가방 첫 묶음 통째로");
+            Assert.IsTrue(bag[1].IsEmpty, "옮긴 가방 칸은 빔");
+            Assert.AreEqual(4, bag[2].Count, "다음 묶음은 그대로");
+            Assert.AreEqual("item_seed_glowcap", bag[0].ItemId, "다른 씨앗은 내려오지 않음");
+        }
+
+        [Test]
+        public void Refill_DoesNothing_WhenSlotNotEmptyOrNoSameItem()
+        {
+            var hotbar = Make(1);
+            var bag = Make(1);
+            hotbar.TryPlace(0, "item_seed_moonroot", 3);
+            bag.TryPlace(0, "item_seed_moonroot", 10);
+
+            Assert.AreEqual(0, InventoryRules.RefillFrom(hotbar, 0, "item_seed_moonroot", new[] { bag }), "칸에 아직 남아 있으면 채우지 않음");
+            Assert.AreEqual(3, hotbar[0].Count);
+
+            Assert.IsTrue(hotbar.TryRemoveAt(0, 3));
+            Assert.AreEqual(0, InventoryRules.RefillFrom(hotbar, 0, "item_seed_glowcap", new[] { bag }), "가방에 같은 아이템이 없으면 빈 칸 그대로");
+            Assert.IsTrue(hotbar[0].IsEmpty);
+            Assert.AreEqual(10, bag[0].Count);
+        }
+
+        [Test]
         public void Resize_GrowKeepsContents_ShrinkDropsTail()
         {
             var inv = Make(2);

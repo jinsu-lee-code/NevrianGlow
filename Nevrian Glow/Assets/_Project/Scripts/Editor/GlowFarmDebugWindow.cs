@@ -26,26 +26,32 @@ namespace NevrianGlowFarm.Editor
         private int expAmount = 80;
         private Data.ItemData addItem;
         private int addCount = 1;
+        private Vector2 scroll;
 
         private void OnGUI()
         {
-            DrawGameSection();
-            EditorGUILayout.Space();
-            DrawTutorialSection();
-            EditorGUILayout.Space();
-            DrawSaveSection();
-            EditorGUILayout.Space();
-            DrawFarmSection();
-            EditorGUILayout.Space();
-            DrawCleaningSection();
-            EditorGUILayout.Space();
-            DrawSalesSection();
-            EditorGUILayout.Space();
-            DrawSkillSection();
-            EditorGUILayout.Space();
-            DrawHotbarSection();
-            EditorGUILayout.Space();
-            DrawLogSection();
+            // 창보다 길어지면 세로 스크롤 (2026-10-30 사용자: 아래쪽 기능을 쓰려면 창을 늘려야 했음)
+            using (var view = new EditorGUILayout.ScrollViewScope(scroll))
+            {
+                scroll = view.scrollPosition;
+                DrawGameSection();
+                EditorGUILayout.Space();
+                DrawTutorialSection();
+                EditorGUILayout.Space();
+                DrawSaveSection();
+                EditorGUILayout.Space();
+                DrawFarmSection();
+                EditorGUILayout.Space();
+                DrawCleaningSection();
+                EditorGUILayout.Space();
+                DrawSalesSection();
+                EditorGUILayout.Space();
+                DrawSkillSection();
+                EditorGUILayout.Space();
+                DrawHotbarSection();
+                EditorGUILayout.Space();
+                DrawLogSection();
+            }
         }
 
         // 튜토리얼 (5-7): 현재 단계 · 진행, 건너뛰기 · 끄기 · 처음부터

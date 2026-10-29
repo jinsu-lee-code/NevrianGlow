@@ -322,7 +322,7 @@ namespace NevrianGlowFarm.Systems.Farm
                 // 씨앗을 먼저 쓰고 심는다 — 씨앗이 없으면 심지 않는다. 데이터베이스에 없는 작물은 심지 않는다(성장 규칙을 찾을 수 없음).
                 if (!database.TryGet(seed.Crop.Id, out CropData _))
                     Debug.LogError($"[FarmGrid] 작물 '{seed.Crop.Id}'가 ContentDatabase에 없음 — Glow Farm/Data/Refresh Content Database", this);
-                else if (hotbar != null && hotbar.TryConsumeSelected(1))
+                else if (hotbar != null && hotbar.TryUseSelected(1))
                 {
                     changed = FarmRules.TryPlant(cell, seed.Crop.Id);
                     if (changed)
@@ -336,7 +336,7 @@ namespace NevrianGlowFarm.Systems.Farm
             else if (held is FertilizerData fertilizer && cell.HasCrop && FarmRules.CanFertilize(cell, SpecOf(cell.CropId)))
             {
                 // 비료를 먼저 쓰고 준다 — 비료가 없으면 주지 않는다
-                if (hotbar != null && hotbar.TryConsumeSelected(1))
+                if (hotbar != null && hotbar.TryUseSelected(1))
                 {
                     changed = FarmRules.TryFertilize(cell, SpecOf(cell.CropId), fertilizer.GrowDaysReduction);
                     if (changed)

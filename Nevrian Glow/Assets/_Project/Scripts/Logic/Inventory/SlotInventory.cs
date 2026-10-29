@@ -168,6 +168,28 @@ namespace NevrianGlowFarm.Logic.Inventory
             return removed;
         }
 
+        /// <summary>
+        /// 빈 칸 하나를 다른 묶음들에 있는 같은 아이템의 첫 묶음으로 채운다 (핫바 씨앗을 다 쓰면 가방에서 내려옴).
+        /// 옮긴 개수 — 칸이 차 있거나 같은 아이템이 없으면 0.
+        /// </summary>
+        public static int RefillFrom(SlotInventory target, int index, string itemId, IReadOnlyList<SlotInventory> sources)
+        {
+            if (target == null || itemId == null || index < 0 || index >= target.SlotCount || !target[index].IsEmpty)
+                return 0;
+            foreach (var inv in sources)
+                for (int i = 0; i < inv.SlotCount; i++)
+                {
+                    var s = inv[i];
+                    if (s.IsEmpty || s.ItemId != itemId)
+                        continue;
+                    int move = Math.Min(s.Count, target.MaxStackOf(itemId));
+                    target.Set(index, new ItemStack(itemId, move));
+                    inv.Set(i, new ItemStack(itemId, s.Count - move));
+                    return move;
+                }
+            return 0;
+        }
+
         /// <summary>모든 묶음에 있는 그 아이템 개수.</summary>
         public static int CountOf(IReadOnlyList<SlotInventory> containers, string itemId)
         {

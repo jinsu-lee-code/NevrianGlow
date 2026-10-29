@@ -119,7 +119,10 @@ namespace NevrianGlowFarm.Systems.Player
         /// <summary>인벤토리 전체(같은 묶음 → 빈 핫바 → 빈 가방)에 넣는다. 자리가 모자라면 false.</summary>
         public bool TryAdd(ItemData item, int count) => inventory != null && inventory.TryAdd(item, count);
 
-        /// <summary>고른 칸에서 count개를 쓴다 (씨앗 심기 · 비료 · 내려놓기). 모자라면 false.</summary>
+        /// <summary>고른 칸에서 count개를 쓴다 (씨앗 심기 · 비료 · 진열). 칸이 비면 가방의 같은 아이템이 그 칸으로 내려온다. 모자라면 false.</summary>
+        public bool TryUseSelected(int count) => inventory != null && inventory.TryUseFromHotbar(selectedIndex, count);
+
+        /// <summary>고른 칸에서 count개를 뺀다 (바닥에 내려놓기 — 가방에서 채우지 않음). 모자라면 false.</summary>
         public bool TryConsumeSelected(int count) => inventory != null && inventory.TryRemove(inventory.Hotbar, selectedIndex, count);
 
         /// <summary>핫바 칸 수를 바꾼다 (스킬 4-3 · 디버그). 선택 칸이 없어지면 마지막 칸.</summary>

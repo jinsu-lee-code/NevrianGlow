@@ -326,7 +326,7 @@ namespace NevrianGlowFarm.Systems.Shop
             if (!(held is CropData crop) || aimedSlot < 0 || state.CanPlace(aimedSlot, crop.Id) != PlaceCheck.Ok)
                 return;
             var hotbar = PlayerHotbar();
-            if (hotbar == null || !hotbar.TryConsumeSelected(1))
+            if (hotbar == null || !hotbar.TryUseSelected(1))
                 return;
             state.TryPlace(aimedSlot, crop.Id);
             state.Straighten(aimedSlot); // 다시 진열하면 그 칸은 반듯해진다 (청소 v2 — 홀로그램 스냅)

@@ -34,6 +34,7 @@ namespace NevrianGlowFarm.Systems.Player
         private SlotInventory hotbar;
         private SlotInventory bag;
         private SlotInventory[] containers;
+        private SlotInventory[] bagOnly;
         private ItemStack cursor;
 
         /// <summary>플레이어 인벤토리 (플레이어는 하나). 구역 씬의 대상(밭 · 바닥 아이템 · 창고)이 찾는다.</summary>
@@ -68,6 +69,7 @@ namespace NevrianGlowFarm.Systems.Player
             hotbar = new SlotInventory(settings.HotbarBaseSlots, MaxStackOf);
             bag = new SlotInventory(settings.BagBaseSlots, MaxStackOf);
             containers = new[] { hotbar, bag };
+            bagOnly = new[] { bag };
 
             var start = startSettings.StartingHotbar;
             for (int i = 0; i < start.Count; i++)
@@ -131,6 +133,22 @@ namespace NevrianGlowFarm.Systems.Player
         {
             if (inventory == null || !inventory.TryRemoveAt(index, count))
                 return false;
+            NotifyChanged();
+            return true;
+        }
+
+        /// <summary>
+        /// 핫바 칸 하나에서 count개를 쓴다. 그 칸이 비면 가방에 있는 같은 아이템 한 묶음이 그 칸으로 내려온다
+        /// (씨앗 · 비료 · 진열 — 2026-10-30 사용자 요청). 모자라면 false.
+        /// </summary>
+        public bool TryUseFromHotbar(int index, int count)
+        {
+            if (hotbar == null)
+                return false;
+            string itemId = hotbar[index].ItemId;
+            if (!hotbar.TryRemoveAt(index, count))
+                return false;
+            InventoryRules.RefillFrom(hotbar, index, itemId, bagOnly);
             NotifyChanged();
             return true;
         }
