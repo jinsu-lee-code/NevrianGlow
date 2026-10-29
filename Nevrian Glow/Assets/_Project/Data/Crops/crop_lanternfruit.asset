@@ -27,8 +27,9 @@ MonoBehaviour:
   - {fileID: 968485363519860326, guid: e4344ef0487ceb644890191b9b6de82e, type: 3}
   - {fileID: 8912540618261724665, guid: f7147c0a18e8d5c46a1e0ca72a7d1988, type: 3}
   - {fileID: 296768963799598503, guid: b984b51ec6abe1748bba54fc1a3ee5bc, type: 3}
-  modelScale: 1
+  modelScale: 1.6
   harvestFromModel: 1
+  harvestTargetFrom: 0.45
   seedPrice: 20
   sellPrice: 180
   growDays: 4

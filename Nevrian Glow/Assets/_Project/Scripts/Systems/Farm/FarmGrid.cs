@@ -626,7 +626,7 @@ namespace NevrianGlowFarm.Systems.Farm
                 bool regrowing = cell.HarvestCount > 0 && spec.RegrowDays > 0;
                 int stage = CropStageRules.StageIndex(stages.Count, growth, ready, regrowing);
                 var stagePrefab = stage >= 0 ? stages[stage] : null;
-                views[index].Show(soil, true, color, Mathf.Lerp(seedlingScale, grownScale, growth), stagePrefab, crop.ModelScale, crop.HarvestFromModel);
+                views[index].Show(soil, true, color, Mathf.Lerp(seedlingScale, grownScale, growth), stagePrefab, crop.ModelScale, crop.HarvestFromModel, crop.HarvestTargetFrom);
                 views[index].SetFruit(ready, regrowing);
             }
 

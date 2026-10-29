@@ -151,9 +151,9 @@ namespace NevrianGlowFarm.Systems.Farm
         /// <summary>
         /// 흙 색과 작물 겉모습을 바꾼다. FarmGrid가 상태가 바뀐 칸에만 부른다.
         /// stagePrefab이 있으면 그 단계 모델(아트), 없으면 그레이박스 상자(색 · 크기 = 성장 비율).
-        /// modelTarget = 모델을 조준해야 수확하는 작물(나무형) — 모델을 감싸는 수확 창구를 붙인다.
+        /// modelTarget = 모델을 조준해야 수확하는 작물(나무형) — 모델의 targetFrom(높이 비율) 위쪽을 감싸는 수확 창구를 붙인다.
         /// </summary>
-        public void Show(Color soilColor, bool hasCrop, Color cropColor, float cropScale, GameObject stagePrefab, float modelScale = 1f, bool modelTarget = false)
+        public void Show(Color soilColor, bool hasCrop, Color cropColor, float cropScale, GameObject stagePrefab, float modelScale = 1f, bool modelTarget = false, float targetFrom = 0f)
         {
             // 흙 연출(SoilFX)이 같은 블록에 쓴 값은 남기고 색만 바꾼다
             soilRenderer.GetPropertyBlock(block);
@@ -163,7 +163,7 @@ namespace NevrianGlowFarm.Systems.Farm
             cropGlowColor = cropColor;
 
             GameObject wanted = hasCrop && modelAnchor != null ? stagePrefab : null;
-            SetModel(wanted, modelTarget);
+            SetModel(wanted, modelTarget, targetFrom);
             if (shownModel != null)
                 shownModel.transform.localScale = Vector3.one * modelScale; // 작물 데이터의 모델 배율 (칸 배율은 부모가 맡는다)
             if (!hasCrop)
@@ -179,7 +179,7 @@ namespace NevrianGlowFarm.Systems.Farm
         }
 
         // 단계가 바뀔 때만 모델을 바꾼다 (같은 프리팹이면 그대로).
-        private void SetModel(GameObject prefab, bool withTarget)
+        private void SetModel(GameObject prefab, bool withTarget, float targetFrom)
         {
             if (prefab == shownPrefab)
                 return;
@@ -199,7 +199,7 @@ namespace NevrianGlowFarm.Systems.Farm
             foreach (var c in shownModel.GetComponentsInChildren<Collider>(true))
                 c.enabled = false;
             if (withTarget)
-                AddModelTarget();
+                AddModelTarget(targetFrom);
             // 열매 트리거(거둠 · 다시 열림)가 둘 다 있는 Animator만 쓴다 — 단계가 바뀔 때 한 번만 찾는다
             var animator = shownModel.GetComponentInChildren<Animator>();
             if (animator != null && HasTrigger(animator, harvestTrigger) && HasTrigger(animator, regrowTrigger))
@@ -210,8 +210,9 @@ namespace NevrianGlowFarm.Systems.Farm
         private CropModelTarget modelTarget;
 
         // 나무형 작물의 수확 창구: 모델의 메시를 감싸는 트리거 상자(이동은 막지 않음, 레이어는 칸과 같은 Interactable).
-        // 크기는 만든 순간의 프리팹 자세로 잰다 — 자라기 애니메이션이 아직 돌기 전이라 다 자란 크기
-        private void AddModelTarget()
+        // 크기는 만든 순간의 프리팹 자세로 잰다 — 자라기 애니메이션이 아직 돌기 전이라 다 자란 크기.
+        // 아래쪽은 모델 높이의 targetFrom 비율부터 — 줄기 메시가 바닥까지 내려와 밑동을 봐도 수확되던 것 (2026-10-30 사용자)
+        private void AddModelTarget(float targetFrom)
         {
             var root = shownModel.transform;
             var toRoot = root.worldToLocalMatrix;
@@ -234,6 +235,8 @@ namespace NevrianGlowFarm.Systems.Farm
             }
             if (!any)
                 return;
+            float bottom = local.min.y + local.size.y * Mathf.Clamp01(targetFrom);
+            local.SetMinMax(new Vector3(local.min.x, bottom, local.min.z), local.max);
 
             var go = new GameObject("HarvestTarget");
             go.layer = gameObject.layer;
