@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: mat_pp_aerial_perspective
+  m_Shader: {fileID: 4800000, guid: c61dc84d5e968d747b126a4d01e62fa7, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _DetailKeep: 0.7
+    - _GlowKeep: 1.1
+    - _HazeAmount: 0.4
+    - _HazeCurve: 1.2
+    - _HazeEnd: 220
+    - _HazeStart: 30
+    - _NearDeepen: 0.06
+    - _NearEnd: 10
+    - _NearSaturate: 0.1
+    - _SkyFrom: 380
+    - _SkyFull: 520
+    m_Colors:
+    - _HazeColor: {r: 0.36, g: 0.32, b: 0.58, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
