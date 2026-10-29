@@ -39,6 +39,9 @@ namespace NevrianGlowFarm.Editor
         private const float EntranceX = 0f, EntranceGap = 1.6f;               // 앞 벽(z = −5) 가운데 — 아트 벽의 문 구멍 1.6 × 2.4 m (x 0)
         private const float CounterX = 4.1f;                                   // 계산대 (오른쪽 벽과 1.2 m — 점원 자리로 들어가는 통로, 2026-10-25)
         private const float FarmDoorZ = -2.3f, FarmDoorGap = 1.6f;            // 왼쪽 벽(x = −6) 출발 지점 — 아트 벽엔 농장 문 구멍이 없어 벽은 막힘(순간이동)
+        private const float BasketStandZ = -3.13f;                             // 장바구니 진열대 — 아트가 앞 벽에서 띄움(BRANCH_ART 10.29, 예전 −4.3). 손님이 집는 자리 · 금지 구역도 따라감
+        private const float ShelfLampX = 5.6f, ShelfLampZ = 3.5f;              // 진열대 램프 2개 — 과일 진열대 사이 → 양쪽 벽(수정사항 10/29, 왼쪽은 아트가 먼저 옮김)
+        private const float CounterLampRange = 3f;                             // 계산대 램프 점광 범위 — 청록이 방 전체를 덮지 않게 6 → 3 m (BRANCH_ART 10.27 요청, 수정사항 10/29 "클럽 같음")
 
         // 아트 가게 껍데기 (BRANCH_ART 10.21): 벽 · 천장 피벗 = 바닥 중앙(ShopRoot), 입구 피벗 = 통로 바닥 중앙. 콜라이더 없음
         private const string ShopWallArt = "Assets/Art/Environment/shop_wall/pf_env_shop_wall.prefab";
@@ -147,18 +150,22 @@ namespace NevrianGlowFarm.Editor
             // 수납장 방향은 그대로 — 계산기(Register)만 점원 쪽을 보게 counter 프리팹에서 돌림 (2026-10-22 사용자)
             // 2026-10-25 사용자: 점원 자리(계산대 뒤)에 못 들어감 — 오른쪽 벽과 0.6 m뿐이라 x 4.7 → CounterX(4.1), 뒤쪽 통로 1.2 m
             Place(root, "Counter", new Vector3(CounterX, 0f, -4.0f), 90f);
-            Place(root, "BasketStand", new Vector3(-0.9f, 0f, -4.3f), 90f);
+            Place(root, "BasketStand", new Vector3(-0.9f, 0f, BasketStandZ), 90f);
             Place(root, "OpenSign", new Vector3(-1.7f, 0f, -4.5f), 0f);
             Place(root, "Lamp_Counter", new Vector3(5.5f, 0f, -4.6f), 0f);
-            Place(root, "Lamp_ShelfLeft", new Vector3(-2.9f, 0f, 2.6f), 180f);
-            Place(root, "Lamp_ShelfRight", new Vector3(2.9f, 0f, 2.6f), 180f);
+            Place(root, "Lamp_ShelfLeft", new Vector3(-ShelfLampX, 0f, ShelfLampZ), 90f);  // 등이 방 안쪽(+x)을 봄
+            Place(root, "Lamp_ShelfRight", new Vector3(ShelfLampX, 0f, ShelfLampZ), 270f);
             Place(root, "Lamp_Entrance", new Vector3(-2.3f, 0f, -4.6f), 0f);
+            // 점광은 계산대 램프만 (범위 좁게). 진열대 램프는 등 몸체 발광 · 블룸만 남기고 Light를 끈다 — 천장 오브 · 창 아래 등이 진열대를 비춤
+            notes.Add(SetLampLight(root, "Lamp_Counter", true, CounterLampRange));
+            notes.Add(SetLampLight(root, "Lamp_ShelfLeft", false, 0f));
+            notes.Add(SetLampLight(root, "Lamp_ShelfRight", false, 0f));
 
             var sales = root.Find("SalesSystem");
             if (sales != null)
             {
                 Place(sales, "CustomerEntrance", new Vector3(EntranceX, 0f, -4.6f), 0f);
-                Place(sales, "BasketPoint", new Vector3(-0.3f, 0f, -4.3f), 270f);
+                Place(sales, "BasketPoint", new Vector3(-0.3f, 0f, BasketStandZ), 270f);
                 Place(sales, "ShelfFront", new Vector3(0f, 0f, LowerAisleZ), 0f);
                 Place(sales, "CounterPoint", new Vector3(CounterX, 0f, -4.0f), 0f);
                 Place(sales, "QueueStart", new Vector3(CounterX - 1.1f, 0f, -4.0f), 270f); // 줄은 계산대 왼쪽으로 (−x)
@@ -184,7 +191,7 @@ namespace NevrianGlowFarm.Editor
             // 통로 2줄: 쓰레기 · 흩어진 상품은 막고 얼룩 · 발자국은 허용 (기획 회신 10/22 A2)
             Zone(root, "ForbiddenZone_ShelfFront", new Vector3(0f, 0f, LowerAisleZ), new Vector2(Width, LowerAisleWidth), allowStains: true); // 아래 통로
             Zone(root, "ForbiddenZone_UpperAisle", new Vector3(0f, 0f, UpperAisleZ), new Vector2(Width, UpperAisleWidth), allowStains: true);
-            Zone(root, "ForbiddenZone_BasketStand", new Vector3(-0.9f, 0f, -4.3f), new Vector2(1.2f, 1.0f));
+            Zone(root, "ForbiddenZone_BasketStand", new Vector3(-0.9f, 0f, BasketStandZ), new Vector2(1.2f, 1.0f));
             foreach (Transform spot in spots)
             {
                 var fs = spot.GetComponent<FurnitureSpot>();
@@ -361,6 +368,20 @@ namespace NevrianGlowFarm.Editor
                 return;
             t.localPosition = pos;
             t.localRotation = Quaternion.Euler(0f, yaw, 0f);
+        }
+
+        // 램프 프리팹 안의 점광원(자식 Light)을 켜고 끈다. 켤 때 range > 0이면 범위도 맞춘다
+        private static string SetLampLight(Transform root, string lampName, bool on, float range)
+        {
+            var lamp = root.Find(lampName);
+            var light = lamp != null ? lamp.GetComponentInChildren<Light>(true) : null;
+            if (light == null)
+                return $"{lampName} 점광 없음";
+            light.enabled = on;
+            if (on && range > 0f)
+                light.range = range;
+            EditorUtility.SetDirty(light);
+            return on ? $"{lampName} 점광 {light.range:0.#} m" : $"{lampName} 점광 끔";
         }
 
         private static Transform Child(Transform parent, string name)

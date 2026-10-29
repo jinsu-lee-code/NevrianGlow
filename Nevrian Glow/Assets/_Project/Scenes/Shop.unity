@@ -1715,13 +1715,17 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 244385544}
     m_Modifications:
+    - target: {fileID: 1655748308337409550, guid: c38758a190bed27428a6c8a2666a1889, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4587121789265486518, guid: c38758a190bed27428a6c8a2666a1889, type: 3}
       propertyPath: m_Name
       value: Lamp_ShelfRight
       objectReference: {fileID: 0}
     - target: {fileID: 7240690308413829460, guid: c38758a190bed27428a6c8a2666a1889, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 2.9
+      value: 5.6
       objectReference: {fileID: 0}
     - target: {fileID: 7240690308413829460, guid: c38758a190bed27428a6c8a2666a1889, type: 3}
       propertyPath: m_LocalPosition.y
@@ -1729,11 +1733,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7240690308413829460, guid: c38758a190bed27428a6c8a2666a1889, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 2.6
+      value: 3.5
       objectReference: {fileID: 0}
     - target: {fileID: 7240690308413829460, guid: c38758a190bed27428a6c8a2666a1889, type: 3}
       propertyPath: m_LocalRotation.w
-      value: -0.00000004371139
+      value: -0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 7240690308413829460, guid: c38758a190bed27428a6c8a2666a1889, type: 3}
       propertyPath: m_LocalRotation.x
@@ -1741,7 +1745,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7240690308413829460, guid: c38758a190bed27428a6c8a2666a1889, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 1
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 7240690308413829460, guid: c38758a190bed27428a6c8a2666a1889, type: 3}
       propertyPath: m_LocalRotation.z
@@ -2178,7 +2182,7 @@ Transform:
   m_GameObject: {fileID: 679654268}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: -0.7071068}
-  m_LocalPosition: {x: -0.3, y: 0, z: -4.3}
+  m_LocalPosition: {x: -0.3, y: 0, z: -3.13}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2310,7 +2314,7 @@ Transform:
   m_GameObject: {fileID: 718900110}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.9, y: 0, z: -4.3}
+  m_LocalPosition: {x: -0.9, y: 0, z: -3.13}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2815,6 +2819,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 244385544}
     m_Modifications:
+    - target: {fileID: 1655748308337409550, guid: c38758a190bed27428a6c8a2666a1889, type: 3}
+      propertyPath: m_Range
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 4587121789265486518, guid: c38758a190bed27428a6c8a2666a1889, type: 3}
       propertyPath: m_Name
       value: Lamp_Counter
@@ -4140,6 +4148,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 244385544}
     m_Modifications:
+    - target: {fileID: 1655748308337409550, guid: c38758a190bed27428a6c8a2666a1889, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4587121789265486518, guid: c38758a190bed27428a6c8a2666a1889, type: 3}
       propertyPath: m_Name
       value: Lamp_ShelfLeft
@@ -6172,7 +6184,7 @@ MonoBehaviour:
   extraBuyStat: {fileID: 11400000, guid: f749632b3543b084dbdb3e727d8e8f3c, type: 2}
   browseSpread: 1.6
   browseGap: 0.6
-  overtimeLimit: 20
+  stuckLimit: 90
   seed: 20261011
   drawPath: 1
   gizmoQueueSlots: 6

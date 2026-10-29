@@ -359,5 +359,23 @@ MonoBehaviour:
     loop: 0
     pitchJitter: 0.05
     cooldown: 0.05
+  - id: sfx_storage_open
+    clips:
+    - {fileID: 8300000, guid: 1bcc6a930ca08624ea3db1c13ec357fb, type: 3}
+    bus: 0
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
+  - id: sfx_storage_put
+    clips:
+    - {fileID: 8300000, guid: f568668e7be836e40b769365aaea88a7, type: 3}
+    bus: 0
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
   minDistance: 1
   maxDistance: 15

@@ -52,6 +52,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: crop_lanternfruit_mature
       objectReference: {fileID: 0}
+    - target: {fileID: 6531217410924844050, guid: 2bf892d638ed84444b01774edbaccf74, type: 3}
+      propertyPath: readyLight
+      value: 
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

@@ -52,6 +52,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: crop_moonroot_giant
       objectReference: {fileID: 0}
+    - target: {fileID: 6547046886416314924, guid: 352c2e5377802ad4c9de8706db9d22f1, type: 3}
+      propertyPath: readyLight
+      value: 
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

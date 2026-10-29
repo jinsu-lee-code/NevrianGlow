@@ -48,6 +48,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5232972293616190121, guid: 930e3fe87b1098c4d8d95a0876b33f0c, type: 3}
+      propertyPath: readyLight
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 9156221194934631043, guid: 930e3fe87b1098c4d8d95a0876b33f0c, type: 3}
       propertyPath: m_Name
       value: crop_mushroomflower_giant
