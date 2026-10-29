@@ -221,6 +221,26 @@ Shader "DSEWA/ToonSky"
         _CloudSpeed ("Cloud Speed (multiplies Wind)", Float) = 1
         _CloudHorizonFade ("Horizon Fade Height", Range(0.01, 0.5)) = 0.12
         _CloudOpacity ("Opacity (> 1 extrapolates)", Range(0, 2)) = 1
+
+        [Header(Painted Sky   equirect layers under the sun and moons and planets)]
+        _PanoTex ("Background (equirect 2:1, RGB sky without clouds, A star mask)", 2D) = "black" {}
+        _PanoCloudLow ("Cloud Layer Low (RGBA)", 2D) = "clear" {}
+        _PanoCloudHigh ("Cloud Layer High (RGBA)", 2D) = "clear" {}
+        _PanoAmount ("Panorama Amount", Range(0, 1)) = 0
+        _PanoTint ("Panorama Tint (multiply)", Color) = (1, 1, 1, 1)
+        _PanoRotation ("Panorama Rotation (deg)", Range(0, 360)) = 0
+        _PanoHorizon ("Panorama Horizon Fade", Range(0.001, 0.3)) = 0.04
+        _PanoCloudSpeed ("Cloud Drift (x low, y high: deg per second around the sky)", Vector) = (0.15, 0.35, 0, 0)
+        _PanoStarTwinkle ("Painted Star Twinkle (x speed, y depth, z brightness)", Vector) = (1.5, 0.8, 1, 0)
+        _PanoCloudFront ("Painted Clouds In Front Of Planets", Range(0, 1)) = 1
+        [Header(Day Side towards the main light   0 is off)]
+        _DaySide ("Day Side Amount", Range(0, 1)) = 0
+        _DaySideRange ("Day Side Blend (dot with light: start, full)", Vector) = (-0.1, 0.6, 0, 0)
+        _DayZenithColor ("Day Zenith", Color) = (0.36, 0.52, 0.9, 1)
+        _DayHorizonColor ("Day Horizon", Color) = (0.82, 0.86, 1, 1)
+        _DayCloudTint ("Day Cloud Tint (multiply)", Color) = (1.1, 1.05, 1.1, 1)
+        _DayEdgeColor ("Day Night Border Colour", Color) = (1, 0.45, 0.25, 1)
+        _DayEdgeAmount ("Border Colour Amount", Range(0, 1)) = 0
     }
 
     SubShader
@@ -236,9 +256,14 @@ Shader "DSEWA/ToonSky"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"   // RgbToHsv / HsvToRgb (aurora HSL)
 
+            float _DSEWA_PlanetSkyOff;   // global: 1 while SkyRingedPlanet draws the planet as 3D meshes (2026-10-26)
             CBUFFER_START(UnityPerMaterial)
                 half4 _ZenithColor, _HorizonColor, _GroundColor;
                 half _GradientPower, _GroundFade;
+                half _DaySide;
+                float4 _DaySideRange;
+                half4 _DayZenithColor, _DayHorizonColor, _DayCloudTint, _DayEdgeColor;
+                half _DayEdgeAmount;
                 half4 _OverallColor;
                 half4 _MidColor, _BandColor;
                 half _MidHeight, _BandHeight, _BandAmount, _Dither;
@@ -294,7 +319,13 @@ Shader "DSEWA/ToonSky"
                 float4 _CloudWind;
                 float _CloudSpeed;
                 half _CloudHorizonFade, _CloudOpacity;
+                half4 _PanoTint;
+                half _PanoAmount, _PanoRotation, _PanoHorizon, _PanoCloudFront;
+                float4 _PanoCloudSpeed, _PanoStarTwinkle;
             CBUFFER_END
+            TEXTURE2D(_PanoTex); SAMPLER(sampler_PanoTex);
+            TEXTURE2D(_PanoCloudLow);
+            TEXTURE2D(_PanoCloudHigh);
 
             // authored cloud shapes (SkyCloudShapes): baked signed distance, up to 4 shapes in RGBA
             TEXTURE3D(_DSEWA_SkyShapeTex); SAMPLER(sampler_DSEWA_SkyShapeTex);
@@ -974,6 +1005,53 @@ Shader "DSEWA/ToonSky"
                 // Bright haze band hugging the horizon (both sides, so it also hides the ground's far edge)
                 color = lerp(color, _BandColor.rgb, (1 - smoothstep(0, _BandHeight, abs(up))) * _BandAmount);
 
+                // Painted sky (2026-10-26, user: "a Ghibli-cloud skybox", then "make the clouds drift and only the stars
+                // twinkle"). Layered like Skyrim's weather sky / OptiFine custom sky layers: a static background, its
+                // painted stars twinkling one by one, and two cloud layers drifting around the sky at their own speeds
+                // (the high one faster, as near clouds overhead pass quicker than far low ones). The clouds are drawn
+                // again after the planets so they pass in front of them.
+                float panoK = _PanoAmount * smoothstep(-0.005, _PanoHorizon, up);
+                half3 pano = 0;
+                half panoCloud = 0;
+                half3 cloudRaw = 0;
+                if (panoK > 0)
+                {
+                    float2 puv = float2(atan2(dir.x, dir.z) * (0.5 / PI) + 0.5 + _PanoRotation / 360.0,
+                                        asin(clamp(up, -1, 1)) / PI + 0.5);
+                    half4 bg = SAMPLE_TEXTURE2D_LOD(_PanoTex, sampler_PanoTex, puv, 0);   // LOD 0: no seam at the atan wrap
+                    // twinkle: the painted stars (kept in the colour, A = star mask) dim and come back, each 4-texel cell
+                    // with its own phase
+                    float2 cell = floor(puv * float2(512, 256));
+                    float ph = frac(sin(dot(cell, float2(12.9898, 78.233))) * 43758.5453);
+                    half tw = 1 - _PanoStarTwinkle.y * (0.5 + 0.5 * sin(_Time.y * _PanoStarTwinkle.x * (0.6 + ph) + ph * 6.2832));
+                    half3 sky = bg.rgb + bg.rgb * bg.a * (tw * _PanoStarTwinkle.z - 1) * saturate(_StarAmount);
+                    float2 drift = float2(_Time.y / 360.0, 0);
+                    half4 lo = SAMPLE_TEXTURE2D_LOD(_PanoCloudLow, sampler_PanoTex, puv + drift * _PanoCloudSpeed.x, 0);
+                    half4 hi = SAMPLE_TEXTURE2D_LOD(_PanoCloudHigh, sampler_PanoTex, puv + drift * _PanoCloudSpeed.y, 0);
+                    half3 cl = lerp(lo.rgb, hi.rgb, hi.a);
+                    half ca = 1 - (1 - lo.a) * (1 - hi.a);                                   // high over low
+                    pano = cl * _PanoTint.rgb;                                                // cloud colour (rgb is bled past the edge)
+                    panoCloud = ca * panoK;
+                    cloudRaw = cl;
+                    color = lerp(color, lerp(sky * _PanoTint.rgb, pano, ca), panoK);
+                }
+
+                // Day side (2026-10-26, user: "where the sunlight falls bright, where the moon is a night sky"): the half of
+                // the sky towards the main light becomes a bright day sky (its own gradient, lit clouds), fading softly into
+                // the night sky on the moon side. Stars and the galaxy fade out on the day side.
+                float dayK = 0;
+                if (_DaySide > 0)
+                {
+                    dayK = smoothstep(_DaySideRange.x, _DaySideRange.y, dot(dir, L)) * _DaySide;
+                    half3 dayCol = lerp(_DayHorizonColor.rgb, _DayZenithColor.rgb, smoothstep(0, 1, pow(saturate(up), _GradientPower)));
+                    if (up < 0) dayCol = lerp(_DayHorizonColor.rgb, _GroundColor.rgb, saturate(-up * _GroundFade));
+                    dayCol = lerp(dayCol, cloudRaw * _DayCloudTint.rgb, panoCloud);
+                    color = lerp(color, dayCol, dayK);
+                    // a warm vermilion band where day meets night (strongest half way, a bit more towards the horizon)
+                    float edge = pow(saturate(dayK * (1 - dayK) * 4), 3) * _DayEdgeAmount * (0.55 + 0.45 * (1 - saturate(up)));
+                    color = lerp(color, _DayEdgeColor.rgb * lerp(1, 0.75, panoCloud), edge);
+                }
+
                 // Sunset glow: warm horizon only on the sun's side of the sky, hotter right at the horizon.
                 // Uses the sun's azimuth (not its height), so it works with the sun low over the horizon.
                 float az = saturate(dot(normalize(dir.xz + 1e-5), normalize(L.xz + 1e-5)) * 0.5 + 0.5);
@@ -994,7 +1072,7 @@ Shader "DSEWA/ToonSky"
                     float2 sf = StarLayer(dir, _StarFar, _StarFar.y * boost, 0, 17.3);
                     float2 sm = StarLayer(dir, float4(_StarScale, _StarDensity, 0.05, 0.13), _StarDensity * lerp(1, boost, 0.5), 0, 0);
                     float2 sn = StarLayer(dir, _StarNear, _StarNear.y, _StarBright.w, 41.7);
-                    float fadeUp = _StarAmount * smoothstep(0.03, 0.25, up);
+                    float fadeUp = _StarAmount * smoothstep(0.03, 0.25, up) * (1 - panoCloud) * (1 - dayK);   // no stars on painted clouds / day side
                     half3 tf = lerp(_StarColor.rgb, sf.y > 0.5 ? _StarWarm.rgb : _StarCool.rgb, _StarTintAmount * abs(sf.y * 2 - 1));
                     half3 tm = lerp(_StarColor.rgb, sm.y > 0.5 ? _StarWarm.rgb : _StarCool.rgb, _StarTintAmount * abs(sm.y * 2 - 1));
                     half3 tn = lerp(_StarColor.rgb, sn.y > 0.5 ? _StarWarm.rgb : _StarCool.rgb, _StarTintAmount * abs(sn.y * 2 - 1));
@@ -1004,7 +1082,7 @@ Shader "DSEWA/ToonSky"
                 // galaxy band and galaxies: behind the planets, faded at the horizon like the stars
                 if (_StarAmount > 0 && up > 0)
                 {
-                    float gFade = _StarAmount * smoothstep(0.02, 0.2, up);
+                    float gFade = _StarAmount * smoothstep(0.02, 0.2, up) * (1 - panoCloud) * (1 - dayK);
                     color += (GalaxyBand(dir) + Galaxies(dir)) * gFade;
                 }
 
@@ -1027,7 +1105,7 @@ Shader "DSEWA/ToonSky"
                     m4 = CelestialBody(dir, L, d4, max(_Moon4Size, 1e-3), _Moon2Lit.rgb * 0.95, _Moon2Shadow.rgb * 1.1, _PlanetBand.rgb, _PlanetRim.rgb, 0, 0, 0.05, 0, float2(0, 0), 0, 0);
                 }
                 float k = _PlanetAmount * horizonFade;
-                float a2 = m2.a * k * step(1e-3, _Moon2Size) * _PlanetSkyDraw, a3 = m3.a * k * step(1e-3, _Moon3Size), a4 = m4.a * k * step(1e-3, _Moon4Size) * _PlanetSkyDraw;
+                float a2 = m2.a * k * step(1e-3, _Moon2Size) * _PlanetSkyDraw * (1 - _DSEWA_PlanetSkyOff), a3 = m3.a * k * step(1e-3, _Moon3Size), a4 = m4.a * k * step(1e-3, _Moon4Size) * _PlanetSkyDraw * (1 - _DSEWA_PlanetSkyOff);
                 half3 c2 = lerp(m2.rgb, skyBehind, bodyHaze), c3 = lerp(m3.rgb, skyBehind, bodyHaze), c4 = lerp(m4.rgb, skyBehind, bodyHaze);
 
                 color = lerp(color, c3, a3 * (1 - f3));
@@ -1044,7 +1122,7 @@ Shader "DSEWA/ToonSky"
                 color = lerp(color, c2, a2 * (1 - f2));
                 color = lerp(color, c4, a4 * (1 - f4));
                 // the ringed planet and moons 2 / 4 are 3D meshes when SkyRingedPlanet is on (_PlanetSkyDraw = 0)
-                if (_PlanetAmount > 0 && up > -0.05 && _PlanetSkyDraw > 0.5)
+                if (_PlanetAmount > 0 && up > -0.05 && _PlanetSkyDraw * (1 - _DSEWA_PlanetSkyOff) > 0.5)
                 {
                     half4 pl = CelestialBody(dir, L, _PlanetDir.xyz, _PlanetSize, _PlanetLit.rgb, _PlanetShadow.rgb,
                                              _PlanetBand.rgb, _PlanetRim.rgb, _PlanetBandAmount, _PlanetBands, _PlanetRimWidth, _RingAmount,
@@ -1054,6 +1132,8 @@ Shader "DSEWA/ToonSky"
                 }
                 color = lerp(color, c2, a2 * f2);
                 color = lerp(color, c4, a4 * f4);
+                // painted clouds pass in front of the planets and moons
+                color = lerp(color, pano * _OverallColor.rgb, panoCloud * _PanoCloudFront);
 
                 // Aurora: in the upper atmosphere, so in front of the planets and moons (additive glow)
                 if (_AuroraAmount > 0 && up > 0)

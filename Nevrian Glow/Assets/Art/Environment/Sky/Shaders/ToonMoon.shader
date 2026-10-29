@@ -47,6 +47,12 @@ Shader "DSEWA/ToonMoon"
         [HideInInspector] _PhaseDir ("Phase Light (world, set by MoonModel)", Vector) = (0, 0, -1, 0)
         [HideInInspector] _CameraShrink ("Camera Shrink (set by MoonModel)", Float) = 1
         [HideInInspector] _GlowMul ("Glow Multiplier (set by MoonModel)", Float) = 1
+        [Header(Sky clouds in front   copied from the skybox by MoonModel)]
+        [NoScaleOffset] _PanoCloudLow ("Cloud Layer Low", 2D) = "clear" {}
+        [NoScaleOffset] _PanoCloudHigh ("Cloud Layer High", 2D) = "clear" {}
+        _SkyCloudParams ("Amount, Horizon Fade, Rotation (deg), In Front", Vector) = (0, 0.04, 0, 1)
+        _PanoCloudSpeed ("Cloud Drift (deg/s low, high)", Vector) = (0.15, 0.35, 0, 0)
+        _SkyCloudTint ("Cloud Tint", Color) = (1, 1, 1, 1)
     }
 
     SubShader
@@ -67,6 +73,8 @@ Shader "DSEWA/ToonMoon"
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
             TEXTURE2D(_BumpMap); SAMPLER(sampler_BumpMap);
             TEXTURE2D(_OcclusionMap); SAMPLER(sampler_OcclusionMap);
+            TEXTURE2D(_PanoCloudLow); SAMPLER(sampler_PanoCloudLow);
+            TEXTURE2D(_PanoCloudHigh);
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseMap_ST;
                 half _BumpScale;
@@ -80,6 +88,8 @@ Shader "DSEWA/ToonMoon"
                 half _Smooth, _Wrap;
                 float4 _PhaseDir;
                 float _CameraShrink, _GlowMul;
+                float4 _SkyCloudParams, _PanoCloudSpeed;
+                half4 _SkyCloudTint;
             CBUFFER_END
 
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float4 tangentOS : TANGENT; float2 uv : TEXCOORD0; };
@@ -172,6 +182,20 @@ Shader "DSEWA/ToonMoon"
                 // ink outline along the silhouette (geometric normal, so the normal map does not break it)
                 float ow = fwidth(fresG) + 0.005;
                 col = lerp(col, _OutlineColor.rgb, smoothstep(1 - _OutlineWidth - ow, 1 - _OutlineWidth + ow, fresG) * step(1e-4, _OutlineWidth));
+                // the sky's painted clouds pass in front of the moon, like they do over the planets (2026-10-28, team:
+                // "a moon in front of the cloud layer looks close / like a bug") - same panorama lookup as DSEWA/ToonSky
+                float3 dir = -normalize(i.viewWS);
+                float panoK = _SkyCloudParams.x * smoothstep(-0.005, _SkyCloudParams.y, dir.y);
+                if (panoK > 0)
+                {
+                    float2 puv = float2(atan2(dir.x, dir.z) * (0.5 / PI) + 0.5 + _SkyCloudParams.z / 360.0, asin(clamp(dir.y, -1, 1)) / PI + 0.5);
+                    float2 drift = float2(_Time.y / 360.0, 0);
+                    half4 lo = SAMPLE_TEXTURE2D_LOD(_PanoCloudLow, sampler_PanoCloudLow, puv + drift * _PanoCloudSpeed.x, 0);
+                    half4 hi = SAMPLE_TEXTURE2D_LOD(_PanoCloudHigh, sampler_PanoCloudLow, puv + drift * _PanoCloudSpeed.y, 0);
+                    half3 cl = lerp(lo.rgb, hi.rgb, hi.a);
+                    half ca = 1 - (1 - lo.a) * (1 - hi.a);
+                    col = lerp(col, cl * _SkyCloudTint.rgb, ca * panoK * _SkyCloudParams.w);
+                }
                 return half4(col, 1);
             }
             ENDHLSL
@@ -201,6 +225,8 @@ Shader "DSEWA/ToonMoon"
                 half _Smooth, _Wrap;
                 float4 _PhaseDir;
                 float _CameraShrink, _GlowMul;
+                float4 _SkyCloudParams, _PanoCloudSpeed;
+                half4 _SkyCloudTint;
             CBUFFER_END
             float4 vert(float4 positionOS : POSITION) : SV_POSITION
             {
@@ -235,6 +261,8 @@ Shader "DSEWA/ToonMoon"
                 half _Smooth, _Wrap;
                 float4 _PhaseDir;
                 float _CameraShrink, _GlowMul;
+                float4 _SkyCloudParams, _PanoCloudSpeed;
+                half4 _SkyCloudTint;
             CBUFFER_END
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; };
             struct Varyings { float4 positionCS : SV_POSITION; float3 normalWS : TEXCOORD0; };

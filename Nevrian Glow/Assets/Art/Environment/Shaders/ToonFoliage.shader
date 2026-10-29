@@ -21,6 +21,7 @@ Shader "DSEWA/ToonFoliage"
         _WindSpeed ("Wind Speed", Float) = 1.6
         _WindFreq ("Wind Wave Frequency", Float) = 0.35
         _PushStrength ("Cat Push Strength (m)", Float) = 0.6
+        _ObstacleLean ("Lean Away From Rocks (m at the tip)", Range(0, 1)) = 0
         _WindRadius ("Wind Radius around the player (m, 0 = everywhere)", Float) = 25
         _WindFade ("Wind Fade Width (m)", Float) = 10
         [Header(Color Controls (SurvivalKit MF_ColorControls order))]
@@ -93,6 +94,7 @@ Shader "DSEWA/ToonFoliage"
             half _ShadowBlur;
             float4 _WindDir;
             float _WindStrength, _WindSpeed, _WindFreq, _PushStrength;
+            float _ObstacleLean;
             float _WindRadius, _WindFade;
             half4 _Tint;
             half _Desaturation, _HueShift, _Brightness, _Contrast;
@@ -117,6 +119,10 @@ Shader "DSEWA/ToonFoliage"
             half _TipGlow, _TipGlowStart;
         CBUFFER_END
         float4 _DSEWA_CatPush;                       // global: xyz = cat position, w = radius
+        // obstacle field (2026-10-26, user: grass round a rock leans naturally outwards): LayerGrassSpawner bakes, per
+        // texel, the direction away from the nearest rock foot (rg, 0..1 -> -1..1) and how close it is (b, 1 at the foot)
+        TEXTURE2D(_DSEWA_ObstacleField); SAMPLER(s_dsewa_obstacle_linear_clamp_sampler);
+        float4 _DSEWA_ObstacleRect;                  // (minX, minZ, 1/sizeX, 1/sizeZ); z = 0 -> off
         float4 _DSEWA_WindCenter;                    // global: xyz = player position, w = 1 when set (else the camera)
         float4 _DSEWA_GroundColorRect;               // global: (minX, minZ, 1/sizeX, 1/sizeZ); z = 0 -> no baker
         float4 _DSEWA_GroundShadowColor;             // global: the ground material's shadow multiply, so shaded roots match it
@@ -125,8 +131,20 @@ Shader "DSEWA/ToonFoliage"
 
         TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
         TEXTURE2D(_DSEWA_GroundColor); SAMPLER(sampler_DSEWA_GroundColor);
+        #include "Assets/Art/Environment/Shaders/RuntimeVirtualTexture.hlsl"
         float4 _DSEWA_GrassCoverageRect;             // global: (minX, minZ, 1/sizeX, 1/sizeZ); z = 0 -> no coverage
         TEXTURE2D(_DSEWA_GrassCoverage); SAMPLER(sampler_DSEWA_GrassCoverage);
+        // GrassClearZones (2026-10-28): farm cells publish a mask; grass whose root falls inside shrinks away
+        float4 _DSEWA_GrassClearRect;                // global: (minX, minZ, 1/sizeX, 1/sizeZ); z = 0 -> off
+        TEXTURE2D(_DSEWA_GrassClear); SAMPLER(sampler_DSEWA_GrassClear);
+
+        float GrassClearScale(float2 pivotXZ)
+        {
+            if (_DSEWA_GrassClearRect.z == 0) return 1;
+            float2 uv = (pivotXZ - _DSEWA_GrassClearRect.xy) * _DSEWA_GrassClearRect.zw;
+            if (any(uv != saturate(uv))) return 1;
+            return 1 - SAMPLE_TEXTURE2D_LOD(_DSEWA_GrassClear, sampler_DSEWA_GrassClear, uv, 0).r;
+        }
 
         // Clumps at the edge of a grass patch get smaller (coverage = blurred detail density), so patches fade out
         // instead of ending in a wall. No coverage here (hand-placed grass away from patches) = full size.
@@ -144,6 +162,9 @@ Shader "DSEWA/ToonFoliage"
         // a = 1 where ground was baked, 0 outside the area or with no baker.
         half4 SampleGroundColor(float2 xz)
         {
+            // real RVT first (RuntimeVirtualTexture: albedo pages -> x the ground's lit colour, as the bake below)
+            half4 rvt;
+            if (SampleRVT(xz, rvt)) return half4(rvt.rgb * (_DSEWA_GroundLight.w > 0 ? _DSEWA_GroundLitColor.rgb : half3(1, 1, 1)), 1);
             if (_DSEWA_GroundColorRect.z == 0) return 0;
             float2 uv = (xz - _DSEWA_GroundColorRect.xy) * _DSEWA_GroundColorRect.zw;
             if (any(uv != saturate(uv))) return 0;
@@ -163,7 +184,7 @@ Shader "DSEWA/ToonFoliage"
         float3 FoliageBend(float3 positionWS, float4 color)
         {
             float3 pivot = TransformObjectToWorld(float3(0, 0, 0));
-            positionWS = pivot + (positionWS - pivot) * GrassEdgeScale(pivot.xz);   // every pass goes through here
+            positionWS = pivot + (positionWS - pivot) * (GrassEdgeScale(pivot.xz) * GrassClearScale(pivot.xz));   // every pass goes through here
             positionWS.y -= _RootSink;                                     // bottom edge hides under the ground
             float h = color.r * color.r;
             float2 offset = 0;
@@ -183,6 +204,19 @@ Shader "DSEWA/ToonFoliage"
                 k *= k;
                 offset += (away / max(d, 1e-3)) * k * _PushStrength * h;
                 positionWS.y -= k * _PushStrength * 0.5 * h;               // lie down a little
+            }
+            // lean away from rocks: the whole clump tilts out, more at the tip, and sinks a touch as it leans
+            if (_ObstacleLean > 0 && _DSEWA_ObstacleRect.z > 0)
+            {
+                float2 ouv = (pivot.xz - _DSEWA_ObstacleRect.xy) * _DSEWA_ObstacleRect.zw;
+                if (all(ouv == saturate(ouv)))
+                {
+                    half4 o = SAMPLE_TEXTURE2D_LOD(_DSEWA_ObstacleField, s_dsewa_obstacle_linear_clamp_sampler, ouv, 0);
+                    float near = o.b * o.b * (3 - 2 * o.b);
+                    float2 away = o.rg * 2 - 1;
+                    offset += away * near * _ObstacleLean * h;
+                    positionWS.y -= near * _ObstacleLean * 0.35 * h;
+                }
             }
             positionWS.xz += offset;
             return positionWS;
@@ -227,8 +261,6 @@ Shader "DSEWA/ToonFoliage"
         half WindColorMask(float3 positionWS, half height)
         {
             half near = WindMask(positionWS.xz);
-            UNITY_BRANCH
-            if (near <= 0) return 0;
             float2 dir = normalize(_WindDir.xz + 1e-5);
             float2 p = positionWS.xz * _WindColorScale - dir * _Time.y * _WindColorSpeed * _WindColorScale;
             float n = ValueNoise2(p) * 0.65 + ValueNoise2(p * 2.3 + 17.1) * 0.35;
@@ -339,7 +371,7 @@ Shader "DSEWA/ToonFoliage"
                 half patch = smoothstep(0.4, 0.6, ValueNoise2(i.restXZ * _PatchScale + 31.7));
                 color *= lerp(half3(1, 1, 1), _PatchTint.rgb, patch * _PatchAmount);
                 color = lerp(color, _WindColor.rgb, WindColorMask(i.positionWS, i.height) * _WindColorAmount);
-                color *= lerp(_ShadowTint.rgb, half3(1, 1, 1), lit);
+                color *= lerp(SceneShadowMul(_ShadowTint.rgb, half3(1, 1, 1)), half3(1, 1, 1), lit);
                 // bake = albedo x ground lit colour -> recover the albedo and apply the ground's own lit / shadow colour
                 half3 groundLit = _DSEWA_GroundLight.w > 0 ? max(_DSEWA_GroundLitColor.rgb, 0.05) : half3(1, 1, 1);
                 half3 rootColor = ground.rgb / groundLit * lerp(1, tex.rgb, _GroundBlendCardShade)
@@ -357,6 +389,7 @@ Shader "DSEWA/ToonFoliage"
                 // Backlight: looking towards the sun, thin tips let the light through
                 half back = smoothstep(_TransThreshold, _TransThreshold + 0.05, saturate(dot(-V, light.direction)));
                 color += _TransColor.rgb * back * direct * smoothstep(0.3, 1, i.height) * _TransStrength;
+                color = ApplyWorldWake(color, i.positionWS);
                 color = ApplyGroundFog(color, i.positionWS);
                 // Bioluminescent tips: self-lit, after the fog so the far field still glows (HDR -> bloom)
                 color += _TipGlowColor.rgb * smoothstep(_TipGlowStart, 1, i.height) * (0.75 + 0.5 * i.clump) * _TipGlow;

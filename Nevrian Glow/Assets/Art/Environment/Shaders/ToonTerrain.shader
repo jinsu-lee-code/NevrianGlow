@@ -17,6 +17,14 @@ Shader "DSEWA/ToonTerrain"
         [HideInInspector] _Normal1 ("Normal 1", 2D) = "bump" {}
         [HideInInspector] _Normal2 ("Normal 2", 2D) = "bump" {}
         [HideInInspector] _Normal3 ("Normal 3", 2D) = "bump" {}
+        [HideInInspector] _Control1 ("Control 1 (layers 5-6, TerrainExtraLayers)", 2D) = "black" {}
+        [HideInInspector] _Splat4 ("Layer 4", 2D) = "grey" {}
+        [HideInInspector] _Splat5 ("Layer 5", 2D) = "grey" {}
+        [HideInInspector] _Normal4 ("Normal 4", 2D) = "bump" {}
+        [HideInInspector] _Normal5 ("Normal 5", 2D) = "bump" {}
+        [HideInInspector] _Mask4 ("Mask 4 (G = AO)", 2D) = "white" {}
+        [HideInInspector] _Mask5 ("Mask 5 (G = AO)", 2D) = "white" {}
+        _PathAO ("Path Layers AO Strength", Range(0, 1)) = 0.7
         [HideInInspector] _Mask0 ("Mask 0 (B = height)", 2D) = "grey" {}
         [HideInInspector] _Mask1 ("Mask 1 (B = height)", 2D) = "grey" {}
         [HideInInspector] _Mask2 ("Mask 2 (B = height)", 2D) = "grey" {}
@@ -41,6 +49,14 @@ Shader "DSEWA/ToonTerrain"
         _GrassTintColor ("Ground Tint Under Grass (multiply)", Color) = (0.62, 0.54, 0.86, 1)
         _GrassTintAmount ("Ground Tint Amount", Range(0, 1)) = 1
         _GrassTintRange ("Ground Tint Range (coverage lo, hi)", Vector) = (0.03, 0.55, 0, 0)
+        [Header(Ground Hue (layers 0 to 2 not the path))]
+        _GroundHueShift ("Hue Shift (turns)", Range(-0.5, 0.5)) = 0
+        _GroundSaturation ("Saturation", Range(0, 2)) = 1
+        [Header(Root Veins (RootVeinBaker))]
+        [HDR] _RootVeinColor ("Root Vein Colour", Color) = (0.45, 1, 1, 1)
+        _RootVeinStrength ("Root Vein Glow (0 = off)", Range(0, 4)) = 0
+        _RootVeinWave ("Wave: per root metre, speed, sharpness, base", Vector) = (0.25, 0.35, 5, 0.25)
+        _RootVeinDark ("Darken Ground Beside Veins", Range(0, 1)) = 0.3
     }
 
     SubShader
@@ -52,7 +68,7 @@ Shader "DSEWA/ToonTerrain"
 
         CBUFFER_START(UnityPerMaterial)
             float4 _Control_ST;
-            float4 _Splat0_ST, _Splat1_ST, _Splat2_ST, _Splat3_ST;
+            float4 _Splat0_ST, _Splat1_ST, _Splat2_ST, _Splat3_ST, _Splat4_ST, _Splat5_ST;
             half4 _LitColor, _ShadowColor;
             half _Threshold, _Softness, _AmbientShade, _BumpScale;
             half _ShadowBlur;
@@ -60,7 +76,14 @@ Shader "DSEWA/ToonTerrain"
             half _HeightBlend, _HeightBlendScale, _HeightBlendWidth;
             half4 _GrassTintColor, _GrassTintRange;
             half _GrassTintAmount;
+            half _GroundHueShift, _GroundSaturation, _PathAO;
+            half4 _RootVeinColor; half _RootVeinStrength, _RootVeinDark; float4 _RootVeinWave;
         CBUFFER_END
+        TEXTURE2D(_DSEWA_RootVeins); SAMPLER(sampler_DSEWA_RootVeins);
+        float4 _DSEWA_RootVeinRect;
+        TEXTURE2D(_DSEWA_WaterMask); SAMPLER(sampler_DSEWA_WaterMask);
+        float4 _DSEWA_WaveRect;
+        float _DSEWA_WaveOn;
 
         // global from GroundColorBaker: blurred grass detail density over the terrain (uv = terrain 0..1); rect.z == 0 = off
         TEXTURE2D(_DSEWA_GrassCoverage); SAMPLER(sampler_DSEWA_GrassCoverage);
@@ -69,6 +92,8 @@ Shader "DSEWA/ToonTerrain"
         TEXTURE2D(_Control); SAMPLER(sampler_Control);
         TEXTURE2D(_Splat0); SAMPLER(sampler_Splat0);
         TEXTURE2D(_Splat1); TEXTURE2D(_Splat2); TEXTURE2D(_Splat3);
+        TEXTURE2D(_Control1); TEXTURE2D(_Splat4); TEXTURE2D(_Splat5);
+        TEXTURE2D(_Normal4); TEXTURE2D(_Normal5); TEXTURE2D(_Mask4); TEXTURE2D(_Mask5);
         TEXTURE2D(_Normal0); SAMPLER(sampler_Normal0);
         TEXTURE2D(_Normal1); TEXTURE2D(_Normal2); TEXTURE2D(_Normal3);
         TEXTURE2D(_Mask0); TEXTURE2D(_Mask1); TEXTURE2D(_Mask2); TEXTURE2D(_Mask3);
@@ -168,11 +193,28 @@ Shader "DSEWA/ToonTerrain"
             return result;
         }
 
+        // ground recolour (2026-10-26, user: "can the ground be purple?"): the deepblue tiles are painted blue, so a
+        // colour multiply only darkens them; rotate the hue around the grey axis instead, keeping the painted detail
+        half3 GroundHue(half3 c)
+        {
+            if (_GroundHueShift == 0 && _GroundSaturation == 1) return c;
+            float a = _GroundHueShift * 6.2832;
+            float3 k = float3(0.57735, 0.57735, 0.57735);
+            float ca = cos(a), sa = sin(a);
+            c = c * ca + cross(k, c) * sa + k * dot(k, c) * (1 - ca);
+            half lum = dot(c, half3(0.2126, 0.7152, 0.0722));
+            return max(lerp(lum.xxx, c, _GroundSaturation), 0);
+        }
+
         // Splat-weighted albedo (4 layers); uv = terrain 0..1. Layers with no paint here are skipped.
         half3 TerrainAlbedo(float2 uv, out half4 w)
         {
             w = SAMPLE_TEXTURE2D(_Control, sampler_Control, uv);
-            w /= max(dot(w, 1), 1e-3);
+            // layers 5-6 (2026-10-27, paths painted by hand): Unity's second alphamap pushed by TerrainExtraLayers;
+            // the base pass draws all six so no add-pass is needed
+            half2 w2 = SAMPLE_TEXTURE2D(_Control1, sampler_Control, uv).rg;
+            half wsum = max(dot(w, 1) + w2.r + w2.g, 1e-3);
+            w /= wsum; w2 /= wsum;
             float4 duv = float4(ddx(uv), ddy(uv));
             half4 s0 = 0, s1 = 0, s2 = 0, s3 = 0;
             UNITY_BRANCH if (w.r > 0.002) s0 = LayerSample(TEXTURE2D_ARGS(_Splat0, sampler_Splat0), TEXTURE2D_ARGS(_Mask0, sampler_Splat0), uv, duv, _Splat0_ST);
@@ -180,8 +222,21 @@ Shader "DSEWA/ToonTerrain"
             UNITY_BRANCH if (w.b > 0.002) s2 = LayerSample(TEXTURE2D_ARGS(_Splat2, sampler_Splat0), TEXTURE2D_ARGS(_Mask2, sampler_Splat0), uv, duv, _Splat2_ST);
             UNITY_BRANCH if (w.a > 0.002) s3 = LayerSample(TEXTURE2D_ARGS(_Splat3, sampler_Splat0), TEXTURE2D_ARGS(_Mask3, sampler_Splat0), uv, duv, _Splat3_ST);
             if (_HeightBlend > 0.5)
-                w = HeightBlendWeights(w, half4(s0.a, s1.a, s2.a, s3.a));   // the normals use these weights too
+                w = HeightBlendWeights(w, half4(s0.a, s1.a, s2.a, s3.a)) * (1 - w2.r - w2.g);   // keeps room for layers 5-6
+            s0.rgb = GroundHue(s0.rgb); s1.rgb = GroundHue(s1.rgb); s2.rgb = GroundHue(s2.rgb);
             half3 albedo = s0.rgb * w.r + s1.rgb * w.g + s2.rgb * w.b + s3.rgb * w.a;
+            UNITY_BRANCH if (w2.r > 0.002)
+            {
+                float2 u4 = uv * _Splat4_ST.xy + _Splat4_ST.zw; float2 d4x = duv.xy * _Splat4_ST.xy, d4y = duv.zw * _Splat4_ST.xy;
+                half ao4 = lerp(1, SAMPLE_TEXTURE2D_GRAD(_Mask4, sampler_Splat0, u4, d4x, d4y).g, _PathAO);
+                albedo += SAMPLE_TEXTURE2D_GRAD(_Splat4, sampler_Splat0, u4, d4x, d4y).rgb * ao4 * w2.r;
+            }
+            UNITY_BRANCH if (w2.g > 0.002)
+            {
+                float2 u5 = uv * _Splat5_ST.xy + _Splat5_ST.zw; float2 d5x = duv.xy * _Splat5_ST.xy, d5y = duv.zw * _Splat5_ST.xy;
+                half ao5 = lerp(1, SAMPLE_TEXTURE2D_GRAD(_Mask5, sampler_Splat0, u5, d5x, d5y).g, _PathAO);
+                albedo += SAMPLE_TEXTURE2D_GRAD(_Splat5, sampler_Splat0, u5, d5x, d5y).rgb * ao5 * w2.g;
+            }
             // ground darkens towards the grass roots near grass -> the border fades from both sides
             if (_DSEWA_GrassCoverageRect.z > 0 && _GrassTintAmount > 0)
             {
@@ -244,13 +299,60 @@ Shader "DSEWA/ToonTerrain"
                 UNITY_BRANCH if (w.g > 0.002) nTS += LayerNormal(TEXTURE2D_ARGS(_Normal1, sampler_Normal0), i.uv, duv, _Splat1_ST) * w.g;
                 UNITY_BRANCH if (w.b > 0.002) nTS += LayerNormal(TEXTURE2D_ARGS(_Normal2, sampler_Normal0), i.uv, duv, _Splat2_ST) * w.b;
                 UNITY_BRANCH if (w.a > 0.002) nTS += LayerNormal(TEXTURE2D_ARGS(_Normal3, sampler_Normal0), i.uv, duv, _Splat3_ST) * w.a;
+                // path layers 5-6: plain tiling (no hex), weights rebuilt from the second control map
+                {
+                    half4 c0 = SAMPLE_TEXTURE2D(_Control, sampler_Control, i.uv);
+                    half2 c1 = SAMPLE_TEXTURE2D(_Control1, sampler_Control, i.uv).rg;
+                    c1 /= max(dot(c0, 1) + c1.r + c1.g, 1e-3);
+                    UNITY_BRANCH if (c1.r > 0.002) nTS += UnpackNormalScale(SAMPLE_TEXTURE2D_GRAD(_Normal4, sampler_Normal0, i.uv * _Splat4_ST.xy + _Splat4_ST.zw, duv.xy * _Splat4_ST.xy, duv.zw * _Splat4_ST.xy), _BumpScale) * c1.r;
+                    UNITY_BRANCH if (c1.g > 0.002) nTS += UnpackNormalScale(SAMPLE_TEXTURE2D_GRAD(_Normal5, sampler_Normal0, i.uv * _Splat5_ST.xy + _Splat5_ST.zw, duv.xy * _Splat5_ST.xy, duv.zw * _Splat5_ST.xy), _BumpScale) * c1.g;
+                }
                 N = normalize(nTS.x * T + nTS.y * B + nTS.z * N);
 
                 Light light = GetMainLight(TransformWorldToShadowCoord(i.positionWS));
                 half direct = min(ToonMainLightShadow(i.positionWS, _ShadowBlur), ToonCharacterShadow(i.positionWS, _ShadowBlur)) * EvaluateCloudShadow(i.positionWS);
                 float shade = saturate(dot(N, light.direction)) * direct + _AmbientShade;
                 float lit = smoothstep(_Threshold, _Threshold + _Softness, shade);
-                half3 color = lerp(_ShadowColor.rgb, _LitColor.rgb, lit) * albedo;
+                half3 color = lerp(SceneShadowMul(_ShadowColor.rgb, _LitColor.rgb), _LitColor.rgb, lit) * albedo;
+                // wet shore (2026-10-27): ground within ~1.2 m of the lake / pool water (LakeWaveSim's baked water mask,
+                // sampled on a small ring) is darker and bluer with a thin bright toon line at the waterline
+                if (_DSEWA_WaveOn > 0.5)
+                {
+                    float2 muv = (i.positionWS.xz - _DSEWA_WaveRect.xy) / max(_DSEWA_WaveRect.z, 1e-3);
+                    if (all(muv > 0) && all(muv < 1))
+                    {
+                        float rr = 1.2 / max(_DSEWA_WaveRect.z, 1e-3);
+                        half near = SAMPLE_TEXTURE2D_LOD(_DSEWA_WaterMask, sampler_DSEWA_WaterMask, muv, 0).r;
+                        UNITY_UNROLL for (int k = 0; k < 8; k++)
+                        {
+                            float a = k * 0.785398;
+                            near = max(near, SAMPLE_TEXTURE2D_LOD(_DSEWA_WaterMask, sampler_DSEWA_WaterMask, muv + float2(cos(a), sin(a)) * rr, 0).r * 0.75);
+                            near = max(near, SAMPLE_TEXTURE2D_LOD(_DSEWA_WaterMask, sampler_DSEWA_WaterMask, muv + float2(cos(a), sin(a)) * rr * 0.5, 0).r);
+                        }
+                        half wet = saturate(near) * step(i.positionWS.y, 0.8);
+                        color = lerp(color, color * half3(0.55, 0.62, 0.85), wet * 0.8);
+                        half here = SAMPLE_TEXTURE2D_LOD(_DSEWA_WaterMask, sampler_DSEWA_WaterMask, muv, 0).r;
+                        half wline = smoothstep(0.02, 0.12, here) * (1 - smoothstep(0.25, 0.5, here));
+                        color += half3(0.25, 0.4, 0.55) * wline * 0.6;
+                    }
+                }
+                // root veins (2026-10-27, user: "redesign the ground"): the trees' glowing vessels run on through the soil;
+                // waves travel along each root toward its tree, like the bark pulse running up the trunk
+                if (_RootVeinStrength > 0 && _DSEWA_RootVeinRect.z > 0)
+                {
+                    float2 ruv = (i.positionWS.xz - _DSEWA_RootVeinRect.xy) * _DSEWA_RootVeinRect.zw;
+                    if (all(ruv > 0) && all(ruv < 1))
+                    {
+                        half2 rv = SAMPLE_TEXTURE2D(_DSEWA_RootVeins, sampler_DSEWA_RootVeins, ruv).rg;
+                        half2 rvBlur = SAMPLE_TEXTURE2D_BIAS(_DSEWA_RootVeins, sampler_DSEWA_RootVeins, ruv, 2.5).rg;
+                        color *= 1 - saturate(rvBlur.r * 3) * _RootVeinDark;                     // a dark groove either side
+                        float along = rv.g * 11.0;                                                  // metres along the root (baker maxLength 11 m)
+                        float wv = frac(along * _RootVeinWave.x + _Time.y * _RootVeinWave.y);       // crests move toward the tree
+                        wv = pow(saturate(1 - abs(wv * 2 - 1)), _RootVeinWave.z);
+                        color += _RootVeinColor.rgb * rv.r * (_RootVeinWave.w + (1 - _RootVeinWave.w) * wv) * _RootVeinStrength;
+                    }
+                }
+                color = ApplyWorldWake(color, i.positionWS);
                 color = ApplyGroundFog(color, i.positionWS);
                 return half4(MixFog(color, i.fogFactor), 1);
             }

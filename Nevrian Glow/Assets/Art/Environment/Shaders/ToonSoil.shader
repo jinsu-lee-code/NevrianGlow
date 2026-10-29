@@ -1,8 +1,10 @@
 // DSEWA/ToonSoil: ToonSoft for the farm-cell soil, with the tilling / planting / wet states done in the shader so one
-// mesh covers every state and each cell can be at its own stage. Wet soil is the game's own colour (request doc), not here.
+// mesh covers every state and each cell can be at its own stage. The game's wet colour still comes in through _BaseColor.
 //   _Till (0..1)        whole-cell dig amount (the game's till progress) - furrows rise, crust turns into loose clods
 //   _Hit0.._Hit3        hoe hits in object space: xy = local x/z, w = 0..1 (a round dug patch that spreads from there)
 //   _Hole / _Mound      planting: a pit opens in the middle, then closes into a small covered mound
+//   _Wet (0..1)         watered: a dark wet patch spreads from _WetOrigin (local x/z) with a ragged edge; wet soil is
+//                       darker and bluer, glossy, the furrow troughs hold little puddles, and grains glint (2026-10-28)
 // Everything else (lighting, outline, depth passes) is ToonSoft. SoilFX.cs drives these through a MaterialPropertyBlock
 // and keeps the game's _BaseColor. Furrow / dig / pit numbers are my own values.
 Shader "DSEWA/ToonSoil"
@@ -11,6 +13,7 @@ Shader "DSEWA/ToonSoil"
     {
         _BaseMap ("Base Map (optional)", 2D) = "white" {}
         _BaseColor ("Base Color", Color) = (0.6, 0.8, 0.8, 1)
+        _WorldTile ("World Tiling (m per texture repeat, 0 = mesh UV)", Float) = 0
         _Pastel ("Pastel (lift toward white)", Range(0, 1)) = 0.25
         [Header(Soil State)]
         _Till ("Till (whole cell, 0 = crust, 1 = dug)", Range(0, 1)) = 0
@@ -22,9 +25,20 @@ Shader "DSEWA/ToonSoil"
         _FurrowHeight ("Furrow Height (m)", Range(0, 0.1)) = 0.035
         _FurrowCount ("Furrows Across The Cell", Range(1, 6)) = 3
         _CellHalf ("Cell Half Size (m)", Float) = 0.8
+        _EdgeFade ("Flat Rim Width (fraction of the half size)", Range(0.01, 0.5)) = 0.18
+        _EdgeOpen ("Open Sides (+x, -x, +z, -z: 1 = a cell snapped there, no rim; set by SoilFX)", Vector) = (0, 0, 0, 0)
         _CrustContrast ("Crust Texture Contrast", Range(0, 1)) = 0.35
         _Hole ("Planting Pit (0..1)", Range(0, 1)) = 0
         _Mound ("Covered Seed Mound (0..1)", Range(0, 1)) = 0
+        [Header(Wet)]
+        _Wet ("Wet (0 = dry, 1 = soaked; spreads from the origin)", Range(0, 1)) = 0
+        _WetOrigin ("Wet Origin (local x, z)", Vector) = (0, 0, 0, 0)
+        _WetDarken ("Wet Darkening", Range(0.2, 1)) = 0.45
+        _WetTint ("Wet Tint", Color) = (0.72, 0.78, 1, 1)
+        _WetGloss ("Wet Sheen", Range(0, 3)) = 1.1
+        _WetPuddle ("Puddles In The Furrows", Range(0, 1)) = 0.75
+        _WetPuddleColor ("Puddle Color", Color) = (0.32, 0.42, 0.85, 1)
+        _WetSparkle ("Wet Glints", Range(0, 4)) = 1.6
         [Header(Surface Detail)]
         [Normal] _BumpMap ("Normal Map (optional, OpenGL, same tiling as the base map)", 2D) = "bump" {}
         _BumpScale ("Normal Strength", Range(0, 2)) = 1
@@ -76,10 +90,15 @@ Shader "DSEWA/ToonSoil"
 
         CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
+            float _WorldTile;
             half4 _BaseColor;
             half _Pastel, _Wrap, _Softness;
-            float _Till, _DigRadius, _FurrowHeight, _FurrowCount, _CellHalf, _CrustContrast, _Hole, _Mound;
+            float _Till, _DigRadius, _FurrowHeight, _FurrowCount, _CellHalf, _CrustContrast, _Hole, _Mound, _EdgeFade;
+            float4 _EdgeOpen;
             float4 _Hit0, _Hit1, _Hit2, _Hit3;
+            float _Wet, _WetDarken, _WetGloss, _WetPuddle, _WetSparkle;
+            float4 _WetOrigin;
+            half4 _WetTint, _WetPuddleColor;
             half _BumpScale, _OcclusionStrength, _OcclusionDirect;
             half4 _ShadowTint;
             half _ShadowSaturation, _LightColorAmount, _ReceiveShadows, _ShadowBlur;
@@ -114,7 +133,15 @@ Shader "DSEWA/ToonSoil"
                 m = max(m, hits[k].w * smoothstep(_DigRadius, _DigRadius * 0.35, distance(p, hits[k].xy)));
             return saturate(m);
         }
-        float SoilEdge(float2 p) { return saturate((1.0 - max(abs(p.x), abs(p.y)) / _CellHalf) / 0.18); }
+        // flat rim round the dug area, only on the sides with no cell snapped next to it (2026-10-28, user: "when cells
+        // snap together the lines should disappear") - joined cells read as one field with a rim round the outside
+        float SoilEdge(float2 p)
+        {
+            float h = _CellHalf;
+            float d = min(min(lerp(h - p.x, 1e3, _EdgeOpen.x), lerp(h + p.x, 1e3, _EdgeOpen.y)),
+                          min(lerp(h - p.y, 1e3, _EdgeOpen.z), lerp(h + p.y, 1e3, _EdgeOpen.w)));
+            return saturate(d / h / max(_EdgeFade, 0.01));
+        }
         float SoilFurrow(float2 p) { return cos(p.y / _CellHalf * 3.14159 * _FurrowCount); }
         float SoilHeight(float2 p)
         {
@@ -124,6 +151,27 @@ Shader "DSEWA/ToonSoil"
             h -= _Hole * 0.11 * smoothstep(0.32, 0.0, d);
             h += _Mound * 0.085 * smoothstep(0.3, 0.0, d);
             return h;
+        }
+        float SoilHash(float2 p)
+        {
+            float3 p3 = frac(float3(p.xyx) * 0.1031);
+            p3 += dot(p3, p3.yzx + 33.33);
+            return frac((p3.x + p3.y) * p3.z);
+        }
+        float SoilNoise(float2 p)
+        {
+            float2 i = floor(p), f = frac(p);
+            f = f * f * (3.0 - 2.0 * f);
+            return lerp(lerp(SoilHash(i), SoilHash(i + float2(1, 0)), f.x), lerp(SoilHash(i + float2(0, 1)), SoilHash(i + 1), f.x), f.y);
+        }
+        // wet patch: a ragged front that grows from the watering point and covers the whole cell at _Wet = 1
+        float SoilWet(float2 p)
+        {
+            if (_Wet <= 0.0) return 0.0;
+            float n = SoilNoise(p * 6.0) * 0.65 + SoilNoise(p * 15.0) * 0.35;
+            float d = distance(p, _WetOrigin.xy) / (_CellHalf * 1.6) + (n - 0.5) * 0.35;
+            float r = _Wet * 1.35;
+            return 1.0 - smoothstep(r - 0.1, r, d);
         }
         void SoilDisplace(inout float3 posOS, inout float3 nOS)
         {
@@ -207,15 +255,18 @@ Shader "DSEWA/ToonSoil"
                 UNITY_SETUP_INSTANCE_ID(i);
                 float3 Ngeo = normalize(i.normalWS);
                 // normal map (planks bevel, grain ridges): bends the lighting only; the rim keeps the mesh normal
-                half3 nTS = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, i.uv), _BumpScale);
+                // world-space texture (2026-10-28, team: "match the farm soil to the ground round it"): the same terrain
+                // layer texture at the terrain's tiling, continuous across neighbouring cells
+                float2 buv = _WorldTile > 0 ? i.positionWS.xz / _WorldTile : i.uv;
+                half3 nTS = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, buv), _BumpScale);
                 float3 bitangent = i.tangentWS.w * cross(Ngeo, i.tangentWS.xyz);
                 float3 N = normalize(TransformTangentToWorld(nTS, float3x3(i.tangentWS.xyz, bitangent, Ngeo)));
-                half occ = SAMPLE_TEXTURE2D(_OcclusionMap, sampler_OcclusionMap, i.uv).r;
+                half occ = SAMPLE_TEXTURE2D(_OcclusionMap, sampler_OcclusionMap, buv).r;
                 float3 V = GetWorldSpaceNormalizeViewDir(i.positionWS);
                 Light light = GetMainLight(TransformWorldToShadowCoord(i.positionWS));
                 half shadow = lerp(1.0h, ToonMainLightShadow(i.positionWS, _ShadowBlur) * EvaluateCloudShadow(i.positionWS), _ReceiveShadows);
 
-                half3 tex = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv).rgb;
+                half3 tex = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, buv).rgb;
                 // crust (flat, faint clods) -> dug (full-contrast clods, darker in the furrow troughs)
                 float dig = SoilDig(i.positionOS.xz) * SoilEdge(i.positionOS.xz);
                 half3 crust = lerp(half3(0.85, 0.85, 0.85), tex, _CrustContrast);
@@ -225,7 +276,11 @@ Shader "DSEWA/ToonSoil"
                 tex *= 1.0 + 0.25 * _Mound * smoothstep(0.3, 0.0, length(i.positionOS.xz));   // fresh covered soil, a touch lighter
                 tex *= lerp(1.0, 0.3, pit);
                 half3 base = tex * _BaseColor.rgb;
-                base = lerp(base, half3(1, 1, 1), _Pastel);
+                // wet: darker, bluer, less chalky; the furrow troughs hold water
+                half wet = SoilWet(i.positionOS.xz);
+                base *= lerp(half3(1, 1, 1), _WetTint.rgb * _WetDarken, wet);
+                base = lerp(base, half3(1, 1, 1), _Pastel * (1.0 - 0.7 * wet));
+                half puddle = wet * _WetPuddle * smoothstep(0.62, 0.92, trough * dig + pit * 0.6);
 
                 // soft wrapped terminator
                 half wrap = (dot(N, light.direction) + _Wrap) / (1.0 + _Wrap);
@@ -269,6 +324,28 @@ Shader "DSEWA/ToonSoil"
                 float3 viewKey = normalize(V + camUp * 0.55 - camRight * 0.35);
                 half glossView = Blob(saturate(dot(N, normalize(viewKey + V))));
                 col += _GlossColor.rgb * (glossLight * _GlossStrength * Luminance(light.color) + glossView * _ViewGloss);
+
+                // wet sheen: small sharp highlights on the bumpy wet soil (light + camera key)
+                if (wet > 0.001)
+                {
+                    // broken into flecks by a fine noise, so smooth furrow ridges do not turn into white bars
+                    half fleck = smoothstep(0.45, 0.75, SoilNoise(i.positionOS.xz * 38.0));
+                    half sharpL = smoothstep(0.992, 0.998, saturate(dot(N, normalize(light.direction + V)))) * lit;
+                    half sharpV = smoothstep(0.99, 0.997, saturate(dot(N, normalize(viewKey + V))));
+                    col += _GlossColor.rgb * (sharpL * Luminance(light.color) + sharpV * 0.5) * _WetGloss * wet * fleck;
+                    // puddles: flat water reflecting the sky, brighter at grazing angles
+                    half fres = 0.35 + 0.65 * pow(1.0 - saturate(dot(Ngeo, V)), 3.0);
+                    half3 sky = lerp(_SkyColor.rgb, SampleSH(reflect(-V, Ngeo)), _SceneAmbient);
+                    half3 water = _WetPuddleColor.rgb * (0.55 + 0.45 * sky) + _GlossColor.rgb * glossView * 0.35;
+                    col = lerp(col, water, puddle * fres);
+                    // glints: sparse grains catching the light, twinkling as the view moves
+                    float2 g = i.positionOS.xz * 55.0;
+                    float2 gi = floor(g);
+                    float hg = SoilHash(gi);
+                    half dotG = smoothstep(0.32, 0.0, length(frac(g) - 0.5 - (SoilHash(gi + 7.0) - 0.5) * 0.3));
+                    half tw = pow(saturate(sin(_Time.y * 2.2 + hg * 60.0 + dot(V, float3(9, 5, 7)) * 6.0)), 6.0);
+                    col += _GlossColor.rgb * dotG * tw * step(0.93, hg) * _WetSparkle * wet;
+                }
 
                 // soft rim
                 col += _RimColor.rgb * pow(1.0 - saturate(dot(Ngeo, V)), _RimPower) * _RimStrength;

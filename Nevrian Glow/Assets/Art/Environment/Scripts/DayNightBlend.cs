@@ -66,6 +66,15 @@ public class DayNightBlend : MonoBehaviour
     public int editPreset;
 
     [SerializeField, HideInInspector] List<PropEntry> entries = new List<PropEntry>();
+
+    /// <summary>Every material asset Apply writes (the listed materials + the property entries' materials).</summary>
+    public List<Material> TouchedMaterials()
+    {
+        var set = new List<Material>();
+        foreach (var m in materials) if (m != null && !set.Contains(m)) set.Add(m);
+        foreach (var e in entries) if (e != null && e.material != null && !set.Contains(e.material)) set.Add(e.material);
+        return set;
+    }
     // legacy two-snapshot data, migrated into presets "Noon" and "Night"
     [SerializeField, HideInInspector] float night = 1f;
     [SerializeField, HideInInspector] State dayState, nightState;

@@ -8,7 +8,8 @@ using UnityEngine.Rendering;
 /// Everything art-directed stays on the sky material, so the DayNightBlend presets keep driving it:
 /// _PlanetDir / _PlanetSize (angular radius) / _RingInnerOuter (inner, outer, roll on screen, opening) /
 /// _PlanetSpin / _RingSpin / colours / _Moon2*, _Moon4* orbits, and _PlanetAmount fades it in and out.
-/// ToonSky stops drawing its own ringed planet and moons 2 and 4 while this is enabled (_PlanetSkyDraw = 0).
+/// ToonSky stops drawing its own ringed planet and moons 2 and 4 while this is enabled (global _DSEWA_PlanetSkyOff = 1;
+/// 2026-10-26: a global instead of writing _PlanetSkyDraw = 0 into the material, which got saved into the asset).
 /// </summary>
 [ExecuteAlways]
 public class SkyRingedPlanet : MonoBehaviour
@@ -65,13 +66,13 @@ public class SkyRingedPlanet : MonoBehaviour
     void OnEnable()
     {
         RenderPipelineManager.beginCameraRendering += OnBeginCamera;
-        if (sky) sky.SetFloat("_PlanetSkyDraw", 0);
+        Shader.SetGlobalFloat("_DSEWA_PlanetSkyOff", 1);   // global, so the sky material asset keeps _PlanetSkyDraw = 1
     }
 
     void OnDisable()
     {
         RenderPipelineManager.beginCameraRendering -= OnBeginCamera;
-        if (sky) sky.SetFloat("_PlanetSkyDraw", 1);
+        Shader.SetGlobalFloat("_DSEWA_PlanetSkyOff", 0);
     }
 
     // flat annulus in the ring's object space (y = 0), radii in planet radii (drawn with scale = planet radius)

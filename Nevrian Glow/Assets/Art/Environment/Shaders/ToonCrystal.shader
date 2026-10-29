@@ -31,6 +31,8 @@ Shader "DSEWA/ToonCrystal"
         _TipColor ("Tip Color (lit colour toward the top)", Color) = (0.6, 0.55, 1, 1)
         _TipShadow ("Tip Colour In Shadow", Range(0, 1)) = 0.35
         _GradientRange ("Gradient Start / End (0-1 of height)", Vector) = (0, 0.85, 0, 0)
+        [ToggleUI] _ObjGradient ("Gradient And Foot Glow From Object Space Height", Float) = 0
+        _ObjYRange ("Object Space Height Range (x bottom, y top)", Vector) = (0, 1, 0, 0)
         _HueShift ("Hue Shift Per Facet", Range(0, 0.3)) = 0.11
         _Saturation ("Saturation", Range(0, 2)) = 1.25
         [Header(Brush Strokes)]
@@ -120,6 +122,8 @@ Shader "DSEWA/ToonCrystal"
             half4 _TipColor;
             half _TipShadow;
             float4 _GradientRange;
+            float _ObjGradient;
+            float4 _ObjYRange;
             half _HueShift, _Saturation;
             float _BrushTiling;
             half _BrushValue, _BrushEdge, _BrushHue;

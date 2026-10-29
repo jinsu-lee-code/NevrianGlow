@@ -85,7 +85,9 @@ public class ToonLensFlareFade : MonoBehaviour
 
     void OnBeginCamera(ScriptableRenderContext ctx, Camera cam)
     {
-        if (!flareGO) return;
+        // the planar water reflection camera (oblique projection, mirrored) must not move the flare: the flare was
+        // put on its far plane and URP's lens flare test then reported "screen position out of view frustum"
+        if (!flareGO || cam.cameraType == CameraType.Reflection || cam.cameraType == CameraType.Preview) return;
         flareGO.transform.position = cam.transform.position - transform.forward * (cam.farClipPlane * distance);
     }
 }

@@ -1,0 +1,93 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: mat_env_tree_bg_qt_leaf_common_orange
+  m_Shader: {fileID: 4800000, guid: d13635ee98467a54fa55d01155424223, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 2800000, guid: b24be98b00e493f429b6dea88d6e24d7, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _PaintMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _VeinMap:
+        m_Texture: {fileID: 2800000, guid: 3aa59e443b792514ca298ac1ce1b198b, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AmbientShade: 0.24
+    - _BackFaceDarken: 0
+    - _BacklightPower: 2.2
+    - _BacklightStrength: 0.12
+    - _Brightness: 1.1
+    - _CardNormal: 0.3
+    - _CrownRim: 0.18
+    - _CrownRimWidth: 0.22
+    - _CrownSky: 0.25
+    - _CrownUnder: 0.8
+    - _Cutoff: 0.35
+    - _Desaturation: 0.18
+    - _EdgeStrength: 0
+    - _EdgeWidth: 0.45
+    - _Flutter: 0.035
+    - _FlutterSpeed: 4
+    - _LeafOutline: 0.45
+    - _LeafOutlineWidth: 0.2
+    - _NormalUp: 0.05
+    - _PaintStrength: 0
+    - _ReceiveShadowBias: 0.03
+    - _ShadowBlur: 1.5
+    - _Softness: 0.053
+    - _SphereCenterY: 0.5
+    - _SphereNormal: 0
+    - _TexDetail: 1
+    - _TexDetailContrast: 1.6
+    - _TexDetailFloor: 0.45
+    - _TexDetailMid: 0.48235294
+    - _Threshold: 0.393
+    - _VeinMapFar: 15
+    - _VeinMapNear: 9
+    - _VeinMapStrength: 0.32
+    - _VeinStrength: 0
+    - _VeinTaper: 0.7
+    - _VeinWidth: 0.028
+    - _WakeExempt: 0
+    - _WindFreq: 0.35
+    - _WindSpeed: 1.6
+    - _WindStrength: 0.06
+    m_Colors:
+    - _BacklightColor: {r: 1, g: 0.75, b: 0.5, a: 1}
+    - _CrownRimColor: {r: 1, g: 0.88, b: 0.7, a: 1}
+    - _CrownSkyColor: {r: 1, g: 0.85, b: 0.65, a: 1}
+    - _CrownUnderColor: {r: 0.5, g: 0.28, b: 0.48, a: 1}
+    - _EdgeColor: {r: 1, g: 0.72, b: 0.5, a: 1}
+    - _RootColor: {r: 0.62, g: 0.28, b: 0.22, a: 1}
+    - _ShadowTint: {r: 0.72, g: 0.5, b: 0.8, a: 1}
+    - _Tint: {r: 1, g: 1, b: 1, a: 1}
+    - _TipColor: {r: 1, g: 0.78, b: 0.55, a: 1}
+    - _VeinColor: {r: 1, g: 0.62, b: 0.4, a: 1}
+    - _WindDir: {r: 1, g: 0, b: 0.35, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

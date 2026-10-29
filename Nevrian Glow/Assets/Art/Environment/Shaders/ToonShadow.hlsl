@@ -16,6 +16,23 @@ static const float2 kToonShadowDisk[12] =
     float2( 0.507,  0.064), float2( 0.896,  0.412), float2(-0.322, -0.933), float2(-0.792, -0.598)
 };
 
+// global soft shadow controls (ToonShadowSettings.cs, 2026-10-27, user: "soft shadows"): x = edge softness (0 = crisp
+// toon line, 0.5 = fully soft gradient), y = extra blur multiplier on every material's blurTexels (0 = unset -> 1)
+float4 _DSEWA_ToonShadowSoft;
+
+// scene shadow colour (ToonShadowSettings.cs, 2026-10-27, after the shop shading pass): every toon shader's shadow
+// multiplier is pulled toward one scene-wide tint so all shadows share a colour family. rgb = tint, a = amount
+// (0 = unset -> each material keeps its own shadow colour). Only the hue is shared: the target is the tint rescaled
+// to the material's own shadow brightness (relative to its lit colour), so deliberately dark shadows stay dark
+float4 _DSEWA_SceneShadowTint;
+half3 SceneShadowMul(half3 materialShadow, half3 materialLit)
+{
+    half3 tint = (half3)_DSEWA_SceneShadowTint.rgb;
+    half3 lumW = half3(0.2126h, 0.7152h, 0.0722h);
+    half3 target = materialLit * tint * (dot(materialShadow, lumW) / max(dot(materialLit * tint, lumW), 1e-3h));
+    return lerp(materialShadow, target, (half)_DSEWA_SceneShadowTint.a);
+}
+
 half ToonMainLightShadow(float3 positionWS, half blurTexels)
 {
     // Single exit: early returns before the fwidth() below made FXC flag the result as "potentially
@@ -29,7 +46,7 @@ half ToonMainLightShadow(float3 positionWS, half blurTexels)
     }
     else if (coord.z > 0.0 && coord.z < 1.0)   // inside the shadow far plane
     {
-        float2 radius = _MainLightShadowmapSize.xy * blurTexels;
+        float2 radius = _MainLightShadowmapSize.xy * blurTexels * (_DSEWA_ToonShadowSoft.y > 0 ? _DSEWA_ToonShadowSoft.y : 1);
         half s = 0;
         UNITY_UNROLL
         for (int k = 0; k < 12; k++)
@@ -38,7 +55,7 @@ half ToonMainLightShadow(float3 positionWS, half blurTexels)
         s *= 1.0 / 12.0;
         // cut the smooth field at its middle with a one-pixel anti-aliased step: round contour, crisp toon edge,
         // independent of the material's lighting threshold (which would otherwise cut the soft ramp at its foot)
-        half aa = max(fwidth(s), 1e-3);
+        half aa = max(max(fwidth(s), 1e-3), _DSEWA_ToonShadowSoft.x);
         s = smoothstep(0.5 - aa, 0.5 + aa, s);
 
         s = LerpWhiteTo(s, GetMainLightShadowParams().x);        // light's shadow strength
@@ -72,7 +89,7 @@ half ToonCharacterShadow(float3 positionWS, half blurTexels)
             s += depth > occluder ? 0 : 1;
         }
         s *= 1.0 / 12.0;
-        half aa = max(fwidth(s), 1e-3);
+        half aa = max(max(fwidth(s), 1e-3), _DSEWA_ToonShadowSoft.x);
         s = smoothstep(0.5 - aa, 0.5 + aa, s);
         result = LerpWhiteTo(s, _DSEWA_CharShadowParams.w);
     }

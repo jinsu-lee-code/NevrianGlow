@@ -123,7 +123,12 @@ half4 CrystalFrag(Varyings i, bool frontFace : SV_IsFrontFace) : SV_Target
 
     // height 0 (bottom of the renderer bounds) .. 1 (top)
     float span = max(unity_RendererBounds_Max.y - unity_RendererBounds_Min.y, 1e-3);
-    float h01 = smoothstep(_GradientRange.x, _GradientRange.y, (i.positionWS.y - unity_RendererBounds_Min.y) / span);
+    float hRaw = (i.positionWS.y - unity_RendererBounds_Min.y) / span;
+    // object space option (2026-10-26, shop wisteria): the renderer bounds did not give a usable height range there,
+    // so the height comes from the mesh's own y range instead
+    float objSpan = max(_ObjYRange.y - _ObjYRange.x, 1e-3);
+    if (_ObjGradient > 0.5) hRaw = (i.positionOS.y - _ObjYRange.x) / objSpan;
+    float h01 = smoothstep(_GradientRange.x, _GradientRange.y, hRaw);
 
     // toon ramp, lit colour base -> tip, shadow colour base -> darker tip
     Light light = GetMainLight(TransformWorldToShadowCoord(i.positionWS));
@@ -134,7 +139,7 @@ half4 CrystalFrag(Varyings i, bool frontFace : SV_IsFrontFace) : SV_Target
     shade += brush * _BrushEdge;                 // the light/shadow border wanders like a painted edge
     float lit = smoothstep(_Threshold, _Threshold + _Softness, shade);
     half3 litC = lerp(_LitColor.rgb, _TipColor.rgb, h01);
-    half3 shadowC = lerp(_ShadowColor.rgb, _TipColor.rgb * _TipShadow, h01);
+    half3 shadowC = SceneShadowMul(lerp(_ShadowColor.rgb, _TipColor.rgb * _TipShadow, h01), litC);
     half3 base = _BoxMap > 0.5 ? BoxMapBase(i.positionOS, i.normalOS) : SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv).rgb;
     half3 color = lerp(shadowC, litC, lit) * base;
 
@@ -164,6 +169,7 @@ half4 CrystalFrag(Varyings i, bool frontFace : SV_IsFrontFace) : SV_Target
     float3 foot = float3((unity_RendererBounds_Min.x + unity_RendererBounds_Max.x) * 0.5, unity_RendererBounds_Min.y,
                          (unity_RendererBounds_Min.z + unity_RendererBounds_Max.z) * 0.5);
     float d01 = distance(i.positionWS, foot) / span;
+    if (_ObjGradient > 0.5) d01 = distance(i.positionOS, float3(0, _ObjYRange.x, 0)) / objSpan;
     float radial = pow(saturate(1.0 - d01 * 0.85), _RadialPower);
     // each beat a wave of light runs from the foot to the tip (first _WaveSpan of the cycle), fading as it goes
     float front = cycle / max(_WaveSpan, 0.05);
