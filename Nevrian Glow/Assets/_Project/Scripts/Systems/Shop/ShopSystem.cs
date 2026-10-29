@@ -333,7 +333,9 @@ namespace NevrianGlowFarm.Systems.Shop
                     return $"{next.DisplayName} 삼";
                 case PlotExpandProductData plot:
                     Farm.TryAddPlots(plot.PlotsAt(tier));
-                    return $"밭 구획 +{plot.PlotsAt(tier)} (지금 {Farm.PlotCount}구획)";
+                    // 흩어진 밭(수정사항 10/29): 어느 자리가 열렸는지 — 걸어가야 하므로
+                    string where = Farm.SiteNameOfPlot(Farm.PlotCount - 1);
+                    return where != null ? $"새 밭 열림: {where}" : $"밭 구획 +{plot.PlotsAt(tier)} (지금 {Farm.PlotCount}구획)";
                 case BagExpandProductData bag:
                     inventory.SetBagSlotCount(inventory.Bag.SlotCount + bag.Slots);
                     return $"가방 +{bag.Slots}칸 (지금 {inventory.Bag.SlotCount}칸)";

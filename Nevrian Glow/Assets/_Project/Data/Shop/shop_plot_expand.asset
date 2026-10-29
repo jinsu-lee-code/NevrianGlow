@@ -14,11 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.PlotExpandProductData
   id: shop_plot_expand
   displayName: "\uBC2D \uD655\uC7A5\uAD8C"
-  description: "\uBC2D +4 \u2192 +8 \u2192 +16 \u2192 +28\uBC2D (\uCD5C\uB300 8\xD78\uBC2D
-    = 256\uCE78)"
+  description: "\uB18D\uC7A5 \uC11C\uCABD \uC6B8\uD0C0\uB9AC \uBC16\uC5D0 \uC0C8
+    \uBC2D(\uC2DC\uC791 \uBC2D\uACFC \uAC19\uC740 8\uBC2D \xB7 32\uCE78)\uC774 \uC5F4\uB9B0\uB2E4,
+    \uAC78\uC5B4\uC11C \uAC00\uC694"
   sortOrder: 90
   category: "\uD655\uC7A5"
-  hidden: 1
+  hidden: 0
   icon: {fileID: 0}
   repeatable: 0
   tiers:
@@ -26,13 +27,9 @@ MonoBehaviour:
     requirements: []
   - price: 4000
     requirements: []
-  - price: 10000
-    requirements: []
-  - price: 25000
-    requirements: []
   dailyStock: 
   stockFromNextDay: 0
   bonusStock: 0
   bonusStockLevel: 0
   plots: 1
-  plotsPerTier: 01000000020000000400000007000000
+  plotsPerTier: 0200000002000000

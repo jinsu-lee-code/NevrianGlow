@@ -29,6 +29,8 @@ namespace NevrianGlowFarm.Systems.Farm
         [SerializeField] private List<ForbiddenZone> forbiddenZones = new List<ForbiddenZone>();
         [Tooltip("성장일 능력치 — 작물 첫 성장일에 더함 (Data/Stats/stat_grow_days, 비우면 그대로)")]
         [SerializeField] private StatData growDaysStat;
+        [Tooltip("확장 밭 자리 — 시작 구획 다음 구획부터 이 순서대로 칸이 놓인다 (수정사항 10/29 흩어진 밭). 비우면 예전처럼 시작 밭에 이어 붙임")]
+        [SerializeField] private List<FarmFieldSite> fieldSites = new List<FarmFieldSite>();
 
         [Header("조정값")]
         [Tooltip("칸 하나의 흙 크기 — 겹침 검사에도 쓴다, 칸 프리팹 크기와 같게 (m)")]
@@ -469,9 +471,9 @@ namespace NevrianGlowFarm.Systems.Farm
         {
             if (state == null)
                 return;
-            int plots = Mathf.Clamp(from.PlotCount, state.PlotCount, settings.MaxPlotCount);
+            int plots = Mathf.Clamp(from.PlotCount, state.PlotCount, MaxPlotCount);
             if (plots != from.PlotCount)
-                Debug.LogWarning($"[FarmGrid] 저장된 구획 {from.PlotCount}개를 {plots}개로 맞춤 (현재 {state.PlotCount} ~ 최대 {settings.MaxPlotCount})", this);
+                Debug.LogWarning($"[FarmGrid] 저장된 구획 {from.PlotCount}개를 {plots}개로 맞춤 (현재 {state.PlotCount} ~ 최대 {MaxPlotCount})", this);
             from.PlotCount = plots;
             Logic.Save.SaveState.ApplyFarm(state, from);
             SpawnMissingViews();
@@ -497,12 +499,54 @@ namespace NevrianGlowFarm.Systems.Farm
         // ── 표시 ─────────────────────────────────────────────
 
         public int PlotCount => state != null ? state.PlotCount : 0;
-        public int MaxPlotCount => settings != null ? settings.MaxPlotCount : 0;
+
+        /// <summary>최대 구획 — 설정 값, 확장 밭 자리가 있으면 자리에 들어가는 만큼까지.</summary>
+        public int MaxPlotCount
+        {
+            get
+            {
+                if (settings == null)
+                    return 0;
+                if (!HasSites)
+                    return settings.MaxPlotCount;
+                int room = settings.StartPlotCount;
+                foreach (var s in fieldSites)
+                    if (s != null)
+                        room += s.Plots;
+                return Mathf.Min(settings.MaxPlotCount, room);
+            }
+        }
+
+        /// <summary>열린 확장 밭 자리의 바닥 사각형(밭 + 둘레 길, 월드 x · z) — 배경 풀 지우기(FarmGrassClearer).</summary>
+        public List<Rect> OpenSiteGroundRects()
+        {
+            var rects = new List<Rect>();
+            if (!HasSites || settings == null || state == null)
+                return rects;
+            int firstCell = settings.StartPlotCount * settings.CellsPerPlot;
+            foreach (var site in fieldSites)
+            {
+                if (firstCell >= state.Cells.Count)
+                    break;
+                rects.Add(site.GroundRect(settings));
+                firstCell += site.Plots * settings.CellsPerPlot;
+            }
+            return rects;
+        }
+
+        /// <summary>그 구획이 들어간 확장 밭 자리 이름 (시작 밭이거나 자리가 없으면 null) — 상점 안내.</summary>
+        public string SiteNameOfPlot(int plot)
+        {
+            if (!HasSites || settings == null)
+                return null;
+            var (site, _) = FarmLayout.SiteOf(plot * settings.CellsPerPlot, settings.CellsPerPlot, settings.StartPlotCount, SitePlots);
+            return site >= 0 ? fieldSites[site].DisplayName : null;
+        }
 
         /// <summary>밭 구획을 늘린다 (상점 밭 구획 확장 3-3). 새 칸은 미개간. 최대를 넘으면 false.</summary>
         public bool TryAddPlots(int plots)
         {
-            if (state == null || plots <= 0 || state.PlotCount + plots > settings.MaxPlotCount)
+            if (state == null || plots <= 0 || state.PlotCount + plots > MaxPlotCount)
                 return false;
             state.SetPlotCount(state.PlotCount + plots);
             SpawnMissingViews();
@@ -518,7 +562,7 @@ namespace NevrianGlowFarm.Systems.Farm
             float prefabScale = settings.CellPitch / Mathf.Max(0.1f, cellPrefabPitch);
             for (int i = views.Count; i < state.Cells.Count; i++)
             {
-                var view = Instantiate(cellPrefab, CellPosition(i), CellRotation(), transform);
+                var view = Instantiate(cellPrefab, CellPosition(i), CellRotation(i), transform);
                 view.transform.localScale = cellPrefab.transform.localScale * prefabScale;
                 view.Bind(this, i);
                 views.Add(view);
@@ -528,7 +572,7 @@ namespace NevrianGlowFarm.Systems.Farm
                     Vector3 center = Vector3.zero;
                     for (int k = 0; k < FarmLayout.CellsPerBed; k++)
                         center += CellPosition(i - k);
-                    var bed = Instantiate(bedPrefab, center / FarmLayout.CellsPerBed, CellRotation(), transform);
+                    var bed = Instantiate(bedPrefab, center / FarmLayout.CellsPerBed, CellRotation(i), transform);
                     bed.transform.localScale = bedPrefab.transform.localScale * prefabScale;
                     bed.name = $"Bed{i / FarmLayout.CellsPerBed:00}";
                 }
@@ -624,7 +668,36 @@ namespace NevrianGlowFarm.Systems.Farm
 
         private Vector3 AlongDir => settings.PlotExpandDirection.sqrMagnitude > 0f ? settings.PlotExpandDirection.normalized : Vector3.left;
         private Vector3 AcrossDir => Vector3.Cross(Vector3.up, AlongDir).normalized;
-        private Quaternion CellRotation() => Quaternion.LookRotation(AcrossDir, Vector3.up);
+
+        private bool HasSites => fieldSites.Count > 0 && fieldSites.TrueForAll(s => s != null);
+
+        private List<int> sitePlots;
+        private IReadOnlyList<int> SitePlots
+        {
+            get
+            {
+                if (sitePlots == null || sitePlots.Count != fieldSites.Count)
+                    sitePlots = fieldSites.ConvertAll(s => s != null ? s.Plots : 1);
+                return sitePlots;
+            }
+        }
+
+        // 칸이 놓이는 확장 밭 자리 (시작 밭이면 null)
+        private FarmFieldSite SiteOfCell(int index, out int localIndex)
+        {
+            localIndex = index;
+            if (!HasSites)
+                return null;
+            var (site, local) = FarmLayout.SiteOf(index, settings.CellsPerPlot, settings.StartPlotCount, SitePlots);
+            localIndex = local;
+            return site >= 0 ? fieldSites[site] : null;
+        }
+
+        private Quaternion CellRotation(int index)
+        {
+            var site = SiteOfCell(index, out _);
+            return site != null ? site.CellRotation : Quaternion.LookRotation(AcrossDir, Vector3.up);
+        }
 
         /// <summary>그 자리가 밭 칸이나 길(금지 구역) 위인지 — 플레이어 발소리(흙)에 쓴다.</summary>
         public bool IsFarmGround(Vector3 world)
@@ -644,9 +717,12 @@ namespace NevrianGlowFarm.Systems.Farm
             return false;
         }
 
-        /// <summary>칸 중심의 월드 위치 (바닥 높이 = 이 오브젝트 높이).</summary>
+        /// <summary>칸 중심의 월드 위치 (바닥 높이 = 이 오브젝트 높이, 확장 밭 자리의 칸은 그 자리 높이).</summary>
         public Vector3 CellPosition(int index)
         {
+            var site = SiteOfCell(index, out int local);
+            if (site != null)
+                return site.CellPosition(local, settings);
             var (along, across) = FarmLayout.CellOffset(index, settings.CellsPerPlot, settings.CellPitch, settings.BedPitch, settings.PlotPitch);
             return transform.position + AlongDir * (float)along + AcrossDir * (float)across;
         }
@@ -699,7 +775,7 @@ namespace NevrianGlowFarm.Systems.Farm
                 }
             }
 
-            if (drawNextPlot && open < settings.MaxPlotCount)
+            if (drawNextPlot && open < settings.MaxPlotCount && !HasSites) // 확장 밭 자리가 있으면 자리가 스스로 그린다
             {
                 // 다음 구획 자리: 칸 바깥 테두리를 빨강 점선으로, 그 안에서 금지 구역과 겹치는 칸은 빨강 칠
                 var b = FarmLayout.PlotCenterBounds(open, settings.CellsPerPlot, settings.CellPitch, settings.BedPitch, settings.PlotPitch);

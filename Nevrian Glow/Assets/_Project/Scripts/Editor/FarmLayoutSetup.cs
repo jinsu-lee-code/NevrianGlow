@@ -158,11 +158,17 @@ namespace NevrianGlowFarm.Editor
             var fence = Child(root, "Fence");
             int pieces = 0;
             pieces += FenceLine(fence, "Fence_SideA", At(fa0, fc0), At(fa0, fc1), skipLast: true);
-            pieces += FenceLine(fence, "Fence_Far", At(fa0, fc1), At(fa1, fc1), skipLast: true);
+            // 먼 쪽 가운데 출입구 — 맵 곳곳의 확장 밭으로 걸어 나간다 (수정사항 10/29, Build Farm Field Sites)
+            var oldFar = fence.Find("Fence_Far");
+            if (oldFar != null)
+                Object.DestroyImmediate(oldFar.gameObject);
+            float gateHalf = FieldGateGap * 0.5f;
+            pieces += FenceLine(fence, "Fence_FarA", At(fa0, fc1), At(aMid - gateHalf, fc1), skipLast: false);
+            pieces += FenceLine(fence, "Fence_FarB", At(aMid + gateHalf, fc1), At(fa1, fc1), skipLast: true);
             pieces += FenceLine(fence, "Fence_SideB", At(fa1, fc1), At(fa1, fc0), skipLast: true);
             pieces += FenceLine(fence, "Fence_NearRight", At(fa1, fc0), At(aMid + gapHalf, fc0), skipLast: false);
             pieces += FenceLine(fence, "Fence_NearLeft", At(aMid - gapHalf, fc0), At(fa0, fc0), skipLast: true);
-            notes.Add(pieces > 0 ? $"울타리 {fa1 - fa0:0.#} × {fc1 - fc0:0.#} m · 조각 {pieces} · 문 틈 {FenceDoorGap} m" : "울타리 모델 없음 (Assets/Art/Environment/fence)");
+            notes.Add(pieces > 0 ? $"울타리 {fa1 - fa0:0.#} × {fc1 - fc0:0.#} m · 조각 {pieces} · 문 틈 {FenceDoorGap} m · 먼 쪽 출입구 {FieldGateGap} m" : "울타리 모델 없음 (Assets/Art/Environment/fence)");
 
             // 걷는 바닥(Ground 평면 = 10 × 10 m 메시, 보이지 않는 콜라이더)이 울타리 바깥 GroundMargin까지 덮게 크기를 맞춘다 (2026-10-25: 밭이 커지며 울타리가 바닥 밖으로 나감)
             var ground = root.Find("Ground");
@@ -188,6 +194,102 @@ namespace NevrianGlowFarm.Editor
             int beds = settings.StartPlotCount * settings.CellsPerPlot / FarmLayout.CellsPerBed;
             notes.Insert(0, $"시작 {beds}밭 {aMax - aMin:0.#} × {cMax - cMin:0.#} m · 원점 {origin} · 둘레 길 {PathWidth} m · 금지 구역 {zones.Length}");
             return string.Join(" · ", notes);
+        }
+
+        // ── 확장 밭 자리 (수정사항 10/29: 해금되는 밭을 맵 곳곳에, 시작 밭과 같은 규격, 해금 전에는 울타리만, 걸어서 이동) ──
+
+        // 처음 만들 때의 자리 (2026-10-30 지형 조사: 평평하고 · 길 · 나무 · 바위 · 배경 소품이 없고 · 플레이 구역 안인 곳). 이미 있으면 씬의 자리를 그대로 둔다
+        private static readonly (string Name, string Label, Vector3 Position, float Yaw)[] DefaultSites =
+        {
+            ("FieldSite_1", "서쪽 밭", new Vector3(-27f, 0f, 0f), 270f),
+            ("FieldSite_2", "먼 서쪽 밭", new Vector3(-41f, 0f, 0f), 270f),
+        };
+
+        [MenuItem("Glow Farm/Setup/Build Farm Field Sites")]
+        private static void BuildSitesMenu()
+        {
+            var scene = EditorSceneManager.GetSceneByPath(FarmScenePath);
+            bool opened = false;
+            if (!scene.isLoaded)
+            {
+                scene = EditorSceneManager.OpenScene(FarmScenePath, OpenSceneMode.Additive);
+                opened = true;
+            }
+            var root = scene.GetRootGameObjects().FirstOrDefault(g => g.name == "FarmRoot");
+            var settings = AssetDatabase.LoadAssetAtPath<GameStartSettingsData>(GameStartPath);
+            var grid = root != null ? root.GetComponentInChildren<FarmGrid>(true) : null;
+            if (root == null || settings == null || grid == null)
+            {
+                Debug.LogError("[Setup] Farm 씬의 FarmRoot · FarmGrid 또는 GameStartSettings가 없음");
+                return;
+            }
+            string log = BuildSites(root.transform, grid, settings);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            if (opened)
+                EditorSceneManager.CloseScene(scene, true);
+            Debug.Log("[Setup] 확장 밭 자리: " + log);
+        }
+
+        private static string BuildSites(Transform root, FarmGrid grid, GameStartSettingsData settings)
+        {
+            var parent = Child(root, "FieldSites");
+            var sites = new List<FarmFieldSite>();
+            var notes = new List<string>();
+            foreach (var d in DefaultSites)
+            {
+                var t = parent.Find(d.Name);
+                if (t == null)
+                {
+                    t = new GameObject(d.Name).transform;
+                    t.SetParent(parent, false);
+                    t.position = d.Position;
+                    t.rotation = Quaternion.Euler(0f, d.Yaw, 0f);
+                }
+                if (!t.TryGetComponent<FarmFieldSite>(out var site))
+                    site = t.gameObject.AddComponent<FarmFieldSite>();
+                var so = new SerializedObject(site);
+                so.FindProperty("settings").objectReferenceValue = settings;
+                if (string.IsNullOrEmpty(so.FindProperty("displayName").stringValue) || so.FindProperty("displayName").stringValue == "새 밭")
+                    so.FindProperty("displayName").stringValue = d.Label;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                int pieces = SiteFence(site, settings);
+                sites.Add(site);
+                notes.Add($"{site.DisplayName} {t.position} · 구획 {site.Plots} · 울타리 조각 {pieces}");
+            }
+
+            var gso = new SerializedObject(grid);
+            var list = gso.FindProperty("fieldSites");
+            list.ClearArray();
+            for (int i = 0; i < sites.Count; i++)
+            {
+                list.InsertArrayElementAtIndex(i);
+                list.GetArrayElementAtIndex(i).objectReferenceValue = sites[i];
+            }
+            gso.ApplyModifiedPropertiesWithoutUndo();
+            int room = settings.StartPlotCount + sites.Sum(s => s.Plots);
+            if (settings.MaxPlotCount != room)
+                notes.Add($"주의: 최대 구획(GameStartSettings {settings.MaxPlotCount})과 자리 합({room})이 다름 — shop.csv 밭 확장권 단계 · 지급 칸 확인");
+            return string.Join(" / ", notes);
+        }
+
+        // 확장 밭 울타리: 밭 사각형 + 둘레 길 + 여유, 가까운 쪽(시작 밭 쪽) · 먼 쪽 가운데에 출입구 (걸어서 지나가게)
+        private static int SiteFence(FarmFieldSite site, GameStartSettingsData settings)
+        {
+            var half = site.HalfSize(settings);
+            float ha = half.x + site.PathWidth + FenceMargin, hc = half.y + site.PathWidth + FenceMargin;
+            float gate = FieldGateGap * 0.5f;
+            Vector3 o = site.transform.position, along = site.Along, across = site.Across;
+            Vector3 At(float a, float c) => o + along * a + across * c;
+            var fence = Child(site.transform, "Fence");
+            int pieces = 0;
+            pieces += FenceLine(fence, "Fence_SideA", At(-ha, -hc), At(-ha, hc), skipLast: true);
+            pieces += FenceLine(fence, "Fence_FarA", At(-ha, hc), At(-gate, hc), skipLast: false);
+            pieces += FenceLine(fence, "Fence_FarB", At(gate, hc), At(ha, hc), skipLast: true);
+            pieces += FenceLine(fence, "Fence_SideB", At(ha, hc), At(ha, -hc), skipLast: true);
+            pieces += FenceLine(fence, "Fence_NearB", At(ha, -hc), At(gate, -hc), skipLast: false);
+            pieces += FenceLine(fence, "Fence_NearA", At(-gate, -hc), At(-ha, -hc), skipLast: true);
+            return pieces;
         }
 
         // ── 부품 ──
@@ -292,6 +394,7 @@ namespace NevrianGlowFarm.Editor
         private const string FenceRailModel = "Assets/Art/Environment/fence/Models/env_rail.fbx";
         private const float FenceMargin = 0.6f;        // 둘레 길 바깥쪽 여유 (m)
         private const float FenceDoorGap = 3.6f;       // 문 자리 틈 (m, 문 · 계단 폭)
+        private const float FieldGateGap = 3f;         // 밭 울타리 출입구 (시작 밭 먼 쪽 · 확장 밭 양쪽, m)
         private const float FencePostSpacing = 1f;     // 기둥 간격 = 가로대 길이 (m)
         private const float FenceColliderHeight = 1.2f, FenceColliderThickness = 0.25f;
         private static readonly float[] FenceRailHeights = { 0.26f, 0.62f }; // 가로대 2단 (바닥 기준 피벗 높이, m)

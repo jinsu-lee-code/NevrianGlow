@@ -78,6 +78,8 @@ namespace NevrianGlowFarm.Systems.Farm
                 var r = zone.FloorRect;
                 rects.Add(new Rect(r.xMin - margin, r.yMin - margin, r.width + margin * 2f, r.height + margin * 2f));
             }
+            // 열린 확장 밭(흩어진 밭, 수정사항 10/29)은 울타리 안 둘레 길까지
+            rects.AddRange(grid.OpenSiteGroundRects());
             if (rects.Count == 0)
                 return;
 

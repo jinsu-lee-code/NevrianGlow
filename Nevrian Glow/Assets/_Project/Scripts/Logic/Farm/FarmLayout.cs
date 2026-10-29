@@ -55,6 +55,27 @@ namespace NevrianGlowFarm.Logic.Farm
             return (alongMin, alongMax, acrossMin, acrossMax);
         }
 
+        /// <summary>
+        /// 흩어진 밭 (수정사항 10/29 "해금되는 밭 위치를 맵 곳곳에"): 시작 구획 다음 구획부터는 자리(site)마다 정해진 구획 수만큼 차례로 들어간다.
+        /// 칸 번호 → (자리 번호, 자리 안 칸 번호). 시작 구획이거나 자리가 모자라면 자리 −1(예전처럼 시작 밭에 이어 붙임 — 자리 안 번호 = 칸 번호).
+        /// 자리 안 번호는 시작 밭과 같은 규칙(CellOffset)으로 놓는다 — 구획이 16칸 단위라 물뿌리개 범위(최대 8칸)는 자리를 넘지 않는다.
+        /// </summary>
+        public static (int Site, int LocalIndex) SiteOf(int index, int cellsPerPlot, int startPlots, System.Collections.Generic.IReadOnlyList<int> sitePlots)
+        {
+            int plot = index / cellsPerPlot;
+            if (plot < startPlots || sitePlots == null)
+                return (-1, index);
+            int firstPlot = startPlots;
+            for (int s = 0; s < sitePlots.Count; s++)
+            {
+                int plots = sitePlots[s] < 1 ? 1 : sitePlots[s];
+                if (plot < firstPlot + plots)
+                    return (s, index - firstPlot * cellsPerPlot);
+                firstPlot += plots;
+            }
+            return (-1, index);
+        }
+
         private static int BedsPerRow(int cellsPerPlot)
         {
             int beds = cellsPerPlot / CellsPerBed;

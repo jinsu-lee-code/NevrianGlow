@@ -10,6 +10,29 @@ namespace NevrianGlowFarm.Tests
 
         private static (double Along, double Across) At(int index) => FarmLayout.CellOffset(index, 16, Cell, Bed, Plot);
 
+        // 흩어진 밭 (수정사항 10/29): 시작 2구획 다음부터 자리마다 2구획(시작 밭과 같은 32칸)씩, 자리 안 번호는 0부터
+        [Test]
+        public void SiteOf_StartThenSitesInOrder()
+        {
+            var sites = new[] { 2, 2 };
+            Assert.AreEqual((-1, 31), FarmLayout.SiteOf(31, 16, 2, sites), "시작 밭");
+            Assert.AreEqual((0, 0), FarmLayout.SiteOf(32, 16, 2, sites), "첫 자리 첫 칸");
+            Assert.AreEqual((0, 31), FarmLayout.SiteOf(63, 16, 2, sites));
+            Assert.AreEqual((1, 0), FarmLayout.SiteOf(64, 16, 2, sites), "둘째 자리");
+            Assert.AreEqual((1, 31), FarmLayout.SiteOf(95, 16, 2, sites));
+            Assert.AreEqual((-1, 96), FarmLayout.SiteOf(96, 16, 2, sites), "자리가 모자라면 예전처럼");
+            Assert.AreEqual((-1, 40), FarmLayout.SiteOf(40, 16, 2, null), "자리가 없으면 예전처럼");
+        }
+
+        [Test]
+        public void SiteCells_KeepWateringBlocksInsideSite()
+        {
+            // 물뿌리개 최대 8칸 블록이 자리 경계를 넘지 않는다 (자리 = 16칸 단위)
+            var sites = new[] { 2 };
+            foreach (int i in WateringPattern.Cells(37, 8, 64))
+                Assert.AreEqual(0, FarmLayout.SiteOf(i, 16, 2, sites).Site);
+        }
+
         [Test]
         public void FirstBed_IsCenteredOnOrigin()
         {

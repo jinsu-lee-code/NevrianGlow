@@ -7,7 +7,7 @@ shop_seed_pearlcore,seed,진주핵꽃 씨앗,"먹이를 주면 진주핵을 키�
 shop_hoe_upgrade,tool,괭이 업그레이드,개간 횟수 3 → 2 → 1회,150;1200,2,tool_tier,tool_hoe,1;1,,,level:3,demo,P1
 shop_mop_upgrade,tool,대걸레 업그레이드,닦는 속도와 반경 증가,200;800,2,tool_tier,tool_mop,1;1,,,level:3,demo,P1
 shop_watering_upgrade,tool,물뿌리개 업그레이드,한 번에 1 → 4 → 8칸,400;1500,2,tool_tier,tool_watering_can,1;1,,,level:3,demo,P1
-shop_plot_expand,expand,밭 확장권,밭 +4 → +8 → +16 → +28밭 (최대 8×8밭 = 256칸),1500;4000;10000;25000,4,plot_cells,farm,16;32;64;112,,,,demo,P1
+shop_plot_expand,expand,밭 확장권,"농장 서쪽 울타리 밖에 새 밭(시작 밭과 같은 8밭 · 32칸)이 열린다, 걸어서 가요",1500;4000,2,plot_cells,farm,32;32,,,,demo,P1
 shop_bag_expand,expand,가방 확장,가방 +4칸,100;200;300;500;800;1200;1600,7,bag_slots,inventory,4;4;4;4;4;4;4,,,level:5,demo,P1
 shop_hotbar_expand,expand,핫바 확장,핫바 +1칸 (최대 8칸),100;200;300;400,4,hotbar_slots,hotbar,1;1;1;1,,,level:5,demo,P1
 shop_fruit_shelf,furniture,과일 진열대,"수확한 작물만. 1층 낮은 판매대, 한 종류를 30개까지",500,0,item,furn_fruit_shelf,1,,,,demo,P1
