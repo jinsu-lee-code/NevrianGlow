@@ -129,6 +129,7 @@
 | `Crops/common/Scripts/CropReadyGlow.cs` + `Crops/common/FX/{pf_vfx_crop_ready_glow.prefab, mat_vfx_crop_ready_halo.mat}`, `Environment/Scripts/CreatureLure.cs` | 10/28. 수확 가능 표시: 마지막 단계 프리팹에 붙어 자라기 애니메이션 뒤 노란 빛무리 + 떠오르는 알갱이 + 흙에 작은 따뜻한 점광원(`Ready Light`, 그림자 없음). 동시에 `CreatureLure`가 되어 나비가 와서 맴돎(`CreatureWander` Visit Lures). 등불 열매처럼 다시 열리는 작물은 `Fruit Probe`로 열매가 있을 때만 켜짐. 게임 코드 필요 없음 |
 | `Environment/Scripts/SoilFX.cs` `OnWater(point)` · `SetWet(bool)`, `Shaders/ToonSoil.shader` (`_Wet` · `_EdgeOpen` · `_WorldTile`), `plot/pf_env_plot_soil.prefab` | 10/28. 물 준 흙: 물이 닿은 곳부터 젖은 얼룩이 번지고 고랑에 물웅덩이 · 반짝임. 칸 흙을 2 m 칸 간격에 맞추고, 바로 옆 칸이 있으면 그쪽 테두리를 없애 붙은 칸이 한 밭처럼 보임. 흙 무늬는 월드 좌표 반복, 외곽선 끔. `pf_env_plot_cell`은 흙만(틀 없음) |
 | `Environment/Scripts/MoonModel.cs`, `Sky/Shaders/ToonMoon.shader` | 10/28. 하늘의 그림 구름층이 달 앞을 지나감(75 %), 달 크기 6° |
+| `shop_wall/Models/env_shop_window_square.fbx` + `shop_wall/pf_env_shop_window_square.prefab` + `pf_env_shop_wall`의 `FrontWindows` | 10/29. 받은 `window_optimized.fbx`(아치 창틀, 0.98 × 0.64 m)를 이름만 바꿔 넣음. 아트 벽 정면의 창틀 없는 사각 구멍 2개에 배치: 입구 왼쪽(폭 4.1 m) 1개, 오른쪽(폭 2.0 m) 1개. 기둥이 구멍 가장자리, 지붕이 구멍 위 선에 닿게 비균일 크기(큰 창 x 5.3배). 재질은 기존 아치 창과 같은 `mat_env_shop_window`(이 모델 UV에 맞춘 텍스처는 아님), 그림자 끔. 구멍 안은 기존 창 풍경(`WindowView`)이 그대로 보임 |
 
 ## 이름을 안 바꾼 것
 
