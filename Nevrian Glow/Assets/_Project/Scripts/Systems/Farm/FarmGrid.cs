@@ -292,6 +292,7 @@ namespace NevrianGlowFarm.Systems.Farm
                     var c = state.Cells[i];
                     if (c.HasCrop && FarmRules.TryWater(c, SpecOf(c.CropId)))
                     {
+                        views[i].Watered(); // 젖은 자국이 퍼지는 연출 먼저 — RefreshCell의 젖음 맞추기가 바로 덮지 않게
                         RefreshCell(i, false);
                         views[i].Splash();
                         watered++;
@@ -301,6 +302,8 @@ namespace NevrianGlowFarm.Systems.Farm
                 {
                     UpdateSummary();
                     GameEvents.RaiseCellsWatered(watered);
+                    // 기울인 뒤(0.3초) 물이 들어가므로 누른 순간 받은 프롬프트("물주기 · 물 필요")가 남지 않게 다시 받는다
+                    Interaction.InteractionRaycaster.RequestPromptRefresh();
                 }
                 AudioManager.Play(SoundCues.WaterPour, CellPosition(index)); // 기울인 뒤 물이 나오는 순간 (마른 땅이어도 붓는 소리)
                 return;
@@ -345,6 +348,7 @@ namespace NevrianGlowFarm.Systems.Farm
                 RefreshCell(index, true, tillHit: held is HoeData);
                 if (held is SeedData)
                     views[index].Planted();
+                Interaction.InteractionRaycaster.RequestPromptRefresh(); // 동작이 늦게 끝나는 도구도 결과(성장 정보 등)를 바로 보이게
             }
         }
 
@@ -359,6 +363,23 @@ namespace NevrianGlowFarm.Systems.Farm
                     count++;
             }
             return count;
+        }
+
+        /// <summary>자라는 작물을 조준했을 때 정보 한 줄 (다 자랐거나 빈 칸이면 null — 수확 프롬프트가 대신한다).</summary>
+        public string GetAimInfo(int index)
+        {
+            if (state == null || index < 0 || index >= state.Cells.Count)
+                return null;
+            var cell = state.Cells[index];
+            if (!cell.HasCrop || state.StatusOf(index) == FarmCellStatus.Ready)
+                return null;
+            var crop = CropOf(cell.CropId);
+            if (crop == null)
+                return null;
+            var spec = SpecOf(cell.CropId);
+            int left = Mathf.Max(1, FarmRules.RequiredDays(cell, spec) - cell.Age);
+            int harvestsLeft = spec.RegrowDays > 0 ? spec.MaxHarvests - cell.HarvestCount : 1;
+            return Logic.Text.UiText.Growth(crop.DisplayName, left, spec.NeedsWater, cell.IsWet, cell.IsFertilized, harvestsLeft);
         }
 
         // 나무형 작물은 모델(나무 · 열매)의 수확 창구로만 수확 — 칸(흙)을 보고는 안 된다. 모델이 없으면(그레이박스) 칸으로
@@ -529,6 +550,7 @@ namespace NevrianGlowFarm.Systems.Farm
                 : status == FarmCellStatus.Tilling ? cell.TillProgress / settings.TillWorkRequired
                 : 1f;
             views[index].ShowTill(till, tillHit);
+            views[index].ShowWet(cell.IsWet);
 
             Color soil = status switch
             {

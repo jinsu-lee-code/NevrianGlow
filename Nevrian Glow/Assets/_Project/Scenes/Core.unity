@@ -170,6 +170,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.UI.TitleScreen
   panel: {fileID: 590127807}
+  fadeTime: 0.15
   bootstrapper: {fileID: 153839637}
   saveSystem: {fileID: 1726523465}
   menu: {fileID: 1459529828}
@@ -3856,6 +3857,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.UI.OpeningLetterScreen
   panel: {fileID: 1748199156}
+  fadeTime: 0.15
   titleLabel: {fileID: 241399425}
   bodyLabel: {fileID: 1339467333}
   startButton: {fileID: 1104073589}
@@ -4860,6 +4862,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.UI.SettlementScreen
   panel: {fileID: 1070628365}
+  fadeTime: 0.15
   shop: {fileID: 431489053}
   database: {fileID: 11400000, guid: 56581527d44eb5145b820af02e243a9c, type: 2}
   titleLabel: {fileID: 2068387187}
@@ -4869,6 +4872,7 @@ MonoBehaviour:
   demoEndScreen: {fileID: 992406470}
   nextDayText: "\uB2E4\uC74C \uB0A0"
   demoEndText: "\uB370\uBAA8 \uACB0\uACFC \uBCF4\uAE30"
+  typeSpeed: 60
 --- !u!1 &388750258
 GameObject:
   m_ObjectHideFlags: 0
@@ -10153,6 +10157,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.UI.InventoryScreen
   panel: {fileID: 1644212920}
+  fadeTime: 0.15
   inventory: {fileID: 657109490}
   bagGrid: {fileID: 594755606}
   hotbarGrid: {fileID: 2061633356}
@@ -13742,6 +13747,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.UI.ShopScreen
   panel: {fileID: 767946087}
+  fadeTime: 0.15
   shop: {fileID: 431489053}
   entryTemplate: {fileID: 1973243709}
   entryParent: {fileID: 594146123}
@@ -15285,6 +15291,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.UI.DemoEndScreen
   panel: {fileID: 436102879}
+  fadeTime: 0.15
   database: {fileID: 11400000, guid: 56581527d44eb5145b820af02e243a9c, type: 2}
   titleLabel: {fileID: 527873948}
   bodyLabel: {fileID: 1797808994}
@@ -21823,7 +21830,7 @@ MonoBehaviour:
   showTime: 3
   fadeTime: 0.3
   levelFormat: "\uB808\uBCA8 \uC5C5!  Lv{0}"
-  unlockFormat: "\n{0} \uC5F4\uB9BC"
+  unlockFormat: "\n\uC0C8\uB85C \uC5F4\uB9BC: {0}"
 --- !u!1 &1454723020
 GameObject:
   m_ObjectHideFlags: 0
@@ -30906,6 +30913,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.UI.StorageScreen
   panel: {fileID: 1106632961}
+  fadeTime: 0.15
   inventory: {fileID: 657109490}
   storage: {fileID: 1533839481}
   bagGrid: {fileID: 1776383120}
@@ -31501,6 +31509,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.UI.PauseScreen
   panel: {fileID: 497208260}
+  fadeTime: 0.15
   saveSystem: {fileID: 1726523465}
   menu: {fileID: 1847998131}
   resumeButton: {fileID: 1543991973}
@@ -31696,6 +31705,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.UI.SkillScreen
   panel: {fileID: 1091449432}
+  fadeTime: 0.15
   skills: {fileID: 1146681033}
   entryTemplate: {fileID: 126334812}
   entryParent: {fileID: 681983748}

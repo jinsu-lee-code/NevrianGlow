@@ -55,6 +55,7 @@ namespace NevrianGlowFarm.Systems.Interaction
         private IItemUseTarget useTarget;
         private ISecondaryUseTarget secondaryTarget;
         private IAimPointTarget aimTarget;
+        private IAimInfoTarget infoTarget;
         private string handPrompt;
         private string usePrompt;
         private string secondaryPrompt;
@@ -133,6 +134,7 @@ namespace NevrianGlowFarm.Systems.Interaction
                 handTarget = null;
                 useTarget = null;
                 secondaryTarget = null;
+                infoTarget = null;
                 targetName = string.Empty;
                 SetPrompt(null);
                 promptDirty = true;
@@ -196,6 +198,7 @@ namespace NevrianGlowFarm.Systems.Interaction
             handTarget = hitCollider != null ? hitCollider.GetComponentInParent<IHandInteractable>() : null;
             useTarget = hitCollider != null ? hitCollider.GetComponentInParent<IItemUseTarget>() : null;
             secondaryTarget = hitCollider != null ? hitCollider.GetComponentInParent<ISecondaryUseTarget>() : null;
+            infoTarget = hitCollider != null ? hitCollider.GetComponentInParent<IAimInfoTarget>() : null;
             var shown = FirstAlive(handTarget, useTarget, secondaryTarget);
             targetName = shown != null ? shown.name : string.Empty;
             promptDirty = true;
@@ -220,6 +223,14 @@ namespace NevrianGlowFarm.Systems.Interaction
             Append(useKeyLabel, usePrompt);
             Append(secondaryKeyLabel, secondaryPrompt);
             Append(handKeyLabel, handPrompt);
+            // 정보 한 줄 (키 없음) — 자라는 작물의 성장 정보
+            string info = IsAlive(infoTarget) ? infoTarget.GetAimInfo() : null;
+            if (!string.IsNullOrEmpty(info))
+            {
+                if (builder.Length > 0)
+                    builder.Append('\n');
+                builder.Append(info);
+            }
             SetPrompt(builder.ToString());
         }
 

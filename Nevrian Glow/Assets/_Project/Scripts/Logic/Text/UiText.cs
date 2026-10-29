@@ -48,6 +48,22 @@ namespace NevrianGlowFarm.Logic.Text
         /// <summary>인벤토리 보유 수 ("보유 3개"). 0 이하면 빈 문자열.</summary>
         public static string Owned(int count) => count > 0 ? $"보유 {count}개" : string.Empty;
 
+        /// <summary>
+        /// 자라는 작물을 조준했을 때 정보 한 줄 (수정사항 10/28 "성장 중인 식물 호버링 시 성장 정보"):
+        /// 이름 · 수확까지 N일(1이면 '내일 수확') · 물 줌/물 필요(물이 필요한 작물만) · 비료 줌 · 남은 수확 N회(재수확 작물, 2회 이상일 때).
+        /// </summary>
+        public static string Growth(string cropName, int daysLeft, bool needsWater, bool isWet, bool fertilized, int harvestsLeft)
+        {
+            var parts = new List<string> { cropName, daysLeft <= 1 ? "내일 수확" : $"수확까지 {daysLeft}일" };
+            if (needsWater)
+                parts.Add(isWet ? "물 줌" : "물 필요");
+            if (fertilized)
+                parts.Add("비료 줌");
+            if (harvestsLeft > 1)
+                parts.Add($"남은 수확 {harvestsLeft}회");
+            return string.Join(Separator, parts);
+        }
+
         /// <summary>스킬 단계 표시 "현재/최대".</summary>
         public static string SkillLevel(int level, int maxLevel) => $"{level}/{maxLevel}";
 

@@ -38,8 +38,12 @@ namespace NevrianGlowFarm.UI
         [SerializeField] private string nextDayText = "다음 날";
         [Tooltip("데모 마지막 날 버튼 글자")]
         [SerializeField] private string demoEndText = "데모 결과 보기";
+        [Tooltip("본문이 한 글자씩 나오는 빠르기 — 0이면 한 번에 (글자/초, 수정사항 10/28). 나오는 중에 '다음 날'을 누르면 먼저 다 보인다")]
+        [SerializeField, Min(0f)] private float typeSpeed = 60f;
 
         private bool advancing;
+        private float typed = -1f;   // 지금 보이는 글자 수 (−1 = 다 보임)
+        private int typeTotal;
         private bool pending;
         private bool yielding;
 
@@ -111,8 +115,18 @@ namespace NevrianGlowFarm.UI
             }
         }
 
+        /// <summary>본문이 아직 한 글자씩 나오는 중인지.</summary>
+        public bool IsTyping => typed >= 0f;
+
         private void Update()
         {
+            if (IsOpen && IsTyping)
+            {
+                typed += typeSpeed * Time.unscaledDeltaTime;
+                bodyLabel.maxVisibleCharacters = Mathf.Min(typeTotal, (int)typed);
+                if (typed >= typeTotal)
+                    FinishTyping();
+            }
             if (!pending || IsOpen)
                 return;
             // 다른 화면(가방 등)이 열려 있으면 먼저 닫아 본다 — 닫을 수 없는 상태면 다음 프레임에 다시.
@@ -151,6 +165,26 @@ namespace NevrianGlowFarm.UI
             }
             bodyLabel.text = body;
             nextDayLabel.text = IsDemoEnd ? demoEndText : nextDayText;
+            StartTyping();
+        }
+
+        // 정산 글자가 한 번에 나오지 않고 하나씩 (수정사항 10/28) — 실제 시간으로, 화면이 멈춰 있어도
+        private void StartTyping()
+        {
+            typed = -1f;
+            bodyLabel.maxVisibleCharacters = int.MaxValue;
+            if (typeSpeed <= 0f)
+                return;
+            bodyLabel.ForceMeshUpdate();
+            typeTotal = bodyLabel.textInfo.characterCount;
+            typed = 0f;
+            bodyLabel.maxVisibleCharacters = 0;
+        }
+
+        private void FinishTyping()
+        {
+            typed = -1f;
+            bodyLabel.maxVisibleCharacters = int.MaxValue;
         }
 
         private bool IsDemoEnd => GameManager.Instance != null && RunSummary.IsDemoLastDay(Report.Day, GameManager.Instance.DemoLastDay);
@@ -164,10 +198,20 @@ namespace NevrianGlowFarm.UI
         {
             if (!IsOpen)
                 return;
+            // 글자가 나오는 중이면 먼저 다 보여 준다 (한 번 더 누르면 다음 날)
+            if (IsTyping)
+            {
+                FinishTyping();
+                return;
+            }
             bool demoEnd = IsDemoEnd;
+            int day = Report.Day;
             ForceClose();
             if (demoEnd)
+            {
+                GameEvents.RaiseDemoEndReached(day); // 엔딩 연출 자리 (아트 EndingDirector — 납품 대기)
                 demoEndScreen.Open();
+            }
             else if (GameManager.Instance != null)
                 GameManager.Instance.AdvanceToNextDay();
         }

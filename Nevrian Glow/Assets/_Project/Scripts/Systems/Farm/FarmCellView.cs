@@ -9,7 +9,7 @@ namespace NevrianGlowFarm.Systems.Farm
     /// 밭 한 칸의 겉모습 + 상호작용 창구. 상태와 규칙은 FarmGrid(→ Logic FarmRules)에 있고 여기는 전달 · 표시만 한다.
     /// 프리팹 구조: 루트(콜라이더 · Interactable 레이어) / Soil(흙) / Crop(작물) — 모델 교체(5-2)는 자식만 바꾼다.
     /// </summary>
-    public class FarmCellView : MonoBehaviour, IItemUseTarget, IHandInteractable, IAimPointTarget
+    public class FarmCellView : MonoBehaviour, IItemUseTarget, IHandInteractable, IAimPointTarget, IAimInfoTarget
     {
         [Header("참조")]
         [Tooltip("흙 표시 (색으로 개간 · 수분 상태)")]
@@ -59,8 +59,9 @@ namespace NevrianGlowFarm.Systems.Farm
             soilFx = soilRenderer.GetComponent<SoilFX>();
         }
 
-        private SoilFX soilFx;     // 아트 칸 흙(pf_env_plot_soil)의 괭이질 · 심기 연출 — 그레이박스 흙이면 없음
+        private SoilFX soilFx;     // 아트 칸 흙(pf_env_plot_soil)의 괭이질 · 심기 · 물 연출 — 그레이박스 흙이면 없음
         private float shownTill = -1f;
+        private bool shownWet;
 
         /// <summary>
         /// 개간 진행(0~1)을 흙 연출에 알린다. hit = 괭이질 한 번(판 자리가 열리고 흙덩이가 튐), 아니면 연출 없이 그 상태로(불러오기 · 아침 · 수확 뒤).
@@ -74,11 +75,34 @@ namespace NevrianGlowFarm.Systems.Farm
             else if (!Mathf.Approximately(progress01, shownTill))
             {
                 if (progress01 <= 0f)
-                    soilFx.ResetSoil();
+                {
+                    soilFx.ResetSoil(); // 젖은 흙도 같이 지워진다
+                    shownWet = false;
+                }
                 else
                     soilFx.SetTill(progress01);
             }
             shownTill = progress01;
+        }
+
+        /// <summary>
+        /// 물을 준 순간 — 젖은 자국이 칸 위에서 퍼진다 (아트 SoilFX.OnWater, BRANCH_ART 10.28). FarmGrid가 RefreshCell보다 먼저 부른다.
+        /// </summary>
+        public void Watered()
+        {
+            if (soilFx == null)
+                return;
+            soilFx.OnWater(soilRenderer.bounds.center + Vector3.up * soilRenderer.bounds.extents.y);
+            shownWet = true;
+        }
+
+        /// <summary>젖음 상태를 연출 없이 맞춘다 — 아침에 마름 · 불러오기 (아트 SoilFX.SetWet). 바뀔 때만.</summary>
+        public void ShowWet(bool wet)
+        {
+            if (soilFx == null || wet == shownWet)
+                return;
+            soilFx.SetWet(wet);
+            shownWet = wet;
         }
 
         /// <summary>심은 순간 — 가운데에 구덩이가 열리고 씨앗이 들어간 뒤 작은 흙무덤.</summary>
@@ -95,6 +119,7 @@ namespace NevrianGlowFarm.Systems.Farm
         // 보는 방향이 바뀌면 2칸 물뿌리개 짝이 바뀐다 → 프롬프트 칸 수를 다시 받는다
         public bool UpdateAim(Vector3 point, ItemData held) => grid != null && grid.UpdateAim(index, held);
         public void ClearAim() { if (grid != null) grid.ClearAim(); }
+        public string GetAimInfo() => grid != null ? grid.GetAimInfo(index) : null;
 
         /// <summary>물을 받은 칸의 짧은 반응 — 흙이 살짝 부풀었다 돌아온다 (물방울 VFX는 5-8).</summary>
         public void Splash()

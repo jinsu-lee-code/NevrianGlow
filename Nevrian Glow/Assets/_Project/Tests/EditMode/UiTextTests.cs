@@ -8,6 +8,16 @@ namespace NevrianGlowFarm.Tests
     /// <summary>5-4c 툴팁 · 목록 둘째 줄 글자 규칙.</summary>
     public class UiTextTests
     {
+        // 자라는 작물 조준 정보 (수정사항 10/28)
+        [Test]
+        public void Growth_Line()
+        {
+            Assert.AreEqual("월광 뿌리 · 내일 수확 · 물 필요", UiText.Growth("월광 뿌리", 1, true, false, false, 1));
+            Assert.AreEqual("버섯꽃 · 수확까지 2일", UiText.Growth("버섯꽃", 2, false, false, false, 1), "물이 필요 없는 작물은 물 상태를 쓰지 않음");
+            Assert.AreEqual("등불 열매 · 수확까지 3일 · 물 줌 · 비료 줌 · 남은 수확 5회", UiText.Growth("등불 열매", 3, true, true, true, 5));
+            Assert.AreEqual("등불 열매 · 내일 수확 · 물 줌", UiText.Growth("등불 열매", 0, true, true, false, 1), "마지막 수확이면 남은 수확을 쓰지 않음");
+        }
+
         // 레벨업 해금 줄: 같은 끝말은 한 번만 (2026-10-29)
         [Test]
         public void JoinSharedTail_FactorsCommonLastWord()

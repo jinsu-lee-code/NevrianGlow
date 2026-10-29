@@ -66,6 +66,11 @@ namespace NevrianGlowFarm.Core
         public static event Action<string> ZoneArrived;
         /// <summary>장사가 끝났을 때 (정산 단계로 넘어가기 직전).</summary>
         public static event Action SalesFinished;
+        /// <summary>
+        /// 데모 마지막 날 정산에서 '데모 결과 보기'를 눌렀을 때 (일차) — 데모 종료 화면이 열리기 직전.
+        /// 엔딩 연출(아트 EndingDirector · LighthouseGoal.PlayEnding, 데모 스토리 충돌 해결안 2번)이 받는 자리.
+        /// </summary>
+        public static event Action<int> DemoEndReached;
 
         internal static void RaiseNewGameStarted() => NewGameStarted?.Invoke();
         internal static void RaiseCellTilled(int cellIndex) => CellTilled?.Invoke(cellIndex);
@@ -79,6 +84,7 @@ namespace NevrianGlowFarm.Core
         internal static void RaiseLetterClosed(string letterId) => LetterClosed?.Invoke(letterId);
         internal static void RaiseZoneArrived(string zoneId) => ZoneArrived?.Invoke(zoneId);
         internal static void RaiseSalesFinished() => SalesFinished?.Invoke();
+        internal static void RaiseDemoEndReached(int day) => DemoEndReached?.Invoke(day);
 
         internal static void RaiseStatsChanged() => StatsChanged?.Invoke();
         internal static void RaiseSkillLevelChanged(string skillId, int level) => SkillLevelChanged?.Invoke(skillId, level);
@@ -115,6 +121,7 @@ namespace NevrianGlowFarm.Core
             LetterClosed = null;
             ZoneArrived = null;
             SalesFinished = null;
+            DemoEndReached = null;
         }
     }
 }
