@@ -44,6 +44,8 @@ namespace NevrianGlowFarm.UI
         [SerializeField] private GameObject[] showWithMenu = new GameObject[0];
         [Tooltip("새 게임 때 한 번 띄울 오프닝 편지 (P-7) — 비우면 바로 상점")]
         [SerializeField] private OpeningLetterScreen openingLetter;
+        [Tooltip("새 게임 · 이어하기를 덮는 로딩 화면 (최적화 2026-10-30) — 비우면 바로 시작")]
+        [SerializeField] private LoadingScreen loadingScreen;
 
         private bool starting;
         private bool hasSave;
@@ -151,19 +153,22 @@ namespace NevrianGlowFarm.UI
         /// <summary>'이어하기': 저장된 날 아침 상점 단계부터.</summary>
         public void ContinueGame()
         {
-            if (!IsOpen || !hasSave || GameManager.Instance == null)
+            if (!IsOpen || !hasSave || GameManager.Instance == null || starting)
                 return;
-            // 시작 상태를 먼저 만들고 그 위에 저장을 덮는다 (6-1 왕복 테스트와 같은 경로)
-            GameManager.Instance.StartNewGame();
-            if (!saveSystem.Load(out string message))
-                Debug.LogError($"[TitleScreen] 이어하기 실패 - 1일차로 시작: {message}", this);
-            Begin();
+            StartBehindLoading(() =>
+            {
+                // 시작 상태를 먼저 만들고 그 위에 저장을 덮는다 (6-1 왕복 테스트와 같은 경로)
+                GameManager.Instance.StartNewGame();
+                if (!saveSystem.Load(out string message))
+                    Debug.LogError($"[TitleScreen] 이어하기 실패 - 1일차로 시작: {message}", this);
+                Begin();
+            });
         }
 
         /// <summary>'새 게임'. 쓸 수 있는 저장이 있으면 덮어쓰기를 묻는다.</summary>
         public void NewGame()
         {
-            if (!IsOpen)
+            if (!IsOpen || starting)
                 return;
             if (!hasSave)
             {
@@ -176,19 +181,33 @@ namespace NevrianGlowFarm.UI
 
         private void StartFresh()
         {
-            if (!IsOpen || GameManager.Instance == null)
+            if (!IsOpen || GameManager.Instance == null || starting)
                 return;
-            GameManager.Instance.StartNewGame();
-            saveSystem.RequestSave(); // 1일차 아침 저장 (이전 파일은 .bak)
-            Begin();
-            // 새 게임만 오프닝 편지 → 닫으면 1일차 상점 (상점은 화면이 비면 열린다)
-            if (openingLetter != null)
-                openingLetter.Open();
+            StartBehindLoading(() =>
+            {
+                GameManager.Instance.StartNewGame();
+                saveSystem.RequestSave(); // 1일차 아침 저장 (이전 파일은 .bak)
+                Begin();
+                // 새 게임만 오프닝 편지 → 닫으면 1일차 상점 (상점은 화면이 비면 열린다)
+                if (openingLetter != null)
+                    openingLetter.Open();
+            });
+        }
+
+        // 로딩 화면이 한 번 그려진 뒤 시작한다 — 칸 만들기 · 불러오기 · 풀 지우기의 끊김을 가린다. 누른 뒤에는 다른 버튼을 받지 않는다
+        private void StartBehindLoading(System.Action start)
+        {
+            starting = true;
+            SetMenuVisible(false);
+            if (loadingScreen != null)
+                loadingScreen.Cover(start);
+            else
+                start();
         }
 
         private void OpenSettings()
         {
-            if (!IsOpen)
+            if (!IsOpen || starting)
                 return;
             SetMenuVisible(false);
             settings.Open(() => SetMenuVisible(true));

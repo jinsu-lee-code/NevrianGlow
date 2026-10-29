@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using NevrianGlowFarm.Core;
+using NevrianGlowFarm.Data;
 using NevrianGlowFarm.Logic.Settings;
 using TMPro;
 using UnityEngine;
@@ -9,7 +10,7 @@ using UnityEngine.UI;
 namespace NevrianGlowFarm.UI
 {
     /// <summary>
-    /// 설정 패널 (TASKS 5-6): 전체 · 음악 · 효과음 볼륨, 마우스 감도, 해상도, 전체 화면. 바꾸는 즉시 적용 · 기기에 남김(SettingsStore).
+    /// 설정 패널 (TASKS 5-6): 전체 · 음악 · 효과음 볼륨, 마우스 감도, 해상도, 전체 화면, 그래픽 품질. 바꾸는 즉시 적용 · 기기에 남김(SettingsStore).
     /// 타이틀 · 일시정지 화면이 자기 메뉴 대신 이 패널을 띄우고, '뒤로'를 누르면 돌려준다.
     /// </summary>
     public class SettingsView : MonoBehaviour
@@ -37,6 +38,16 @@ namespace NevrianGlowFarm.UI
         [SerializeField] private TMP_Text fullscreenLabel;
         [Tooltip("'뒤로' 버튼")]
         [SerializeField] private Button backButton;
+
+        [Header("그래픽 품질 (최적화 2026-10-30 — 비우면 줄을 숨김)")]
+        [Tooltip("품질 단계 이름 · 수 (Data/Stats/GraphicsQuality)")]
+        [SerializeField] private GraphicsQualityData quality;
+        [Tooltip("그래픽 품질 글자")]
+        [SerializeField] private TMP_Text qualityLabel;
+        [Tooltip("그래픽 품질 이전(가볍게) 버튼")]
+        [SerializeField] private Button qualityPrev;
+        [Tooltip("그래픽 품질 다음(곱게) 버튼")]
+        [SerializeField] private Button qualityNext;
 
         private List<(int w, int h)> resolutions;
         private Action onBack;
@@ -70,7 +81,14 @@ namespace NevrianGlowFarm.UI
             resolutionNext.onClick.AddListener(() => StepResolution(1));
             fullscreenButton.onClick.AddListener(() => Change(s => s.Fullscreen = !s.Fullscreen));
             backButton.onClick.AddListener(Back);
+            if (HasQualityRow)
+            {
+                qualityPrev.onClick.AddListener(() => StepQuality(-1));
+                qualityNext.onClick.AddListener(() => StepQuality(1));
+            }
         }
+
+        private bool HasQualityRow => quality != null && quality.Tiers.Count > 0 && qualityLabel != null && qualityPrev != null && qualityNext != null;
 
         private void SetupSlider(Slider slider, float min, float max, Action<float> changed)
         {
@@ -134,6 +152,14 @@ namespace NevrianGlowFarm.UI
             });
         }
 
+        private void StepQuality(int step)
+        {
+            int index = SettingsStore.Current.QualityIndex(quality.Tiers.Count, quality.DefaultTier);
+            int next = Mathf.Clamp(index + step, 0, quality.Tiers.Count - 1);
+            if (next != index)
+                Change(s => s.GraphicsQuality = next);
+        }
+
         private void Refresh()
         {
             var s = SettingsStore.Current;
@@ -158,6 +184,14 @@ namespace NevrianGlowFarm.UI
                 resolutionNext.interactable = index >= 0 && index < resolutions.Count - 1;
             }
             fullscreenLabel.text = s.Fullscreen ? "전체 화면: 켜짐" : "전체 화면: 꺼짐 (창 모드)";
+
+            if (HasQualityRow)
+            {
+                int q = s.QualityIndex(quality.Tiers.Count, quality.DefaultTier);
+                qualityLabel.text = quality.Get(q).DisplayName;
+                qualityPrev.interactable = q > 0;
+                qualityNext.interactable = q < quality.Tiers.Count - 1;
+            }
         }
 
         private static string Percent(float v) => $"{Mathf.RoundToInt(v * 100f)}%";

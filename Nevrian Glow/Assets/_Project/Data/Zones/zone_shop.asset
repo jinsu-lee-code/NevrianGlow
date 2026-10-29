@@ -29,3 +29,4 @@ MonoBehaviour:
     bgmId: bgm_clean_loop
   ambienceId: amb_shop_loop
   footstepId: sfx_step_wood
+  cameraFarClip: 120

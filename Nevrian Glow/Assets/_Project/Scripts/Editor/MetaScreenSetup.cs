@@ -490,6 +490,10 @@ namespace NevrianGlowFarm.Editor
             so.FindProperty("fullscreenLabel").objectReferenceValue = full.GetComponentInChildren<TMP_Text>();
             so.FindProperty("backButton").objectReferenceValue = back;
             so.ApplyModifiedPropertiesWithoutUndo();
+            // 그래픽 품질 줄 (최적화 2026-10-30) — 품질 데이터가 있으면 해상도 줄 아래에
+            var quality = AssetDatabase.LoadAssetAtPath<NevrianGlowFarm.Data.GraphicsQualityData>(RenderBudgetSetup.QualityPath);
+            if (quality != null)
+                RenderBudgetSetup.AddQualityRow(view, quality);
             panel.gameObject.SetActive(false);
             return view;
         }

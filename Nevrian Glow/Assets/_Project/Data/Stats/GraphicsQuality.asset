@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5dd0330b6d445e9499ba39c8d935d17c, type: 3}
+  m_Name: GraphicsQuality
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.GraphicsQualityData
+  tiers:
+  - displayName: "\uB0AE\uC74C"
+    shadowDistance: 50
+    shadowResolution: 2048
+    shadowCascades: 2
+    grassDistanceScale: 0.4
+    grassDensityScale: 0.5
+    lakeReflection: 0
+    windowViewScale: 0.3
+    windowViewShadows: 0
+    renderScale: 0.8
+  - displayName: "\uBCF4\uD1B5"
+    shadowDistance: 80
+    shadowResolution: 2048
+    shadowCascades: 3
+    grassDistanceScale: 0.6
+    grassDensityScale: 0.75
+    lakeReflection: 1
+    windowViewScale: 0.4
+    windowViewShadows: 0
+    renderScale: 1
+  - displayName: "\uB192\uC74C"
+    shadowDistance: 120
+    shadowResolution: 4096
+    shadowCascades: 4
+    grassDistanceScale: 1
+    grassDensityScale: 1
+    lakeReflection: 1
+    windowViewScale: 0.5
+    windowViewShadows: 1
+    renderScale: 1
+  defaultTier: 1

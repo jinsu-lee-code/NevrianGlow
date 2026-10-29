@@ -57,6 +57,10 @@ namespace NevrianGlowFarm.Data
         [Tooltip("플레이어 발소리 id — 이 지역 바닥 (사운드 납품 10.23: 농장 sfx_step_grass · 가게 sfx_step_wood). 농장 밭 · 길 위는 sfx_step_soil로 바뀐다")]
         [SerializeField] private string footstepId;
 
+        [Header("그리기 (최적화 2026-10-30)")]
+        [Tooltip("이 지역에 있는 동안 카메라가 그리는 최대 거리 — 가게처럼 닫힌 곳은 벽 너머(수백 m 밖 배경)를 그리지 않게 줄인다. 0이면 카메라 기본값 (m)")]
+        [SerializeField, Min(0f)] private float cameraFarClip;
+
         /// <summary>그 단계에 이 지역에서 나는 배경음 id.</summary>
         public string BgmFor(DayPhase phase)
         {
@@ -77,6 +81,7 @@ namespace NevrianGlowFarm.Data
         public string BgmId => bgmId;
         public string AmbienceId => ambienceId;
         public string FootstepId => footstepId;
+        public float CameraFarClip => cameraFarClip;
 
         public ZoneRule ToRule() => new ZoneRule(Id, phases, isDayStart);
     }

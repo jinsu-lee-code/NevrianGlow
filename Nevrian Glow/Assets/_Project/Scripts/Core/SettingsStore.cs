@@ -7,7 +7,7 @@ namespace NevrianGlowFarm.Core
 {
     /// <summary>
     /// 설정 값을 기기(PlayerPrefs)에 두고, 바뀌면 알린다 (TASKS 5-6). 진행 저장 파일과 별개 — 새 게임 · 불러오기에도 그대로.
-    /// 소리는 AudioManager, 감도는 PlayerController가 Changed를 받아 반영하고, 해상도 · 전체 화면은 여기서 바로 적용한다.
+    /// 소리는 AudioManager, 감도는 PlayerController, 그래픽 품질은 RenderBudget이 Changed를 받아 반영하고, 해상도 · 전체 화면은 여기서 바로 적용한다.
     /// </summary>
     public static class SettingsStore
     {
@@ -78,6 +78,7 @@ namespace NevrianGlowFarm.Core
                 Width = PlayerPrefs.GetInt(Prefix + "width", 0),
                 Height = PlayerPrefs.GetInt(Prefix + "height", 0),
                 Fullscreen = PlayerPrefs.GetInt(Prefix + "fullscreen", Screen.fullScreen ? 1 : 0) != 0,
+                GraphicsQuality = PlayerPrefs.GetInt(Prefix + "graphics_quality", d.GraphicsQuality),
             };
             s.Clamp();
             return s;
@@ -92,6 +93,7 @@ namespace NevrianGlowFarm.Core
             PlayerPrefs.SetInt(Prefix + "width", s.Width);
             PlayerPrefs.SetInt(Prefix + "height", s.Height);
             PlayerPrefs.SetInt(Prefix + "fullscreen", s.Fullscreen ? 1 : 0);
+            PlayerPrefs.SetInt(Prefix + "graphics_quality", s.GraphicsQuality);
             PlayerPrefs.Save();
         }
 

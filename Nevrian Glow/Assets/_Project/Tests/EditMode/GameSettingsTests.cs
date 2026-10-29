@@ -45,6 +45,23 @@ namespace NevrianGlowFarm.Tests
         }
 
         [Test]
+        public void QualityIndex_DefaultUntilChosen_ThenClampedToTiers()
+        {
+            // 그래픽 품질 (최적화 2026-10-30): 안 골랐으면 데이터 기본 단계, 고른 번호는 단계 수 안으로
+            var s = new GameSettings();
+            Assert.AreEqual(-1, s.GraphicsQuality, "처음엔 안 고름");
+            Assert.AreEqual(1, s.QualityIndex(3, 1));
+            s.GraphicsQuality = 2;
+            Assert.AreEqual(2, s.QualityIndex(3, 1));
+            Assert.AreEqual(1, s.QualityIndex(2, 0), "단계가 줄어든 데이터 → 마지막 단계");
+            Assert.AreEqual(0, s.QualityIndex(0, 0), "단계가 없으면 0");
+
+            s.GraphicsQuality = -7;
+            s.Clamp();
+            Assert.AreEqual(-1, s.GraphicsQuality, "손으로 고친 기록 → 안 고른 것으로");
+        }
+
+        [Test]
         public void NearestResolution_ExactThenClosestArea()
         {
             var list = new List<(int w, int h)> { (1280, 720), (1600, 900), (1920, 1080), (2560, 1440) };
