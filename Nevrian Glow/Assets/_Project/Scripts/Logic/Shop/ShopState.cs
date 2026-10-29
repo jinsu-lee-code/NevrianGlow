@@ -14,6 +14,8 @@ namespace NevrianGlowFarm.Logic.Shop
         DayAtLeast,
         /// <summary>작물 TargetId를 한 번이라도 수확함 (BALANCE 3-8 추천값 "버섯꽃 첫 수확").</summary>
         FirstHarvest,
+        /// <summary>레벨 Value 이상 (스킬트리 폐기 → 레벨업 해금, 수정사항 10/28).</summary>
+        LevelAtLeast,
     }
 
     public readonly struct UnlockRequirement
@@ -34,6 +36,7 @@ namespace NevrianGlowFarm.Logic.Shop
     public interface IUnlockContext
     {
         int Day { get; }
+        int Level { get; }
         int SkillLevel(string skillId);
         bool HasHarvested(string cropId);
     }
@@ -48,6 +51,7 @@ namespace NevrianGlowFarm.Logic.Shop
                 case UnlockKind.SkillLevel: return context.SkillLevel(requirement.TargetId) >= Math.Max(1, requirement.Value);
                 case UnlockKind.DayAtLeast: return context.Day >= requirement.Value;
                 case UnlockKind.FirstHarvest: return context.HasHarvested(requirement.TargetId);
+                case UnlockKind.LevelAtLeast: return context.Level >= requirement.Value;
                 default: return false;
             }
         }
@@ -82,6 +86,7 @@ namespace NevrianGlowFarm.Logic.Shop
     /// 단계형(도구 등급 · 밭 구획 · 가방 · 진열대) = 단계를 차례로 한 번씩.
     /// 하루 입고량: 일차별 표(1일차부터, 마지막 값이 이후 계속 — BALANCE 3-8 "일차별 입고량"), 비우면 무제한.
     /// StockFromNextDay = 처음 열린 날은 입고 없음, 다음 날부터 (BALANCE 3-8 "해금 다음 날부터 입고").
+    /// 레벨 보너스 입고: 레벨이 BonusStockLevel 이상이면 하루 입고량 = BonusStock (수정사항 10/28 "레벨 6에서 씨앗 입고량 두 배"). 0이면 없음.
     /// </summary>
     public readonly struct ProductSpec
     {
@@ -90,14 +95,19 @@ namespace NevrianGlowFarm.Logic.Shop
         public bool Repeatable { get; }
         public IReadOnlyList<int> DailyStock { get; }
         public bool StockFromNextDay { get; }
+        public int BonusStock { get; }
+        public int BonusStockLevel { get; }
 
-        public ProductSpec(string id, IReadOnlyList<TierSpec> tiers, bool repeatable, IReadOnlyList<int> dailyStock = null, bool stockFromNextDay = false)
+        public ProductSpec(string id, IReadOnlyList<TierSpec> tiers, bool repeatable, IReadOnlyList<int> dailyStock = null, bool stockFromNextDay = false,
+            int bonusStock = 0, int bonusStockLevel = 0)
         {
             Id = id;
             Tiers = tiers ?? Array.Empty<TierSpec>();
             Repeatable = repeatable;
             DailyStock = dailyStock ?? Array.Empty<int>();
             StockFromNextDay = stockFromNextDay;
+            BonusStock = Math.Max(0, bonusStock);
+            BonusStockLevel = Math.Max(0, bonusStockLevel);
         }
     }
 
@@ -116,7 +126,7 @@ namespace NevrianGlowFarm.Logic.Shop
 
     public readonly struct ProductOffer
     {
-        /// <summary>상점 목록에 보이는지. 해금 안 된 상품은 숨는다(GDD 4-6 "스킬로 해금해야 상점에 나타난다") — 단, 단계형에서 이미 앞 단계를 산 상품은 "다음 단계 잠김"으로 보인다.</summary>
+        /// <summary>상점 목록에 보이는지. 해금 안 된 상품은 숨는다(GDD 4-6, 2026-10-29부터 레벨업 해금) — 단, 단계형에서 이미 앞 단계를 산 상품은 "다음 단계 잠김"으로 보인다.</summary>
         public bool Visible { get; }
         public OfferStatus Status { get; }
         /// <summary>이번에 사는 단계 (0부터). 반복 상품은 0.</summary>
@@ -171,8 +181,8 @@ namespace NevrianGlowFarm.Logic.Shop
                 firstOpenDay[product.Id] = context.Day;
         }
 
-        /// <summary>오늘 입고량 (−1 = 무제한). 처음 열린 날 입고 없음 규칙 포함.</summary>
-        public int StockToday(ProductSpec product, int day)
+        /// <summary>오늘 입고량 (−1 = 무제한). 처음 열린 날 입고 없음 · 레벨 보너스 입고 규칙 포함.</summary>
+        public int StockToday(ProductSpec product, int day, int level = 0)
         {
             if (product.DailyStock.Count == 0)
                 return -1;
@@ -182,6 +192,8 @@ namespace NevrianGlowFarm.Logic.Shop
                 if (open == 0 || open >= day)
                     return 0;
             }
+            if (product.BonusStockLevel > 0 && product.BonusStock > 0 && level >= product.BonusStockLevel)
+                return product.BonusStock;
             int index = Math.Min(Math.Max(0, day - 1), product.DailyStock.Count - 1);
             return Math.Max(0, product.DailyStock[index]);
         }
@@ -196,7 +208,7 @@ namespace NevrianGlowFarm.Logic.Shop
                 return new ProductOffer(true, OfferStatus.MaxedOut, tier, 0, 0);
 
             var spec = product.Tiers[tier];
-            int stock = StockToday(product, context.Day);
+            int stock = StockToday(product, context.Day, context.Level);
             int left = stock < 0 ? -1 : Math.Max(0, stock - BoughtToday(product.Id));
             if (!UnlockRules.AllMet(spec.Requirements, context))
                 return new ProductOffer(!product.Repeatable && tier > 0, OfferStatus.Locked, tier, spec.Price, left);

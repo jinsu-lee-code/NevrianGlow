@@ -137,13 +137,16 @@ namespace NevrianGlowFarm.UI
             Report = BuildReport();
             var game = GameManager.Instance;
             titleLabel.text = $"{Report.Day}일차 정산";
-            string body = string.Join("\n", Report.Lines(NameOf));
+            // 레벨업으로 새로 열린 상품 (스킬트리 폐기 10/29)
+            var shop = Systems.Shop.ShopSystem.Instance;
+            var unlocked = shop != null && Report.Exp.LeveledUp ? shop.UnlockedBetween(Report.Level - Report.Exp.LevelsGained, Report.Level) : null;
+            string body = string.Join("\n", Report.Lines(NameOf, unlocked));
             string grades = GradeLine();
             if (grades != null)
                 body += "\n" + grades;
             if (game != null)
             {
-                body += $"\n\n보유 {game.Money:N0}달러 · SP {game.SkillPoints}";
+                body += $"\n\n보유 {game.Money:N0}달러";
                 game.RecordSettlement(Report);
             }
             bodyLabel.text = body;

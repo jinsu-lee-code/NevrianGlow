@@ -5,7 +5,8 @@ using UnityEngine;
 namespace NevrianGlowFarm.UI
 {
     /// <summary>
-    /// 레벨업 배너 (TASKS 5-7, 기획 튜토리얼 D2-11 levelup_banner): GameEvents.LeveledUp이 오면 화면 위쪽에 "레벨 업! Lv2 · SP 3"을 잠깐 띄운다.
+    /// 레벨업 배너 (TASKS 5-7, 기획 튜토리얼 D2-11 levelup_banner): GameEvents.LeveledUp이 오면 화면 위쪽에 "레벨 업! Lv2"와
+    /// 새로 열린 상품(레벨업 해금, 스킬트리 폐기 10/29)을 잠깐 띄운다.
     /// 소리 · 발밑 금빛 고리는 AudioManager · VfxManager가 같은 이벤트로 낸다. 실제 시간으로 움직여 정산 화면 위에서도 보인다.
     /// </summary>
     public class LevelUpBanner : MonoBehaviour
@@ -21,8 +22,10 @@ namespace NevrianGlowFarm.UI
         [SerializeField, Min(0.5f)] private float showTime = 3f;
         [Tooltip("나타나고 사라지는 시간 (초)")]
         [SerializeField, Min(0f)] private float fadeTime = 0.3f;
-        [Tooltip("글자 — {0} 새 레벨, {1} 보유 SP (게임 화면 - '—' 쓰지 않음)")]
-        [SerializeField] private string format = "레벨 업!  Lv{0} · SP {1}";
+        [Tooltip("글자 — {0} 새 레벨 (게임 화면 - '—' 쓰지 않음)")]
+        [SerializeField] private string levelFormat = "레벨 업!  Lv{0}";
+        [Tooltip("새로 열린 것이 있을 때 붙는 줄 — {0} 열린 것 (' · '로 잇고 같은 끝말은 한 번만)")]
+        [SerializeField] private string unlockFormat = "\n새로 열림: {0}";
 
         private float elapsed = -1f;
 
@@ -43,8 +46,12 @@ namespace NevrianGlowFarm.UI
 
         private void OnLeveledUp(int level, int levelsGained)
         {
-            var game = GameManager.Instance;
-            label.text = string.Format(format, level, game != null ? game.SkillPoints : 0);
+            string text = string.Format(levelFormat, level);
+            var shop = Systems.Shop.ShopSystem.Instance;
+            var unlocked = shop != null ? shop.UnlockedBetween(level - levelsGained, level) : null;
+            if (unlocked != null && unlocked.Count > 0)
+                text += string.Format(unlockFormat, Logic.Text.UiText.JoinSharedTail(unlocked));
+            label.text = text;
             elapsed = 0f;
             group.alpha = 0f;
             group.gameObject.SetActive(true);

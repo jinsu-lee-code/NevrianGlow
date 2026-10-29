@@ -23,7 +23,8 @@ namespace NevrianGlowFarm.Logic.Game
 
     /// <summary>
     /// 일차 · 하루 단계 상태 머신 (GDD 4-1, CLAUDE 핵심 규칙 2).
-    /// 상점 → 농사 → 청소·진열 → 장사 → 정산 → 스킬 → 다음 날 상점. 엔진 의존 없음.
+    /// 상점 → 농사 → 청소·진열 → 장사 → 정산 → 다음 날 상점. 엔진 의존 없음.
+    /// 스킬 단계는 스킬트리 폐기로 뺐다 (수정사항 10/28, 결정 2026-10-29) — enum 값(DayPhase.Skill)은 저장 호환으로 남는다.
     /// </summary>
     public sealed class DayCycle
     {
@@ -36,7 +37,6 @@ namespace NevrianGlowFarm.Logic.Game
             DayPhase.CleanDisplay,
             DayPhase.Sales,
             DayPhase.Settlement,
-            DayPhase.Skill,
         };
 
         /// <summary>하루 단계 진행 순서.</summary>
@@ -59,7 +59,10 @@ namespace NevrianGlowFarm.Logic.Game
             Phase = phase;
         }
 
-        /// <summary>다음 단계로. 마지막 단계(스킬) 다음은 다음 날 첫 단계(상점).</summary>
+        /// <summary>진행 순서에 있는 단계인지 (예전 저장의 스킬 단계는 아님).</summary>
+        public static bool IsInOrder(DayPhase phase) => Array.IndexOf(order, phase) >= 0;
+
+        /// <summary>다음 단계로. 마지막 단계(정산) 다음은 다음 날 첫 단계(상점).</summary>
         public PhaseChange Advance()
         {
             int index = Array.IndexOf(order, Phase);

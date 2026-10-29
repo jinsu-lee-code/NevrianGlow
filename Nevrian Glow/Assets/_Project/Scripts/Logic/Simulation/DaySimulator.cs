@@ -92,6 +92,7 @@ namespace NevrianGlowFarm.Logic.Simulation
         private sealed class Context : IUnlockContext
         {
             public int Day { get; set; }
+            public int Level { get; set; } = Progression.FirstLevel;
             public SkillLevels Skills { get; } = new SkillLevels();
             public GameRecord Record { get; } = new GameRecord();
             public int SkillLevel(string skillId) => Skills.LevelOf(skillId);
@@ -240,10 +241,11 @@ namespace NevrianGlowFarm.Logic.Simulation
 
                 // ── 정산 → 스킬 ──
                 var gain = progression.AddRevenue(session.Revenue);
+                ctx.Level = progression.Level;
                 if (gain.SkillPointsGained > 0)
                     wallet.TryChangeSkillPoints(gain.SkillPointsGained);
                 LearnSkills(config.SkillPriority, ctx.Skills, wallet, row.SkillsLearned);
-                // 게임(ShopSystem)은 스킬이 바뀌는 순간 열린 날을 기록한다 → "해금 다음 날부터 입고"가 배운 날 기준 (P-6에서 맞춤)
+                // 게임(ShopSystem)은 레벨 · 스킬이 바뀌는 순간 열린 날을 기록한다 → "해금 다음 날부터 입고"가 레벨업한 날 기준 (P-6에서 맞춤)
                 foreach (var c in config.Crops)
                     if (c.HasSeedProduct)
                     {

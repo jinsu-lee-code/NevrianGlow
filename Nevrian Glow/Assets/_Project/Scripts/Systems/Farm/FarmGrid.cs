@@ -361,24 +361,34 @@ namespace NevrianGlowFarm.Systems.Farm
             return count;
         }
 
-        public string GetHandPrompt(int index)
+        // 나무형 작물은 모델(나무 · 열매)의 수확 창구로만 수확 — 칸(흙)을 보고는 안 된다. 모델이 없으면(그레이박스) 칸으로
+        private bool HarvestBlocked(int index, CropData crop, bool fromModel) =>
+            !fromModel && crop != null && crop.HarvestFromModel && views.Count > index && views[index].HasModelTarget;
+
+        /// <summary>E 프롬프트. fromModel = 작물 모델(CropModelTarget)을 보고 있음.</summary>
+        public string GetHandPrompt(int index, bool fromModel = false)
         {
             if (state == null || state.StatusOf(index) != FarmCellStatus.Ready)
                 return null;
             var cell = state.Cells[index];
             var crop = CropOf(cell.CropId);
+            if (HarvestBlocked(index, crop, fromModel))
+                return null;
             int yield = SpecOf(cell.CropId).HarvestYield;
             return hotbar != null && hotbar.CanAdd(crop, yield)
                 ? $"{crop.DisplayName} 수확 ×{yield}"
                 : $"{crop.DisplayName} 수확 불가 - 넣을 칸 없음";
         }
 
-        public void InteractHand(int index)
+        /// <summary>E — 수확. fromModel = 작물 모델(CropModelTarget)을 보고 누름.</summary>
+        public void InteractHand(int index, bool fromModel = false)
         {
             if (state == null || hotbar == null || state.StatusOf(index) != FarmCellStatus.Ready)
                 return;
             var cell = state.Cells[index];
             var crop = CropOf(cell.CropId);
+            if (HarvestBlocked(index, crop, fromModel))
+                return;
             var spec = SpecOf(cell.CropId);
             // 넣을 자리가 없으면 수확하지 않는다 (GDD 4-2).
             if (!hotbar.CanAdd(crop, spec.HarvestYield))
@@ -550,7 +560,7 @@ namespace NevrianGlowFarm.Systems.Farm
                 bool regrowing = cell.HarvestCount > 0 && spec.RegrowDays > 0;
                 int stage = CropStageRules.StageIndex(stages.Count, growth, ready, regrowing);
                 var stagePrefab = stage >= 0 ? stages[stage] : null;
-                views[index].Show(soil, true, color, Mathf.Lerp(seedlingScale, grownScale, growth), stagePrefab, crop.ModelScale);
+                views[index].Show(soil, true, color, Mathf.Lerp(seedlingScale, grownScale, growth), stagePrefab, crop.ModelScale, crop.HarvestFromModel);
                 views[index].SetFruit(ready, regrowing);
             }
 

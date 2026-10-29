@@ -9,11 +9,11 @@ namespace NevrianGlowFarm.Data
     [Serializable]
     public struct UnlockRequirementEntry
     {
-        [Tooltip("조건 종류 — Always 없음 · SkillLevel 스킬 단계 · DayAtLeast 일차 · FirstHarvest 작물 첫 수확")]
+        [Tooltip("조건 종류 — Always 없음 · SkillLevel 스킬 단계(폐기) · DayAtLeast 일차 · FirstHarvest 작물 첫 수확 · LevelAtLeast 레벨")]
         [SerializeField] private UnlockKind kind;
         [Tooltip("대상 id — 스킬 id(skill_*) 또는 작물 id(crop_*)")]
         [SerializeField] private string targetId;
-        [Tooltip("값 — 스킬 단계 또는 일차")]
+        [Tooltip("값 — 레벨 · 일차 · 스킬 단계")]
         [SerializeField, Min(0)] private int value;
 
         public UnlockRequirementEntry(UnlockKind kind, string targetId, int value)
@@ -75,6 +75,10 @@ namespace NevrianGlowFarm.Data
         [SerializeField] private List<int> dailyStock = new List<int>();
         [Tooltip("처음 열린 날은 입고 없이 다음 날부터 (BALANCE 3-8 추천값 — 미채택이면 끔)")]
         [SerializeField] private bool stockFromNextDay;
+        [Tooltip("레벨 보너스 하루 입고량 — 아래 레벨부터 위 입고량 대신 (개, 0이면 없음 · 기획 shop.csv stock_max)")]
+        [SerializeField, Min(0)] private int bonusStock;
+        [Tooltip("레벨 보너스 입고가 시작되는 레벨 (0이면 없음 · 기획 game_settings stock_bonus_level, 수정사항 10/28: 레벨 6)")]
+        [SerializeField, Min(0)] private int bonusStockLevel;
 
         public int SortOrder => sortOrder;
         public string Category => category;
@@ -83,6 +87,8 @@ namespace NevrianGlowFarm.Data
         public IReadOnlyList<ShopTierEntry> Tiers => tiers;
         public IReadOnlyList<int> DailyStock => dailyStock;
         public bool StockFromNextDay => stockFromNextDay;
+        public int BonusStock => bonusStock;
+        public int BonusStockLevel => bonusStockLevel;
 
         /// <summary>단계 이름 (목록 글자) — 하위 종류가 "철 괭이"처럼 바꾼다.</summary>
         public virtual string TierLabel(int tier) => repeatable || tiers.Count <= 1 ? DisplayName : $"{DisplayName} {tier + 1}단계";
@@ -100,7 +106,7 @@ namespace NevrianGlowFarm.Data
                     reqs.Add(r.ToLogic());
                 specs.Add(new TierSpec(t.Price, reqs));
             }
-            return new ProductSpec(Id, specs, repeatable, dailyStock, stockFromNextDay);
+            return new ProductSpec(Id, specs, repeatable, dailyStock, stockFromNextDay, bonusStock, bonusStockLevel);
         }
     }
 }

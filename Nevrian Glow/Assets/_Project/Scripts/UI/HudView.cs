@@ -8,7 +8,7 @@ using UnityEngine;
 namespace NevrianGlowFarm.UI
 {
     /// <summary>
-    /// HUD 최소판 (GDD 5 화면 목록, TASKS 2-8): 일차 · 단계 · 지역 / 달러 · SP / 레벨 · 경험치 바.
+    /// HUD 최소판 (GDD 5 화면 목록, TASKS 2-8): 일차 · 단계 · 지역 / 달러 / 레벨 · 경험치 바. SP는 스킬트리 폐기로 뺐다 (수정사항 10/28).
     /// 핫바(HotbarView) · 상호작용 프롬프트(InteractionPromptView)는 따로 있다. 값은 GameEvents가 알릴 때만 바꾼다(매 프레임 갱신 없음).
     /// 그레이박스: 단색 패널 + 글자 — UI 아트(5-4) · UI 흐름도 도착 후 한꺼번에 다듬는다.
     /// </summary>
@@ -17,10 +17,8 @@ namespace NevrianGlowFarm.UI
         [Header("참조")]
         [Tooltip("일차 · 단계 · 지역 한 줄")]
         [SerializeField] private TMP_Text dayLabel;
-        [Tooltip("달러 · SP 한 줄 (SP 글자가 따로 있으면 달러만)")]
+        [Tooltip("달러 한 줄")]
         [SerializeField] private TMP_Text walletLabel;
-        [Tooltip("SP 글자 — 아이콘과 함께 따로 보일 때 (비우면 달러 줄에 같이, 5-4b)")]
-        [SerializeField] private TMP_Text skillPointLabel;
         [Tooltip("레벨 · 경험치 숫자")]
         [SerializeField] private TMP_Text levelLabel;
         [Tooltip("경험치 바 채움 — 가로 앵커(anchorMax.x)를 비율로 바꾼다")]
@@ -30,7 +28,6 @@ namespace NevrianGlowFarm.UI
         private DayPhase phase;
         private string zoneName = string.Empty;
         private int money;
-        private int skillPoints;
         private int exp;
         private int expRequired = 1;
         private bool subscribed;
@@ -44,7 +41,6 @@ namespace NevrianGlowFarm.UI
             }
             GameEvents.PhaseChanged += OnPhase;
             GameEvents.MoneyChanged += OnMoney;
-            GameEvents.SkillPointsChanged += OnSkillPoints;
             GameEvents.ExpChanged += OnExp;
             subscribed = true;
             ReadCurrent();
@@ -67,7 +63,6 @@ namespace NevrianGlowFarm.UI
                 return;
             GameEvents.PhaseChanged -= OnPhase;
             GameEvents.MoneyChanged -= OnMoney;
-            GameEvents.SkillPointsChanged -= OnSkillPoints;
             GameEvents.ExpChanged -= OnExp;
             subscribed = false;
         }
@@ -86,8 +81,6 @@ namespace NevrianGlowFarm.UI
             {
                 dayLabel.text = string.Empty;
                 walletLabel.text = string.Empty;
-                if (skillPointLabel != null)
-                    skillPointLabel.text = string.Empty;
                 levelLabel.text = string.Empty;
                 SetFill(0f);
                 return;
@@ -95,7 +88,6 @@ namespace NevrianGlowFarm.UI
             day = game.Day;
             phase = game.Phase;
             money = game.Money;
-            skillPoints = game.SkillPoints;
             exp = game.Exp;
             expRequired = game.ExpRequired;
             RefreshDay();
@@ -122,12 +114,6 @@ namespace NevrianGlowFarm.UI
             RefreshWallet();
         }
 
-        private void OnSkillPoints(int value)
-        {
-            skillPoints = value;
-            RefreshWallet();
-        }
-
         private void OnExp(int value, int required)
         {
             exp = value;
@@ -143,16 +129,7 @@ namespace NevrianGlowFarm.UI
             dayLabel.text = $"{day}일차 · {DayPhaseNames.ToKorean(phase)}{zone}";
         }
 
-        private void RefreshWallet()
-        {
-            if (skillPointLabel == null)
-            {
-                walletLabel.text = $"{money:N0} 달러 · SP {skillPoints}";
-                return;
-            }
-            walletLabel.text = $"{money:N0} 달러";
-            skillPointLabel.text = $"SP {skillPoints}";
-        }
+        private void RefreshWallet() => walletLabel.text = $"{money:N0} 달러";
 
         private void RefreshLevel()
         {

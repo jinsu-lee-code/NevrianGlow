@@ -15,4 +15,4 @@ MonoBehaviour:
   expPerRevenue: 1
   levelUpBase: 100
   levelUpPerLevel: 100
-  skillPointsPerLevel: 3
+  skillPointsPerLevel: 0

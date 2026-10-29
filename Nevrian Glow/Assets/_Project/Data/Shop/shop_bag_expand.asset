@@ -23,39 +23,41 @@ MonoBehaviour:
   tiers:
   - price: 100
     requirements:
-    - kind: 1
-      targetId: skill_bag_license
-      value: 1
+    - kind: 4
+      targetId: 
+      value: 5
   - price: 200
     requirements:
-    - kind: 1
-      targetId: skill_bag_license
-      value: 1
+    - kind: 4
+      targetId: 
+      value: 5
   - price: 300
     requirements:
-    - kind: 1
-      targetId: skill_bag_license
-      value: 2
+    - kind: 4
+      targetId: 
+      value: 5
   - price: 500
     requirements:
-    - kind: 1
-      targetId: skill_bag_license
-      value: 2
+    - kind: 4
+      targetId: 
+      value: 5
   - price: 800
     requirements:
-    - kind: 1
-      targetId: skill_bag_license
-      value: 3
+    - kind: 4
+      targetId: 
+      value: 5
   - price: 1200
     requirements:
-    - kind: 1
-      targetId: skill_bag_license
-      value: 3
+    - kind: 4
+      targetId: 
+      value: 5
   - price: 1600
     requirements:
-    - kind: 1
-      targetId: skill_bag_license
-      value: 3
+    - kind: 4
+      targetId: 
+      value: 5
   dailyStock: 
   stockFromNextDay: 0
+  bonusStock: 0
+  bonusStockLevel: 0
   slots: 4

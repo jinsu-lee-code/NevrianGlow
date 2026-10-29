@@ -14,7 +14,7 @@ D1-12,1,tidy,남은 쓰레기와 얼룩은 원하는 만큼 치워요. 깨끗할
 D1-13,1,tidy,월광 뿌리를 들고 과일 진열대에 좌클릭으로 진열해요 (6개),fruit_shelf_1,displayed:6,open_sales,P0
 D1-14,1,tidy,준비 끝! 장사 시작 [Enter] 버튼 또는 간판 E로 장사를 시작해요,btn_open_sales;signboard,phase:sales,,P0
 D1-15,1,sales,(피피와 미루 등장) 장사는 손님이 알아서 사 가요,customer_pipi,sales_done,,P0
-D1-16,1,settlement,오늘의 결과예요. 판 금액만큼 경험치가 쌓이고 200이 되면 레벨업해요,settle_revenue;settle_grade;settle_xp,next_day,,P0
+D1-16,1,settlement,오늘의 결과예요. 판 금액만큼 경험치가 쌓여요. 레벨 2가 되어 버섯꽃 · 등불 열매 씨앗이 열렸어요,settle_revenue;settle_grade;settle_xp,next_day,,P0
 D2-01,2,shop,(편지 ②),letter_ui,letter_closed:letter_2,move,P0
 D2-02,2,shop,오늘은 월광 뿌리 씨앗을 넉넉히 사요 (추천 10개),shop_row:item_seed_moonroot,owned:item_seed_moonroot:4,close_shop,P0
 D2-03,2,farming,빛나는 월광 뿌리를 E로 수확해요,bed_tutorial,harvested:4,end_farming,P0
@@ -25,7 +25,6 @@ D2-07,2,tidy,어제 손님 발자국이 통로에 남았어요. 3번 대걸레�
 D2-08,2,tidy,오늘 수확한 월광 뿌리 4개를 과일 진열대에 진열해요,fruit_shelf_1,displayed:4,open_sales,P0
 D2-09,2,tidy,장사 시작 [Enter] 버튼 또는 간판 E로 장사를 시작해요,btn_open_sales;signboard,phase:sales,,P0
 D2-10,2,sales,"(손님 3명, 피피 포함)",customers,sales_done,,P0
-D2-11,2,settlement,경험치가 가득 찼어요! 레벨업!,settle_xp;levelup_banner,leveled_up,,P0
-D2-12,2,settlement,SP 3으로 새 작물을 배울 수 있어요. 버섯꽃 해금을 눌러요,skill_node:skill_unlock_mushroom;btn_learn,skill:skill_unlock_mushroom,close_skill;other_skills,P0
+D2-11,2,settlement,레벨 3! 도구 업그레이드를 상점에서 살 수 있어요,settle_xp;levelup_banner,leveled_up,,P0
 D2-13,2,settlement,(편지 ③),letter_ui,letter_closed:letter_3,,P0
-D2-14,2,settlement,내일 아침부터 상점에 버섯꽃 씨앗이 들어와요. 다음 날을 눌러요,btn_next_day,next_day,,P0
+D2-14,2,settlement,레벨이 오를 때마다 상점에 새 물건이 열려요. 다음 날을 눌러요,btn_next_day,next_day,,P0

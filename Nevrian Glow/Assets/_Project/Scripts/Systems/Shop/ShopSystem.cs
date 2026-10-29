@@ -16,7 +16,7 @@ namespace NevrianGlowFarm.Systems.Shop
     /// <summary>
     /// 상점 (노션 GDD 12.4 ShopSystem, GDD 4-6 · BALANCE 9-2). Core 씬에 하나 — 어디서나 B로 연다(상점 화면).
     /// 상품 = Data/Shop의 ShopProductData 에셋(ContentDatabase 자동 수집). 살 수 있는지 · 입고량 · 단계는 Logic ShopState,
-    /// 해금 조건은 GameManager(스킬 단계 · 일차 · 첫 수확). 효과는 상품 종류(타입)로 고른다 — 아이템 지급 · 도구 교체 · 밭 구획 · 가방 · 진열대.
+    /// 해금 조건은 GameManager(레벨 · 일차 · 첫 수확). 효과는 상품 종류(타입)로 고른다 — 아이템 지급 · 도구 교체 · 밭 구획 · 가방 · 핫바 · 진열대.
     /// 날이 바뀌면 입고 초기화 (밤 처리 마지막 단계, GDD 4-2).
     /// </summary>
     public class ShopSystem : MonoBehaviour
@@ -36,6 +36,8 @@ namespace NevrianGlowFarm.Systems.Shop
         [SerializeField] private string viewOnlyMessage = "농사 단계에서 살 수 있어요";
         [Tooltip("튜토리얼이 다른 상품을 잠갔을 때 안내 (5-7 buy_other)")]
         [SerializeField] private string tutorialLockMessage = "지금은 안내한 것만 살 수 있어요";
+        [Tooltip("레벨 보너스 입고가 열렸을 때 레벨업 글자 (수정사항 10/28: 레벨 6 씨앗 입고 2배)")]
+        [SerializeField] private string bonusStockText = "씨앗 입고 2배";
 
         [Header("디버그")]
         [Tooltip("상품 상태 (읽기 전용)")]
@@ -84,6 +86,7 @@ namespace NevrianGlowFarm.Systems.Shop
             GameEvents.MoneyChanged += OnMoneyChanged;
             GameEvents.SkillLevelChanged += OnSkillChanged;
             GameEvents.CropFirstHarvested += OnFirstHarvest;
+            GameEvents.LeveledUp += OnLeveledUp;
         }
 
         private void OnDisable()
@@ -92,6 +95,7 @@ namespace NevrianGlowFarm.Systems.Shop
             GameEvents.MoneyChanged -= OnMoneyChanged;
             GameEvents.SkillLevelChanged -= OnSkillChanged;
             GameEvents.CropFirstHarvested -= OnFirstHarvest;
+            GameEvents.LeveledUp -= OnLeveledUp;
         }
 
         // 밭 · 진열대는 다른 씬(Farm · Shop)에 있어 씬 사이 참조를 걸 수 없다 → 처음 쓸 때 한 번 찾는다.
@@ -117,6 +121,33 @@ namespace NevrianGlowFarm.Systems.Shop
         private void OnMoneyChanged(int money) => NotifyChanged();
         private void OnSkillChanged(string skillId, int level) { NoteOpenAll(); NotifyChanged(); }
         private void OnFirstHarvest(string cropId) { NoteOpenAll(); NotifyChanged(); }
+        // 레벨업한 날(정산)에 열린 날을 기록 → 씨앗은 다음 날 아침부터 입고 (해금 다음 날부터 입고)
+        private void OnLeveledUp(int level, int levelsGained) { NoteOpenAll(); NotifyChanged(); }
+
+        /// <summary>
+        /// 레벨이 fromLevel 초과 ~ toLevel 이하로 오르며 새로 열린 것 (정산 · 레벨업 배너 글자). 상품 이름과 보너스 입고("씨앗 입고 2배").
+        /// 숨긴 상품은 넣지 않는다. 같은 이름은 한 번만.
+        /// </summary>
+        public List<string> UnlockedBetween(int fromLevel, int toLevel)
+        {
+            var names = new List<string>();
+            bool bonusStock = false;
+            foreach (var p in products)
+            {
+                bool opened = false;
+                foreach (var tier in p.Tiers)
+                    foreach (var r in tier.Requirements)
+                        if (r.Kind == UnlockKind.LevelAtLeast && r.Value > fromLevel && r.Value <= toLevel)
+                            opened = true;
+                if (opened && !names.Contains(p.DisplayName))
+                    names.Add(p.DisplayName);
+                if (p.BonusStock > 0 && p.BonusStockLevel > fromLevel && p.BonusStockLevel <= toLevel)
+                    bonusStock = true;
+            }
+            if (bonusStock)
+                names.Add(bonusStockText);
+            return names;
+        }
 
         private void NoteOpenAll()
         {
@@ -170,6 +201,7 @@ namespace NevrianGlowFarm.Systems.Shop
                         text.Append(skill != null && skill.MaxLevel <= 1 ? $"스킬 '{skillName}'" : $"스킬 '{skillName}' {Mathf.Max(1, r.Value)}단계");
                         break;
                     case UnlockKind.DayAtLeast: text.Append($"{r.Value}일차부터"); break;
+                    case UnlockKind.LevelAtLeast: text.Append($"레벨 {r.Value}"); break;
                     case UnlockKind.FirstHarvest:
                         var crop = database.Get<CropData>(r.TargetId);
                         text.Append($"{(crop != null ? crop.DisplayName : r.TargetId)} 첫 수확");
@@ -269,6 +301,11 @@ namespace NevrianGlowFarm.Systems.Shop
                         return true;
                     reason = "가방을 더 늘릴 수 없음";
                     return false;
+                case HotbarExpandProductData bar:
+                    if (inventory.Hotbar != null && inventory.Hotbar.SlotCount + bar.Slots <= inventory.Settings.HotbarMaxSlots)
+                        return true;
+                    reason = "핫바를 더 늘릴 수 없음";
+                    return false;
                 case ShelfExpandProductData _:
                     if (Shelves.Count > 0 && Shelves[0] != null)
                         return true;
@@ -300,6 +337,9 @@ namespace NevrianGlowFarm.Systems.Shop
                 case BagExpandProductData bag:
                     inventory.SetBagSlotCount(inventory.Bag.SlotCount + bag.Slots);
                     return $"가방 +{bag.Slots}칸 (지금 {inventory.Bag.SlotCount}칸)";
+                case HotbarExpandProductData bar:
+                    inventory.SetHotbarSlotCount(inventory.Hotbar.SlotCount + bar.Slots);
+                    return $"핫바 +{bar.Slots}칸 (지금 {inventory.Hotbar.SlotCount}칸)";
                 case ShelfExpandProductData shelf:
                     var display = Shelves[0];
                     display.SetSlotCount(display.State.SlotCount + shelf.Slots);

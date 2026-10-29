@@ -11,6 +11,7 @@ namespace NevrianGlowFarm.Tests
         private sealed class Context : IUnlockContext
         {
             public int Day { get; set; } = 1;
+            public int Level { get; set; } = 1;
             public readonly SkillLevels Skills = new SkillLevels();
             public readonly GameRecord Record = new GameRecord();
             public int SkillLevel(string skillId) => Skills.LevelOf(skillId);
@@ -41,6 +42,48 @@ namespace NevrianGlowFarm.Tests
             Assert.IsTrue(UnlockRules.IsMet(new UnlockRequirement(UnlockKind.FirstHarvest, "crop_x"), ctx));
             Assert.IsTrue(UnlockRules.AllMet(new[] { Skill("skill_a", 1), new UnlockRequirement(UnlockKind.FirstHarvest, "crop_x") }, ctx));
             Assert.IsFalse(UnlockRules.AllMet(new[] { Skill("skill_a", 1), Skill("skill_b", 1) }, ctx), "모두 만족해야");
+        }
+
+        // 스킬트리 폐기 → 레벨업 해금 (수정사항 10/28): 레벨 2에서 씨앗, 단계형 도구는 모든 단계가 같은 레벨 조건
+        [Test]
+        public void LevelUnlock_OpensAtLevel_AllTiers()
+        {
+            var shop = new ShopState();
+            var ctx = new Context { Day = 1, Level = 1 };
+            var level2 = new UnlockRequirement(UnlockKind.LevelAtLeast, null, 2);
+            var seed = Seed(15, new[] { 20 }, new[] { level2 }, nextDay: true);
+            Assert.IsFalse(UnlockRules.IsMet(level2, ctx));
+            Assert.IsFalse(shop.Offer(seed, ctx, 1000).Visible, "레벨 1에서는 숨김");
+
+            ctx.Level = 2; // 1일차 정산에서 레벨업 → 그 순간 열린 날 기록
+            shop.NoteOpen(seed, ctx);
+            Assert.AreEqual(OfferStatus.SoldOut, shop.Offer(seed, ctx, 1000).Status, "레벨업한 날은 입고 없음");
+            ctx.Day = 2;
+            shop.StartDay();
+            Assert.AreEqual(20, shop.Offer(seed, ctx, 1000).StockLeft, "다음 날 아침부터 입고");
+
+            var level3 = new UnlockRequirement(UnlockKind.LevelAtLeast, null, 3);
+            var hoe = Tiered(new TierSpec(150, new[] { level3 }), new TierSpec(1200, new[] { level3 }));
+            Assert.AreEqual(OfferStatus.Locked, shop.Offer(hoe, ctx, 5000).Status);
+            ctx.Level = 3;
+            Assert.IsTrue(shop.TryBuy(hoe, ctx, 5000, out _));
+            Assert.IsTrue(shop.TryBuy(hoe, ctx, 5000, out _), "레벨 3이면 2단계도");
+        }
+
+        // 수정사항 10/28: 레벨 6에서 씨앗 입고량 두 배 (해금이 아니라 그냥 제공)
+        [Test]
+        public void BonusStock_FromLevel()
+        {
+            var shop = new ShopState();
+            var seed = new ProductSpec("shop_seed", new[] { new TierSpec(5) }, true, new[] { 40 }, false, bonusStock: 80, bonusStockLevel: 6);
+            Assert.AreEqual(40, shop.StockToday(seed, 3, 5));
+            Assert.AreEqual(80, shop.StockToday(seed, 3, 6));
+            Assert.AreEqual(80, shop.StockToday(seed, 3, 9));
+            Assert.AreEqual(40, shop.StockToday(seed, 3), "레벨을 모르면 기본");
+            Assert.AreEqual(80, shop.Offer(seed, new Context { Day = 5, Level = 6 }, 1000).StockLeft);
+
+            var none = new ProductSpec("shop_x", new[] { new TierSpec(5) }, true, new[] { 40 });
+            Assert.AreEqual(40, shop.StockToday(none, 3, 10), "보너스가 없는 상품은 그대로");
         }
 
         [Test]

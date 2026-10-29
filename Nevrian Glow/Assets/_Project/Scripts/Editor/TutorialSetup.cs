@@ -309,8 +309,16 @@ namespace NevrianGlowFarm.Editor
             root.anchorMin = root.anchorMax = new Vector2(0.5f, 1f);
             root.pivot = new Vector2(0.5f, 1f);
             root.anchoredPosition = new Vector2(0f, -110f);
-            root.sizeDelta = new Vector2(640f, 110f);
+            // 레벨업 해금 줄(2026-10-29)이 붙으면 두 줄 — 높이를 늘리고, 넘치면 글자를 줄인다. 폭은 왼쪽 위 HUD에 닿지 않게 780
+            root.sizeDelta = new Vector2(780f, 140f);
             EditorUtility.SetDirty(root);
+            if (new SerializedObject(root.GetComponent<LevelUpBanner>()).FindProperty("label").objectReferenceValue is TMP_Text bannerLabel)
+            {
+                bannerLabel.enableAutoSizing = true;
+                bannerLabel.fontSizeMin = 26f;
+                bannerLabel.fontSizeMax = 40f;
+                EditorUtility.SetDirty(bannerLabel);
+            }
 
             var tooltip = canvas.Find("Tooltip");
             var fader = canvas.Find("ScreenFader");

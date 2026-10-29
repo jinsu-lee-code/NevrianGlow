@@ -23,10 +23,12 @@ MonoBehaviour:
   tiers:
   - price: 20
     requirements:
-    - kind: 1
-      targetId: skill_unlock_lantern
-      value: 1
+    - kind: 4
+      targetId: 
+      value: 2
   dailyStock: 14000000
   stockFromNextDay: 1
+  bonusStock: 40
+  bonusStockLevel: 6
   item: {fileID: 11400000, guid: 7163b34af8cd65b4294c0a9f1fa9a84b, type: 2}
   count: 1

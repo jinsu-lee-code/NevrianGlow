@@ -239,32 +239,29 @@ namespace NevrianGlowFarm.Editor
                 so.FindProperty("giantYieldMultiplier").floatValue = Mathf.Max(1f, mult);
                 if (CsvValue.TryColor(table.Get(r, "glow_color"), out float cr, out float cg, out float cb, out float ca))
                     so.FindProperty("greyboxColor").colorValue = new Color(cr, cg, cb, ca);
+                // 나무형 작물(growth_form tree)은 나무 · 열매를 조준해야 수확 (수정사항 댓글 10/29)
+                so.FindProperty("harvestFromModel").boolValue = table.Get(r, "growth_form") == "tree";
                 Apply(so, crop, $"작물 {planId}", report);
             }
         }
 
-        // ── 상점 (shop.csv + skill_effects unlock_tier) ────
+        // ── 상점 (shop.csv) ────
 
-        /// <summary>상품을 가져온다. 밭 확장으로 늘어나는 구획 합을 돌려준다 (최대 구획 계산).</summary>
+        /// <summary>
+        /// 상품을 가져온다. 밭 확장으로 늘어나는 구획 합을 돌려준다 (최대 구획 계산).
+        /// 해금 = unlock 열 — "level:2"는 레벨 조건(스킬트리 폐기 10/29). 예전 스킬 조건(skill_*:단계)도 읽지만 배울 곳이 없으므로 쓰지 않는다.
+        /// skill_effects의 단계형 해금(unlock_tier)은 더 읽지 않는다 — 도구 · 가방의 모든 단계가 unlock 열 조건 하나로 열린다.
+        /// </summary>
         private static int ImportShop(Tables t, IdMap map, Dictionary<string, ContentData> byId, Report report)
         {
             var table = t.Shop;
             int plotsAdded = 0;
             int cellsPerPlot = LoadSettings<GameStartSettingsData>("GameStartSettings")?.CellsPerPlot ?? 16;
-
-            // 단계형 해금: 상품 id → (스킬, 스킬 단계, 살 수 있는 최대 단계)
-            var unlockTiers = new Dictionary<string, List<(string Skill, int Level, int MaxTier)>>();
-            for (int r = 0; r < t.Effects.RowCount; r++)
-            {
-                if (t.Effects.Get(r, "effect_kind") != "unlock_tier")
-                    continue;
-                string target = t.Effects.Get(r, "target_id");
-                CsvValue.TryInt(t.Effects.Get(r, "level"), out int level);
-                CsvValue.TryInt(t.Effects.Get(r, "value"), out int value);
-                if (!unlockTiers.TryGetValue(target, out var list))
-                    unlockTiers[target] = list = new List<(string, int, int)>();
-                list.Add((t.Effects.Get(r, "skill_id"), level, value));
-            }
+            // 레벨 보너스 입고가 시작되는 레벨 (game_settings stock_bonus_level, 수정사항 10/28: 레벨 6에서 씨앗 입고 두 배)
+            int bonusStockLevel = 0;
+            for (int r = 0; r < t.Settings.RowCount; r++)
+                if (t.Settings.Get(r, "key") == "stock_bonus_level")
+                    CsvValue.TryInt(t.Settings.Get(r, "value"), out bonusStockLevel);
 
             for (int r = 0; r < table.RowCount; r++)
             {
@@ -310,44 +307,35 @@ namespace NevrianGlowFarm.Editor
                 bool hidden = entry != null && entry.Status == IdMapStatus.Hidden;
                 so.FindProperty("hidden").boolValue = hidden;
 
-                // 단계별 해금 조건 = unlock 열(모든 단계) + 단계형 해금(그 단계를 여는 스킬 단계)
+                // 해금 조건 = unlock 열 (모든 단계 같음). level:N → 레벨 조건, 그 밖(skill_*:N) → 예전 스킬 조건
                 var unlock = PlanCsv.ParseRequirements(table.Get(r, "unlock"));
-                unlockTiers.TryGetValue(planId, out var tierRows);
-                int[] tierSkillLevels = tierRows != null ? PlanCsv.TierLevels(tierCount, tierRows.Select(x => (x.Level, x.MaxTier))) : null;
+                var reqs = new List<(Logic.Shop.UnlockKind Kind, string Target, int Value)>();
+                foreach (var (key, value) in unlock)
+                {
+                    if (key == "level")
+                        reqs.Add((Logic.Shop.UnlockKind.LevelAtLeast, string.Empty, value));
+                    else if (map.DevIdOf(key) is string devSkill)
+                    {
+                        reqs.Add((Logic.Shop.UnlockKind.SkillLevel, devSkill, value));
+                        report.Problems.Add($"상품 {planId}: 스킬 해금 조건 {key} — 스킬트리 폐기(10/29)로 열 수 없음, level:N으로 바꿀 것");
+                    }
+                }
                 var tiers = so.FindProperty("tiers");
                 tiers.ClearArray();
                 for (int i = 0; i < tierCount; i++)
                 {
-                    var reqs = new Dictionary<string, int>();
-                    foreach (var (skill, level) in unlock)
-                    {
-                        string devSkill = map.DevIdOf(skill);
-                        if (devSkill != null)
-                            reqs[devSkill] = level;
-                    }
-                    if (tierSkillLevels != null)
-                    {
-                        string skill = map.DevIdOf(tierRows[0].Skill);
-                        int need = tierSkillLevels[i];
-                        if (need < 0)
-                        {
-                            report.Problems.Add($"상품 {planId} {i + 1}단계: 여는 스킬 단계가 없음 (skill_effects unlock_tier)");
-                            need = int.MaxValue / 2;
-                        }
-                        reqs[skill] = reqs.TryGetValue(skill, out int had) ? Math.Max(had, need) : need;
-                    }
                     tiers.InsertArrayElementAtIndex(i);
                     var tier = tiers.GetArrayElementAtIndex(i);
                     tier.FindPropertyRelative("price").intValue = prices[i];
                     var list = tier.FindPropertyRelative("requirements");
                     list.ClearArray();
-                    foreach (var pair in reqs)
+                    foreach (var req in reqs)
                     {
                         list.InsertArrayElementAtIndex(list.arraySize);
                         var e = list.GetArrayElementAtIndex(list.arraySize - 1);
-                        e.FindPropertyRelative("kind").enumValueIndex = (int)Logic.Shop.UnlockKind.SkillLevel;
-                        e.FindPropertyRelative("targetId").stringValue = pair.Key;
-                        e.FindPropertyRelative("value").intValue = pair.Value;
+                        e.FindPropertyRelative("kind").enumValueIndex = (int)req.Kind;
+                        e.FindPropertyRelative("targetId").stringValue = req.Target;
+                        e.FindPropertyRelative("value").intValue = req.Value;
                     }
                 }
 
@@ -361,6 +349,11 @@ namespace NevrianGlowFarm.Editor
                     stock.GetArrayElementAtIndex(0).intValue = stockBase;
                 }
                 so.FindProperty("stockFromNextDay").boolValue = hasStock && unlock.Count > 0; // 입고가 있는 상품(씨앗)만
+                // 레벨 보너스 입고: stock_max가 기본보다 크면 stock_bonus_level부터 그만큼 (수정사항 10/28: 레벨 6 두 배)
+                int stockMax = 0;
+                bool hasBonus = hasStock && bonusStockLevel > 0 && CsvValue.TryInt(table.Get(r, "stock_max"), out stockMax) && stockMax > stockBase;
+                so.FindProperty("bonusStock").intValue = hasBonus ? stockMax : 0;
+                so.FindProperty("bonusStockLevel").intValue = hasBonus ? bonusStockLevel : 0;
 
                 string grantTarget = table.Get(r, "grant_target");
                 switch (product)
@@ -413,6 +406,11 @@ namespace NevrianGlowFarm.Editor
                     case BagExpandProductData _:
                         if (grants.Distinct().Count() > 1)
                             report.Problems.Add($"상품 {planId}: 단계마다 다른 가방 칸 수는 아직 못 넣음 — 첫 값만");
+                        so.FindProperty("slots").intValue = grants.Count > 0 ? Mathf.Max(1, grants[0]) : 1;
+                        break;
+                    case HotbarExpandProductData _:
+                        if (grants.Distinct().Count() > 1)
+                            report.Problems.Add($"상품 {planId}: 단계마다 다른 핫바 칸 수는 아직 못 넣음 — 첫 값만");
                         so.FindProperty("slots").intValue = grants.Count > 0 ? Mathf.Max(1, grants[0]) : 1;
                         break;
                 }
@@ -714,6 +712,7 @@ namespace NevrianGlowFarm.Editor
                 }
                 if (CsvValue.TryInt(V("sp_per_level"), out int sp))
                     so.FindProperty("skillPointsPerLevel").intValue = sp;
+                V("stock_bonus_level"); // 상점 가져오기(ImportShop)가 씀
                 if (CsvValue.TryFloat(V("xp_per_revenue"), out float xp))
                     so.FindProperty("expPerRevenue").floatValue = xp;
                 Apply(so, progression, "설정 Progression", report);

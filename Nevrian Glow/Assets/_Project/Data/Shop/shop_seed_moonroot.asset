@@ -26,5 +26,7 @@ MonoBehaviour:
     requirements: []
   dailyStock: 28000000
   stockFromNextDay: 0
+  bonusStock: 80
+  bonusStockLevel: 6
   item: {fileID: 11400000, guid: 951abf54dedae774fa34f4dbea44d508, type: 2}
   count: 1

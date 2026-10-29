@@ -138,7 +138,8 @@ MonoBehaviour:
     day: 1
     phase: settlement
     text: "\uC624\uB298\uC758 \uACB0\uACFC\uC608\uC694. \uD310 \uAE08\uC561\uB9CC\uD07C
-      \uACBD\uD5D8\uCE58\uAC00 \uC313\uC774\uACE0 200\uC774 \uB418\uBA74 \uB808\uBCA8\uC5C5\uD574\uC694"
+      \uACBD\uD5D8\uCE58\uAC00 \uC313\uC5EC\uC694. \uB808\uBCA8 2\uAC00 \uB418\uC5B4
+      \uBC84\uC12F\uAF43 \xB7 \uB4F1\uBD88 \uC5F4\uB9E4 \uC528\uC557\uC774 \uC5F4\uB838\uC5B4\uC694"
     highlight: settle_revenue;settle_grade;settle_xp
     completeEvent: next_day
     locks: 
@@ -223,18 +224,11 @@ MonoBehaviour:
   - id: D2-11
     day: 2
     phase: settlement
-    text: "\uACBD\uD5D8\uCE58\uAC00 \uAC00\uB4DD \uCC3C\uC5B4\uC694! \uB808\uBCA8\uC5C5!"
+    text: "\uB808\uBCA8 3! \uB3C4\uAD6C \uC5C5\uADF8\uB808\uC774\uB4DC\uB97C \uC0C1\uC810\uC5D0\uC11C
+      \uC0B4 \uC218 \uC788\uC5B4\uC694"
     highlight: settle_xp;levelup_banner
     completeEvent: leveled_up
     locks: 
-  - id: D2-12
-    day: 2
-    phase: settlement
-    text: "SP 3\uC73C\uB85C \uC0C8 \uC791\uBB3C\uC744 \uBC30\uC6B8 \uC218 \uC788\uC5B4\uC694.
-      \uBC84\uC12F\uAF43 \uD574\uAE08\uC744 \uB20C\uB7EC\uC694"
-    highlight: skill_node:skill_unlock_mushroom;btn_learn
-    completeEvent: skill:skill_unlock_mushroom
-    locks: close_skill;other_skills
   - id: D2-13
     day: 2
     phase: settlement
@@ -245,8 +239,8 @@ MonoBehaviour:
   - id: D2-14
     day: 2
     phase: settlement
-    text: "\uB0B4\uC77C \uC544\uCE68\uBD80\uD130 \uC0C1\uC810\uC5D0 \uBC84\uC12F\uAF43
-      \uC528\uC557\uC774 \uB4E4\uC5B4\uC640\uC694. \uB2E4\uC74C \uB0A0\uC744 \uB20C\uB7EC\uC694"
+    text: "\uB808\uBCA8\uC774 \uC624\uB97C \uB54C\uB9C8\uB2E4 \uC0C1\uC810\uC5D0
+      \uC0C8 \uBB3C\uAC74\uC774 \uC5F4\uB824\uC694. \uB2E4\uC74C \uB0A0\uC744 \uB20C\uB7EC\uC694"
     highlight: btn_next_day
     completeEvent: next_day
     locks: 

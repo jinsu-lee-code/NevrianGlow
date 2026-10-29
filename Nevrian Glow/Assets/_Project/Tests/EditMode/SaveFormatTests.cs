@@ -155,15 +155,14 @@ namespace NevrianGlowFarm.Tests
                     Wallet.TryChangeSkillPoints(gain.SkillPointsGained);
                 Cycle.Advance();
 
-                // 정산 · 스킬: SP가 3 이상이면 버섯꽃 해금
+                // 정산: SP가 3 이상이면 버섯꽃 해금 (예전 스킬 저장 줄 왕복 확인용 — 스킬 단계는 폐기 10/29)
                 Run.Record(new SettlementReport(day, true, sold, sold, 0, sold, revenue, new Dictionary<string, int>(), Shop.SpentToday, gain, Progress.Level));
                 if (Wallet.SkillPoints >= 3 && Skills.LevelOf("skill_unlock_mushroom") == 0)
                 {
                     Wallet.TryChangeSkillPoints(-3);
                     Skills.SetLevel("skill_unlock_mushroom", 1);
                 }
-                Cycle.Advance();
-                Cycle.Advance(); // 다음 날 아침
+                Cycle.Advance(); // 정산 → 다음 날 아침
 
                 // 밤 처리 + 상점 입고 초기화 (게임과 같은 순서) + 튜토리얼 다음 날
                 Night.Run(Farm);
@@ -184,6 +183,7 @@ namespace NevrianGlowFarm.Tests
                 private readonly Model m;
                 public Ctx(Model m) => this.m = m;
                 public int Day => m.Cycle.Day;
+                public int Level => m.Progress.Level;
                 public int SkillLevel(string skillId) => m.Skills.LevelOf(skillId);
                 public bool HasHarvested(string cropId) => m.Record.HasHarvested(cropId);
             }

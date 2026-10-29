@@ -17,6 +17,8 @@ namespace NevrianGlowFarm.Data
         [SerializeField] private List<GameObject> stagePrefabs = new List<GameObject>();
         [Tooltip("단계 모델 크기 배율 — 밭 칸 배율과 곱해진다. 낮은 작물을 키워 시선이 땅에 머물지 않게 (배, 2026-10-25)")]
         [SerializeField, Range(0.5f, 3f)] private float modelScale = 1f;
+        [Tooltip("켜면 밭 칸이 아니라 작물 모델(나무 · 열매)을 조준해야 수확 — 기획 growth_form = tree (수정사항 댓글 10/29)")]
+        [SerializeField] private bool harvestFromModel;
 
         [Header("가격")]
         [Tooltip("씨앗 1개 가격 (달러)")]
@@ -61,6 +63,7 @@ namespace NevrianGlowFarm.Data
         public Color GreyboxColor => greyboxColor;
         public IReadOnlyList<GameObject> StagePrefabs => stagePrefabs;
         public float ModelScale => modelScale;
+        public bool HarvestFromModel => harvestFromModel;
 
         /// <summary>규칙 계산용 값 묶음 (Logic FarmRules · CropEconomics).</summary>
         public Logic.Farm.CropSpec ToSpec() => new Logic.Farm.CropSpec(growDays, wetDays, harvestYield, regrowDays, maxHarvests, needsWater);

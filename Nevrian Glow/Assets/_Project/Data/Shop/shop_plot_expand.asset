@@ -32,5 +32,7 @@ MonoBehaviour:
     requirements: []
   dailyStock: 
   stockFromNextDay: 0
+  bonusStock: 0
+  bonusStockLevel: 0
   plots: 1
   plotsPerTier: 01000000020000000400000007000000

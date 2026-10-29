@@ -66,5 +66,32 @@ namespace NevrianGlowFarm.Logic.Text
                     kept.Add(p);
             return string.Join(Separator, kept);
         }
+
+        /// <summary>
+        /// 이름들을 " · "로 잇되, 모두 같은 끝말(마지막 띄어쓰기 뒤)이면 한 번만 쓴다 — 레벨업 해금 줄이 길어지지 않게 (2026-10-29).
+        /// 예: "괭이 업그레이드", "대걸레 업그레이드" → "괭이 · 대걸레 업그레이드". 하나뿐이거나 끝말이 다르면 그대로 잇는다.
+        /// </summary>
+        public static string JoinSharedTail(IReadOnlyList<string> names)
+        {
+            if (names == null || names.Count == 0)
+                return string.Empty;
+            if (names.Count == 1)
+                return names[0];
+            string tail = null;
+            var heads = new List<string>(names.Count);
+            foreach (var n in names)
+            {
+                int space = n != null ? n.LastIndexOf(' ') : -1;
+                if (space <= 0 || space == n.Length - 1)
+                    return string.Join(Separator, names);
+                string t = n.Substring(space + 1);
+                if (tail == null)
+                    tail = t;
+                else if (t != tail)
+                    return string.Join(Separator, names);
+                heads.Add(n.Substring(0, space));
+            }
+            return string.Join(Separator, heads) + " " + tail;
+        }
     }
 }

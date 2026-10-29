@@ -8,6 +8,17 @@ namespace NevrianGlowFarm.Tests
     /// <summary>5-4c 툴팁 · 목록 둘째 줄 글자 규칙.</summary>
     public class UiTextTests
     {
+        // 레벨업 해금 줄: 같은 끝말은 한 번만 (2026-10-29)
+        [Test]
+        public void JoinSharedTail_FactorsCommonLastWord()
+        {
+            Assert.AreEqual("괭이 · 대걸레 · 물뿌리개 업그레이드", UiText.JoinSharedTail(new[] { "괭이 업그레이드", "대걸레 업그레이드", "물뿌리개 업그레이드" }));
+            Assert.AreEqual("버섯꽃 · 등불 열매 씨앗", UiText.JoinSharedTail(new[] { "버섯꽃 씨앗", "등불 열매 씨앗" }));
+            Assert.AreEqual("가방 확장 · 비료", UiText.JoinSharedTail(new[] { "가방 확장", "비료" }), "끝말이 다르면 그대로");
+            Assert.AreEqual("비료", UiText.JoinSharedTail(new[] { "비료" }));
+            Assert.AreEqual(string.Empty, UiText.JoinSharedTail(new string[0]));
+        }
+
         [Test]
         public void Crop_OneShot_NoRegrowLine()
         {

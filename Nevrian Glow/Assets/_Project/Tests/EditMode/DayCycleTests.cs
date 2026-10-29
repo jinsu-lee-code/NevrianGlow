@@ -18,7 +18,7 @@ namespace NevrianGlowFarm.Tests
         public void Advance_FollowsDailyOrder()
         {
             var cycle = new DayCycle();
-            var expected = new[] { DayPhase.Farming, DayPhase.CleanDisplay, DayPhase.Sales, DayPhase.Settlement, DayPhase.Skill };
+            var expected = new[] { DayPhase.Farming, DayPhase.CleanDisplay, DayPhase.Sales, DayPhase.Settlement };
 
             foreach (var phase in expected)
             {
@@ -29,10 +29,11 @@ namespace NevrianGlowFarm.Tests
             }
         }
 
+        // 스킬트리 폐기 (수정사항 10/28): 정산 다음은 바로 다음 날 상점
         [Test]
-        public void AdvanceAfterSkill_GoesToNextDayShop()
+        public void AdvanceAfterSettlement_GoesToNextDayShop()
         {
-            var cycle = new DayCycle(1, DayPhase.Skill);
+            var cycle = new DayCycle(1, DayPhase.Settlement);
 
             var change = cycle.Advance();
 
@@ -40,7 +41,15 @@ namespace NevrianGlowFarm.Tests
             Assert.AreEqual(DayPhase.Shop, cycle.Phase);
             Assert.IsTrue(change.DayChanged);
             Assert.AreEqual(1, change.PreviousDay);
-            Assert.AreEqual(DayPhase.Skill, change.PreviousPhase);
+            Assert.AreEqual(DayPhase.Settlement, change.PreviousPhase);
+        }
+
+        [Test]
+        public void SkillPhase_IsNoLongerInOrder()
+        {
+            Assert.IsFalse(DayCycle.IsInOrder(DayPhase.Skill));
+            Assert.Throws<System.ArgumentOutOfRangeException>(() => new DayCycle(1, DayPhase.Skill));
+            Assert.IsFalse(new DayCycle(1, DayPhase.Shop).TrySetPhase(DayPhase.Skill, out _));
         }
 
         [Test]

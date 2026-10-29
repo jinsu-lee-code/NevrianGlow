@@ -43,11 +43,17 @@ namespace NevrianGlowFarm.Tests
                 StringAssert.DoesNotContain("—", line, "게임 화면 글자에 긴 줄표 금지 (글꼴에 없음)");
         }
 
+        // 스킬트리 폐기 (수정사항 10/28): SP 대신 레벨업으로 새로 열린 것을 한 줄로
         [Test]
-        public void LevelUp_ShowsSkillPoints()
+        public void LevelUp_ShowsUnlocks_NoSkillPoints()
         {
-            var lines = Report(240, 0, new Dictionary<string, int> { { "crop_a", 11 } }, new ExpGain(240, 2, 6)).Lines(NameOf);
-            Assert.AreEqual("경험치 +240 (Lv 3) · 레벨 업! SP +6", lines[lines.Count - 1]);
+            var report = Report(240, 0, new Dictionary<string, int> { { "crop_a", 11 } }, new ExpGain(240, 2, 0));
+            var lines = report.Lines(NameOf, new[] { "버섯꽃 씨앗", "등불 열매 씨앗" });
+            Assert.AreEqual("경험치 +240 (Lv 3) · 레벨 업!", lines[lines.Count - 2]);
+            Assert.AreEqual("새로 열림: 버섯꽃 · 등불 열매 씨앗", lines[lines.Count - 1], "같은 끝말은 한 번만");
+
+            var plain = report.Lines(NameOf);
+            Assert.AreEqual("경험치 +240 (Lv 3) · 레벨 업!", plain[plain.Count - 1], "열린 것이 없으면 줄을 더하지 않음");
         }
 
         private static SettlementReport Day(int day, int revenue, int spent, int customers = 8, int items = 4) =>

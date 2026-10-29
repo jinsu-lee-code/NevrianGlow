@@ -140,7 +140,8 @@ namespace NevrianGlowFarm.Core
         public void LoadFrom(Logic.Save.SaveSnapshot from)
         {
             bootstrapper.Ready -= StartNewGame;
-            cycle = new DayCycle(from.Day, from.Phase);
+            // 예전 저장의 스킬 단계(폐기 10/29)는 같은 날 정산으로 — 정산 화면의 '다음 날'로 이어진다
+            cycle = new DayCycle(from.Day, DayCycle.IsInOrder(from.Phase) ? from.Phase : DayPhase.Settlement);
             wallet = new Wallet(from.Money, from.SkillPoints);
             progression = new Progression(progressionData.ToCurve(), from.Level, from.Exp);
             Logic.Save.SaveState.ApplyProgress(skills, record, run, from);
@@ -209,7 +210,7 @@ namespace NevrianGlowFarm.Core
         /// <summary>정산 화면이 그날 정산을 기록한다 (같은 날은 덮어씀).</summary>
         public void RecordSettlement(SettlementReport report) => run.Record(report);
 
-        /// <summary>다음 단계로 (스킬 다음은 다음 날 상점). 각 단계의 "끝내기"가 부른다.</summary>
+        /// <summary>다음 단계로 (정산 다음은 다음 날 상점). 각 단계의 "끝내기"가 부른다.</summary>
         public void AdvancePhase()
         {
             if (RequireStarted())

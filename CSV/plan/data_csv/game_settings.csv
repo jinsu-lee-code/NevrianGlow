@@ -8,7 +8,8 @@ start_fruit_shelves,3,대,시작 매장 과일 진열대 (가공품 진열대 �
 start_beds,8,밭,시작 밭 (4×2),레벨배치
 level_xp_base,200,xp,레벨업 필요량 = base + step × (레벨 − 1),수정사항 10/28
 level_xp_step,100,xp,,수정사항 10/28
-sp_per_level,3,SP,,
+sp_per_level,0,SP,스킬트리 폐기 - SP 없음,수정사항 10/28
+stock_bonus_level,6,레벨,"이 레벨부터 씨앗 하루 입고량 = shop.csv stock_max (두 배, 해금이 아니라 그냥 제공)",수정사항 10/28
 xp_per_revenue,1,배,경험치 = 매출 × 이 값,
 day1_customers,2,명,1일차 손님 고정 (피피 · 미루),수정사항 10/28
 day1_first_buy,3,개,1일차 손님마다 구매 개수 고정,수정사항 10/28

@@ -47,6 +47,8 @@ namespace NevrianGlowFarm.Systems.Farm
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 
         public int Index => index;
+        /// <summary>지금 모델에 수확 창구(나무 · 열매 조준, CropModelTarget)가 있는지.</summary>
+        public bool HasModelTarget => modelTarget != null;
 
         public void Bind(FarmGrid owner, int cellIndex)
         {
@@ -124,8 +126,9 @@ namespace NevrianGlowFarm.Systems.Farm
         /// <summary>
         /// 흙 색과 작물 겉모습을 바꾼다. FarmGrid가 상태가 바뀐 칸에만 부른다.
         /// stagePrefab이 있으면 그 단계 모델(아트), 없으면 그레이박스 상자(색 · 크기 = 성장 비율).
+        /// modelTarget = 모델을 조준해야 수확하는 작물(나무형) — 모델을 감싸는 수확 창구를 붙인다.
         /// </summary>
-        public void Show(Color soilColor, bool hasCrop, Color cropColor, float cropScale, GameObject stagePrefab, float modelScale = 1f)
+        public void Show(Color soilColor, bool hasCrop, Color cropColor, float cropScale, GameObject stagePrefab, float modelScale = 1f, bool modelTarget = false)
         {
             // 흙 연출(SoilFX)이 같은 블록에 쓴 값은 남기고 색만 바꾼다
             soilRenderer.GetPropertyBlock(block);
@@ -135,7 +138,7 @@ namespace NevrianGlowFarm.Systems.Farm
             cropGlowColor = cropColor;
 
             GameObject wanted = hasCrop && modelAnchor != null ? stagePrefab : null;
-            SetModel(wanted);
+            SetModel(wanted, modelTarget);
             if (shownModel != null)
                 shownModel.transform.localScale = Vector3.one * modelScale; // 작물 데이터의 모델 배율 (칸 배율은 부모가 맡는다)
             if (!hasCrop)
@@ -151,7 +154,7 @@ namespace NevrianGlowFarm.Systems.Farm
         }
 
         // 단계가 바뀔 때만 모델을 바꾼다 (같은 프리팹이면 그대로).
-        private void SetModel(GameObject prefab)
+        private void SetModel(GameObject prefab, bool withTarget)
         {
             if (prefab == shownPrefab)
                 return;
@@ -159,6 +162,7 @@ namespace NevrianGlowFarm.Systems.Farm
                 Destroy(shownModel);
             shownPrefab = prefab;
             shownModel = null;
+            modelTarget = null;
             fruitAnimator = null;
             if (prefab == null)
                 return;
@@ -169,11 +173,52 @@ namespace NevrianGlowFarm.Systems.Farm
             // 작물 모델은 보이기만 한다 — 조준(칸 콜라이더)과 플레이어 이동을 막지 않게
             foreach (var c in shownModel.GetComponentsInChildren<Collider>(true))
                 c.enabled = false;
+            if (withTarget)
+                AddModelTarget();
             // 열매 트리거(거둠 · 다시 열림)가 둘 다 있는 Animator만 쓴다 — 단계가 바뀔 때 한 번만 찾는다
             var animator = shownModel.GetComponentInChildren<Animator>();
             if (animator != null && HasTrigger(animator, harvestTrigger) && HasTrigger(animator, regrowTrigger))
                 fruitAnimator = animator;
             fruitShown = true;
+        }
+
+        private CropModelTarget modelTarget;
+
+        // 나무형 작물의 수확 창구: 모델의 메시를 감싸는 트리거 상자(이동은 막지 않음, 레이어는 칸과 같은 Interactable).
+        // 크기는 만든 순간의 프리팹 자세로 잰다 — 자라기 애니메이션이 아직 돌기 전이라 다 자란 크기
+        private void AddModelTarget()
+        {
+            var root = shownModel.transform;
+            var toRoot = root.worldToLocalMatrix;
+            Bounds local = default;
+            bool any = false;
+            foreach (var r in shownModel.GetComponentsInChildren<Renderer>(true))
+            {
+                Mesh mesh = r is SkinnedMeshRenderer skinned ? skinned.sharedMesh
+                    : r.TryGetComponent<MeshFilter>(out var filter) ? filter.sharedMesh : null;
+                if (mesh == null)
+                    continue;
+                var m = toRoot * r.transform.localToWorldMatrix;
+                var b = mesh.bounds;
+                for (int i = 0; i < 8; i++)
+                {
+                    var corner = m.MultiplyPoint3x4(b.center + Vector3.Scale(b.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1)));
+                    if (!any) { local = new Bounds(corner, Vector3.zero); any = true; }
+                    else local.Encapsulate(corner);
+                }
+            }
+            if (!any)
+                return;
+
+            var go = new GameObject("HarvestTarget");
+            go.layer = gameObject.layer;
+            go.transform.SetParent(root, false);
+            var box = go.AddComponent<BoxCollider>();
+            box.isTrigger = true;
+            box.center = local.center;
+            box.size = local.size;
+            modelTarget = go.AddComponent<CropModelTarget>();
+            modelTarget.Bind(grid, index);
         }
 
         /// <summary>

@@ -42,9 +42,9 @@ namespace NevrianGlowFarm.Logic.Game
             Level = level;
         }
 
-        /// <summary>정산 화면 본문. nameOf = 작물 id → 표시 이름 (없으면 id).
+        /// <summary>정산 화면 본문. nameOf = 작물 id → 표시 이름 (없으면 id). unlocked = 레벨업으로 새로 열린 것 (없으면 비움, 스킬트리 폐기 10/29).
         /// 게임 화면 글자라 "—" 대신 "-"를 쓴다 (글꼴에 없음).</summary>
-        public List<string> Lines(Func<string, string> nameOf)
+        public List<string> Lines(Func<string, string> nameOf, IReadOnlyList<string> unlocked = null)
         {
             var lines = new List<string>();
             if (HasSales)
@@ -59,8 +59,10 @@ namespace NevrianGlowFarm.Logic.Game
             lines.Add($"순이익 {Signed(NetProfit)}달러");
             string exp = $"경험치 +{Exp.Exp:N0} (Lv {Level})";
             if (Exp.LeveledUp)
-                exp += $" · 레벨 업! SP +{Exp.SkillPointsGained}";
+                exp += " · 레벨 업!";
             lines.Add(exp);
+            if (Exp.LeveledUp && unlocked != null && unlocked.Count > 0)
+                lines.Add($"새로 열림: {Text.UiText.JoinSharedTail(unlocked)}");
             return lines;
         }
 

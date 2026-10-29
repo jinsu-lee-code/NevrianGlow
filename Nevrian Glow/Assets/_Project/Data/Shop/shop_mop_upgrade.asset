@@ -22,11 +22,19 @@ MonoBehaviour:
   repeatable: 0
   tiers:
   - price: 200
-    requirements: []
+    requirements:
+    - kind: 4
+      targetId: 
+      value: 3
   - price: 800
-    requirements: []
+    requirements:
+    - kind: 4
+      targetId: 
+      value: 3
   dailyStock: 
   stockFromNextDay: 0
+  bonusStock: 0
+  bonusStockLevel: 0
   baseTool: {fileID: 11400000, guid: e59d00e08fdcfa743a80da95306d1217, type: 2}
   tierTools:
   - {fileID: 11400000, guid: dfa7fc53796a24041a027e8dacc816b2, type: 2}

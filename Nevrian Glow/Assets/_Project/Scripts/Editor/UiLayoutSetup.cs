@@ -346,31 +346,21 @@ namespace NevrianGlowFarm.Editor
             if (view == null || wallet == null || level == null)
                 return "HUD 줄 없음";
             var dollar = AssetDatabase.LoadAssetAtPath<Sprite>($"{IconFolder}/icon_dollar.png");
-            var sp = AssetDatabase.LoadAssetAtPath<Sprite>($"{IconFolder}/icon_skillpoint.png");
             var xp = AssetDatabase.LoadAssetAtPath<Sprite>($"{IconFolder}/icon_xp.png");
 
-            // 달러 줄: [달러 아이콘][150 달러]   [SP 아이콘][SP 0]
+            // 달러 줄: [달러 아이콘][150 달러] — SP 줄은 스킬트리 폐기로 끈다 (수정사항 10/28)
             float walletTop = wallet.offsetMax.y, walletHeight = wallet.rect.height;
             Icon(hud, "IconDollar", dollar, 18f, walletTop, walletHeight);
             Line(wallet, 18f + walletHeight + 6f, walletTop, 170f, walletHeight);
-            var spLabelRt = hud.Find("SkillPoints") as RectTransform;
-            if (spLabelRt == null)
-            {
-                spLabelRt = Object.Instantiate(wallet.gameObject, hud).GetComponent<RectTransform>();
-                spLabelRt.name = "SkillPoints";
-            }
-            Icon(hud, "IconSkillPoint", sp, 230f, walletTop, walletHeight);
-            Line(spLabelRt, 230f + walletHeight + 6f, walletTop, 130f, walletHeight);
+            foreach (var old in new[] { "SkillPoints", "IconSkillPoint" })
+                if (hud.Find(old) is Transform t)
+                    t.gameObject.SetActive(false);
 
             // 레벨 줄: [경험치 아이콘][Lv1 0 / 100]
             float levelTop = level.offsetMax.y, levelHeight = level.rect.height;
             Icon(hud, "IconXp", xp, 18f, levelTop, levelHeight);
             Line(level, 18f + levelHeight + 6f, levelTop, 330f, levelHeight);
-
-            var so = new SerializedObject(view);
-            so.FindProperty("skillPointLabel").objectReferenceValue = spLabelRt.GetComponent<TMP_Text>();
-            so.ApplyModifiedPropertiesWithoutUndo();
-            return $"HUD 아이콘 {(dollar != null ? 1 : 0) + (sp != null ? 1 : 0) + (xp != null ? 1 : 0)}";
+            return $"HUD 아이콘 {(dollar != null ? 1 : 0) + (xp != null ? 1 : 0)}";
         }
 
         // 왼쪽 위 기준 정사각 아이콘 (줄 높이만 한)
