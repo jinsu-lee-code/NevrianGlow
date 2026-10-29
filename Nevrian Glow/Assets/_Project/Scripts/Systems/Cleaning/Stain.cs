@@ -61,6 +61,9 @@ namespace NevrianGlowFarm.Systems.Cleaning
             float before = amount;
             amount = (float)CleaningRules.Wipe(amount, wipeAmount);
             Refresh();
+            // 닦는 동안 프롬프트의 "남은 %"가 멈춰 있던 오류 (수정사항 10/28) — 보이는 숫자가 바뀔 때만 다시 받게 한다
+            if (Mathf.CeilToInt(before * 100f) != Mathf.CeilToInt(amount * 100f))
+                InteractionRaycaster.RequestPromptRefresh();
             if (IsClean)
             {
                 gameObject.SetActive(false);

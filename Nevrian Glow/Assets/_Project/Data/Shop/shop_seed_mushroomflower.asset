@@ -21,12 +21,12 @@ MonoBehaviour:
   icon: {fileID: 0}
   repeatable: 1
   tiers:
-  - price: 30
+  - price: 15
     requirements:
     - kind: 1
       targetId: skill_unlock_mushroom
       value: 1
-  dailyStock: 05000000
+  dailyStock: 14000000
   stockFromNextDay: 1
   item: {fileID: 11400000, guid: 526adb1750cb4b1478827fb40e4db8bb, type: 2}
   count: 1

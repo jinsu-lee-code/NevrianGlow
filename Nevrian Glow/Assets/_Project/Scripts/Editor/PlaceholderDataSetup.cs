@@ -269,6 +269,7 @@ namespace NevrianGlowFarm.Editor
                 so.FindProperty("eyeHeight").floatValue = 1.7f;
                 so.FindProperty("headBobAmplitude").floatValue = 0.008f;
                 so.FindProperty("headBobFrequency").floatValue = 0.8f;
+                so.FindProperty("fieldOfView").floatValue = 65f; // 수정사항 10/29
                 so.FindProperty("interactMaxDistance").floatValue = 5f;
             });
 

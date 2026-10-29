@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0e226b25eec8eaa4b82517061366c75e, type: 3}
   m_Name: SalesSettings
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.SalesSettingsData
-  day1Customers: 1
-  day1FirstBuy: 2
+  day1Customers: 2
+  day1FirstBuy: 3
   regularsAfterDay1: 2
   marketSize: 40
   adRate: 0.02
@@ -29,6 +29,10 @@ MonoBehaviour:
   satisfactionTidy: 0.35
   satisfactionSuccess: 0.3
   customerRandom: 0.1
+  tutorialCustomers: 3
+  tutorialBuyAll: 1
+  tutorialRandomOff: 1
+  spawnInterval: 3
   salesDuration: 30
   spawnWindow: 0.8
   maxConcurrentCustomers: 6

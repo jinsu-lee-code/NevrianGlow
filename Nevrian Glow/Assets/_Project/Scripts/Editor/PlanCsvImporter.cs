@@ -685,6 +685,7 @@ namespace NevrianGlowFarm.Editor
                     so.FindProperty("startFruitShelves").intValue = Mathf.Max(0, shelvesAtStart);
                 SetStartingItems(so.FindProperty("startingHotbarItems"), V("start_hotbar"), map, byId, report, "시작 핫바");
                 SetStartingItems(so.FindProperty("startingStorageItems"), V("start_storage"), map, byId, report, "시작 창고");
+                SetStartingItems(so.FindProperty("startingPlantedCrops"), V("start_planted"), map, byId, report, "시작 밭 작물"); // 다 자란 채로 (수정사항 10/29)
                 if (PlanCsv.SplitList(V("start_bag")).Count > 0)
                     report.Problems.Add("start_bag: 개발은 시작 가방 아이템이 없음 — 기획 값이 비어 있지 않아 무시함");
                 int cellsPerPlot = start.CellsPerPlot;
@@ -728,6 +729,8 @@ namespace NevrianGlowFarm.Editor
                     so.FindProperty("purchaseMax").intValue = Mathf.Max(1, buyMax);
                 if (CsvValue.TryFloat(V("sale_duration"), out float duration))
                     so.FindProperty("salesDuration").floatValue = Mathf.Max(1f, duration);
+                if (CsvValue.TryFloat(V("customer_spawn_interval"), out float interval))
+                    so.FindProperty("spawnInterval").floatValue = Mathf.Max(0f, interval); // 장사 시간 제한 없음 (수정사항 10/28)
                 if (CsvValue.TryInt(V("buy_extra_max"), out int extraMax))
                     so.FindProperty("purchaseExtraMax").intValue = Mathf.Max(1, extraMax);
 

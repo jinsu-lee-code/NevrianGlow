@@ -87,8 +87,8 @@ namespace NevrianGlowFarm.Systems.Sales
         [SerializeField, Min(0f)] private float browseSpread = 4f;
         [Tooltip("진열 가구 가장자리에서 손님이 서는 거리 (m)")]
         [SerializeField, Min(0f)] private float browseGap = 0.6f;
-        [Tooltip("장사 시간이 지난 뒤 남은 손님을 기다리는 최대 시간 — 지나면 남은 손님을 바로 처리 (초, 임시)")]
-        [SerializeField, Min(0f)] private float overtimeLimit = 20f;
+        [Tooltip("손님이 모두 들어온 뒤 이 시간이 지나도 가게에 남은 손님이 있으면 바로 처리 — 손님이 길에 끼였을 때만 (초, 장사 시간 제한 아님)")]
+        [SerializeField, Min(10f)] private float stuckLimit = 90f;
         [Tooltip("손님 구매 · 종류 난수 시드 — 같은 시드 · 같은 일차면 같은 장사")]
         [SerializeField] private int seed = 20261011;
 
@@ -119,7 +119,9 @@ namespace NevrianGlowFarm.Systems.Sales
         private readonly List<ShelfState> shelfStates = new List<ShelfState>();
         private IRandomSource purchaseRandom;
         private IRandomSource customerRandom;
+        private readonly HashSet<int> typesToday = new HashSet<int>();
         private float elapsed;
+        private float allSpawnedAt = -1f;
         private int day;
         private int spawnedNumber;
         private SalesResult? lastResult;
@@ -234,11 +236,15 @@ namespace NevrianGlowFarm.Systems.Sales
             CollectTypes(today);
             CollectShelves();
             // 모두 구매: 설정이 켜져 있거나, 오늘 튜토리얼이 레벨업을 안내하면(2일차 월광 4개 모두 → 누적 108 ≥ 100) 손님마다 진열 수만큼 사려 한다
-            bool buyAll = (tutorial && settings.TutorialBuyAll) || Systems.Tutorial.TutorialSystem.RequiredToday(Logic.Tutorial.TutorialEvents.LeveledUp) > 0f;
-            int everyWanted = buyAll ? Mathf.Max(1, DisplayedCount()) : 0;
-            session = new SalesSession(count, spec, today <= 1 ? settings.Day1FirstBuy : 0, extra, settings.PurchaseExtraMax, everyWanted);
+            // 1일차는 '모두 구매'를 쓰지 않는다 — 손님마다 고정 개수 (피피 · 미루 3개씩, 수정사항 10/28)
+            bool buyAll = (tutorial && settings.TutorialBuyAll && today > 1) || Systems.Tutorial.TutorialSystem.RequiredToday(Logic.Tutorial.TutorialEvents.LeveledUp) > 0f;
+            // 1일차는 손님마다 고정 개수 (수정사항 10/28: 피피 · 미루가 3개씩 → 할머니의 월광 6개 완판)
+            int everyWanted = buyAll ? Mathf.Max(1, DisplayedCount()) : today <= 1 ? settings.Day1FirstBuy : 0;
+            session = new SalesSession(count, spec, 0, extra, settings.PurchaseExtraMax, everyWanted);
             purchaseRandom = new SeededRandom(SeededRandom.SeedFor(seed, PurchasePurpose, today));
             customerRandom = new SeededRandom(SeededRandom.SeedFor(seed, CustomerPurpose, today));
+            typesToday.Clear();
+            allSpawnedAt = -1f;
             elapsed = 0f;
             spawnedNumber = 0;
             lastResult = null;
@@ -263,12 +269,15 @@ namespace NevrianGlowFarm.Systems.Sales
             int due = session.SpawnDue(elapsed);
             for (int i = 0; i < due; i++)
                 Spawn();
+            if (allSpawnedAt < 0f && session.Spawned >= session.Total)
+                allSpawnedAt = elapsed;
 
+            // 장사 시간 제한 없음 — 마지막 손님이 계산하고 나가면 끝 (수정사항 10/28). 끼인 손님만 늦게 정리한다.
             if (session.IsFinished)
                 Complete(skipped: false, advancePhase: true);
-            else if (elapsed >= session.Spec.Duration + overtimeLimit)
+            else if (allSpawnedAt >= 0f && elapsed - allSpawnedAt >= stuckLimit)
             {
-                Debug.Log($"[SalesSystem] 장사 시간 + {overtimeLimit}초가 지나 남은 손님 {session.InStore + session.Total - session.Spawned}명을 바로 처리");
+                Debug.LogWarning($"[SalesSystem] 손님이 다 들어온 뒤 {stuckLimit}초가 지나도 {session.InStore}명이 남아 바로 처리 - 손님 길(NavMesh) 확인");
                 FinishNow(advancePhase: true);
             }
             else
@@ -319,7 +328,10 @@ namespace NevrianGlowFarm.Systems.Sales
 
         private void Spawn()
         {
-            int typeIndex = SalesRules.PickCustomerType(typeWeights, typeDays, day, customerRandom);
+            // 오늘 아직 안 온 종류 먼저 (1일차 피피 · 미루가 한 번씩)
+            int typeIndex = SalesRules.PickCustomerTypeFresh(typeWeights, typeDays, day, customerRandom, typesToday);
+            if (typeIndex >= 0)
+                typesToday.Add(typeIndex);
             var type = typeIndex >= 0 ? types[typeIndex] : null;
             if (type == null || type.Prefab == null)
             {

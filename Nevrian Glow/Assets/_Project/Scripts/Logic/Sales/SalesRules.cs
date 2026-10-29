@@ -16,10 +16,13 @@ namespace NevrianGlowFarm.Logic.Sales
         public int PurchaseMax { get; }
         /// <summary>흐트러진 진열 칸의 구매 확률 배율 (가게 정리 P-3, 기획 disorder_buy_mult 0.5).</summary>
         public double DisorderBuyMultiplier { get; }
+        /// <summary>손님이 들어오는 간격 (초). 0보다 크면 장사 시간과 상관없이 이 간격으로 들어온다 — 장사는 마지막 손님이 나가면 끝 (수정사항 10/28).</summary>
+        public double SpawnInterval { get; }
 
-        public SalesSpec(double duration, double spawnWindow, int maxConcurrent, int purchaseMin, int purchaseMax, double disorderBuyMultiplier = 1.0)
+        public SalesSpec(double duration, double spawnWindow, int maxConcurrent, int purchaseMin, int purchaseMax, double disorderBuyMultiplier = 1.0, double spawnInterval = 0.0)
         {
             DisorderBuyMultiplier = Clamp01(disorderBuyMultiplier);
+            SpawnInterval = Math.Max(0.0, spawnInterval);
             Duration = Math.Max(0.0, duration);
             SpawnWindow = Clamp01(spawnWindow);
             MaxConcurrent = Math.Max(1, maxConcurrent);
@@ -35,12 +38,35 @@ namespace NevrianGlowFarm.Logic.Sales
     /// </summary>
     public static class SalesRules
     {
-        /// <summary>k번째(0부터) 손님이 문에서 생기는 시각 = k × (장사 시간 × 생성 구간 ÷ 손님 수) (초).</summary>
+        /// <summary>
+        /// k번째(0부터) 손님이 문에서 생기는 시각 (초). 손님 간격이 있으면 k × 간격 — 손님이 많아도 평소 속도로 들어온다 (수정사항 10/28 "30초 제한 삭제").
+        /// 간격이 0이면 예전처럼 k × (장사 시간 × 생성 구간 ÷ 손님 수).
+        /// </summary>
         public static double SpawnTime(int k, int customerCount, SalesSpec spec)
         {
             if (customerCount <= 0)
                 return 0;
+            if (spec.SpawnInterval > 0)
+                return k * spec.SpawnInterval;
             return k * (spec.Duration * spec.SpawnWindow / customerCount);
+        }
+
+        /// <summary>
+        /// 오늘 아직 안 나온 종류를 먼저 고른다 (튜토리얼 1일차 "피피와 미루" — 같은 아이가 두 번 오지 않게). 고를 수 있는 새 종류가 없으면 PickCustomerType 그대로.
+        /// </summary>
+        public static int PickCustomerTypeFresh(IReadOnlyList<double> weights, IReadOnlyList<int> unlockDays, int day, IRandomSource random, ICollection<int> usedToday)
+        {
+            if (usedToday == null || usedToday.Count == 0)
+                return PickCustomerType(weights, unlockDays, day, random);
+            var fresh = new double[weights.Count];
+            bool any = false;
+            for (int i = 0; i < weights.Count; i++)
+            {
+                fresh[i] = usedToday.Contains(i) ? 0 : weights[i];
+                if (fresh[i] > 0 && unlockDays[i] <= day)
+                    any = true;
+            }
+            return PickCustomerType(any ? fresh : weights, unlockDays, day, random);
         }
 
         /// <summary>

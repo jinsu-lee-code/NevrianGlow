@@ -22,6 +22,28 @@ namespace NevrianGlowFarm.Tests
             return cell;
         }
 
+        [Test]
+        public void PlantReady_UntilledCellBecomesHarvestableNow()
+        {
+            // 수정사항 10/29: 새 게임은 밭에 다 자란 월광 뿌리가 심어진 채로 시작
+            var cell = new FarmCell();
+            Assert.IsTrue(FarmRules.PlantReady(cell, "crop_moonroot", Moonroot));
+            Assert.AreEqual(FarmCellStatus.Ready, FarmRules.GetStatus(cell, Moonroot));
+            var result = FarmRules.TryHarvest(cell, Moonroot);
+            Assert.IsTrue(result.Succeeded);
+            Assert.AreEqual(1, result.Yield);
+            Assert.IsFalse(cell.HasCrop, "수확하면 보통 작물처럼 칸이 비고 미개간으로 돌아간다");
+            Assert.AreEqual(FarmCellStatus.Untilled, FarmRules.GetStatus(cell, Moonroot));
+            Assert.IsFalse(FarmRules.PlantReady(TilledCellWithCrop(), "crop_moonroot", Moonroot), "작물이 있는 칸은 건드리지 않음");
+        }
+
+        private static FarmCell TilledCellWithCrop()
+        {
+            var cell = TilledCell();
+            FarmRules.TryPlant(cell, "crop");
+            return cell;
+        }
+
         /// <summary>plantDay에 심고, waterOn(일차)이면 그날 물을 준다. 수확 가능한 날들을 돌려준다 (수확하면 다음 날로).</summary>
         private static List<int> HarvestDays(CropSpec spec, Func<int, bool> waterOn, int plantDay = 1, int lastDay = 30)
         {

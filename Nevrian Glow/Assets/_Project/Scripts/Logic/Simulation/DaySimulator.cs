@@ -227,7 +227,8 @@ namespace NevrianGlowFarm.Logic.Simulation
                 // ── 장사 (입소문 손님 모델 · 청결도 고정 · 건너뛰기와 같은 함수) ──
                 var countRandom = new SeededRandom(SeededRandom.SeedFor(seed, DaySimConfig.CountPurpose, day));
                 int count = customers.TodayCount(day, config.Cleanliness, config.FurnitureSpots, countRandom.NextDouble(), config.CustomerModel);
-                var session = new SalesSession(count, config.Sales, day <= 1 ? config.CustomerModel.Day1FirstBuy : 0);
+                // 1일차는 손님마다 고정 개수 — 게임 SalesSystem과 같게 (수정사항 10/28)
+                var session = new SalesSession(count, config.Sales, 0, everyWanted: day <= 1 ? config.CustomerModel.Day1FirstBuy : 0);
                 var random = new SeededRandom(SeededRandom.SeedFor(seed, DaySimConfig.PurchasePurpose, day));
                 session.SkipRemaining(shelves, random, priceOf);
                 customers.RecordSales(config.Cleanliness, config.Tidiness, session.Total, session.Buyers, config.CustomerModel);

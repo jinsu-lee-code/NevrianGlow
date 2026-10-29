@@ -76,6 +76,13 @@ namespace NevrianGlowFarm.Systems.Interaction
         /// <summary>프롬프트가 바뀔 때만 발생. 비어 있으면 숨긴다.</summary>
         public event Action<string> PromptChanged;
 
+        private static int refreshRequestedFrame = -1;
+
+        /// <summary>
+        /// 보고 있는 대상의 상태가 상호작용 없이 바뀌었을 때(누르고 있는 동안 닦이는 얼룩 등) 이번 프레임에 프롬프트를 다시 받게 한다.
+        /// </summary>
+        public static void RequestPromptRefresh() => refreshRequestedFrame = Time.frameCount;
+
         /// <summary>좌클릭으로 대상에 아이템을 썼을 때 (든 아이템) — 1인칭 도구 동작(HeldItemView)이 듣는다.</summary>
         public event Action<ItemData> ItemUsed;
 
@@ -135,6 +142,9 @@ namespace NevrianGlowFarm.Systems.Interaction
             UpdateTarget();
 
             if (IsAlive(aimTarget) && aimTarget.UpdateAim(hitPoint, hotbar.SelectedItem))
+                promptDirty = true;
+            // 이번 프레임이나 지난 프레임의 요청 (실행 순서와 상관없이 한 번은 받는다)
+            if (refreshRequestedFrame >= Time.frameCount - 1)
                 promptDirty = true;
 
             if (promptDirty)

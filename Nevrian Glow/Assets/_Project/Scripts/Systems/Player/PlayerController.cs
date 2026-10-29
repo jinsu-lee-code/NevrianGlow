@@ -62,6 +62,8 @@ namespace NevrianGlowFarm.Systems.Player
 
             yaw = transform.eulerAngles.y;
             pitch = Mathf.DeltaAngle(0f, cameraPivot.localEulerAngles.x);
+            if (settings.FieldOfView > 0f && cameraPivot.TryGetComponent<Camera>(out var cam))
+                cam.fieldOfView = settings.FieldOfView;
         }
 
         private void OnEnable()

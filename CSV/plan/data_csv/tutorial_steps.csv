@@ -7,14 +7,14 @@ D1-05,1,farming,밭 한 칸을 좌클릭으로 세 번 일궈요,bed_tutorial:ce
 D1-06,1,farming,같은 밭의 나머지 3칸도 일궈요,bed_tutorial,tilled:4,end_farming,P0
 D1-07,1,farming,4번 씨앗을 들고 일군 칸에 좌클릭으로 심어요,hotbar:4;bed_tutorial,planted:4,end_farming,P0
 D1-08,1,farming,2번 물뿌리개로 심은 칸에 물을 줘요,hotbar:2;bed_tutorial,watered:4,end_farming,P0
-D1-09,1,farming,농장 문 옆 창고를 E로 열고 할머니의 월광 뿌리 2개를 꺼내요,storage_farm;storage_row:crop_moonroot,owned:crop_moonroot:2,end_farming,P0
+D1-09,1,farming,옆 밭에 할머니가 키워 둔 월광 뿌리가 다 자랐어요. E로 6개를 모두 수확해요,bed_next,harvested:6,end_farming,P0
 D1-10,1,farming,농사 끝내기 [Enter] 또는 가게 문(E)으로 가요,btn_end_farming;door_shop,zone:zone_shop,,P0
 D1-11,1,tidy,오랫동안 닫혀 있던 가게예요. 쓰레기 3개를 E로 주워 쓰레기통(E)에 버려요,trash_nearest:3;trash_bin,trashed:3,open_sales,P0
 D1-12,1,tidy,남은 쓰레기와 얼룩은 원하는 만큼 치워요. 깨끗할수록 내일 손님이 늘어요,hud_tidy_grade,auto,,P0
-D1-13,1,tidy,월광 뿌리를 들고 과일 진열대에 좌클릭으로 진열해요 (2개),fruit_shelf_1,displayed:2,open_sales,P0
+D1-13,1,tidy,월광 뿌리를 들고 과일 진열대에 좌클릭으로 진열해요 (6개),fruit_shelf_1,displayed:6,open_sales,P0
 D1-14,1,tidy,준비 끝! 장사 시작 [Enter] 버튼 또는 간판 E로 장사를 시작해요,btn_open_sales;signboard,phase:sales,,P0
-D1-15,1,sales,(피피 등장) 장사는 손님이 알아서 사 가요,customer_pipi,sales_done,,P0
-D1-16,1,settlement,오늘의 결과예요. 경험치가 100이 되면 레벨업해요,settle_revenue;settle_grade;settle_xp,next_day,,P0
+D1-15,1,sales,(피피와 미루 등장) 장사는 손님이 알아서 사 가요,customer_pipi,sales_done,,P0
+D1-16,1,settlement,오늘의 결과예요. 판 금액만큼 경험치가 쌓이고 200이 되면 레벨업해요,settle_revenue;settle_grade;settle_xp,next_day,,P0
 D2-01,2,shop,(편지 ②),letter_ui,letter_closed:letter_2,move,P0
 D2-02,2,shop,오늘은 월광 뿌리 씨앗을 넉넉히 사요 (추천 10개),shop_row:item_seed_moonroot,owned:item_seed_moonroot:4,close_shop,P0
 D2-03,2,farming,빛나는 월광 뿌리를 E로 수확해요,bed_tutorial,harvested:4,end_farming,P0

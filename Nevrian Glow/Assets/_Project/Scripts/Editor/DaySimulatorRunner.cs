@@ -96,8 +96,8 @@ namespace NevrianGlowFarm.Editor
                 FirstDayCells = settings.FirstDayCells,
             };
 
-            // 시작 소지품: 씨앗은 심을 씨앗, 작물은 바로 팔 수확물 (핫바 · 창고 모두)
-            foreach (var row in start.StartingHotbar.Concat(start.StartingStorage))
+            // 시작 소지품: 씨앗은 심을 씨앗, 작물은 바로 팔 수확물 (핫바 · 창고 · 밭에 다 자란 채 심긴 시작 작물 — 1일차에 바로 수확)
+            foreach (var row in start.StartingHotbar.Concat(start.StartingStorage).Concat(start.StartingPlantedCrops))
             {
                 if (row.Item is SeedData seed && seed.Crop != null)
                     Add(config.StartSeeds, seed.Crop.Id, row.Count);

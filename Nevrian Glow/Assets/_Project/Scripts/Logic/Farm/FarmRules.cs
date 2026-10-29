@@ -75,6 +75,20 @@ namespace NevrianGlowFarm.Logic.Farm
             return true;
         }
 
+        /// <summary>
+        /// 새 게임 시작 작물 (수정사항 10/29 "창고 작물을 밭에 심어진 상태로 시작"): 빈 칸을 개간하고 다 자란 작물을 둔다. 작물이 이미 있으면 false.
+        /// </summary>
+        public static bool PlantReady(FarmCell cell, string cropId, CropSpec spec)
+        {
+            if (cropId == null || cell.HasCrop)
+                return false;
+            cell.IsTilled = true;
+            cell.TillProgress = 0f;
+            TryPlant(cell, cropId);
+            cell.Age = spec.GrowDays;
+            return true;
+        }
+
         /// <summary>비료를 줄 수 있는지: 작물이 있고 아직 다 자라지 않았고 이 작물에 비료를 준 적이 없음.</summary>
         public static bool CanFertilize(FarmCell cell, CropSpec spec) => cell.HasCrop && !IsReady(cell, spec) && !cell.IsFertilized;
 

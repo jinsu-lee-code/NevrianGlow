@@ -23,6 +23,8 @@ namespace NevrianGlowFarm.Data
         [SerializeField, Range(0f, 0.03f)] private float headBobAmplitude;
         [Tooltip("헤드밥 주파수 (Hz)")]
         [SerializeField, Range(0.5f, 2f)] private float headBobFrequency = 0.5f;
+        [Tooltip("1인칭 카메라 세로 시야각 — 0이면 씬의 카메라 값 그대로 (°, 수정사항 10/29: 65)")]
+        [SerializeField, Range(0f, 90f)] private float fieldOfView = 65f;
 
         [Header("상호작용")]
         [Tooltip("화면 중앙 Raycast 최대 거리 (m)")]
@@ -35,6 +37,7 @@ namespace NevrianGlowFarm.Data
         public float EyeHeight => eyeHeight;
         public float HeadBobAmplitude => headBobAmplitude;
         public float HeadBobFrequency => headBobFrequency;
+        public float FieldOfView => fieldOfView;
         public float InteractMaxDistance => interactMaxDistance;
     }
 }

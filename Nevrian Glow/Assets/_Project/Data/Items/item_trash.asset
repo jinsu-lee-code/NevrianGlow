@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.ItemData
   id: item_trash
   displayName: "\uC4F0\uB808\uAE30"
-  maxStack: 10
+  description: 
+  maxStack: 1
   canStore: 0
   heldPrefab: {fileID: 0}
   worldModels:
@@ -23,3 +24,4 @@ MonoBehaviour:
   - {fileID: 2649233225253384290, guid: 3590f398824443843a153398d630b91a, type: 3}
   - {fileID: 150754234311803321, guid: 22247742382dab84d94089f3a4fb7a65, type: 3}
   - {fileID: 8404415216180328333, guid: ecbee65850f4a874c8b522d0e2edde93, type: 3}
+  icon: {fileID: 0}

@@ -33,6 +33,34 @@ namespace NevrianGlowFarm.Tests
         }
 
         [Test]
+        public void SpawnTime_FixedIntervalIgnoresDurationAndCount()
+        {
+            // 수정사항 10/28: 30초 제한 없이 평소 속도 — 손님이 몇 명이든 3초 간격
+            var spec = new SalesSpec(30, 0.8, 6, 1, 3, 1.0, 3.0);
+            Assert.AreEqual(0.0, SalesRules.SpawnTime(0, 17, spec), 1e-9);
+            Assert.AreEqual(3.0, SalesRules.SpawnTime(1, 17, spec), 1e-9);
+            Assert.AreEqual(48.0, SalesRules.SpawnTime(16, 17, spec), 1e-9, "17명이면 30초를 넘겨도 계속 들어온다");
+            Assert.AreEqual(3.0, SalesRules.SpawnTime(1, 2, spec), 1e-9, "2명이어도 같은 간격");
+        }
+
+        [Test]
+        public void PickCustomerTypeFresh_AvoidsRepeatUntilAllUsed()
+        {
+            var weights = new List<double> { 1, 1, 1 };
+            var days = new List<int> { 1, 1, 2 }; // 셋째는 2일차부터
+            var used = new HashSet<int>();
+            var random = new SeededRandom(7);
+            int first = SalesRules.PickCustomerTypeFresh(weights, days, 1, random, used);
+            used.Add(first);
+            int second = SalesRules.PickCustomerTypeFresh(weights, days, 1, random, used);
+            Assert.AreNotEqual(first, second, "1일차 두 손님은 다른 종류");
+            Assert.That(second, Is.InRange(0, 1), "아직 안 열린 종류는 고르지 않음");
+            used.Add(second);
+            int third = SalesRules.PickCustomerTypeFresh(weights, days, 1, random, used);
+            Assert.That(third, Is.InRange(0, 1), "다 나왔으면 다시 아무나");
+        }
+
+        [Test]
         public void SpawnDue_RespectsScheduleAndMaxConcurrent()
         {
             var session = new SalesSession(10, Spec);

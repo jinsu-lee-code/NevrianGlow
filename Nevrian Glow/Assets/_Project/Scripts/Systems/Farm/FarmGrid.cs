@@ -92,6 +92,7 @@ namespace NevrianGlowFarm.Systems.Farm
         {
             GameEvents.PhaseChanged += OnPhaseChanged;
             GameEvents.StatsChanged += OnStatsChanged;
+            GameEvents.NewGameStarted += PlantStartingCrops;
             Tutorial.TutorialHighlights.Register(this);
         }
 
@@ -99,7 +100,32 @@ namespace NevrianGlowFarm.Systems.Farm
         {
             GameEvents.PhaseChanged -= OnPhaseChanged;
             GameEvents.StatsChanged -= OnStatsChanged;
+            GameEvents.NewGameStarted -= PlantStartingCrops;
             Tutorial.TutorialHighlights.Unregister(this);
+        }
+
+        // 새 게임: 시작 작물을 다 자란 채로 둔다 (수정사항 10/29 — 1일차는 밭에서 할머니의 월광 뿌리를 수확하는 것으로 시작).
+        // 이어하기는 이 뒤에 저장 내용이 칸을 덮는다.
+        private void PlantStartingCrops()
+        {
+            if (state == null)
+                return;
+            int index = settings.StartPlantedFirstCell;
+            foreach (var entry in settings.StartingPlantedCrops)
+            {
+                if (!(entry.Item is CropData crop))
+                {
+                    if (entry.Item != null)
+                        Debug.LogWarning($"[FarmGrid] 시작 작물 '{entry.Item.Id}'은 작물(CropData)이 아님 — 건너뜀", this);
+                    continue;
+                }
+                for (int n = 0; n < entry.Count && index < state.Cells.Count; index++)
+                    if (FarmRules.PlantReady(state.Cells[index], crop.Id, SpecOf(crop.Id)))
+                        n++;
+            }
+            if (views.Count > 0)
+                RefreshAll();
+            UpdateSummary();
         }
 
         // 튜토리얼 강조 (5-7): bed_tutorial[:cell_N] = 첫 밭(4칸) 가운데 또는 N번 칸, bed_next = 둘째 밭, planted_cells = 작물이 있는 첫 칸

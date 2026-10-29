@@ -1,16 +1,17 @@
 ﻿key,value,unit,desc,source
-start_money,150,달러,시작 자금,GDD
+start_money,50,달러,시작 자금 (1일차 아침 50골드),수정사항 10/28
 start_hotbar,tool_hoe_1;tool_watering_can_1;tool_mop_1;,item_id,시작 핫바 4칸 (마지막 칸 비움),회신2 2-3
 start_bag,,item_id,시작 가방 (비어 있음),회신2 2-3
-start_storage,crop_moonroot:2,item_id:개수,시작 창고,회신2 2-3
+start_storage,,item_id:개수,시작 창고 (비어 있음 — 할머니의 월광 뿌리는 밭에 심긴 채로 시작),수정사항 10/29
+start_planted,crop_moonroot:6,item_id:개수,"새 게임 때 밭에 다 자란 채로 심겨 있는 작물 (할머니의 월광 뿌리 6 — 1일차에 수확해 진열, 피피 · 미루가 3개씩)",수정사항 10/29
 start_fruit_shelves,3,대,시작 매장 과일 진열대 (가공품 진열대 없음),회신2 2-1
 start_beds,8,밭,시작 밭 (4×2),레벨배치
-level_xp_base,100,xp,레벨업 필요량 = base + step × (레벨 − 1),회신 #3
-level_xp_step,50,xp,,
+level_xp_base,200,xp,레벨업 필요량 = base + step × (레벨 − 1),수정사항 10/28
+level_xp_step,100,xp,,수정사항 10/28
 sp_per_level,3,SP,,
 xp_per_revenue,1,배,경험치 = 매출 × 이 값,
-day1_customers,1,명,1일차 손님 고정,손님수
-day1_first_buy,2,개,1일차 첫 손님 구매 개수 고정,손님수
+day1_customers,2,명,1일차 손님 고정 (피피 · 미루),수정사항 10/28
+day1_first_buy,3,개,1일차 손님마다 구매 개수 고정,수정사항 10/28
 customer_regulars_after_day1,2,명,1일차 장사 후 단골 수 N,손님수
 customer_market_size,40,명,시장 크기 M (매장 확장마다 +20),손님수
 customer_ad_rate,0.02,,광고 계수 p (간판 단계마다 +0.01),손님수
@@ -27,8 +28,8 @@ satisfaction_w_success,0.30,,만족도 가중치: 구매 성공률,손님수
 buy_min,1,개,손님 구매 개수 최소 (균등),회신 #19
 buy_max,3,개,손님 구매 개수 최대 (균등),회신 #19
 buy_extra_max,4,개,단골의 장바구니로 늘어날 수 있는 최대,회신2 2-5
-trash_day1,30,개,1일차 쓰레기,회신 #20
-stain_day1,12,개,1일차 얼룩,회신 #20
+trash_day1,20,개,"1일차 쓰레기 (30 → 20 감소, 임시값 — 기획 확인)",수정사항 10/28
+stain_day1,8,개,"1일차 얼룩 (12 → 8 감소, 임시값 — 기획 확인)",수정사항 10/28
 trash_daily_min,1,개,평소 쓰레기 최소,회신 #20
 trash_daily_max,3,개,평소 쓰레기 최대,회신 #20
 trash_expand_base,10,개,매장 확장 직후 새 구역 쓰레기 = base + 늘어난 자리 × per_spot,회신 #20
@@ -38,7 +39,7 @@ scatter_unsold_ratio,0.15,,흩어진 상품 = 안 팔린 진열 × 이 값 + 손
 scatter_per_customers,3,명,,
 disorder_ratio,0.20,,"상품이 있는 진열 칸 중 흐트러지는 비율 (과일 진열대 1대 = 1칸, 일반 진열대 1층 = 1칸)",청소 v2
 disorder_buy_mult,0.5,배,흐트러진 층의 구매 확률 배율,회신 #18
-sale_duration,30,초,자동 장사 시간,GDD
+customer_spawn_interval,3,초,"손님이 들어오는 간격 — 장사 시간 제한 없음, 마지막 손님이 계산하고 나가면 끝 (임시값 3초)",수정사항 10/28
 grade_s_min,0.95,,청결도 · 정돈도 등급 S 하한 (청결 · 정돈 같은 기준),회신3 1-1
 grade_a_min,0.80,,등급 A 하한,회신3 1-1
 grade_b_min,0.60,,등급 B 하한 (미만은 C),회신3 1-1
@@ -50,7 +51,7 @@ store_aisle_width,1.4,m,통로 폭 (위 · 아래 2줄),레벨배치
 trash_bin_location,storage_side,,쓰레기통 위치: 창고 구역 옆(농장 문 쪽),레벨배치
 store_spots_fruit,4,자리,기본 매장 과일 진열대 자리 (가운데),회신 10/20
 store_spots_shelf,4,자리,"기본 매장 일반 진열대 자리 (벽 쪽, 2차)",회신 10/20
-tutorial_day1_buy_all,true,,튜토리얼 1일차: 피피 1명이 진열 2개 모두 구매,튜토리얼
+tutorial_day1_buy_all,false,,튜토리얼 1일차: 손님마다 day1_first_buy개 (피피 · 미루 3개씩),수정사항 10/28
 tutorial_day2_customers,3,명,튜토리얼 2일차 손님 수 고정,튜토리얼
 tutorial_day2_buy_all,true,,튜토리얼 2일차: 진열된 월광 뿌리 모두 구매 (레벨업 보장),튜토리얼
 tutorial_day2_stains,2,개,튜토리얼 2일차 발자국 수 (흩어진 상품 · 흐트러짐 0),튜토리얼

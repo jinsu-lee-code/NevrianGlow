@@ -22,9 +22,9 @@ MonoBehaviour:
   icon: {fileID: 0}
   repeatable: 1
   tiers:
-  - price: 10
+  - price: 5
     requirements: []
-  dailyStock: 0a000000
+  dailyStock: 28000000
   stockFromNextDay: 0
   item: {fileID: 11400000, guid: 951abf54dedae774fa34f4dbea44d508, type: 2}
   count: 1

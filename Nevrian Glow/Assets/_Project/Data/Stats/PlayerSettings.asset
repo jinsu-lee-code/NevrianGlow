@@ -19,4 +19,5 @@ MonoBehaviour:
   eyeHeight: 1.7
   headBobAmplitude: 0.008
   headBobFrequency: 0.8
+  fieldOfView: 65
   interactMaxDistance: 5

@@ -78,10 +78,11 @@ MonoBehaviour:
   - id: D1-09
     day: 1
     phase: farming
-    text: "\uB18D\uC7A5 \uBB38 \uC606 \uCC3D\uACE0\uB97C E\uB85C \uC5F4\uACE0 \uD560\uBA38\uB2C8\uC758
-      \uC6D4\uAD11 \uBFCC\uB9AC 2\uAC1C\uB97C \uAEBC\uB0B4\uC694"
-    highlight: storage_farm;storage_row:crop_moonroot
-    completeEvent: owned:crop_moonroot:2
+    text: "\uC606 \uBC2D\uC5D0 \uD560\uBA38\uB2C8\uAC00 \uD0A4\uC6CC \uB454 \uC6D4\uAD11
+      \uBFCC\uB9AC\uAC00 \uB2E4 \uC790\uB790\uC5B4\uC694. E\uB85C 6\uAC1C\uB97C \uBAA8\uB450
+      \uC218\uD655\uD574\uC694"
+    highlight: bed_next
+    completeEvent: harvested:6
     locks: end_farming
   - id: D1-10
     day: 1
@@ -113,9 +114,9 @@ MonoBehaviour:
     day: 1
     phase: tidy
     text: "\uC6D4\uAD11 \uBFCC\uB9AC\uB97C \uB4E4\uACE0 \uACFC\uC77C \uC9C4\uC5F4\uB300\uC5D0
-      \uC88C\uD074\uB9AD\uC73C\uB85C \uC9C4\uC5F4\uD574\uC694 (2\uAC1C)"
+      \uC88C\uD074\uB9AD\uC73C\uB85C \uC9C4\uC5F4\uD574\uC694 (6\uAC1C)"
     highlight: fruit_shelf_1
-    completeEvent: displayed:2
+    completeEvent: displayed:6
     locks: open_sales
   - id: D1-14
     day: 1
@@ -128,16 +129,16 @@ MonoBehaviour:
   - id: D1-15
     day: 1
     phase: sales
-    text: "(\uD53C\uD53C \uB4F1\uC7A5) \uC7A5\uC0AC\uB294 \uC190\uB2D8\uC774 \uC54C\uC544\uC11C
-      \uC0AC \uAC00\uC694"
+    text: "(\uD53C\uD53C\uC640 \uBBF8\uB8E8 \uB4F1\uC7A5) \uC7A5\uC0AC\uB294 \uC190\uB2D8\uC774
+      \uC54C\uC544\uC11C \uC0AC \uAC00\uC694"
     highlight: customer_pipi
     completeEvent: sales_done
     locks: 
   - id: D1-16
     day: 1
     phase: settlement
-    text: "\uC624\uB298\uC758 \uACB0\uACFC\uC608\uC694. \uACBD\uD5D8\uCE58\uAC00
-      100\uC774 \uB418\uBA74 \uB808\uBCA8\uC5C5\uD574\uC694"
+    text: "\uC624\uB298\uC758 \uACB0\uACFC\uC608\uC694. \uD310 \uAE08\uC561\uB9CC\uD07C
+      \uACBD\uD5D8\uCE58\uAC00 \uC313\uC774\uACE0 200\uC774 \uB418\uBA74 \uB808\uBCA8\uC5C5\uD574\uC694"
     highlight: settle_revenue;settle_grade;settle_xp
     completeEvent: next_day
     locks: 
