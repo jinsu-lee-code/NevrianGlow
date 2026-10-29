@@ -31,7 +31,7 @@ public class LighthouseGoal : MonoBehaviour
 
     [Header("Look")]
     [Tooltip("Unlit colour multiply")] public Color darkColor = new Color(0.10f, 0.10f, 0.18f);
-    [Tooltip("Unlit multiply for the extra parts (ribs etc.) - milder, they are structure, not lights")] public Color extraDarkColor = new Color(0.45f, 0.45f, 0.62f);
+    [Tooltip("Unlit multiply for the extra parts (ribs etc.) - white: the structure keeps its colour, only its glow is off")] public Color extraDarkColor = Color.white;
     [Tooltip("Faint flicker of the dark windows, so they read as 'can be lit'")] [Range(0f, 1f)] public float darkFlicker = 0.35f;
     [Tooltip("Bright band riding the climbing front")] public float frontFlash = 2.5f;
     public float revealSoft = 0.8f;
@@ -62,9 +62,22 @@ public class LighthouseGoal : MonoBehaviour
     Material[] savedMats;     // ... and copies of them from before the ending, restored on exit
     bool ending;
 
+    /// <summary>The lighthouse in the loaded scenes (GrandmaSleep follows it from the shop scene).</summary>
+    public static LighthouseGoal Active { get; private set; }
     public bool IsEnding => ending;
     /// <summary>The progress the climbing light has reached right now (WorldAwakening follows this).</summary>
     public float ShownProgress => shown < 0f ? progress : shown;
+
+    /// <summary>World point at the top of the lit part of the tower (where harvest light sinks in).</summary>
+    public Vector3 LightFront()
+    {
+        if (windows == null) return transform.position + Vector3.up * 10f;
+        var b = windows.bounds;
+        return new Vector3(b.center.x, Mathf.Lerp(b.min.y, b.max.y, Mathf.Clamp01(ShownProgress / Mathf.Max(orbAt, 0.01f))), b.center.z);
+    }
+
+    /// <summary>A brief flare along the lit front (a harvest's light arriving, HarvestLightWisp).</summary>
+    public void Pulse() => flash = Mathf.Max(flash, 1f);
 
     /// <summary>Progress 0..1 (e.g. level / target level). The light climbs there over climbSeconds.</summary>
     public void SetProgress(float value)
@@ -81,10 +94,11 @@ public class LighthouseGoal : MonoBehaviour
         StartCoroutine(Ending());
     }
 
-    void OnEnable() { mpb ??= new MaterialPropertyBlock(); shown = Application.isPlaying ? 0f : progress; }
+    void OnEnable() { mpb ??= new MaterialPropertyBlock(); shown = Application.isPlaying ? 0f : progress; Active = this; }
 
     void OnDisable()
     {
+        if (Active == this) Active = null;
         foreach (var r in All()) if (r != null) r.SetPropertyBlock(null);
         // DayNightBlend writes its listed material ASSETS: in the editor put back the exact values from before the
         // ending (re-applying the old hour is not enough - the saved assets need not match a preset exactly)

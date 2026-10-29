@@ -6,6 +6,8 @@ using UnityEngine;
 /// against the violet world (user: "an effect - ready crops glow gently yellow against the purple"):
 ///   effect  - pf_vfx_crop_ready_glow: a soft breathing halo round the plant and a few warm motes drifting up
 ///   light   - a small warm point light at its foot pools gold on the soil (Ready Light, no shadows)
+/// Harvest: when a ready crop is harvested (its prefab removed from the cell, or a re-harvest tree's fruit dropping) a
+/// wisp of its light flies to the lighthouse (HarvestLightWisp, 2026-10-29).
 /// The plant's own materials are left as they are. It also becomes a CreatureLure, so the night creatures come and
 /// hover round it. Fruit Probe (re-harvest crops): ready only while that fruit is grown (lantern fruit shows buds after
 /// a harvest). No game code needed. All numbers are my own values.
@@ -28,15 +30,24 @@ public class CropReadyGlow : MonoBehaviour
 
     [Tooltip("Optional: ready only while this fruit is grown (scale above half of its starting scale)")]
     public Transform fruitProbe;
+    [Tooltip("Light that flies to the lighthouse when the crop is harvested (pf_vfx_harvest_wisp)")]
+    public GameObject harvestWisp;
+    [Tooltip("Where the wisp starts, above the crop's foot (m)")]
+    public float wispHeight = 0.4f;
+
+    static bool quitting;
+    [RuntimeInitializeOnLoadMethod] static void HookQuit() { quitting = false; Application.quitting += () => quitting = true; }
 
     ParticleSystem[] parts = new ParticleSystem[0];
     CreatureLure lure;
     float born, k, probeScale;
+    bool wasReady;
 
     void OnEnable()
     {
         born = Time.time;
         k = 0f;
+        wasReady = false;
         if (fruitProbe != null) probeScale = Mathf.Max(fruitProbe.localScale.x, 1e-4f);
         lure = GetComponent<CreatureLure>();
         if (lure == null) lure = gameObject.AddComponent<CreatureLure>();
@@ -67,5 +78,27 @@ public class CropReadyGlow : MonoBehaviour
             if (on && !p.isPlaying) p.Play();
         }
         if (lure != null && lure.enabled != (k > 0.5f)) lure.enabled = k > 0.5f;
+
+        // re-harvest tree: the fruit dropping while it was ready = a harvest
+        if (k > 0.5f) wasReady = true;
+        if (wasReady && fruitProbe != null && fruitProbe.localScale.x < probeScale * 0.5f)
+        {
+            wasReady = false;
+            SendLight(transform.parent);
+        }
+    }
+
+    // the farm swaps the stage prefab out of the cell when the crop is harvested
+    void OnDestroy()
+    {
+        if (!wasReady || quitting || !Application.isPlaying) return;
+        if (fruitProbe != null && fruitProbe.localScale.x < probeScale * 0.5f) return;   // already sent with the fruit
+        SendLight(transform.parent);
+    }
+
+    void SendLight(Transform cell)
+    {
+        if (harvestWisp == null) return;
+        HarvestLightWisp.Spawn(harvestWisp, transform.position + Vector3.up * wispHeight * transform.lossyScale.y, cell);
     }
 }

@@ -80,6 +80,8 @@ MonoBehaviour:
   readyLight: {fileID: 2371714224610114198}
   lightIntensity: 2.4
   fruitProbe: {fileID: 0}
+  harvestWisp: {fileID: 8417276002303677927, guid: 8539dcbf04c91744c8e7d62fe52471ca, type: 3}
+  wispHeight: 0.6
 --- !u!1 &2082086919619513923
 GameObject:
   m_ObjectHideFlags: 0

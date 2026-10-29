@@ -62,6 +62,7 @@ Shader "DSEWA/ToonProp"
         _RevealDark ("Unlit Colour (multiply)", Color) = (0.12, 0.12, 0.2, 1)
         _RevealFlash ("Bright Band At The Front", Range(0, 6)) = 0
         _RevealFlicker ("Unlit Faint Flicker", Range(0, 1)) = 0
+        _RevealGrey ("Unlit Desaturate (GrandmaSleep)", Range(0, 1)) = 0
         [Header(World Awakening   WorldAwakening   default off)]
         _AwakeResponse ("Glow Follows The World Waking (0 = off)", Range(0, 1)) = 0
         [ToggleUI] _WakeExempt ("Keep Colour Outside The Waking Circle (lighthouse)", Float) = 0
@@ -134,7 +135,7 @@ Shader "DSEWA/ToonProp"
             float _FruitSway, _FruitSwaySpeed;
             float4 _FruitWindDir;
             float _PlantSway, _PlantSwaySpeed, _PlantNod, _PlantNodSpeed;
-            float _RevealY, _RevealSoft, _RevealFlash, _RevealFlicker;
+            float _RevealY, _RevealSoft, _RevealFlash, _RevealFlicker, _RevealGrey;
             half4 _RevealDark;
             half _AwakeResponse, _WakeExempt;
         CBUFFER_END
@@ -342,6 +343,7 @@ Shader "DSEWA/ToonProp"
                 half sleepK = _AwakeResponse * WorldWakeOutside(i.positionWS) * (1.0h - _WakeExempt);   // asleep outside the colour circle
                 half awakeK = 1.0h - 0.95h * sleepK;
                 color *= 1.0h - 0.7h * sleepK * mask;   // the painted glowing parts themselves sink too, not only the added glow
+                half3 preGlow = color;   // the lit surface without its glow (reveal-by-height keeps it, see below)
                 color += glowCol * glowTint * mask * _TexGlowStrength * 0.6 * glowK * distK * awakeK;
                 // cap the brightest channel, keeping the hue: past ~2 the tonemapper turns teal into white and the
                 // few pixels of a far fruit sparkle under bloom (2026-10-26 check: 29 white pixels, max 4.4)
@@ -365,7 +367,10 @@ Shader "DSEWA/ToonProp"
                     float above = (i.positionWS.y - _RevealY) / max(_RevealSoft, 1e-3);
                     half litK = 1 - smoothstep(-0.5, 0.5, above);
                     half flick = _RevealFlicker * (0.5 + 0.5 * sin(_Time.y * 2.3 + phase * 6.2832)) * (0.6 + 0.4 * sin(_Time.y * 7.1));
-                    half3 dark = color * _RevealDark.rgb + glowCol * glowTint * flick * 0.25;
+                    // above the lit front: the surface keeps its colour x _RevealDark (white = untouched, 2026-10-29 user:
+                    // the dormant tower must not look grey) and only the glow is gone
+                    half3 dark = lerp(preGlow, dot(preGlow, half3(0.3, 0.59, 0.11)).xxx, _RevealGrey) * _RevealDark.rgb
+                               + glowCol * glowTint * flick * 0.25;
                     color = lerp(dark, color, litK);
                     color += glowCol * glowTint * _RevealFlash * exp(-above * above * 2.0);
                 }
