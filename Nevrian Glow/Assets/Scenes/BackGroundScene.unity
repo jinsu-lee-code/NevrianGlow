@@ -116235,6 +116235,28 @@ MonoBehaviour:
   onEndingFinished:
     m_PersistentCalls:
       m_Calls: []
+  floorClip: {fileID: 0}
+  endingClip: {fileID: 0}
+  volume: 0.8
+  audioSource: {fileID: 0}
+--- !u!114 &1416070710
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 745880757}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e2ba5016b311e14d8a8b0ae3ef69ae7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LighthouseProgressLink
+  lighthouse: {fileID: 0}
+  levelAtStart: 1
+  levelAtTop: 6
+  maxBeforeEnding: 0.99
+  farmZoneId: zone_farm
+  delaySeconds: 1.5
 --- !u!1001 &1417311443
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -120563,6 +120585,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2dbeb2497c8be7749b15be5400404fc4, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1416070709}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2dbeb2497c8be7749b15be5400404fc4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1416070710}
     - targetCorrespondingSourceObject: {fileID: -8542623778231601835, guid: 2dbeb2497c8be7749b15be5400404fc4, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1476022160}

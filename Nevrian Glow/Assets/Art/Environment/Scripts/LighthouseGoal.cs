@@ -11,6 +11,7 @@ using UnityEngine.Events;
 /// Game hook-up (two calls):
 ///   SetProgress(level / targetLevel)   // 0..1, any time; the light climbs to it over climbSeconds
 ///   PlayEnding()                       // when the goal is reached; onEndingFinished fires at the end
+///   SetProgressImmediate(value)        // no climb / sound (loaded save) - LighthouseProgressLink does all three from game events
 /// Writes only MaterialPropertyBlocks (DSEWA/ToonProp reveal-by-height: _RevealY, _RevealFlash, _RevealFlicker),
 /// so the shared materials stay untouched. Previews in the editor while you drag Progress.
 /// All numbers are my own values.
@@ -46,6 +47,12 @@ public class LighthouseGoal : MonoBehaviour
     public float skyTurnSeconds = 10f;
     public DayNightBlend dayNight;
     public UnityEvent onEndingFinished;
+
+    [Header("Sound (2026-10-29: resonance hums made in VARCO - the tower has no bell)")]
+    [Tooltip("Plays when a floor starts to light (sfx_lighthouse_floor, 2-3 s)")] public AudioClip floorClip;
+    [Tooltip("Plays when the ending starts, swelling into the beam (sfx_lighthouse_ending, 8-12 s)")] public AudioClip endingClip;
+    [Range(0f, 1f)] public float volume = 0.8f;
+    [Tooltip("Optional; a 2D source is added here when empty (the tower is far away but must be heard)")] public AudioSource audioSource;
 
     static readonly int RevealYId = Shader.PropertyToID("_RevealY");
     static readonly int RevealSoftId = Shader.PropertyToID("_RevealSoft");
@@ -83,8 +90,29 @@ public class LighthouseGoal : MonoBehaviour
     public void SetProgress(float value)
     {
         float v = Mathf.Clamp01(value);
-        if (v > progress + 1e-4f) { flash = 1f; Burst(v); }
+        if (v > progress + 1e-4f) { flash = 1f; Burst(v); if (!ending) PlaySound(floorClip); }
         progress = v;
+    }
+
+    /// <summary>Jump straight to a progress with no climb, flash or sound (a loaded save, a new game).</summary>
+    public void SetProgressImmediate(float value)
+    {
+        progress = Mathf.Clamp01(value);
+        shown = progress; flash = 0f;
+        if (!ending) orbWake = shown >= orbAt - 1e-4f ? 1f : 0f;
+        Apply();
+    }
+
+    void PlaySound(AudioClip clip)
+    {
+        if (!Application.isPlaying || clip == null) return;
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+            audioSource.spatialBlend = 0f;
+        }
+        audioSource.PlayOneShot(clip, volume);
     }
 
     /// <summary>Goal reached: orb wakes, the beam goes up, the sky turns to dawn.</summary>
@@ -169,6 +197,7 @@ public class LighthouseGoal : MonoBehaviour
     IEnumerator Ending()
     {
         ending = true;
+        PlaySound(endingClip);
         SetProgress(1f);
         while (shown < 1f - 1e-4f) yield return null;
         // orb charges up
