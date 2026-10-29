@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using NevrianGlowFarm.Data;
 using NevrianGlowFarm.Logic.Data;
+using NevrianGlowFarm.Logic.Text;
 using UnityEditor;
 using UnityEngine;
 
@@ -22,6 +23,9 @@ namespace NevrianGlowFarm.Editor
         private const string DataRoot = "Assets/_Project/Data";
         private const string SkillsFolder = DataRoot + "/Skills";
         private const string StatsFolder = DataRoot + "/Stats";
+        private const string TutorialFolder = DataRoot + "/Tutorial";
+        internal const string TutorialAssetPath = TutorialFolder + "/TutorialSteps.asset";
+        private const string TutorialCsv = "data_csv/tutorial_steps.csv";
         private const int BedCells = 4; // GDD 1페이지: 밭 1개 = 2×2칸
 
         private static string RepoRoot => Path.GetFullPath(Path.Combine(Application.dataPath, "..", ".."));
@@ -71,6 +75,7 @@ namespace NevrianGlowFarm.Editor
             int plotsAdded = ImportShop(t, map, byId, report);
             ImportSkills(t, map, byId, report);
             ImportSettings(t, map, byId, plotsAdded, report);
+            ImportTutorial(t, report);
 
             AssetDatabase.SaveAssets();
             ContentDatabaseBuilder.Refresh();
@@ -83,6 +88,8 @@ namespace NevrianGlowFarm.Editor
         private sealed class Tables
         {
             public CsvTable Items, Crops, Shop, Skills, Effects, Tabs, Settings;
+            /// <summary>튜토리얼 단계 (5-7) — 예전 기획 묶음에는 없을 수 있어 null 허용.</summary>
+            public CsvTable Tutorial;
         }
 
         private static bool TryLoad(out Tables t, out IdMap map, out string error)
@@ -99,6 +106,7 @@ namespace NevrianGlowFarm.Editor
                 t.Skills = Read("skill_csv/skills.csv");
                 t.Effects = Read("skill_csv/skill_effects.csv");
                 t.Tabs = Read("skill_csv/skill_tabs.csv");
+                t.Tutorial = File.Exists(Path.Combine(PlanRoot, TutorialCsv)) ? Read(TutorialCsv) : null;
                 map = IdMap.Parse(File.ReadAllText(IdMapPath, Encoding.UTF8));
                 return true;
             }
@@ -295,6 +303,7 @@ namespace NevrianGlowFarm.Editor
                 var so = new SerializedObject(product);
                 string category = table.Get(r, "category");
                 so.FindProperty("displayName").stringValue = table.Get(r, "name_ko");
+                so.FindProperty("description").stringValue = UiText.ForScreenFont(table.Get(r, "description")); // 툴팁 본문 (5-4c)
                 so.FindProperty("sortOrder").intValue = (r + 1) * 10;
                 so.FindProperty("category").stringValue = map.DevIdOf(category, "상점 분류") ?? category;
                 so.FindProperty("repeatable").boolValue = repeatable;
@@ -511,6 +520,7 @@ namespace NevrianGlowFarm.Editor
                 var entry = map.Find(planId);
                 var so = new SerializedObject(skill);
                 so.FindProperty("displayName").stringValue = table.Get(r, "name_ko");
+                so.FindProperty("description").stringValue = UiText.ForScreenFont(table.Get(r, "description")); // 툴팁 본문 (5-4c)
                 string tabId = table.Get(r, "tab_id");
                 var tab = tabs.TryGetValue(tabId, out var tb) ? tb : (tabId, 99);
                 so.FindProperty("tab").stringValue = tab.Item1;
@@ -744,6 +754,14 @@ namespace NevrianGlowFarm.Editor
                 if (CsvValue.TryInt(V("store_spots_fruit"), out int fruitSpots) && CsvValue.TryInt(V("store_spots_shelf"), out int shelfSpots))
                     so.FindProperty("furnitureSpots").intValue = fruitSpots + shelfSpots;
                 Float("disorder_buy_mult", "disorderBuyMultiplier"); // 흐트러진 칸 구매 확률 (P-3)
+                // 튜토리얼 고정값 (5-7, 기획 튜토리얼 2절) — 1 · 2일차 '모두 구매'는 한 값으로 (어느 하나라도 켜져 있으면)
+                Int("tutorial_day2_customers", "tutorialCustomers");
+                bool hasBuy1 = CsvValue.TryBool(V("tutorial_day1_buy_all"), out bool buy1);
+                bool hasBuy2 = CsvValue.TryBool(V("tutorial_day2_buy_all"), out bool buy2);
+                if (hasBuy1 || hasBuy2)
+                    so.FindProperty("tutorialBuyAll").boolValue = (hasBuy1 && buy1) || (hasBuy2 && buy2);
+                if (CsvValue.TryBool(V("tutorial_random_off"), out bool randomOff))
+                    so.FindProperty("tutorialRandomOff").boolValue = randomOff;
                 Apply(so, sales, "설정 SalesSettings", report);
             }
 
@@ -759,6 +777,7 @@ namespace NevrianGlowFarm.Editor
                 Int("trash_daily_min", "trashDailyMin");
                 Int("trash_daily_max", "trashDailyMax");
                 Float("stain_per_customer", "stainPerCustomer");
+                Int("tutorial_day2_stains", "tutorialStains"); // 튜토리얼 고정값 (5-7)
                 Float("scatter_unsold_ratio", "scatterUnsoldRatio");
                 Float("scatter_per_customers", "scatterPerCustomers");
                 Float("disorder_ratio", "disorderRatio");
@@ -794,6 +813,72 @@ namespace NevrianGlowFarm.Editor
                 e.FindPropertyRelative("item").objectReferenceValue = item;
                 e.FindPropertyRelative("count").intValue = count;
             }
+        }
+
+        // ── 튜토리얼 단계 (tutorial_steps.csv → Data/Tutorial/TutorialSteps, 5-7) ──
+
+        private static void ImportTutorial(Tables t, Report report)
+        {
+            if (t.Tutorial == null)
+            {
+                report.Skipped.Add($"튜토리얼 단계 — {TutorialCsv} 없음");
+                return;
+            }
+            int phase2 = 0;
+            for (int r = 0; r < t.Tutorial.RowCount; r++)
+                if (IsPhase2(t.Tutorial, r))
+                    phase2++;
+            report.Phase2 += phase2;
+            int count = ImportTutorialSteps(t.Tutorial, report);
+            if (count == 0)
+                report.Problems.Add("튜토리얼 단계: 읽은 줄이 없음 (step_id 열 확인)");
+        }
+
+        /// <summary>CSV 표를 튜토리얼 데이터 에셋(없으면 만듦)의 단계 목록에 넣는다. 문구의 "—"는 글꼴용으로 바꾼다. 넣은 줄 수.</summary>
+        internal static int ImportTutorialSteps(CsvTable table, Report report)
+        {
+            var steps = Logic.Tutorial.TutorialStep.FromCsv(table);
+            var asset = LoadOrCreateTutorialAsset();
+            var so = new SerializedObject(asset);
+            var list = so.FindProperty("steps");
+            list.arraySize = steps.Count;
+            for (int i = 0; i < steps.Count; i++)
+            {
+                var s = steps[i];
+                var e = list.GetArrayElementAtIndex(i);
+                e.FindPropertyRelative("id").stringValue = s.Id;
+                e.FindPropertyRelative("day").intValue = Mathf.Max(1, s.Day);
+                e.FindPropertyRelative("phase").stringValue = s.Phase;
+                e.FindPropertyRelative("text").stringValue = UiText.ForScreenFont(s.Text);
+                e.FindPropertyRelative("highlight").stringValue = s.Highlight;
+                e.FindPropertyRelative("completeEvent").stringValue = s.CompleteEvent;
+                e.FindPropertyRelative("locks").stringValue = s.LocksText;
+            }
+            Apply(so, asset, $"튜토리얼 단계 {steps.Count}줄 ({asset.name})", report ?? new Report());
+            return steps.Count;
+        }
+
+        /// <summary>저장소 CSV에서 튜토리얼 단계만 다시 읽는다 (Setup 메뉴). 파일이 없으면 -1.</summary>
+        internal static int ImportTutorialStepsFromRepo()
+        {
+            string path = Path.Combine(PlanRoot, TutorialCsv);
+            if (!File.Exists(path))
+                return -1;
+            int count = ImportTutorialSteps(CsvTable.Parse(File.ReadAllText(path, Encoding.UTF8)), new Report());
+            AssetDatabase.SaveAssets();
+            return count;
+        }
+
+        internal static TutorialStepsData LoadOrCreateTutorialAsset()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<TutorialStepsData>(TutorialAssetPath);
+            if (asset != null)
+                return asset;
+            if (!AssetDatabase.IsValidFolder(TutorialFolder))
+                AssetDatabase.CreateFolder(DataRoot, "Tutorial");
+            asset = ScriptableObject.CreateInstance<TutorialStepsData>();
+            AssetDatabase.CreateAsset(asset, TutorialAssetPath);
+            return asset;
         }
 
         // ── 공통 ─────────────────────────────────────────

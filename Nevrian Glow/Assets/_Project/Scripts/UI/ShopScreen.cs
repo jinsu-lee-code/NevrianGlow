@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using NevrianGlowFarm.Core;
 using NevrianGlowFarm.Data;
 using NevrianGlowFarm.Logic.Shop;
+using NevrianGlowFarm.Logic.Text;
+using NevrianGlowFarm.Systems.Player;
 using NevrianGlowFarm.Systems.Shop;
 using TMPro;
 using UnityEngine;
@@ -10,12 +12,13 @@ using UnityEngine.InputSystem;
 namespace NevrianGlowFarm.UI
 {
     /// <summary>
-    /// 상점 화면 (B, 어디서나 — GDD 3장 화면 표). 분류별 탭(P-7, 와이어프레임 4) 안에 보이는 상품을 한 줄씩: 이름(단계) · 가격 · 오늘 남은 입고 · 상태.
+    /// 상점 화면 (B, 어디서나 — GDD 3장 화면 표). 분류별 탭(P-7, 와이어프레임 4) 안에 보이는 상품을 한 줄씩 (5-4c, 스타듀밸리식):
+    /// [아이콘] 이름(단계) / 둘째 줄 상태(오늘 남은 입고 · 잠김 조건 · 보유) … 가격 [달러]. 마우스를 올리면 설명 툴팁.
     /// 상점 · 농사 단계가 아니면 보기만 (회신2 4절 #2 — ShopSystem.CanBuyNow).
-    /// 줄을 누르면 산다. 잠긴 단계는 조건을 함께 적는다. B · Esc로 닫는다. 모양은 UI를 몰아서 다듬을 때까지 그레이박스.
+    /// 줄을 누르면 산다. 잠긴 단계는 조건을 함께 적는다. B · Esc로 닫는다.
     /// 하루 시작(상점 단계)에는 저절로 열리고, 그때 닫으면 농사 단계로 넘어간다 (3-4).
     /// </summary>
-    public class ShopScreen : GameScreen
+    public class ShopScreen : GameScreen, Systems.Tutorial.ITutorialHighlightSource
     {
         [Header("참조")]
         [Tooltip("상점 (Core Shop)")]
@@ -38,12 +41,20 @@ namespace NevrianGlowFarm.UI
         [SerializeField] private Transform tabParent;
         [Tooltip("탭에 상품이 없을 때 보이는 글자")]
         [SerializeField] private TMP_Text emptyLabel;
+        [Tooltip("인벤토리 (Core Player) — 상품이 주는 아이템의 보유 수를 적는다 (비우면 안 적음, 5-4c)")]
+        [SerializeField] private PlayerInventory inventory;
+        [Tooltip("가격 옆 달러 아이콘 (비우면 숫자만, 5-4c)")]
+        [SerializeField] private Sprite priceIcon;
+        [Tooltip("보유 달러 글자 — 제목 오른쪽에 따로 (비우면 제목에 같이, 5-4c)")]
+        [SerializeField] private TMP_Text moneyLabel;
 
         [Header("조정값")]
         [Tooltip("탭 = 상품 분류(ShopProductData.category) 순서 (와이어프레임 4: 씨앗 · 도구 · 확장 · 가구 · 소모품 · 장치). 목록에 없는 분류는 마지막 탭에")]
         [SerializeField] private List<string> tabs = new List<string> { "씨앗", "도구", "확장", "가구", "소모품 · 장치" };
         [Tooltip("탭에 보이는 상품이 없을 때 안내 (결정 2026-10-21, 사용자)")]
         [SerializeField] private string emptyTabMessage = "데모버전에서는 해금되지 않은 컨텐츠입니다.";
+        [Tooltip("튜토리얼이 닫기를 잠갔을 때 안내 (5-7 close_shop, 게임 화면 글자 - '—' 쓰지 않음)")]
+        [SerializeField] private string tutorialCloseMessage = "먼저 안내한 것을 사고 닫아요";
         [Tooltip("살 수 있는 줄 색")]
         [SerializeField] private Color availableColor = new Color(0.05f, 0.25f, 0.3f, 0.9f);
         [Tooltip("살 수 없는 줄 색 (잠김 · 품절 · 달러 부족 · 최대 · 보기만)")]
@@ -124,12 +135,46 @@ namespace NevrianGlowFarm.UI
             cancelAction.action.Enable();
             shop.Changed += Rebuild;
             GameEvents.PhaseChanged += OnPhaseChanged;
+            if (inventory != null)
+                inventory.Changed += Rebuild;
+            Systems.Tutorial.TutorialHighlights.Register(this);
         }
 
         private void OnDisable()
         {
             shop.Changed -= Rebuild;
             GameEvents.PhaseChanged -= OnPhaseChanged;
+            if (inventory != null)
+                inventory.Changed -= Rebuild;
+            Systems.Tutorial.TutorialHighlights.Unregister(this);
+        }
+
+        // 튜토리얼 강조 (5-7): shop_tab_seed = 씨앗 상품이 있는 탭, shop_row:<아이템 id> = 그 아이템을 주는 상품 줄 (열려 있을 때만)
+        public bool TryGetHighlight(string name, string arg, out Systems.Tutorial.HighlightHit hit)
+        {
+            hit = default;
+            if (!IsOpen)
+                return false;
+            if (name == "shop_tab_seed" && tabViews.Count > 0)
+            {
+                foreach (var p in shop.Products)
+                    if (p is ItemProductData ip && ip.Item is SeedData)
+                    {
+                        hit = Systems.Tutorial.HighlightHit.On(tabViews[TabOf(p)].GetComponent<RectTransform>());
+                        return true;
+                    }
+                return false;
+            }
+            if (name == "shop_row" && !string.IsNullOrEmpty(arg))
+            {
+                for (int i = 0; i < rowProducts.Count && i < entries.Count; i++)
+                    if (rowProducts[i] is ItemProductData ip && ip.Item != null && ip.Item.Id == arg)
+                    {
+                        hit = Systems.Tutorial.HighlightHit.On(entries[i].GetComponent<RectTransform>());
+                        return true;
+                    }
+            }
+            return false;
         }
 
         // 하루 시작(상점 단계)이면 저절로 연다 — 닫으면 농사 단계로 (GDD 4-1 "상점: 닫기", 결정 2026-10-11)
@@ -142,7 +187,16 @@ namespace NevrianGlowFarm.UI
             if (IsOpen)
             {
                 if (toggleAction.action.WasPressedThisFrame() || cancelAction.action.WasPressedThisFrame())
-                    Close();
+                {
+                    // 튜토리얼(5-7): 안내한 것을 사기 전에는 닫히지 않는다
+                    if (Systems.Tutorial.TutorialSystem.IsLocked(Logic.Tutorial.TutorialLocks.CloseShop))
+                    {
+                        messageLabel.text = tutorialCloseMessage;
+                        AudioManager.Play(SoundCues.UiBuyFail);
+                    }
+                    else
+                        Close();
+                }
                 return;
             }
             if (openForDayStart && Current == null)
@@ -187,10 +241,14 @@ namespace NevrianGlowFarm.UI
                 return;
             var game = GameManager.Instance;
             bool canBuy = shop.CanBuyNow;
+            // 보유 달러 글자가 따로 있으면 제목은 짧게 (오른쪽 위에 "150 [달러]")
+            string money = moneyLabel != null || game == null ? string.Empty : $" - 보유 {game.Money:N0}달러";
             titleLabel.text = game == null ? "상점"
-                : game.Phase == Logic.Game.DayPhase.Shop ? $"{game.Day}일차 상점 - 보유 {game.Money:N0}달러 · 닫으면 농사 시작"
-                : canBuy ? $"상점 - 보유 {game.Money:N0}달러"
-                : $"상점 (보기만) - 보유 {game.Money:N0}달러";
+                : game.Phase == Logic.Game.DayPhase.Shop ? $"{game.Day}일차 상점{money} · 닫으면 농사 시작"
+                : canBuy ? $"상점{money}"
+                : $"상점 (보기만){money}";
+            if (moneyLabel != null)
+                moneyLabel.text = game != null ? $"{game.Money:N0}" : string.Empty;
 
             bool useTabs = tabViews.Count > 0;
             for (int i = 0; i < tabViews.Count; i++)
@@ -226,31 +284,37 @@ namespace NevrianGlowFarm.UI
                     continue;
                 var product = rowProducts[i];
                 var offer = shop.OfferOf(product);
-                entries[i].SetContent(0, RowText(product, offer, useTabs));
-                var color = offer.Status == OfferStatus.Available && canBuy ? availableColor : unavailableColor;
-                entries[i].SetSelected(false, color, color);
+                var view = entries[i];
+                view.SetIcon(product.IconFor(offer.Tier));
+                // 탭이 있으면 분류는 탭이 보여 준다
+                string head = useTabs || string.IsNullOrEmpty(product.Category) ? string.Empty : $"[{product.Category}] ";
+                view.SetContent(0, head + product.TierLabel(offer.Tier));
+                view.SetDetail(UiText.Join(UiText.Offer(offer.Status, offer.StockLeft, LockReason(product, offer), StockFromTomorrow(product)), UiText.Owned(OwnedCount(product))));
+                view.SetValue(offer.Status == OfferStatus.MaxedOut ? string.Empty : $"{offer.Price:N0}", priceIcon);
+                view.BindTooltip(() => Tooltip(product));
+                bool available = offer.Status == OfferStatus.Available && canBuy && !shop.IsTutorialLocked(product);
+                var color = available ? availableColor : unavailableColor;
+                view.SetSelected(false, color, color);
+                view.SetDimmed(!available);
             }
         }
 
-        // 게임 화면 글자에는 "—"를 쓰지 않는다 (글꼴에 없음, TASKS 트러블슈팅)
-        private string RowText(ShopProductData product, ProductOffer offer, bool tabbed)
+        private string LockReason(ShopProductData product, ProductOffer offer) =>
+            offer.Status == OfferStatus.Locked ? shop.LockReason(product, offer.Tier) : string.Empty;
+
+        // 처음 열린 날은 입고 없이 다음 날부터 (BALANCE 3-8) — 품절과 구분해 "내일부터 입고"
+        private bool StockFromTomorrow(ShopProductData product) =>
+            product.StockFromNextDay && GameManager.Instance != null && shop.State.FirstOpenDay(product.Id) >= GameManager.Instance.Day;
+
+        // 아이템 상품만 보유 수를 적는다 (도구 · 확장은 보유 개념이 없음)
+        private int OwnedCount(ShopProductData product) =>
+            inventory != null && product is ItemProductData ip && ip.Item != null ? inventory.CountOf(ip.Item) : 0;
+
+        // 툴팁은 마우스를 올린 순간의 값으로 (산 뒤 보유 수 · 남은 입고가 바뀐다)
+        private TooltipContent Tooltip(ShopProductData product)
         {
-            // 탭이 있으면 분류는 탭이 보여 준다
-            string head = tabbed || string.IsNullOrEmpty(product.Category) ? string.Empty : $"[{product.Category}] ";
-            if (offer.Status == OfferStatus.MaxedOut)
-                return $"{head}{product.DisplayName} - 최대 단계";
-            // 잠긴 상품은 입고 수를 적지 않는다 (해금 전이라 0개로 보여 헷갈림)
-            string stock = offer.StockLeft < 0 || offer.Status == OfferStatus.Locked ? string.Empty : $" · 오늘 {offer.StockLeft}개";
-            string text = $"{head}{product.TierLabel(offer.Tier)} - {offer.Price:N0}달러{stock}";
-            switch (offer.Status)
-            {
-                case OfferStatus.Locked: return $"{text} · 잠김 ({shop.LockReason(product, offer.Tier)})";
-                case OfferStatus.SoldOut:
-                    bool firstDay = product.StockFromNextDay && GameManager.Instance != null && shop.State.FirstOpenDay(product.Id) >= GameManager.Instance.Day;
-                    return $"{text} · {(firstDay ? "내일부터 입고" : "오늘 품절")}";
-                case OfferStatus.NotEnoughMoney: return $"{text} · 달러 부족";
-                default: return text;
-            }
+            var offer = shop.OfferOf(product);
+            return TooltipText.ForProduct(product, offer, LockReason(product, offer), StockFromTomorrow(product), OwnedCount(product), shop.CanBuyNow);
         }
     }
 }

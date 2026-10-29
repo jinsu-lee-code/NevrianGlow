@@ -37,6 +37,7 @@ namespace NevrianGlowFarm.Editor
         private static readonly Vector2 FruitSpotSize = new Vector2(2.6f, 1.3f);
         private static readonly Vector2 WallSpotSize = new Vector2(2.6f, 0.8f);
         private const float EntranceX = 0f, EntranceGap = 1.6f;               // 앞 벽(z = −5) 가운데 — 아트 벽의 문 구멍 1.6 × 2.4 m (x 0)
+        private const float CounterX = 4.1f;                                   // 계산대 (오른쪽 벽과 1.2 m — 점원 자리로 들어가는 통로, 2026-10-25)
         private const float FarmDoorZ = -2.3f, FarmDoorGap = 1.6f;            // 왼쪽 벽(x = −6) 출발 지점 — 아트 벽엔 농장 문 구멍이 없어 벽은 막힘(순간이동)
 
         // 아트 가게 껍데기 (BRANCH_ART 10.21): 벽 · 천장 피벗 = 바닥 중앙(ShopRoot), 입구 피벗 = 통로 바닥 중앙. 콜라이더 없음
@@ -144,7 +145,8 @@ namespace NevrianGlowFarm.Editor
             Place(root, "TrashBin", new Vector3(-3.1f, 0f, -4.3f), 0f);
             Place(root, "ShopSpawn", new Vector3(-5.2f, 0f, FarmDoorZ), 90f);
             // 수납장 방향은 그대로 — 계산기(Register)만 점원 쪽을 보게 counter 프리팹에서 돌림 (2026-10-22 사용자)
-            Place(root, "Counter", new Vector3(4.7f, 0f, -4.0f), 90f);
+            // 2026-10-25 사용자: 점원 자리(계산대 뒤)에 못 들어감 — 오른쪽 벽과 0.6 m뿐이라 x 4.7 → CounterX(4.1), 뒤쪽 통로 1.2 m
+            Place(root, "Counter", new Vector3(CounterX, 0f, -4.0f), 90f);
             Place(root, "BasketStand", new Vector3(-0.9f, 0f, -4.3f), 90f);
             Place(root, "OpenSign", new Vector3(-1.7f, 0f, -4.5f), 0f);
             Place(root, "Lamp_Counter", new Vector3(5.5f, 0f, -4.6f), 0f);
@@ -158,8 +160,8 @@ namespace NevrianGlowFarm.Editor
                 Place(sales, "CustomerEntrance", new Vector3(EntranceX, 0f, -4.6f), 0f);
                 Place(sales, "BasketPoint", new Vector3(-0.3f, 0f, -4.3f), 270f);
                 Place(sales, "ShelfFront", new Vector3(0f, 0f, LowerAisleZ), 0f);
-                Place(sales, "CounterPoint", new Vector3(4.7f, 0f, -4.0f), 0f);
-                Place(sales, "QueueStart", new Vector3(3.6f, 0f, -4.0f), 270f); // 줄은 계산대 왼쪽으로 (−x)
+                Place(sales, "CounterPoint", new Vector3(CounterX, 0f, -4.0f), 0f);
+                Place(sales, "QueueStart", new Vector3(CounterX - 1.1f, 0f, -4.0f), 270f); // 줄은 계산대 왼쪽으로 (−x)
                 var so = new SerializedObject(sales.GetComponent<SalesSystem>());
                 var list = so.FindProperty("shelves");
                 list.ClearArray();
@@ -173,8 +175,8 @@ namespace NevrianGlowFarm.Editor
             }
 
             // 금지 구역 (쓰레기 · 얼룩 · 흩어진 상품을 놓지 않는 곳)
-            Zone(root, "ForbiddenZone_Counter", new Vector3(4.7f, 0f, -4.0f), new Vector2(1.6f, 2.0f));
-            Zone(root, "ForbiddenZone_Queue", new Vector3(2.4f, 0f, -4.0f), new Vector2(3.0f, 1.0f));
+            Zone(root, "ForbiddenZone_Counter", new Vector3(CounterX, 0f, -4.0f), new Vector2(1.6f, 2.0f));
+            Zone(root, "ForbiddenZone_Queue", new Vector3(CounterX - 2.3f, 0f, -4.0f), new Vector2(3.0f, 1.0f));
             Zone(root, "ForbiddenZone_Entrance", new Vector3(EntranceX, 0f, -4.5f), new Vector2(EntranceGap + 0.6f, 1.2f));
             Zone(root, "ForbiddenZone_TrashBin", new Vector3(-3.1f, 0f, -4.3f), new Vector2(1.2f, 1.2f));
             Zone(root, "ForbiddenZone_Storage", new Vector3(-4.7f, 0f, -4.1f), new Vector2(2.0f, 1.6f));
@@ -230,6 +232,8 @@ namespace NevrianGlowFarm.Editor
             float entranceLeft = EntranceX - EntranceGap * 0.5f, entranceRight = EntranceX + EntranceGap * 0.5f;
             Wall(walls, "Wall_FrontLeft", new Vector3((-hw + entranceLeft) * 0.5f, 0f, -hd), new Vector3(entranceLeft + hw, WallHeight, WallThickness), material);
             Wall(walls, "Wall_FrontRight", new Vector3((entranceRight + hw) * 0.5f, 0f, -hd), new Vector3(hw - entranceRight, WallHeight, WallThickness), material);
+            // 입구 구멍은 보이지 않는 벽으로 막는다 — 플레이어가 입구를 뚫고 나가 바닥 밖으로 떨어졌음 (2026-10-25). 손님은 입구 안쪽(z −4.6)에서 생기고 사라져 영향 없음
+            Wall(walls, "Wall_Entrance", new Vector3(EntranceX, 0f, -hd), new Vector3(EntranceGap, WallHeight, WallThickness), material);
             // 왼쪽 벽: 아트 벽에 농장 문 구멍이 없으므로 한 장 (예전 두 조각 중 앞 조각은 지움)
             Wall(walls, "Wall_LeftBack", new Vector3(-hw, 0f, 0f), new Vector3(WallThickness, WallHeight, Depth), material);
             var leftFront = walls.Find("Wall_LeftFront");
@@ -241,6 +245,33 @@ namespace NevrianGlowFarm.Editor
             foreach (Transform w in walls)
                 if (w.TryGetComponent<Renderer>(out var r))
                     r.enabled = !art;
+            BuildOutside(root);
+        }
+
+        // 가게 바깥 (2026-10-25 사용자: 창문 밖에 땅이 없고 입구가 막혀 보임 → 밭 쪽 배경과 같은 땅으로):
+        // 배경 지형을 실행 중에 복제하는 ShopOutsideGround(Outside/Terrain, 콜라이더 없음 — 플레이어는 입구 벽이 막음) + 입구 앞 울타리 두 줄(앞마당 느낌)
+        private const float OutsideFenceLength = 7f, OutsideFenceGap = 3.2f;
+
+        private static void BuildOutside(Transform root)
+        {
+            var outside = Child(root, "Outside");
+            outside.localPosition = Vector3.zero;
+            outside.localRotation = Quaternion.identity;
+            var oldGround = outside.Find("Ground"); // 예전 평평한 판 (mat_env_ground_toon) — 배경과 달라 보여 지움
+            if (oldGround != null)
+                Undo.DestroyObjectImmediate(oldGround.gameObject);
+            var terrainT = Child(outside, "Terrain");
+            if (!terrainT.TryGetComponent<ShopOutsideGround>(out _))
+                terrainT.gameObject.AddComponent<ShopOutsideGround>();
+            terrainT.localPosition = Vector3.zero;
+
+            // 입구 앞 양옆 울타리 (아트 fence — 농장 울타리와 같은 부품)
+            float hd = Depth * 0.5f;
+            Vector3 left = root.TransformPoint(new Vector3(EntranceX - OutsideFenceGap * 0.5f, 0f, -hd - 0.3f));
+            Vector3 right = root.TransformPoint(new Vector3(EntranceX + OutsideFenceGap * 0.5f, 0f, -hd - 0.3f));
+            Vector3 outward = -root.forward;
+            FarmLayoutSetup.FenceLine(outside, "Fence_EntranceLeft", left, left + outward * OutsideFenceLength, skipLast: false);
+            FarmLayoutSetup.FenceLine(outside, "Fence_EntranceRight", right, right + outward * OutsideFenceLength, skipLast: false);
         }
 
         // 아트 벽 · 천장 · 입구 (없으면 만들고, 있으면 위치만)
@@ -250,8 +281,15 @@ namespace NevrianGlowFarm.Editor
             any |= ArtPiece(root, "Shell_Wall", ShopWallArt, Vector3.zero);
             any |= ArtPiece(root, "Shell_Ceiling", ShopCeilingArt, Vector3.zero);
             any |= ArtPiece(root, "Shell_Entrance", ShopEntranceArt, new Vector3(EntranceX, 0f, EntranceArtZ));
+            // 입구의 소용돌이 포털 VFX(아트 입구 프리팹의 Portal)는 문 밖이 안 보이게 가린다 — 2026-10-25 사용자: 입구는 손님을 부르는 가게처럼 트여 보이게 → 끔 (EntrancePortalVisible)
+            var entrance = root.Find("Shell_Entrance");
+            var portal = entrance != null ? entrance.Find("Portal") : null;
+            if (portal != null)
+                portal.gameObject.SetActive(EntrancePortalVisible);
             return any;
         }
+
+        private const bool EntrancePortalVisible = false;
 
         private static bool ArtPiece(Transform root, string name, string path, Vector3 localPos)
         {

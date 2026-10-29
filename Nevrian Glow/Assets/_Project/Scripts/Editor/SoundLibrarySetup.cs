@@ -32,7 +32,21 @@ namespace NevrianGlowFarm.Editor
         [MenuItem("Glow Farm/Setup/Build Sound Library")]
         private static void BuildMenu()
         {
-            Debug.Log("[Setup] 소리 목록: " + Build());
+            Debug.Log("[Setup] 소리 목록: " + Build() + " · " + AttachPlayerFootsteps());
+        }
+
+        // 플레이어 발소리 (사운드 납품 10.23) — Core 씬이 열려 있으면 Player에 PlayerFootsteps를 붙인다 (있으면 그대로)
+        private static string AttachPlayerFootsteps()
+        {
+            var player = Object.FindFirstObjectByType<NevrianGlowFarm.Systems.Player.PlayerController>(FindObjectsInactive.Include);
+            if (player == null)
+                return "발소리: Core 씬이 열려 있지 않아 건너뜀";
+            if (player.GetComponent<NevrianGlowFarm.Systems.Player.PlayerFootsteps>() != null)
+                return "발소리 유지";
+            Undo.AddComponent<NevrianGlowFarm.Systems.Player.PlayerFootsteps>(player.gameObject);
+            UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(player.gameObject.scene);
+            UnityEditor.SceneManagement.EditorSceneManager.SaveScene(player.gameObject.scene);
+            return "발소리 붙임 (Player)";
         }
 
         /// <summary>소리 목록을 만든다/갱신한다. 결과 요약을 돌려준다.</summary>

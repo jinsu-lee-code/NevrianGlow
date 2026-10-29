@@ -1,0 +1,683 @@
+#if UNITY_EDITOR
+using System.Collections.Generic;
+using System.Linq;
+using NevrianGlowFarm.Data;
+using NevrianGlowFarm.Logic.Game;
+using NevrianGlowFarm.Logic.Tutorial;
+using NevrianGlowFarm.Systems.Tutorial;
+using NevrianGlowFarm.UI;
+using TMPro;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.UI;
+
+namespace NevrianGlowFarm.Editor
+{
+    /// <summary>
+    /// 튜토리얼 설치 (TASKS 5-7): 데이터 에셋(단계는 기획 CSV, 편지는 기획 튜토리얼_플로우 3절 문구), Core 씬의 TutorialSystem,
+    /// UICanvas 위쪽 "오늘 할 일" 한 줄(TutorialHud, 아트 패널), 단계 버튼에 "장사 시작 [Enter]" · 튜토리얼 잠금 이름, 편지 E 닫기, 타이틀 중 숨김.
+    /// 여러 번 실행해도 결과가 같다.
+    /// </summary>
+    public static class TutorialSetup
+    {
+        private const string CorePath = "Assets/_Project/Scenes/Core.unity";
+        private const string InputPath = "Assets/InputSystem_Actions.inputactions";
+        private const string FontPath = "Assets/_Project/Art/Fonts/font_maplestory_bold_sdf.asset";
+        private const string PanelSprite = "Assets/Art/UI/Panels/ui_panel_base.png";
+
+        // 기획 튜토리얼_플로우_1-2일차 3절 (2026-10-22) — 게임 화면 글자라 "—" · "…"는 쓰지 않는다. 문구는 에셋에서 바꾼다 (한 번 채운 뒤에는 건드리지 않음)
+        private static readonly TutorialStepsData.Letter[] DefaultLetters =
+        {
+            new TutorialStepsData.Letter("letter_1", "얘야, 농장에 온 첫날 열어 보렴",
+                "사랑하는 우리 얘야,\n\n" +
+                "이 편지를 읽고 있다면, 할머니 대신 네가 글로우 팜에 와 주었구나. 정말 고맙다.\n" +
+                "아마 오랫동안 아무도 돌보지 못해서 밭도 가게도 많이 쓸쓸해졌을 거야.\n\n" +
+                "그래도 걱정 말렴. 이곳 흙은 손길만 닿으면 금방 다시 빛난단다.\n" +
+                "괭이로 굳은 흙을 부드럽게 일구고, 월광 뿌리를 심어 보렴. 물만 잘 주면 하룻밤 사이에 예쁘게 빛날 거야.\n" +
+                "창고 상자에 월광 뿌리 두 개를 남겨 두었어. 월광 뿌리는 오래 두어도 상하지 않거든. 가게에 내놓으면 반가운 손님이 올 거야.\n\n" +
+                "가게는... 먼지가 꽤 쌓였겠지? 천천히, 네 속도대로 하면 돼.\n\n" +
+                "언제나 네 편인, 네아 할머니가\n" +
+                "추신. 옆집 꼬마 피피가 우리 가게를 참 좋아했단다."),
+            new TutorialStepsData.Letter("letter_2", "첫 수확 날 열어 보렴",
+                "얘야, 밤사이 밭에서 빛이 올라왔니?\n\n" +
+                "그럼 월광 뿌리가 다 자란 거야. 손으로 살짝 뽑아 거두고, 비어 있는 밭은 다시 일궈서 새로 심으렴.\n" +
+                "가게가 다시 열렸다는 소문이 나면, 손님이 하나둘 돌아올 거야. 할머니 때처럼.\n\n" +
+                "네아 할머니가"),
+            new TutorialStepsData.Letter("letter_3", "새 씨앗을 고른 날 열어 보렴",
+                "우리 얘야, 벌써 새 씨앗을 고를 줄 알게 됐구나!\n\n" +
+                "버섯꽃은 물을 주지 않아도 혼자 잘 자라는 착한 꽃이야. 내일 아침부터 상점에 들어올 거란다.\n" +
+                "이제 글로우 팜은 네 농장이야. 네 마음 가는 대로 가꿔 주렴. 다시 빛나는 우리 농장을, 할머니는 늘 응원하고 있을게.\n\n" +
+                "네아 할머니가"),
+        };
+
+        [MenuItem("Glow Farm/Setup/Create Tutorial HUD (5-7)")]
+        private static void CreateMenu()
+        {
+            var notes = new List<string>();
+
+            // 1) 데이터: 단계는 기획 CSV, 편지는 빈 것만 기본 문구
+            var data = PlanCsvImporter.LoadOrCreateTutorialAsset();
+            int imported = PlanCsvImporter.ImportTutorialStepsFromRepo();
+            notes.Add(imported < 0 ? "단계 CSV 없음 (CSV/plan/data_csv/tutorial_steps.csv)" : $"단계 {imported}줄");
+            notes.Add($"편지 {FillLetters(data)}개 채움");
+
+            // 2) Core 씬
+            var scene = EditorSceneManager.GetSceneByPath(CorePath);
+            bool opened = false;
+            if (!scene.isLoaded)
+            {
+                scene = EditorSceneManager.OpenScene(CorePath, OpenSceneMode.Additive);
+                opened = true;
+            }
+            Transform canvas = null;
+            foreach (var root in scene.GetRootGameObjects())
+                foreach (var c in root.GetComponentsInChildren<Canvas>(true))
+                    if (c.name == "UICanvas")
+                        canvas = c.transform;
+            if (canvas == null)
+            {
+                Debug.LogError("[Setup] 튜토리얼: Core 씬에 UICanvas가 없음");
+                return;
+            }
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FontPath);
+            var refs = AssetDatabase.LoadAllAssetsAtPath(InputPath).OfType<InputActionReference>().ToList();
+            InputActionReference Ref(string map, string action) => refs.FirstOrDefault(r => r.action != null && r.action.actionMap.name == map && r.action.name == action);
+
+            var letter = canvas.GetComponentInChildren<OpeningLetterScreen>(true);
+            notes.Add(BuildSystem(scene, data, letter));
+            notes.Add(BuildHud(canvas, font));
+            notes.Add(BuildLevelUpBanner(canvas, font));
+            notes.Add(BuildSpeechBubbles(canvas, font));
+            notes.Add($"손님 대사 {FillCustomerLines()}개 채움");
+            notes.Add(BuildHighlightView(canvas));
+            notes.Add(MarkSceneTargets());
+            notes.Add(FixPhaseButtons(canvas, Ref("Player", "EndPhase")));
+            notes.Add(AddLetterCloseKey(letter, Ref("Player", "Interact")));
+
+            var fader = canvas.Find("ScreenFader");
+            if (fader != null)
+                fader.SetAsLastSibling();
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            if (opened)
+                EditorSceneManager.CloseScene(scene, true);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[Setup] 튜토리얼 5-7: " + string.Join(" · ", notes));
+        }
+
+        // 편지 기본 문구 — 같은 id가 없을 때만 넣는다 (기획이 바꾼 문구를 덮지 않게)
+        private static int FillLetters(TutorialStepsData data)
+        {
+            var so = new SerializedObject(data);
+            var list = so.FindProperty("letters");
+            int added = 0;
+            foreach (var letter in DefaultLetters)
+            {
+                if (data.TryGetLetter(letter.Id, out _))
+                    continue;
+                list.InsertArrayElementAtIndex(list.arraySize);
+                var e = list.GetArrayElementAtIndex(list.arraySize - 1);
+                e.FindPropertyRelative("id").stringValue = letter.Id;
+                e.FindPropertyRelative("title").stringValue = letter.Title;
+                e.FindPropertyRelative("body").stringValue = letter.Body;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                added++;
+            }
+            if (added > 0)
+                EditorUtility.SetDirty(data);
+            return added;
+        }
+
+        // Core 씬 루트 "Tutorial" + TutorialSystem (데이터 · 편지 화면 참조)
+        private static string BuildSystem(UnityEngine.SceneManagement.Scene scene, TutorialStepsData data, OpeningLetterScreen letter)
+        {
+            TutorialSystem system = null;
+            foreach (var root in scene.GetRootGameObjects())
+                system ??= root.GetComponentInChildren<TutorialSystem>(true);
+            string note = "TutorialSystem 유지";
+            if (system == null)
+            {
+                var go = new GameObject("Tutorial");
+                EditorSceneManager.MoveGameObjectToScene(go, scene);
+                system = go.AddComponent<TutorialSystem>();
+                Undo.RegisterCreatedObjectUndo(go, "Create TutorialSystem");
+                note = "TutorialSystem 생성";
+            }
+            var so = new SerializedObject(system);
+            so.FindProperty("data").objectReferenceValue = data;
+            if (letter != null)
+                so.FindProperty("letterScreen").objectReferenceValue = letter;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return note + (letter == null ? " (편지 화면 없음 - Create P-7 UI 먼저)" : string.Empty);
+        }
+
+        // 화면 위쪽 가운데 한 줄: 아트 패널(작은 패널 테두리 반) + 글자. 툴팁 · 페이드보다 아래, 다른 화면보다 위
+        private static string BuildHud(Transform canvas, TMP_FontAsset font)
+        {
+            var existing = canvas.Find("TutorialHud");
+            string note = "TutorialHud 유지";
+            RectTransform root;
+            if (existing == null)
+            {
+                root = new GameObject("TutorialHud", typeof(RectTransform), typeof(TutorialHudView)).GetComponent<RectTransform>();
+                root.SetParent(canvas, false);
+
+                var panel = new GameObject("Panel", typeof(RectTransform), typeof(Image), typeof(CanvasGroup)).GetComponent<RectTransform>();
+                panel.SetParent(root, false);
+                panel.anchorMin = Vector2.zero;
+                panel.anchorMax = Vector2.one;
+                panel.offsetMin = panel.offsetMax = Vector2.zero;
+                var image = panel.GetComponent<Image>();
+                image.raycastTarget = false;
+                var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(PanelSprite);
+                if (sprite != null)
+                {
+                    image.sprite = sprite;
+                    image.type = Image.Type.Sliced;
+                    image.pixelsPerUnitMultiplier = 2f; // 작은 패널 — 모서리 장식 반 (5-4a와 같게)
+                    image.color = Color.white;
+                }
+                else
+                    image.color = new Color(0.02f, 0.09f, 0.12f, 0.92f);
+                var group = panel.GetComponent<CanvasGroup>();
+                group.alpha = 0f;
+                group.blocksRaycasts = false;
+                group.interactable = false;
+
+                var label = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI)).GetComponent<TextMeshProUGUI>();
+                label.rectTransform.SetParent(panel, false);
+                label.rectTransform.anchorMin = Vector2.zero;
+                label.rectTransform.anchorMax = Vector2.one;
+                label.rectTransform.offsetMin = new Vector2(28f, 6f);
+                label.rectTransform.offsetMax = new Vector2(-28f, -6f);
+                if (font != null)
+                    label.font = font;
+                label.fontSize = 26f;
+                label.fontSizeMin = 16f;
+                label.fontSizeMax = 26f;
+                label.enableAutoSizing = true;
+                label.color = new Color(0.96f, 0.98f, 1f, 1f);
+                label.alignment = TextAlignmentOptions.Center;
+                label.textWrappingMode = TextWrappingModes.Normal;
+                label.raycastTarget = false;
+                label.richText = true;
+                label.text = string.Empty;
+
+                var view = root.GetComponent<TutorialHudView>();
+                var so = new SerializedObject(view);
+                so.FindProperty("group").objectReferenceValue = group;
+                so.FindProperty("label").objectReferenceValue = label;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                Undo.RegisterCreatedObjectUndo(root.gameObject, "Create TutorialHud");
+                note = "TutorialHud 생성";
+            }
+            else
+                root = existing as RectTransform;
+
+            // 자리 · 크기는 늘 다시 맞춘다: 위 가운데, HUD(왼쪽 460) · 오늘의 정리(오른쪽 460) 사이에 들어가는 폭 (기준 해상도 1920)
+            root.anchorMin = root.anchorMax = new Vector2(0.5f, 1f);
+            root.pivot = new Vector2(0.5f, 1f);
+            root.anchoredPosition = new Vector2(0f, -18f);
+            root.sizeDelta = new Vector2(720f, 64f); // 캡처 기준 HUD(왼쪽) · 오늘의 정리(오른쪽) 사이 폭 — 900은 오른쪽과 겹쳤음
+            EditorUtility.SetDirty(root);
+
+            // 순서: 툴팁 바로 아래 (없으면 페이드 바로 아래) — 상점 · 정산 창 위에 보이게
+            var tooltip = canvas.Find("Tooltip");
+            var fader = canvas.Find("ScreenFader");
+            var anchor = tooltip != null ? tooltip : fader;
+            if (anchor != null)
+                root.SetSiblingIndex(anchor.GetSiblingIndex() - (anchor.GetSiblingIndex() > root.GetSiblingIndex() ? 1 : 0));
+
+            // 타이틀 중 숨김
+            var title = canvas.Find("TitleScreen")?.GetComponent<TitleScreen>();
+            if (title != null)
+            {
+                var tso = new SerializedObject(title);
+                var arr = tso.FindProperty("hideWhileOpen");
+                bool has = false;
+                for (int i = 0; i < arr.arraySize; i++)
+                    has |= arr.GetArrayElementAtIndex(i).objectReferenceValue == root.gameObject;
+                if (!has)
+                {
+                    arr.arraySize++;
+                    arr.GetArrayElementAtIndex(arr.arraySize - 1).objectReferenceValue = root.gameObject;
+                    tso.ApplyModifiedPropertiesWithoutUndo();
+                    note += " · 타이틀 중 숨김";
+                }
+            }
+            return note;
+        }
+
+        // 레벨업 배너: 화면 위쪽(튜토리얼 줄 아래) 아트 패널 + 큰 글자, 평소 숨김 — LeveledUp에 3초
+        private static string BuildLevelUpBanner(Transform canvas, TMP_FontAsset font)
+        {
+            var existing = canvas.Find("LevelUpBanner");
+            string note = "레벨업 배너 유지";
+            RectTransform root;
+            if (existing == null)
+            {
+                root = new GameObject("LevelUpBanner", typeof(RectTransform), typeof(LevelUpBanner)).GetComponent<RectTransform>();
+                root.SetParent(canvas, false);
+                var panel = new GameObject("Panel", typeof(RectTransform), typeof(Image), typeof(CanvasGroup)).GetComponent<RectTransform>();
+                panel.SetParent(root, false);
+                panel.anchorMin = Vector2.zero;
+                panel.anchorMax = Vector2.one;
+                panel.offsetMin = panel.offsetMax = Vector2.zero;
+                var image = panel.GetComponent<Image>();
+                image.raycastTarget = false;
+                var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(PanelSprite);
+                if (sprite != null)
+                {
+                    image.sprite = sprite;
+                    image.type = Image.Type.Sliced;
+                    image.pixelsPerUnitMultiplier = 1.4f;
+                    image.color = Color.white;
+                }
+                else
+                    image.color = new Color(0.02f, 0.09f, 0.12f, 0.92f);
+                var group = panel.GetComponent<CanvasGroup>();
+                group.alpha = 0f;
+                group.blocksRaycasts = false;
+                group.interactable = false;
+
+                var label = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI)).GetComponent<TextMeshProUGUI>();
+                label.rectTransform.SetParent(panel, false);
+                label.rectTransform.anchorMin = Vector2.zero;
+                label.rectTransform.anchorMax = Vector2.one;
+                label.rectTransform.offsetMin = new Vector2(30f, 10f);
+                label.rectTransform.offsetMax = new Vector2(-30f, -10f);
+                if (font != null)
+                    label.font = font;
+                label.fontSize = 40f;
+                label.color = new Color(0.55f, 0.95f, 1f, 1f);
+                label.alignment = TextAlignmentOptions.Center;
+                label.raycastTarget = false;
+                label.text = string.Empty;
+
+                var so = new SerializedObject(root.GetComponent<LevelUpBanner>());
+                so.FindProperty("group").objectReferenceValue = group;
+                so.FindProperty("label").objectReferenceValue = label;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                Undo.RegisterCreatedObjectUndo(root.gameObject, "Create LevelUpBanner");
+                note = "레벨업 배너 생성";
+            }
+            else
+                root = existing as RectTransform;
+
+            root.anchorMin = root.anchorMax = new Vector2(0.5f, 1f);
+            root.pivot = new Vector2(0.5f, 1f);
+            root.anchoredPosition = new Vector2(0f, -110f);
+            root.sizeDelta = new Vector2(640f, 110f);
+            EditorUtility.SetDirty(root);
+
+            var tooltip = canvas.Find("Tooltip");
+            var fader = canvas.Find("ScreenFader");
+            var anchor = tooltip != null ? tooltip : fader;
+            if (anchor != null)
+                root.SetSiblingIndex(anchor.GetSiblingIndex() - (anchor.GetSiblingIndex() > root.GetSiblingIndex() ? 1 : 0));
+            if (AddTitleHide(canvas, root.gameObject))
+                note += " · 타이틀 중 숨김";
+            return note;
+        }
+
+        // 말풍선: UICanvas/SpeechBubbles (화면 전체) + 풍선 원본(아트 패널 테두리 반 + 글자, 비활성) — 창(상점 · 정산)보다 아래, HUD 위
+        private static string BuildSpeechBubbles(Transform canvas, TMP_FontAsset font)
+        {
+            var existing = canvas.Find("SpeechBubbles");
+            if (existing != null)
+                return "말풍선 유지";
+            var root = new GameObject("SpeechBubbles", typeof(RectTransform), typeof(SpeechBubbleView)).GetComponent<RectTransform>();
+            root.SetParent(canvas, false);
+            root.anchorMin = Vector2.zero;
+            root.anchorMax = Vector2.one;
+            root.offsetMin = root.offsetMax = Vector2.zero;
+
+            var bubble = new GameObject("BubbleTemplate", typeof(RectTransform), typeof(Image), typeof(CanvasGroup)).GetComponent<RectTransform>();
+            bubble.SetParent(root, false);
+            bubble.anchorMin = bubble.anchorMax = new Vector2(0.5f, 0.5f);
+            bubble.pivot = new Vector2(0.5f, 0f); // 아래 가운데가 머리 위에 닿게
+            bubble.sizeDelta = new Vector2(520f, 72f);
+            var image = bubble.GetComponent<Image>();
+            image.raycastTarget = false;
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(PanelSprite);
+            if (sprite != null)
+            {
+                image.sprite = sprite;
+                image.type = Image.Type.Sliced;
+                image.pixelsPerUnitMultiplier = 2f;
+                image.color = Color.white;
+            }
+            else
+                image.color = new Color(0.02f, 0.09f, 0.12f, 0.92f);
+            var label = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI)).GetComponent<TextMeshProUGUI>();
+            label.rectTransform.SetParent(bubble, false);
+            label.rectTransform.anchorMin = Vector2.zero;
+            label.rectTransform.anchorMax = Vector2.one;
+            label.rectTransform.offsetMin = new Vector2(26f, 8f);
+            label.rectTransform.offsetMax = new Vector2(-26f, -8f);
+            if (font != null)
+                label.font = font;
+            label.fontSize = 24f;
+            label.fontSizeMin = 16f;
+            label.fontSizeMax = 24f;
+            label.enableAutoSizing = true;
+            label.color = new Color(0.96f, 0.98f, 1f, 1f);
+            label.alignment = TextAlignmentOptions.Center;
+            label.textWrappingMode = TextWrappingModes.Normal;
+            label.raycastTarget = false;
+            label.text = string.Empty;
+            bubble.gameObject.SetActive(false);
+
+            var so = new SerializedObject(root.GetComponent<SpeechBubbleView>());
+            so.FindProperty("bubbleTemplate").objectReferenceValue = bubble;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            // HUD 바로 뒤(위에 그려짐) — 창들은 그 뒤에 있어 말풍선을 덮는다
+            var hud = canvas.Find("HUD");
+            if (hud != null)
+                root.SetSiblingIndex(hud.GetSiblingIndex() + 1);
+            Undo.RegisterCreatedObjectUndo(root.gameObject, "Create SpeechBubbles");
+            return "말풍선 생성";
+        }
+
+        // 기획 튜토리얼 4 · 5절 손님 대사 — 들어올 때 줄이 비어 있는 손님만 채운다 (피피 1 · 2일차, 루미안 손님 오르)
+        private static readonly (string Id, string[] Enter, string Buy, string Leave)[] DefaultCustomerLines =
+        {
+            ("customer_pipi",
+                new[] { "와아, 네아 할머니 가게가 다시 열렸다! 진짜 오랜만이에요!", "친구들 데려왔어요! 여기 월광 뿌리 진짜 맛있대요!" },
+                "두 개 다 주세요! 친구들한테 자랑할래요!",
+                "내일 또 올게요! 가게 다시 열었다고 다 말할래요!"),
+            ("customer_or",
+                new[] { "할머니 가게에 다시 불이 켜졌구나... 반갑네." },
+                string.Empty,
+                string.Empty),
+        };
+
+        private static int FillCustomerLines()
+        {
+            int filled = 0;
+            foreach (var (id, enter, buy, leave) in DefaultCustomerLines)
+            {
+                var guids = AssetDatabase.FindAssets($"t:CustomerData {id}", new[] { "Assets/_Project/Data/Customers" });
+                CustomerData data = null;
+                foreach (var g in guids)
+                {
+                    var c = AssetDatabase.LoadAssetAtPath<CustomerData>(AssetDatabase.GUIDToAssetPath(g));
+                    if (c != null && c.Id == id)
+                        data = c;
+                }
+                if (data == null || data.EnterLines.Count > 0)
+                    continue;
+                var so = new SerializedObject(data);
+                var lines = so.FindProperty("enterLines");
+                lines.arraySize = enter.Length;
+                for (int i = 0; i < enter.Length; i++)
+                    lines.GetArrayElementAtIndex(i).stringValue = enter[i];
+                so.FindProperty("buyLine").stringValue = buy;
+                so.FindProperty("leaveLine").stringValue = leave;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                EditorUtility.SetDirty(data);
+                filled++;
+            }
+            return filled;
+        }
+
+        // ── 강조 표시: UICanvas/TutorialHighlights (화살표 · 테두리 원본) + Farm · Shop 씬의 고정 대상 ──
+
+        private const string ArrowDev = "Assets/_Project/Art/UI/ui_tutorial_arrow.png"; // 개발이 만든 아래쪽 화살표 (시안 · 알파)
+        private const string FrameSprite = "Assets/Art/UI/Panels/ui_slot_inventory_selected.png";
+        private const string FarmPath = "Assets/_Project/Scenes/Farm.unity";
+        private const string ShopPath = "Assets/_Project/Scenes/Shop.unity";
+
+        private static string BuildHighlightView(Transform canvas)
+        {
+            var existing = canvas.Find("TutorialHighlights");
+            string note = "강조 표시 유지";
+            RectTransform root;
+            if (existing == null)
+            {
+                root = new GameObject("TutorialHighlights", typeof(RectTransform), typeof(TutorialHighlightView)).GetComponent<RectTransform>();
+                root.SetParent(canvas, false);
+                root.anchorMin = Vector2.zero;
+                root.anchorMax = Vector2.one;
+                root.offsetMin = root.offsetMax = Vector2.zero;
+
+                var arrow = new GameObject("ArrowTemplate", typeof(RectTransform), typeof(Image)).GetComponent<RectTransform>();
+                arrow.SetParent(root, false);
+                arrow.sizeDelta = new Vector2(56f, 56f);
+                var arrowImage = arrow.GetComponent<Image>();
+                arrowImage.sprite = LoadOrMakeArrow();
+                arrowImage.raycastTarget = false;
+                arrowImage.color = new Color(0.38f, 0.95f, 0.88f, 1f);
+                arrow.gameObject.SetActive(false);
+
+                var frame = new GameObject("FrameTemplate", typeof(RectTransform), typeof(Image)).GetComponent<RectTransform>();
+                frame.SetParent(root, false);
+                var frameImage = frame.GetComponent<Image>();
+                var frameSprite = AssetDatabase.LoadAssetAtPath<Sprite>(FrameSprite);
+                frameImage.sprite = frameSprite;
+                frameImage.type = Image.Type.Sliced;
+                frameImage.fillCenter = false;
+                frameImage.raycastTarget = false;
+                frameImage.color = new Color(0.38f, 0.95f, 0.88f, 1f);
+                frame.gameObject.SetActive(false);
+
+                var so = new SerializedObject(root.GetComponent<TutorialHighlightView>());
+                so.FindProperty("arrowTemplate").objectReferenceValue = arrow;
+                so.FindProperty("frameTemplate").objectReferenceValue = frame;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                Undo.RegisterCreatedObjectUndo(root.gameObject, "Create TutorialHighlights");
+                note = "강조 표시 생성" + (frameSprite == null ? " (테두리 그림 없음)" : string.Empty);
+            }
+            else
+                root = existing as RectTransform;
+
+            // 창들 위, 툴팁 아래 (상점 줄 · 스킬 줄 테두리가 창 위에 보이게)
+            var tooltip = canvas.Find("Tooltip");
+            var fader = canvas.Find("ScreenFader");
+            var anchor = tooltip != null ? tooltip : fader;
+            if (anchor != null)
+                root.SetSiblingIndex(anchor.GetSiblingIndex() - (anchor.GetSiblingIndex() > root.GetSiblingIndex() ? 1 : 0));
+            if (AddTitleHide(canvas, root.gameObject))
+                note += " · 타이틀 중 숨김";
+            return note;
+        }
+
+        // 아래를 가리키는 화살표 그림 64 × 64 (흰색 · 알파) — 없을 때만 만든다
+        private static Sprite LoadOrMakeArrow()
+        {
+            if (AssetDatabase.LoadAssetAtPath<Texture2D>(ArrowDev) == null)
+            {
+                const int size = 64;
+                var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+                var pixels = new Color[size * size];
+                for (int y = 0; y < size; y++)
+                    for (int x = 0; x < size; x++)
+                    {
+                        // 위 넓고 아래 뾰족한 삼각형 + 위쪽 기둥 — 머리(y 0~36)는 삼각형, 기둥(y 36~60)은 폭 16
+                        float cx = x + 0.5f - size * 0.5f;
+                        float fy = y + 0.5f;
+                        bool head = fy < 38f && Mathf.Abs(cx) <= 4f + (fy - 2f) * 0.7f;
+                        bool shaft = fy >= 34f && fy <= 60f && Mathf.Abs(cx) <= 8f;
+                        float a = (head || shaft) ? 1f : 0f;
+                        pixels[y * size + x] = new Color(1f, 1f, 1f, a);
+                    }
+                tex.SetPixels(pixels);
+                tex.Apply();
+                System.IO.File.WriteAllBytes(ArrowDev, tex.EncodeToPNG());
+                Object.DestroyImmediate(tex);
+                AssetDatabase.ImportAsset(ArrowDev);
+            }
+            if (AssetImporter.GetAtPath(ArrowDev) is TextureImporter importer
+                && (importer.textureType != TextureImporterType.Sprite || importer.mipmapEnabled || importer.textureCompression != TextureImporterCompression.Uncompressed))
+            {
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.mipmapEnabled = false;
+                importer.alphaIsTransparency = true;
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                importer.SaveAndReimport();
+            }
+            return AssetDatabase.LoadAssetAtPath<Sprite>(ArrowDev);
+        }
+
+        // Farm · Shop 씬의 고정 대상에 TutorialHighlightTarget 이름을 붙인다 (이미 있으면 그대로)
+        private static string MarkSceneTargets()
+        {
+            int added = 0;
+            added += MarkIn(FarmPath, scene =>
+            {
+                int n = 0;
+                foreach (var door in FindAll<NevrianGlowFarm.Systems.Zones.ZoneDoor>(scene))
+                    if (new SerializedObject(door).FindProperty("usablePhase").enumValueIndex == (int)DayPhase.Farming)
+                        n += Mark(door.gameObject, "door_shop", 2.4f);
+                foreach (var storage in FindAll<NevrianGlowFarm.Systems.Storage.StorageAccessPoint>(scene))
+                    n += Mark(storage.gameObject, "storage_farm", 1.6f);
+                return n;
+            });
+            added += MarkIn(ShopPath, scene =>
+            {
+                int n = 0;
+                foreach (var bin in FindAll<NevrianGlowFarm.Systems.Cleaning.TrashBin>(scene))
+                    n += Mark(bin.gameObject, "trash_bin", 1.4f);
+                foreach (var sign in FindAll<NevrianGlowFarm.Systems.Sales.OpenSign>(scene))
+                    n += Mark(sign.gameObject, "signboard", 1.8f);
+                var shelves = FindAll<NevrianGlowFarm.Systems.Shop.ShelfDisplay>(scene);
+                shelves.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
+                for (int i = 0; i < shelves.Count; i++)
+                    n += Mark(shelves[i].gameObject, $"fruit_shelf_{i + 1}", 1.9f);
+                return n;
+            });
+            return added > 0 ? $"씬 강조 대상 {added}개 표시" : "씬 강조 대상 유지";
+        }
+
+        private static int MarkIn(string scenePath, System.Func<UnityEngine.SceneManagement.Scene, int> mark)
+        {
+            var scene = EditorSceneManager.GetSceneByPath(scenePath);
+            bool opened = false;
+            if (!scene.isLoaded)
+            {
+                scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Additive);
+                opened = true;
+            }
+            int n = mark(scene);
+            if (n > 0)
+            {
+                EditorSceneManager.MarkSceneDirty(scene);
+                EditorSceneManager.SaveScene(scene);
+            }
+            if (opened)
+                EditorSceneManager.CloseScene(scene, true);
+            return n;
+        }
+
+        private static List<T> FindAll<T>(UnityEngine.SceneManagement.Scene scene) where T : Component
+        {
+            var list = new List<T>();
+            foreach (var root in scene.GetRootGameObjects())
+                list.AddRange(root.GetComponentsInChildren<T>(true));
+            return list;
+        }
+
+        private static int Mark(GameObject go, string name, float height)
+        {
+            foreach (var t in go.GetComponents<TutorialHighlightTarget>())
+                if (t.TargetName == name)
+                    return 0;
+            var target = go.AddComponent<TutorialHighlightTarget>();
+            var so = new SerializedObject(target);
+            so.FindProperty("targetName").stringValue = name;
+            so.FindProperty("height").floatValue = height;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return 1;
+        }
+
+        // 타이틀이 떠 있는 동안 숨길 목록에 더한다 (이미 있으면 false)
+        private static bool AddTitleHide(Transform canvas, GameObject target)
+        {
+            var title = canvas.Find("TitleScreen")?.GetComponent<TitleScreen>();
+            if (title == null)
+                return false;
+            var tso = new SerializedObject(title);
+            var arr = tso.FindProperty("hideWhileOpen");
+            for (int i = 0; i < arr.arraySize; i++)
+                if (arr.GetArrayElementAtIndex(i).objectReferenceValue == target)
+                    return false;
+            arr.arraySize++;
+            arr.GetArrayElementAtIndex(arr.arraySize - 1).objectReferenceValue = target;
+            tso.ApplyModifiedPropertiesWithoutUndo();
+            return true;
+        }
+
+        // 단계 버튼: 농사(end_farming) · 청소·진열 "장사 시작 [Enter]"(open_sales, 새로) · 장사
+        private static string FixPhaseButtons(Transform canvas, InputActionReference endPhase)
+        {
+            var hud = canvas.GetComponentInChildren<PhaseActionHud>(true);
+            if (hud == null)
+                return "단계 버튼 없음 (Create P-7 UI 먼저)";
+            var so = new SerializedObject(hud);
+            var entries = so.FindProperty("entries");
+            int farming = -1, tidy = -1, changed = 0;
+            for (int i = 0; i < entries.arraySize; i++)
+            {
+                var phase = (DayPhase)entries.GetArrayElementAtIndex(i).FindPropertyRelative("phase").enumValueIndex;
+                if (phase == DayPhase.Farming) farming = i;
+                if (phase == DayPhase.CleanDisplay) tidy = i;
+            }
+            if (farming >= 0 && SetLock(entries.GetArrayElementAtIndex(farming), TutorialLocks.EndFarming))
+                changed++;
+            if (tidy < 0)
+            {
+                entries.InsertArrayElementAtIndex(entries.arraySize);
+                var e = entries.GetArrayElementAtIndex(entries.arraySize - 1);
+                e.FindPropertyRelative("phase").enumValueIndex = (int)DayPhase.CleanDisplay;
+                e.FindPropertyRelative("label").stringValue = "장사 시작";
+                e.FindPropertyRelative("keyHint").stringValue = "Enter";
+                e.FindPropertyRelative("action").enumValueIndex = (int)PhaseActionHud.ActionKind.OpenSales;
+                e.FindPropertyRelative("key").objectReferenceValue = endPhase;
+                e.FindPropertyRelative("tutorialLock").stringValue = TutorialLocks.OpenSales;
+                changed++;
+            }
+            else if (SetLock(entries.GetArrayElementAtIndex(tidy), TutorialLocks.OpenSales))
+                changed++;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return changed > 0 ? $"단계 버튼 {changed}곳 고침" : "단계 버튼 유지";
+        }
+
+        private static bool SetLock(SerializedProperty entry, string lockName)
+        {
+            var p = entry.FindPropertyRelative("tutorialLock");
+            if (p.stringValue == lockName)
+                return false;
+            p.stringValue = lockName;
+            return true;
+        }
+
+        // 편지를 E로도 닫기 (기획 2절 편지 UI) + 긴 편지(①)가 종이를 넘지 않게 본문 글자 자동 크기
+        private static string AddLetterCloseKey(OpeningLetterScreen letter, InputActionReference interact)
+        {
+            if (letter == null || interact == null)
+                return "편지 E 닫기 건너뜀";
+            var body = letter.transform.Find("Panel/Paper/Body")?.GetComponent<TMP_Text>();
+            if (body != null && !body.enableAutoSizing)
+            {
+                body.enableAutoSizing = true;
+                body.fontSizeMax = body.fontSize;
+                body.fontSizeMin = 15f;
+                EditorUtility.SetDirty(body);
+            }
+            var so = new SerializedObject(letter);
+            var arr = so.FindProperty("closeActions");
+            for (int i = 0; i < arr.arraySize; i++)
+                if (arr.GetArrayElementAtIndex(i).objectReferenceValue == interact)
+                    return "편지 E 닫기 유지";
+            arr.arraySize++;
+            arr.GetArrayElementAtIndex(arr.arraySize - 1).objectReferenceValue = interact;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return "편지 E 닫기 추가";
+        }
+    }
+}
+#endif

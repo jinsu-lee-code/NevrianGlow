@@ -46,6 +46,14 @@ namespace NevrianGlowFarm.Data
         [Tooltip("오늘 손님 ± 무작위 폭 (0.1 = ±10%, customer_random)")]
         [SerializeField, Range(0f, 1f)] private float customerRandom = 0.1f;
 
+        [Header("튜토리얼 고정값 — 튜토리얼이 진행 중인 날만 (기획 튜토리얼 2절, game_settings tutorial_*)")]
+        [Tooltip("2일차부터 손님 수 고정 — 0이면 모델대로 (명, tutorial_day2_customers)")]
+        [SerializeField, Min(0)] private int tutorialCustomers = 3;
+        [Tooltip("손님마다 진열된 것을 모두 사려 한다 — 2일차 월광 4개 모두 → 레벨업 보장 (tutorial_day1_buy_all · tutorial_day2_buy_all)")]
+        [SerializeField] private bool tutorialBuyAll = true;
+        [Tooltip("손님 수 ± 무작위를 끈다 (tutorial_random_off)")]
+        [SerializeField] private bool tutorialRandomOff = true;
+
         [Header("시간")]
         [Tooltip("장사 시간 (초)")]
         [SerializeField, Min(1f)] private float salesDuration = 1f;
@@ -80,6 +88,9 @@ namespace NevrianGlowFarm.Data
         public int FurnitureSpots => furnitureSpots;
         public int PurchaseExtraMax => Mathf.Max(PurchaseMax, purchaseExtraMax);
         public int Day1FirstBuy => day1FirstBuy;
+        public int TutorialCustomers => tutorialCustomers;
+        public bool TutorialBuyAll => tutorialBuyAll;
+        public bool TutorialRandomOff => tutorialRandomOff;
         public float SalesDuration => salesDuration;
         public float SpawnWindow => spawnWindow;
         public int MaxConcurrentCustomers => maxConcurrentCustomers;

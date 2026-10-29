@@ -114,6 +114,7 @@ namespace NevrianGlowFarm.Core
             GameEvents.RaiseMoneyChanged(wallet.Money);
             GameEvents.RaiseSkillPointsChanged(wallet.SkillPoints);
             GameEvents.RaiseExpChanged(progression.Exp, progression.Required);
+            GameEvents.RaiseNewGameStarted(); // 튜토리얼(5-7)은 새 게임에서만 시작 — 이어하기는 이 뒤에 저장 내용이 덮는다
         }
 
         // ── 저장 (6-1) ──

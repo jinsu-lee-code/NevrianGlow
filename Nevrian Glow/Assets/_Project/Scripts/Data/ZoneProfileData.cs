@@ -52,6 +52,10 @@ namespace NevrianGlowFarm.Data
         [SerializeField] private string bgmId;
         [Tooltip("단계마다 다른 배경음 — 목록에 없는 단계는 위 배경음 (사운드 납품 10.21: 가게 청소·진열 bgm_clean_loop · 장사 bgm_market_loop)")]
         [SerializeField] private List<PhaseBgm> phaseBgm = new List<PhaseBgm>();
+        [Tooltip("환경음 id — 지역에 들어가면 교차 재생 (사운드 납품 10.23: amb_farm_loop · amb_shop_loop), 비우면 바꾸지 않는다")]
+        [SerializeField] private string ambienceId;
+        [Tooltip("플레이어 발소리 id — 이 지역 바닥 (사운드 납품 10.23: 농장 sfx_step_grass · 가게 sfx_step_wood). 농장 밭 · 길 위는 sfx_step_soil로 바뀐다")]
+        [SerializeField] private string footstepId;
 
         /// <summary>그 단계에 이 지역에서 나는 배경음 id.</summary>
         public string BgmFor(DayPhase phase)
@@ -71,6 +75,8 @@ namespace NevrianGlowFarm.Data
         public float FogDensity => fogDensity;
         public Material Skybox => skybox;
         public string BgmId => bgmId;
+        public string AmbienceId => ambienceId;
+        public string FootstepId => footstepId;
 
         public ZoneRule ToRule() => new ZoneRule(Id, phases, isDayStart);
     }

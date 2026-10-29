@@ -20,6 +20,9 @@ namespace NevrianGlowFarm.Core
         public const string CropMature = "sfx_crop_mature";
         public const string DayStart = "sfx_day_start";
 
+        // 플레이어 발소리 (2D, 사운드 납품 10.23 — 지역 바닥은 ZoneProfileData.footstepId, 밭 · 길 위는 흙)
+        public const string StepSoil = "sfx_step_soil";
+
         // 손님 · 가게 (3D)
         public const string CustomerEnter = "sfx_customer_enter";
         public const string CustomerExit = "sfx_customer_exit";

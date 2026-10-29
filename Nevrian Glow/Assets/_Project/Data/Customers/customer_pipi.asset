@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.CustomerData
   id: customer_pipi
   displayName: "\uD53C\uD53C"
-  prefab: {fileID: 8692623647252547470, guid: 488074fd3442d0b41b6e4fe77913cdd4, type: 3}
+  description: 
+  prefab: {fileID: 9181125774427795739, guid: c1b3f68aeff380845a69d1dbb343327d, type: 3}
   bodySize: 0
   greyboxColor: {r: 1, g: 0.6039216, b: 0.8352941, a: 1}
   basketSocketOffset: {x: 0, y: 0, z: 0}
@@ -22,3 +23,12 @@ MonoBehaviour:
   walkSpeedMul: 1.1
   spawnWeight: 1
   unlockDay: 1
+  enterLines:
+  - "\uC640\uC544, \uB124\uC544 \uD560\uBA38\uB2C8 \uAC00\uAC8C\uAC00 \uB2E4\uC2DC
+    \uC5F4\uB838\uB2E4! \uC9C4\uC9DC \uC624\uB79C\uB9CC\uC774\uC5D0\uC694!"
+  - "\uCE5C\uAD6C\uB4E4 \uB370\uB824\uC654\uC5B4\uC694! \uC5EC\uAE30 \uC6D4\uAD11
+    \uBFCC\uB9AC \uC9C4\uC9DC \uB9DB\uC788\uB300\uC694!"
+  buyLine: "\uB450 \uAC1C \uB2E4 \uC8FC\uC138\uC694! \uCE5C\uAD6C\uB4E4\uD55C\uD14C
+    \uC790\uB791\uD560\uB798\uC694!"
+  leaveLine: "\uB0B4\uC77C \uB610 \uC62C\uAC8C\uC694! \uAC00\uAC8C \uB2E4\uC2DC \uC5F4\uC5C8\uB2E4\uACE0
+    \uB2E4 \uB9D0\uD560\uB798\uC694!"

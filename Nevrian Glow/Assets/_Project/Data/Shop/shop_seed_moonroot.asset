@@ -14,9 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.ItemProductData
   id: shop_seed_moonroot
   displayName: "\uC6D4\uAD11 \uBFCC\uB9AC \uC528\uC557"
+  description: "\uC2EC\uC740 \uB2E4\uC74C \uB0A0 \uC218\uD655\uD558\uB294 \uAE30\uBCF8
+    \uC791\uBB3C"
   sortOrder: 10
   category: "\uC528\uC557"
   hidden: 0
+  icon: {fileID: 0}
   repeatable: 1
   tiers:
   - price: 10

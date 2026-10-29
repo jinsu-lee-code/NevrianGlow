@@ -58,8 +58,8 @@ namespace NevrianGlowFarm.Systems.Sales
         [SerializeField, Min(0f)] private float basketLayerBlend = 0.25f;
         [Tooltip("애니메이션 이벤트가 없을 때 장바구니 집기 시간 (초, 임시)")]
         [SerializeField, Min(0f)] private float pickBasketFallback = 0.5f;
-        [Tooltip("애니메이션 이벤트가 없을 때 상품 하나 넣는 시간 (초, 임시)")]
-        [SerializeField, Min(0f)] private float putItemFallback = 0.4f;
+        [Tooltip("상품 하나 넣기를 기다리는 최대 시간 — OnItemPlace(바구니에 넣는 순간)가 오면 그때 넘어간다 (초, put_item 클립 1.53초 · 이벤트 1.03초)")]
+        [SerializeField, Min(0f)] private float putItemFallback = 1.2f;
         [Tooltip("애니메이션 이벤트가 없을 때 해피 아이들 시간 (초, 임시)")]
         [SerializeField, Min(0f)] private float happyFallback = 1f;
         [Tooltip("도착으로 보는 남은 거리 여유 — 정지 거리에 더한다 (m)")]
@@ -70,6 +70,10 @@ namespace NevrianGlowFarm.Systems.Sales
         [SerializeField, Min(0f)] private float happyHop = 0.15f;
         [Tooltip("발소리 간격 — 걸은 거리 (m). 걷기 클립에 OnFootstep 이벤트가 있으면 이벤트로 바뀐다 (animation.md B-1)")]
         [SerializeField, Min(0.1f)] private float stepDistance = 1.05f;
+        [Tooltip("말풍선(튜토리얼 대사)이 보이는 시간 (초)")]
+        [SerializeField, Min(0.5f)] private float speechDuration = 3.5f;
+        [Tooltip("말풍선 높이 — 체형 키 위로 (m)")]
+        [SerializeField, Min(0f)] private float speechHeight = 0.35f;
 
         [Header("디버그")]
         [Tooltip("지금 상태 (읽기 전용)")]
@@ -93,6 +97,8 @@ namespace NevrianGlowFarm.Systems.Sales
         private readonly List<Renderer> basketItems = new List<Renderer>();
         private bool paid;
         private int animEvents;
+        private int placeEvents;
+        private CustomerFace face;
         private Vector3 modelBase;
         private float stepTravel;
         private bool footstepEvents;
@@ -146,6 +152,8 @@ namespace NevrianGlowFarm.Systems.Sales
             else if (model != null)
                 model.localScale = Vector3.one * (h / modelHeight); // 아트 모델: 체형 키에 맞춰 같은 비율로
             modelBase = model != null ? model.localPosition : Vector3.zero;
+            // 표정(피피 · 오르 아트 모델, BRANCH_ART 10/22) — 없으면 그레이박스 · Cunsumer
+            face = model != null ? model.GetComponentInChildren<CustomerFace>(true) : null;
             if (basket != null)
             {
                 basket.localPosition = type.BasketSocketOffset;
@@ -197,9 +205,18 @@ namespace NevrianGlowFarm.Systems.Sales
             }
         }
 
+        // 튜토리얼이 진행 중인 동안만 손님 데이터의 대사를 머리 위 말풍선으로 (기획 튜토리얼 4 · 5절 — 피피 등장 · 구매 · 퇴장)
+        private void Say(string line)
+        {
+            if (string.IsNullOrWhiteSpace(line) || !Systems.Tutorial.TutorialSystem.IsActive)
+                return;
+            UI.SpeechBubbleView.Say(transform, (data != null ? data.Height : 1.6f) + speechHeight, line, speechDuration);
+        }
+
         private IEnumerator Run(SalesSettingsData settings)
         {
             state = CustomerState.Entering;
+            Say(data.EnterLineFor(GameManager.Instance != null ? GameManager.Instance.Day : 1));
             yield return WalkTo(system.BasketStandPosition);
 
             state = CustomerState.PickingBasket;
@@ -224,10 +241,13 @@ namespace NevrianGlowFarm.Systems.Sales
             items = system.FillBasket();
             UpdateBasketView();
             state = CustomerState.Putting;
+            if (items.Count > 0)
+                Say(data.BuyLine);
             for (int i = 0; i < items.Count; i++)
             {
                 SetTrigger(PutItemId);
-                yield return WaitAnimation(putItemFallback);
+                // 집는 순간(OnItemTake)이 아니라 바구니에 넣는 순간(OnItemPlace)까지 — 넣는 동작이 잘리지 않게 (BRANCH_ANIMATOR 10/22 ①)
+                yield return WaitPlace(putItemFallback);
                 ShowBasketItem(items[i]);
                 AudioManager.Play(SoundCues.BasketPut, transform.position);
             }
@@ -268,7 +288,11 @@ namespace NevrianGlowFarm.Systems.Sales
             state = CustomerState.Happy;
             SetTrigger(HappyId);
             AudioManager.Play(SoundCues.CustomerHappy, transform.position);
+            if (face != null)
+                face.SetHappy(true);
             yield return HappyRoutine();
+            if (face != null)
+                face.SetHappy(false);
 
             yield return LeaveStore();
         }
@@ -276,6 +300,8 @@ namespace NevrianGlowFarm.Systems.Sales
         private IEnumerator LeaveStore()
         {
             state = CustomerState.Leaving;
+            if (paid && items != null && items.Count > 0)
+                Say(data.LeaveLine);
             yield return WalkTo(system.EntrancePosition);
             system.Despawn(this);
         }
@@ -334,6 +360,14 @@ namespace NevrianGlowFarm.Systems.Sales
                 yield return null;
         }
 
+        private IEnumerator WaitPlace(float fallback)
+        {
+            int before = placeEvents;
+            float start = Time.time;
+            while (placeEvents == before && Time.time - start < fallback)
+                yield return null;
+        }
+
         private IEnumerator HappyRoutine()
         {
             int before = animEvents;
@@ -362,6 +396,7 @@ namespace NevrianGlowFarm.Systems.Sales
             var block = new MaterialPropertyBlock();
             block.SetColor(BaseColorId, crop.GreyboxColor);
             r.SetPropertyBlock(block);
+            Systems.Items.ItemModelView.Apply(r, crop, i);
             basketItems.Add(r);
         }
 
@@ -379,7 +414,7 @@ namespace NevrianGlowFarm.Systems.Sales
         // 리그 모델은 Animator가 모델 쪽에 있어 CustomerAnimationEvents가 여기로 넘긴다.
         public void OnBasketAttach() => animEvents++;
         public void OnItemTake() => animEvents++;
-        public void OnItemPlace() => animEvents++;
+        public void OnItemPlace() { animEvents++; placeEvents++; }
         public void OnHappyGlow() => animEvents++;
 
         public void OnFootstep()

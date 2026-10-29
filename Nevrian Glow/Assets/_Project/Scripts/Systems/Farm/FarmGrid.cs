@@ -14,7 +14,7 @@ namespace NevrianGlowFarm.Systems.Farm
     /// 칸 상태 · 규칙은 Logic(FarmState · FarmRules · NightPipeline), 여기는 칸 표시 생성 · 입력 전달 · 밤 처리 연결만 한다.
     /// 밤 처리는 일차가 바뀌는 단계 전환(PhaseChange.DayChanged) 때 1회.
     /// </summary>
-    public class FarmGrid : MonoBehaviour
+    public class FarmGrid : MonoBehaviour, Tutorial.ITutorialHighlightSource
     {
         [Header("참조")]
         [Tooltip("구획 수 · 칸 간격 · 개간 작업량 (Data/Stats/GameStartSettings)")]
@@ -23,6 +23,8 @@ namespace NevrianGlowFarm.Systems.Farm
         [SerializeField] private ContentDatabase database;
         [Tooltip("칸 프리팹 (Prefabs/Farm/farm_cell)")]
         [SerializeField] private FarmCellView cellPrefab;
+        [Tooltip("밭(2×2칸) 테두리 — 밭마다 4칸 가운데에 하나 (아트 pf_env_plot, 비우면 없음)")]
+        [SerializeField] private GameObject bedPrefab;
         [Tooltip("겹치면 안 되는 구역 (길 · 문 주변) — 겹치면 기즈모 빨강 + 시작 시 경고")]
         [SerializeField] private List<ForbiddenZone> forbiddenZones = new List<ForbiddenZone>();
         [Tooltip("성장일 능력치 — 작물 첫 성장일에 더함 (Data/Stats/stat_grow_days, 비우면 그대로)")]
@@ -31,8 +33,10 @@ namespace NevrianGlowFarm.Systems.Farm
         [Header("조정값")]
         [Tooltip("칸 하나의 흙 크기 — 겹침 검사에도 쓴다, 칸 프리팹 크기와 같게 (m)")]
         [SerializeField, Min(0.1f)] private float cellFootprint = 1.6f;
+        [Tooltip("칸 · 밭 테두리 프리팹이 만들어진 기준 칸 간격 — 데이터 칸 간격이 다르면 그 비율로 프리팹을 키운다 (m, 2026-10-25 밭 키우기)")]
+        [SerializeField, Min(0.1f)] private float cellPrefabPitch = 2f;
         [Tooltip("미개간 흙 색 (BALANCE 9-5 임시)")]
-        [SerializeField] private Color untilledColor = new Color(0.024f, 0.086f, 0.122f);
+        [SerializeField] private Color untilledColor = new Color(0.46f, 0.45f, 0.48f); // 아트 칸 흙(흰 바탕) · 밤 조명에서 검게 보이지 않게 밝힘 (2026-10-23, 사용자)
         [Tooltip("개간된 흙 색 — 개간 중에는 진행만큼 이 색에 가까워진다")]
         [SerializeField] private Color tilledColor = new Color(0.17f, 0.33f, 0.47f);
         [Tooltip("젖은 흙 색 (심은 칸에 물을 줬을 때)")]
@@ -69,6 +73,7 @@ namespace NevrianGlowFarm.Systems.Farm
 
         public FarmState State => state;
         public int CellCount => state != null ? state.Cells.Count : 0;
+        public IReadOnlyList<ForbiddenZone> ForbiddenZones => forbiddenZones;
         public string Summary => summary;
 
         private void Awake()
@@ -87,12 +92,51 @@ namespace NevrianGlowFarm.Systems.Farm
         {
             GameEvents.PhaseChanged += OnPhaseChanged;
             GameEvents.StatsChanged += OnStatsChanged;
+            Tutorial.TutorialHighlights.Register(this);
         }
 
         private void OnDisable()
         {
             GameEvents.PhaseChanged -= OnPhaseChanged;
             GameEvents.StatsChanged -= OnStatsChanged;
+            Tutorial.TutorialHighlights.Unregister(this);
+        }
+
+        // 튜토리얼 강조 (5-7): bed_tutorial[:cell_N] = 첫 밭(4칸) 가운데 또는 N번 칸, bed_next = 둘째 밭, planted_cells = 작물이 있는 첫 칸
+        public bool TryGetHighlight(string name, string arg, out Tutorial.HighlightHit hit)
+        {
+            hit = default;
+            if (state == null)
+                return false;
+            int bed = name == "bed_tutorial" ? 0 : name == "bed_next" ? 1 : -1;
+            if (bed >= 0)
+            {
+                if (!string.IsNullOrEmpty(arg) && arg.StartsWith("cell_") && int.TryParse(arg.Substring(5), out int cell) && cell >= 0 && cell < state.Cells.Count)
+                {
+                    hit = Tutorial.HighlightHit.At(CellPosition(cell) + Vector3.up * 0.9f);
+                    return true;
+                }
+                int first = bed * FarmLayout.CellsPerBed;
+                if (first >= state.Cells.Count)
+                    return false;
+                Vector3 center = Vector3.zero;
+                int n = Mathf.Min(FarmLayout.CellsPerBed, state.Cells.Count - first);
+                for (int i = 0; i < n; i++)
+                    center += CellPosition(first + i);
+                hit = Tutorial.HighlightHit.At(center / n + Vector3.up * 0.9f);
+                return true;
+            }
+            if (name == "planted_cells")
+            {
+                for (int i = 0; i < state.Cells.Count; i++)
+                    if (state.Cells[i].HasCrop)
+                    {
+                        hit = Tutorial.HighlightHit.At(CellPosition(i) + Vector3.up * 0.9f);
+                        return true;
+                    }
+                return false;
+            }
+            return false;
         }
 
         // 성장일이 줄면 이미 자란 칸이 바로 다 자람이 될 수 있다 → 겉모습만 다시 (성장 처리는 밤에만)
@@ -228,13 +272,20 @@ namespace NevrianGlowFarm.Systems.Farm
                     }
                 }
                 if (watered > 0)
+                {
                     UpdateSummary();
+                    GameEvents.RaiseCellsWatered(watered);
+                }
                 AudioManager.Play(SoundCues.WaterPour, CellPosition(index)); // 기울인 뒤 물이 나오는 순간 (마른 땅이어도 붓는 소리)
                 return;
             }
 
             if (held is HoeData hoe)
+            {
                 changed = FarmRules.TryTill(cell, hoe.WorkPerUse, settings.TillWorkRequired);
+                if (changed && FarmRules.GetStatus(cell, default) == FarmCellStatus.Tilled)
+                    GameEvents.RaiseCellTilled(index); // 마지막 괭이질 — 칸 개간 완료
+            }
             else if (held is SeedData seed && seed.Crop != null && FarmRules.GetStatus(cell, default) == FarmCellStatus.Tilled)
             {
                 // 씨앗을 먼저 쓰고 심는다 — 씨앗이 없으면 심지 않는다. 데이터베이스에 없는 작물은 심지 않는다(성장 규칙을 찾을 수 없음).
@@ -244,7 +295,10 @@ namespace NevrianGlowFarm.Systems.Farm
                 {
                     changed = FarmRules.TryPlant(cell, seed.Crop.Id);
                     if (changed)
+                    {
                         AudioManager.Play(SoundCues.SeedPlant, CellPosition(index));
+                        GameEvents.RaiseCropPlanted(seed.Crop.Id);
+                    }
                 }
             }
 
@@ -260,7 +314,12 @@ namespace NevrianGlowFarm.Systems.Farm
             }
 
             if (changed)
-                RefreshCell(index);
+            {
+                // 흙 연출(아트 SoilFX): 괭이질 한 번 = 판 자리가 열림, 심기 = 구덩이 → 흙 덮기
+                RefreshCell(index, true, tillHit: held is HoeData);
+                if (held is SeedData)
+                    views[index].Planted();
+            }
         }
 
         /// <summary>물뿌리개 범위 안에서 물을 주면 바뀌는 칸 수.</summary>
@@ -302,10 +361,12 @@ namespace NevrianGlowFarm.Systems.Farm
             if (result.Succeeded)
             {
                 hotbar.TryAdd(crop, result.Yield);
+                views[index].HarvestBurst(); // 모델이 바뀌기 전 자리에서 반짝임
                 RefreshCell(index);
                 AudioManager.Play(SoundCues.HarvestPull, CellPosition(index));
                 if (GameManager.Instance != null)
                     GameManager.Instance.RecordHarvest(crop.Id); // 해금 조건 "첫 수확"
+                GameEvents.RaiseCropHarvested(crop.Id, result.Yield);
             }
         }
 
@@ -394,11 +455,26 @@ namespace NevrianGlowFarm.Systems.Farm
 
         private void SpawnMissingViews()
         {
+            if (views.Count < state.Cells.Count && TryGetComponent<FarmGrassClearer>(out var grass))
+                grass.RefreshNextFrame(); // 새 칸 자리의 배경 풀을 지운다 (새 게임 · 불러오기 · 구획 확장)
+            // 칸 · 밭 테두리 프리팹은 기준 간격(2 m)으로 만들어졌다 — 데이터 칸 간격에 맞춰 키운다 (밭을 키워 시선을 올리는 2026-10-25 조정)
+            float prefabScale = settings.CellPitch / Mathf.Max(0.1f, cellPrefabPitch);
             for (int i = views.Count; i < state.Cells.Count; i++)
             {
                 var view = Instantiate(cellPrefab, CellPosition(i), CellRotation(), transform);
+                view.transform.localScale = cellPrefab.transform.localScale * prefabScale;
                 view.Bind(this, i);
                 views.Add(view);
+                // 밭의 마지막 칸이 생기면 그 밭 테두리 (밭 = 이어진 4칸 — FarmLayout)
+                if (bedPrefab != null && i % FarmLayout.CellsPerBed == FarmLayout.CellsPerBed - 1)
+                {
+                    Vector3 center = Vector3.zero;
+                    for (int k = 0; k < FarmLayout.CellsPerBed; k++)
+                        center += CellPosition(i - k);
+                    var bed = Instantiate(bedPrefab, center / FarmLayout.CellsPerBed, CellRotation(), transform);
+                    bed.transform.localScale = bedPrefab.transform.localScale * prefabScale;
+                    bed.name = $"Bed{i / FarmLayout.CellsPerBed:00}";
+                }
             }
         }
 
@@ -409,10 +485,14 @@ namespace NevrianGlowFarm.Systems.Farm
             UpdateSummary();
         }
 
-        private void RefreshCell(int index, bool updateSummary = true)
+        private void RefreshCell(int index, bool updateSummary = true, bool tillHit = false)
         {
             var cell = state.Cells[index];
             var status = state.StatusOf(index);
+            float till = status == FarmCellStatus.Untilled ? 0f
+                : status == FarmCellStatus.Tilling ? cell.TillProgress / settings.TillWorkRequired
+                : 1f;
+            views[index].ShowTill(till, tillHit);
 
             Color soil = status switch
             {
@@ -444,7 +524,7 @@ namespace NevrianGlowFarm.Systems.Farm
                 bool regrowing = cell.HarvestCount > 0 && spec.RegrowDays > 0;
                 int stage = CropStageRules.StageIndex(stages.Count, growth, ready, regrowing);
                 var stagePrefab = stage >= 0 ? stages[stage] : null;
-                views[index].Show(soil, true, color, Mathf.Lerp(seedlingScale, grownScale, growth), stagePrefab);
+                views[index].Show(soil, true, color, Mathf.Lerp(seedlingScale, grownScale, growth), stagePrefab, crop.ModelScale);
                 views[index].SetFruit(ready, regrowing);
             }
 
@@ -487,6 +567,24 @@ namespace NevrianGlowFarm.Systems.Farm
         private Vector3 AlongDir => settings.PlotExpandDirection.sqrMagnitude > 0f ? settings.PlotExpandDirection.normalized : Vector3.left;
         private Vector3 AcrossDir => Vector3.Cross(Vector3.up, AlongDir).normalized;
         private Quaternion CellRotation() => Quaternion.LookRotation(AcrossDir, Vector3.up);
+
+        /// <summary>그 자리가 밭 칸이나 길(금지 구역) 위인지 — 플레이어 발소리(흙)에 쓴다.</summary>
+        public bool IsFarmGround(Vector3 world)
+        {
+            if (state == null)
+                return false;
+            float half = cellFootprint * 0.5f;
+            for (int i = 0; i < state.Cells.Count; i++)
+            {
+                Vector3 c = CellPosition(i);
+                if (Mathf.Abs(world.x - c.x) <= half && Mathf.Abs(world.z - c.z) <= half)
+                    return true;
+            }
+            foreach (var zone in forbiddenZones)
+                if (zone != null && zone.Overlaps(world, 0.05f, 0.05f))
+                    return true;
+            return false;
+        }
 
         /// <summary>칸 중심의 월드 위치 (바닥 높이 = 이 오브젝트 높이).</summary>
         public Vector3 CellPosition(int index)

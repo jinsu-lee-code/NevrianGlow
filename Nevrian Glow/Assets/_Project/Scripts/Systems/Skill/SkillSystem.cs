@@ -80,6 +80,10 @@ namespace NevrianGlowFarm.Systems.Skill
             return SkillRules.CanLearn(skill.ToSpec(), LevelOf(skill), game.SkillLevel, game.SkillPoints);
         }
 
+        /// <summary>튜토리얼(5-7)이 이 스킬을 잠갔는지 — 안내한 스킬만 배울 수 있는 단계.</summary>
+        public bool IsTutorialLocked(SkillData skill) =>
+            Systems.Tutorial.TutorialSystem.IsLockedFor(Logic.Tutorial.TutorialLocks.OtherSkills, skill != null ? skill.Id : null);
+
         /// <summary>다음 단계를 배운다. 결과 문구는 화면 안내용 (게임 화면 글자라 "—"를 쓰지 않는다).</summary>
         public bool TryLearn(SkillData skill, out string message)
         {
@@ -88,6 +92,11 @@ namespace NevrianGlowFarm.Systems.Skill
             if (check != LearnCheck.Ok)
             {
                 message = FailText(skill, check);
+                return false;
+            }
+            if (IsTutorialLocked(skill))
+            {
+                message = "지금은 안내한 스킬만 배울 수 있어요";
                 return false;
             }
             int cost = NextCost(skill);

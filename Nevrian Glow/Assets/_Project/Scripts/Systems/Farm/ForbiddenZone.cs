@@ -19,6 +19,17 @@ namespace NevrianGlowFarm.Systems.Farm
 
         public bool AllowsStains => allowsStains;
 
+        /// <summary>바닥에서 본 구역을 감싸는 사각형 (x, z — 원은 지름 정사각형).</summary>
+        public Rect FloorRect
+        {
+            get
+            {
+                Vector3 p = transform.position;
+                Vector2 size = radius > 0f ? new Vector2(radius * 2f, radius * 2f) : boxSize;
+                return new Rect(p.x - size.x * 0.5f, p.z - size.y * 0.5f, size.x, size.y);
+            }
+        }
+
         // 가장자리가 딱 닿는 것은 겹침이 아니다 (소수 오차로 -1.7999 < 1.8이 되는 것을 막는 허용치, m).
         private const float TouchTolerance = 0.01f;
 

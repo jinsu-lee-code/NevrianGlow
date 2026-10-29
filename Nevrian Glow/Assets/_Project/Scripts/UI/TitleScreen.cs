@@ -40,6 +40,8 @@ namespace NevrianGlowFarm.UI
         [SerializeField] private InputActionReference cancelAction;
         [Tooltip("타이틀이 떠 있는 동안 숨길 게임 화면 요소 (HUD · 핫바 · 조준점)")]
         [SerializeField] private GameObject[] hideWhileOpen = new GameObject[0];
+        [Tooltip("메뉴와 함께 보이고 숨는 것 — 로고 · 부제 (설정 · 확인 창이 열리면 숨김, 5-4b)")]
+        [SerializeField] private GameObject[] showWithMenu = new GameObject[0];
         [Tooltip("새 게임 때 한 번 띄울 오프닝 편지 (P-7) — 비우면 바로 상점")]
         [SerializeField] private OpeningLetterScreen openingLetter;
 
@@ -103,10 +105,18 @@ namespace NevrianGlowFarm.UI
             starting = false;
             settings.Hide();
             confirm.Hide();
-            menu.SetActive(true);
+            SetMenuVisible(true);
             SetGameHudVisible(false);
             RefreshSave();
             AudioManager.PlayMusic(SoundCues.TitleMusic);
+        }
+
+        private void SetMenuVisible(bool visible)
+        {
+            menu.SetActive(visible);
+            foreach (var go in showWithMenu)
+                if (go != null)
+                    go.SetActive(visible);
         }
 
         private void SetGameHudVisible(bool visible)
@@ -160,8 +170,8 @@ namespace NevrianGlowFarm.UI
                 StartFresh();
                 return;
             }
-            menu.SetActive(false);
-            confirm.Ask($"새 게임을 시작할까요?\n{savedDay}일차까지의 저장이 새 게임 1일차 아침으로 바뀝니다.", "새 게임 시작", StartFresh, () => menu.SetActive(true));
+            SetMenuVisible(false);
+            confirm.Ask($"새 게임을 시작할까요?\n{savedDay}일차까지의 저장이 새 게임 1일차 아침으로 바뀝니다.", "새 게임 시작", StartFresh, () => SetMenuVisible(true));
         }
 
         private void StartFresh()
@@ -180,8 +190,8 @@ namespace NevrianGlowFarm.UI
         {
             if (!IsOpen)
                 return;
-            menu.SetActive(false);
-            settings.Open(() => menu.SetActive(true));
+            SetMenuVisible(false);
+            settings.Open(() => SetMenuVisible(true));
         }
 
         private void Begin()

@@ -35,5 +35,14 @@ namespace NevrianGlowFarm.Data
             var tool = ToolAt(tier);
             return tool != null ? tool.DisplayName : base.TierLabel(tier);
         }
+
+        public override Sprite IconFor(int tier)
+        {
+            var own = base.IconFor(tier);
+            if (own != null)
+                return own;
+            var tool = ToolAt(tier);
+            return tool != null ? tool.Icon : null;
+        }
     }
 }

@@ -11,7 +11,7 @@ namespace NevrianGlowFarm.UI
     /// 예상 청결 · 정돈 등급을 보여 준다. 값은 짧은 간격으로 읽는다(바닥 아이템 · 얼룩은 여러 곳에서 바뀌어 알림 하나로 모으기 어렵다).
     /// 그레이박스: 단색 패널 + 글자 — UI 아트(5-4) 때 다듬는다.
     /// </summary>
-    public class TidyHudView : MonoBehaviour
+    public class TidyHudView : MonoBehaviour, Systems.Tutorial.ITutorialHighlightSource
     {
         [Header("참조")]
         [Tooltip("보이고 숨길 패널")]
@@ -34,6 +34,19 @@ namespace NevrianGlowFarm.UI
                 return;
             }
             panel.SetActive(false);
+        }
+
+        private void OnEnable() => Systems.Tutorial.TutorialHighlights.Register(this);
+        private void OnDisable() => Systems.Tutorial.TutorialHighlights.Unregister(this);
+
+        // 튜토리얼 강조 (5-7): hud_tidy_grade = 오늘의 정리 패널 (보일 때만)
+        public bool TryGetHighlight(string name, string arg, out Systems.Tutorial.HighlightHit hit)
+        {
+            hit = default;
+            if (name != "hud_tidy_grade" || panel == null || !panel.activeSelf)
+                return false;
+            hit = Systems.Tutorial.HighlightHit.On(panel.GetComponent<RectTransform>());
+            return true;
         }
 
         private void Update()

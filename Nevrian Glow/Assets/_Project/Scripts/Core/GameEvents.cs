@@ -40,6 +40,46 @@ namespace NevrianGlowFarm.Core
         /// <summary>능력치 변경(스킬 효과)이 바뀔 때 — 핫바 칸 · 밭 성장 표시 등이 다시 읽는다 (StatSystem 4-3).</summary>
         public static event Action StatsChanged;
 
+        // ── 플레이어가 한 일 (튜토리얼 5-7가 완료 이벤트 이름으로 잇는다 — 보내는 쪽은 각 시스템, 바뀐 것만 알린다) ──
+
+        /// <summary>새 게임이 시작됐을 때 (1일차 첫 단계 알림 뒤). 이어하기는 이 다음 저장 내용이 덮는다.</summary>
+        public static event Action NewGameStarted;
+        /// <summary>밭 한 칸의 개간이 끝났을 때 (칸 번호).</summary>
+        public static event Action<int> CellTilled;
+        /// <summary>씨앗을 심었을 때 (작물 id).</summary>
+        public static event Action<string> CropPlanted;
+        /// <summary>물을 줬을 때 (물이 들어간 칸 수).</summary>
+        public static event Action<int> CellsWatered;
+        /// <summary>수확했을 때 (작물 id, 개수).</summary>
+        public static event Action<string, int> CropHarvested;
+        /// <summary>쓰레기통에 버렸을 때 (버린 개수).</summary>
+        public static event Action<int> TrashDisposed;
+        /// <summary>얼룩이 다 닦였을 때 (이번에 다 닦인 얼룩 수).</summary>
+        public static event Action<int> StainsCleared;
+        /// <summary>진열대에 놓았을 때 (아이템 id).</summary>
+        public static event Action<string> ItemDisplayed;
+        /// <summary>핫바 칸을 골랐을 때 — 같은 칸을 다시 눌러도 온다 (든 아이템 id, 빈 칸이면 null).</summary>
+        public static event Action<string> HotbarSelected;
+        /// <summary>편지를 닫았을 때 (편지 id).</summary>
+        public static event Action<string> LetterClosed;
+        /// <summary>지역에 도착했을 때 (지역 id) — 하루 시작 위치 포함.</summary>
+        public static event Action<string> ZoneArrived;
+        /// <summary>장사가 끝났을 때 (정산 단계로 넘어가기 직전).</summary>
+        public static event Action SalesFinished;
+
+        internal static void RaiseNewGameStarted() => NewGameStarted?.Invoke();
+        internal static void RaiseCellTilled(int cellIndex) => CellTilled?.Invoke(cellIndex);
+        internal static void RaiseCropPlanted(string cropId) => CropPlanted?.Invoke(cropId);
+        internal static void RaiseCellsWatered(int count) => CellsWatered?.Invoke(count);
+        internal static void RaiseCropHarvested(string cropId, int count) => CropHarvested?.Invoke(cropId, count);
+        internal static void RaiseTrashDisposed(int count) => TrashDisposed?.Invoke(count);
+        internal static void RaiseStainsCleared(int count) => StainsCleared?.Invoke(count);
+        internal static void RaiseItemDisplayed(string itemId) => ItemDisplayed?.Invoke(itemId);
+        internal static void RaiseHotbarSelected(string itemId) => HotbarSelected?.Invoke(itemId);
+        internal static void RaiseLetterClosed(string letterId) => LetterClosed?.Invoke(letterId);
+        internal static void RaiseZoneArrived(string zoneId) => ZoneArrived?.Invoke(zoneId);
+        internal static void RaiseSalesFinished() => SalesFinished?.Invoke();
+
         internal static void RaiseStatsChanged() => StatsChanged?.Invoke();
         internal static void RaiseSkillLevelChanged(string skillId, int level) => SkillLevelChanged?.Invoke(skillId, level);
         internal static void RaiseCropFirstHarvested(string cropId) => CropFirstHarvested?.Invoke(cropId);
@@ -63,6 +103,18 @@ namespace NevrianGlowFarm.Core
             SkillLevelChanged = null;
             CropFirstHarvested = null;
             StatsChanged = null;
+            NewGameStarted = null;
+            CellTilled = null;
+            CropPlanted = null;
+            CellsWatered = null;
+            CropHarvested = null;
+            TrashDisposed = null;
+            StainsCleared = null;
+            ItemDisplayed = null;
+            HotbarSelected = null;
+            LetterClosed = null;
+            ZoneArrived = null;
+            SalesFinished = null;
         }
     }
 }

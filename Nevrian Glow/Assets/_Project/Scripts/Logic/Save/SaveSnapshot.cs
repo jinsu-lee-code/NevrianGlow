@@ -69,6 +69,9 @@ namespace NevrianGlowFarm.Logic.Save
         public double CustomerSatisfaction { get; set; } = 1.0;
 
         public List<WorldItemSave> WorldItems { get; } = new List<WorldItemSave>();
+
+        /// <summary>튜토리얼 (5-7): 현재 단계 id · "done"(끝) · null(안 켜짐 — 형식 1 저장). TutorialProgress.SaveKey.</summary>
+        public string TutorialStep { get; set; }
     }
 
     /// <summary>

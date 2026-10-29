@@ -14,9 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.BagExpandProductData
   id: shop_bag_expand
   displayName: "\uAC00\uBC29 \uD655\uC7A5"
+  description: "\uAC00\uBC29 +4\uCE78"
   sortOrder: 100
   category: "\uD655\uC7A5"
   hidden: 0
+  icon: {fileID: 0}
   repeatable: 0
   tiers:
   - price: 100

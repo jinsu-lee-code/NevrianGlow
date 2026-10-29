@@ -15,7 +15,7 @@ namespace NevrianGlowFarm.UI
     /// Esc · 다른 화면으로는 닫히지 않고 '다음 날' 버튼만 — 누르면 다음 날로 넘기고(밤 처리 · 상점 입고는 날 변경에 붙어 있음)
     /// ZoneTransition이 같은 페이드로 농장에 옮긴다. 디버그로 정산 단계를 벗어나면 같이 닫힌다.
     /// </summary>
-    public class SettlementScreen : GameScreen
+    public class SettlementScreen : GameScreen, Systems.Tutorial.ITutorialHighlightSource
     {
         [Header("참조")]
         [Tooltip("오늘 상점 지출 (Core Shop)")]
@@ -41,8 +41,12 @@ namespace NevrianGlowFarm.UI
 
         private bool advancing;
         private bool pending;
+        private bool yielding;
 
         public static SettlementScreen Instance { get; private set; }
+
+        /// <summary>정산 단계라 열릴 차례인데 아직 안 열렸는지 (다른 화면이 닫히기를 기다리는 중 포함).</summary>
+        public bool IsPending => pending && !IsOpen;
 
         /// <summary>지금 보여 주는 정산 (열린 동안 유효).</summary>
         public SettlementReport Report { get; private set; }
@@ -67,8 +71,32 @@ namespace NevrianGlowFarm.UI
                 Instance = null;
         }
 
-        private void OnEnable() => GameEvents.PhaseChanged += OnPhaseChanged;
-        private void OnDisable() => GameEvents.PhaseChanged -= OnPhaseChanged;
+        private void OnEnable()
+        {
+            GameEvents.PhaseChanged += OnPhaseChanged;
+            Systems.Tutorial.TutorialHighlights.Register(this);
+        }
+
+        private void OnDisable()
+        {
+            GameEvents.PhaseChanged -= OnPhaseChanged;
+            Systems.Tutorial.TutorialHighlights.Unregister(this);
+        }
+
+        // 튜토리얼 강조 (5-7): btn_next_day = 다음 날 버튼, settle_* = 정산 본문 (열려 있을 때만)
+        public bool TryGetHighlight(string name, string arg, out Systems.Tutorial.HighlightHit hit)
+        {
+            hit = default;
+            if (!IsOpen)
+                return false;
+            if (name == "btn_next_day")
+                hit = Systems.Tutorial.HighlightHit.On(nextDayButton.GetComponent<RectTransform>());
+            else if (name.StartsWith("settle_"))
+                hit = Systems.Tutorial.HighlightHit.On(bodyLabel.rectTransform);
+            else
+                return false;
+            return true;
+        }
 
         private void OnPhaseChanged(PhaseChange change)
         {
@@ -77,6 +105,7 @@ namespace NevrianGlowFarm.UI
             else
             {
                 pending = false;
+                yielding = false;
                 if (IsOpen)
                     ForceClose();
             }
@@ -86,8 +115,9 @@ namespace NevrianGlowFarm.UI
         {
             if (!pending || IsOpen)
                 return;
-            // 다른 화면(가방 등)이 열려 있으면 먼저 닫아 본다 — 닫을 수 없는 상태면 다음 프레임에 다시
-            if (Current != null)
+            // 다른 화면(가방 등)이 열려 있으면 먼저 닫아 본다 — 닫을 수 없는 상태면 다음 프레임에 다시.
+            // 비켜 준 동안(튜토리얼이 연 스킬 트리 · 편지)은 닫지 않고 그 화면이 스스로 닫히기를 기다린다
+            if (Current != null && !yielding)
                 Current.Close();
             if (Current == null)
                 Open();
@@ -97,6 +127,7 @@ namespace NevrianGlowFarm.UI
         public void Open()
         {
             pending = false;
+            yielding = false;
             Show();
         }
 
@@ -143,6 +174,18 @@ namespace NevrianGlowFarm.UI
             advancing = true;
             Close();
             advancing = false;
+        }
+
+        /// <summary>
+        /// 잠깐 비켜 준다 (튜토리얼 5-7: 정산 위에 스킬 트리 · 편지를 연다) — 다른 화면이 닫히면 정산이 다시 뜬다 (같은 날 정산이면 다시 기록하지 않음).
+        /// </summary>
+        public void CloseTemporarily()
+        {
+            if (!IsOpen)
+                return;
+            ForceClose();
+            pending = GameManager.Instance != null && GameManager.Instance.Phase == DayPhase.Settlement;
+            yielding = pending;
         }
 
         private SettlementReport BuildReport()

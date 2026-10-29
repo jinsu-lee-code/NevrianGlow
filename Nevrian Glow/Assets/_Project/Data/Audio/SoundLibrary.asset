@@ -270,5 +270,94 @@ MonoBehaviour:
     loop: 0
     pitchJitter: 0
     cooldown: 0.05
+  - id: amb_farm_loop
+    clips:
+    - {fileID: 8300000, guid: 09b687cefa27d26428745557af27bc81, type: 3}
+    bus: 3
+    volume: 1
+    spatial: 0
+    loop: 1
+    pitchJitter: 0
+    cooldown: 0
+  - id: amb_shop_loop
+    clips:
+    - {fileID: 8300000, guid: f7c4a1b12604e0c45893cd16f2c869c9, type: 3}
+    bus: 3
+    volume: 1
+    spatial: 0
+    loop: 1
+    pitchJitter: 0
+    cooldown: 0
+  - id: sfx_day_start
+    clips:
+    - {fileID: 8300000, guid: dbe8abd57f7385e4da9bf93c6b4cc991, type: 3}
+    bus: 0
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
+  - id: sfx_giant_merge
+    clips:
+    - {fileID: 8300000, guid: 00e39bc110b16ca45821bb1d112f9cc0, type: 3}
+    bus: 0
+    volume: 1
+    spatial: 1
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
+  - id: sfx_shelf_place
+    clips:
+    - {fileID: 8300000, guid: a3a53f264bedb81459419dacefcf9a13, type: 3}
+    - {fileID: 8300000, guid: 122f26b9671ca9949bd21b9f6339ed09, type: 3}
+    - {fileID: 8300000, guid: ffc7d72c51d6c8e40a4d115d95cb587c, type: 3}
+    bus: 0
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
+  - id: sfx_shelf_take
+    clips:
+    - {fileID: 8300000, guid: 0e02791ef28607d45bed0119ac9f09c8, type: 3}
+    bus: 0
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
+  - id: sfx_step_grass
+    clips:
+    - {fileID: 8300000, guid: 648c0c8293d08f74aaa2aa69a952774b, type: 3}
+    - {fileID: 8300000, guid: 86415362ed3d735498fc8cda5e995ab4, type: 3}
+    - {fileID: 8300000, guid: 465c32d01b5dc8045a3edba3ce0eb6f6, type: 3}
+    bus: 0
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
+  - id: sfx_step_soil
+    clips:
+    - {fileID: 8300000, guid: 1273eb4fb6dbbc942bc1ae25db3c8125, type: 3}
+    - {fileID: 8300000, guid: 38dfcbf3b5e9da741b070c4f20cb75a8, type: 3}
+    - {fileID: 8300000, guid: 260744cbf7241c9438558010f0126802, type: 3}
+    bus: 0
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
+  - id: sfx_step_wood
+    clips:
+    - {fileID: 8300000, guid: c7edcc64d6fd5a740a608d4fa39e4531, type: 3}
+    - {fileID: 8300000, guid: 8b4f59c4131f7f74cb5c13d0fbe58801, type: 3}
+    - {fileID: 8300000, guid: 1960ff728a01b154bbd62372e27be803, type: 3}
+    bus: 0
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
   minDistance: 1
   maxDistance: 15

@@ -45,6 +45,32 @@ namespace NevrianGlowFarm.Systems.Shop
         [SerializeField, Min(0.05f)] private float itemSize = 0.24f;
         [Tooltip("줄마다 (놓는 면 높이, 앞뒤 위치 z) — 0번 = 앞줄(손님 쪽). 층 · 경사 진열대(아트 2026-10-22)용, 비우면 topHeight 한 면에 stackSpacing 간격 (m)")]
         [SerializeField] private List<Vector2> rowLayout = new List<Vector2>();
+        [Tooltip("진열 가능 영역(파인 쟁반 · 바구니) — 채우는 순서대로. 있으면 이 영역 안에만 stackSpacing 격자로 놓고 면 기울기를 따른다, 칸당 개수가 안 들어가면 간격 · 크기를 줄인다 (2026-10-25)")]
+        [SerializeField] private List<Tray> trays = new List<Tray>();
+
+        /// <summary>진열 가능 영역 하나 (칸 중심 기준 로컬). z 범위를 0으로 주면 한 줄.</summary>
+        [System.Serializable]
+        public struct Tray
+        {
+            [Tooltip("로컬 x 범위 (m)")]
+            [SerializeField] private Vector2 x;
+            [Tooltip("로컬 z 범위 — 같은 값이면 한 줄 (m)")]
+            [SerializeField] private Vector2 z;
+            [Tooltip("놓는 면의 대략 높이 — 위에서 쏜 레이가 여러 면에 맞으면(윗층 턱 · 처마) 이 높이에 가장 가까운 면 (m, 0 = 가장 높은 면)")]
+            [SerializeField, Min(0f)] private float floorHeight;
+            [Tooltip("작물이 바라보는 방향 — 0 = 손님 쪽 +Z, 90 = +X, -90 = -X (도)")]
+            [SerializeField] private float yaw;
+
+            public Tray(Vector2 x, Vector2 z, float floorHeight, float yaw)
+            {
+                this.x = x; this.z = z; this.floorHeight = floorHeight; this.yaw = yaw;
+            }
+
+            public Vector2 X => x;
+            public Vector2 Z => z;
+            public float FloorHeight => floorHeight;
+            public float Yaw => yaw;
+        }
         [Tooltip("놓을 수 있을 때 홀로그램 색 — 알파 = 투명도, 밝기는 재질의 Emission Scale (시안 #62F2E1)")]
         [SerializeField] private Color okColor = new Color(0.38f, 0.95f, 0.88f, 0.35f);
         [Tooltip("놓을 수 없을 때 홀로그램 색 (빨강)")]
@@ -65,6 +91,10 @@ namespace NevrianGlowFarm.Systems.Shop
         [SerializeField] private List<string> contentsView = new List<string>();
 
         private ShelfState state;
+        private readonly List<Collider> surfaceColliders = new List<Collider>();
+        private readonly Dictionary<int, float> surfaceHeights = new Dictionary<int, float>();
+        private readonly List<(Vector2 Cell, int Tray)> trayGrid = new List<(Vector2, int)>(); // 쟁반 격자 자리 (칸 중심 기준 x · z, 쟁반 번호), 채우는 순서대로
+        private readonly Dictionary<int, (Vector3 Pos, Quaternion Rot)> trayPoints = new Dictionary<int, (Vector3, Quaternion)>();
         private readonly List<List<Renderer>> views = new List<List<Renderer>>();
         private readonly List<(Transform Item, Vector3 To, float Time)> placing = new List<(Transform, Vector3, float)>();
         private CropData aimedCrop;
@@ -92,10 +122,126 @@ namespace NevrianGlowFarm.Systems.Shop
                 return;
             }
             block = new MaterialPropertyBlock();
-            state = new ShelfState(BaseSlots, ItemsPerSlot);
+            BuildTrayGrid();
+            // 칸당 개수는 가구 데이터(30)와 바구니에 실제로 들어가는 수 중 작은 쪽 (2026-10-25 사용자: 바구니 크기에 맞게 개수 조정)
+            int perSlot = trayGrid.Count > 0 ? Mathf.Min(ItemsPerSlot, trayGrid.Count) : ItemsPerSlot;
+            state = new ShelfState(BaseSlots, perSlot);
             hologram.gameObject.SetActive(false);
+            AddSurfaceColliders();
             FitBody();
             RefreshAll();
+        }
+
+        // 진열된 작물 한 개의 크기 (m)
+        private float PlacedSize => itemSize;
+
+        // 쟁반 영역을 stackSpacing 격자로 나눈 자리 (2026-10-25 사용자: 파인 쟁반 안에만, 한 줄, 기울인 면을 따라).
+        // 한 영역에 들어가는 수 = 너비 ÷ 간격 (작물은 간격보다 조금 커서 이웃과 살짝 겹친다 — 수북한 느낌, 영역 밖 턱 · 기둥으로는 안 나감).
+        // 쟁반 순서대로 · 쟁반 안은 앞줄(+Z)부터 채운다
+        private void BuildTrayGrid()
+        {
+            trayGrid.Clear();
+            trayPoints.Clear();
+            for (int ti = 0; ti < trays.Count; ti++)
+            {
+                var t = trays[ti];
+                float width = Mathf.Abs(t.X.y - t.X.x), depth = Mathf.Abs(t.Z.y - t.Z.x);
+                int cols = Mathf.Max(1, Mathf.FloorToInt(width / stackSpacing + 0.001f));
+                int rows = Mathf.Max(1, Mathf.FloorToInt(depth / stackSpacing + 0.001f));
+                float cx = (t.X.x + t.X.y) * 0.5f, cz = (t.Z.x + t.Z.y) * 0.5f;
+                for (int r = 0; r < rows; r++)
+                    for (int c = 0; c < cols; c++)
+                        trayGrid.Add((new Vector2(cx + (c - (cols - 1) * 0.5f) * stackSpacing, cz + ((rows - 1) * 0.5f - r) * stackSpacing), ti));
+            }
+        }
+
+        // 쟁반 자리 하나: 격자 x · z 위에서 아래로 쏜 레이가 처음 닿는 모델 면에 작물 바닥을 대고, 면의 기울기만큼 눕힌다. 한 번 재면 기억한다
+        private (Vector3 Pos, Quaternion Rot) TrayPoint(int slot, int index)
+        {
+            int key = slot * 1000 + index;
+            if (trayPoints.TryGetValue(key, out var point))
+                return point;
+            var (cell, trayIndex) = trayGrid[index % trayGrid.Count];
+            var tray = trays[trayIndex];
+            float x = (float)ShelfLayout.SlotCenterX(slot, state.SlotCount, slotPitch) + cell.x;
+            float z = cell.y;
+            float half = PlacedSize * 0.5f + 0.005f;
+            var facing = Quaternion.Euler(0f, tray.Yaw, 0f);
+            float floor = tray.FloorHeight > 0f ? tray.FloorHeight : topHeight;
+            point = (new Vector3(x, floor + half, z), facing);
+            if (surfaceColliders.Count > 0)
+            {
+                // 바닥 높이를 알면 그 바로 위(작물 한 개 높이)에서 쏜다 — 윗층 턱 · 처마 아래의 바닥도 잡는다 (메시 콜라이더 하나는 레이에 한 번만 맞으므로 위에서 쏘면 처마에 막힘)
+                float from = tray.FloorHeight > 0f ? tray.FloorHeight + itemSize : 3f;
+                Vector3 top = transform.TransformPoint(new Vector3(x, from, z));
+                bool any = false;
+                RaycastHit best = default;
+                foreach (var h in Physics.RaycastAll(top, -transform.up, from + 1f, ~0, QueryTriggerInteraction.Ignore))
+                {
+                    if (!surfaceColliders.Contains(h.collider))
+                        continue;
+                    if (!any || h.distance < best.distance) { best = h; any = true; }
+                }
+                if (any)
+                {
+                    Vector3 normal = transform.InverseTransformDirection(best.normal).normalized;
+                    if (normal.y < 0.5f)
+                        normal = Vector3.up; // 벽 · 턱의 옆면에 맞으면 세워 둔다
+                    Vector3 hit = transform.InverseTransformPoint(best.point);
+                    point = (hit + normal * half, Quaternion.FromToRotation(Vector3.up, normal) * facing);
+                }
+            }
+            trayPoints[key] = point;
+            return point;
+        }
+
+        // 진열 면 높이는 아트 모델의 실제 표면에서 잰다 (2026-10-25 사용자: 경사 진열대 · 판매대 칸막이에 작물이 파묻힘).
+        // 모델의 메시마다 메시 콜라이더를 붙여 두고(조준 판정은 Interactable 레이어의 aimCollider뿐이라 영향 없음) 놓을 자리에서 아래로 레이를 쏜다.
+        private void AddSurfaceColliders()
+        {
+            foreach (var filter in GetComponentsInChildren<MeshFilter>(true))
+            {
+                if (filter.sharedMesh == null || filter.transform == body || filter.transform == hologram.transform)
+                    continue;
+                var r = filter.GetComponent<Renderer>();
+                if (r == null || !r.enabled || !r.gameObject.activeInHierarchy)
+                    continue;
+                if (filter.GetComponent<Collider>() != null)
+                    continue;
+                var mc = filter.gameObject.AddComponent<MeshCollider>();
+                mc.sharedMesh = filter.sharedMesh;
+                surfaceColliders.Add(mc);
+            }
+            if (surfaceColliders.Count > 0)
+                Physics.SyncTransforms();
+        }
+
+        // 그 자리(로컬 x · z) 위에서 아래로 쏜 레이가 닿는 표면 가운데 설계 높이(fallback)에 가장 가까운 것 + 작물 반 크기.
+        // (가장 높은 면을 고르면 경사 진열대에서 윗단 턱이 아랫단 자리를 덮을 수 있다.) 표면이 없으면 fallback. 한 번 재면 기억한다
+        private float SurfaceHeight(int slot, int index, float x, float z, float fallback)
+        {
+            int key = slot * 1000 + index;
+            if (surfaceHeights.TryGetValue(key, out float y))
+                return y;
+            y = fallback;
+            if (surfaceColliders.Count > 0)
+            {
+                float wanted = fallback - itemSize * 0.5f;
+                Vector3 top = transform.TransformPoint(new Vector3(x, 3f, z));
+                float best = float.NaN, bestGap = float.MaxValue;
+                foreach (var h in Physics.RaycastAll(top, -transform.up, 6f, ~0, QueryTriggerInteraction.Ignore))
+                {
+                    if (!surfaceColliders.Contains(h.collider))
+                        continue;
+                    float hy = transform.InverseTransformPoint(h.point).y;
+                    float gap = Mathf.Abs(hy - wanted);
+                    if (gap < bestGap) { bestGap = gap; best = hy; }
+                }
+                if (!float.IsNaN(best))
+                    y = best + itemSize * 0.5f + 0.005f;
+            }
+            surfaceHeights[key] = y;
+            return y;
         }
 
         private void Update()
@@ -107,8 +253,8 @@ namespace NevrianGlowFarm.Systems.Shop
                 float t = settings.PlaceDuration > 0f ? Mathf.Clamp01((Time.time - start) / settings.PlaceDuration) : 1f;
                 if (item != null)
                 {
-                    item.localPosition = Vector3.Lerp(to + Vector3.up * itemSize, to, t);
-                    item.localScale = Vector3.one * (itemSize * Mathf.Lerp(0.4f, 1f, t));
+                    item.localPosition = Vector3.Lerp(to + Vector3.up * PlacedSize, to, t);
+                    item.localScale = Vector3.one * (PlacedSize * Mathf.Lerp(0.4f, 1f, t));
                 }
                 if (t >= 1f)
                     placing.RemoveAt(i);
@@ -150,7 +296,8 @@ namespace NevrianGlowFarm.Systems.Shop
             // 놓을 수 있으면 다음 자리, 가득 차 있으면 마지막 자리 위에 빨강
             int index = aimedCheck == PlaceCheck.Full ? count - 1 : Mathf.Min(count, state.ItemsPerSlot - 1);
             hologram.transform.localPosition = StackPoint(aimedSlot, index);
-            hologram.transform.localScale = Vector3.one * itemSize;
+            hologram.transform.localRotation = StackRotation(aimedSlot, index);
+            hologram.transform.localScale = Vector3.one * PlacedSize;
             block.Clear();
             block.SetColor(HologramColorId, aimedCheck == PlaceCheck.Ok ? okColor : blockedColor);
             hologram.SetPropertyBlock(block);
@@ -185,6 +332,8 @@ namespace NevrianGlowFarm.Systems.Shop
             state.Straighten(aimedSlot); // 다시 진열하면 그 칸은 반듯해진다 (청소 v2 — 홀로그램 스냅)
             RefreshSlot(aimedSlot, animateLast: true);
             AudioManager.Play(SoundCues.ShelfPlace);
+            VfxManager.Play(VfxCues.Sparkle, transform.TransformPoint(StackPoint(aimedSlot, state[aimedSlot].Count - 1)));
+            GameEvents.RaiseItemDisplayed(crop.Id);
             // 홀로그램은 다음 자리로 (가득 차면 빨강). 마지막 1개를 놓아 손이 비면 다음 프레임 UpdateAim이 숨긴다.
             aimedCheck = state.CanPlace(aimedSlot, crop.Id);
             ShowHologram();
@@ -275,6 +424,8 @@ namespace NevrianGlowFarm.Systems.Shop
         public void SetSlotCount(int count)
         {
             state.SetSlotCount(count);
+            surfaceHeights.Clear(); // 칸 자리가 바뀜
+            trayPoints.Clear();
             FitBody();
             RefreshAll();
         }
@@ -301,6 +452,8 @@ namespace NevrianGlowFarm.Systems.Shop
                 views[slot].Clear();
             }
             placing.Clear();
+            surfaceHeights.Clear();
+            trayPoints.Clear();
             FitBody();
             RefreshAll();
         }
@@ -334,6 +487,7 @@ namespace NevrianGlowFarm.Systems.Shop
             {
                 var r = Instantiate(itemPrefab, transform);
                 r.name = $"Slot{slot + 1}_Item{list.Count + 1}";
+                Items.ItemModelView.Apply(r, crop, slot * 31 + list.Count); // 작물 모델 (한 칸 = 한 종류라 칸이 빌 때까지 그대로)
                 list.Add(r);
             }
             while (list.Count > stack.Count)
@@ -352,8 +506,8 @@ namespace NevrianGlowFarm.Systems.Shop
                 // 흐트러진 칸은 작물이 기울고 자리에서 벗어난다 (칸 · 순서로 정해 같은 칸이면 같은 모습)
                 r.transform.localRotation = messy
                     ? Quaternion.Euler(((slot * 3 + i) % 2 == 0 ? 1f : -1f) * disorderTilt, (slot * 53 + i * 71) % 360, ((i % 3) - 1) * disorderTilt * 0.6f)
-                    : Quaternion.identity;
-                r.transform.localScale = Vector3.one * itemSize;
+                    : StackRotation(slot, i);
+                r.transform.localScale = Vector3.one * PlacedSize;
                 block.Clear();
                 block.SetColor(BaseColorId, crop != null ? crop.GreyboxColor : Color.white);
                 r.SetPropertyBlock(block);
@@ -364,9 +518,15 @@ namespace NevrianGlowFarm.Systems.Shop
             UpdateDebugView();
         }
 
-        /// <summary>칸 slot의 index번째 쌓는 자리 (로컬). 앞줄(손님 쪽 +Z)부터 채운다.</summary>
+        /// <summary>칸 slot의 index번째 작물의 기울기 (로컬) — 쟁반 면을 따라 눕힌다, 쟁반이 없으면 똑바로.</summary>
+        private Quaternion StackRotation(int slot, int index) =>
+            trayGrid.Count > 0 ? TrayPoint(slot, index).Rot : Quaternion.identity;
+
+        /// <summary>칸 slot의 index번째 쌓는 자리 (로컬). 쟁반이 있으면 쟁반 격자, 없으면 줄 배치 — 앞줄(손님 쪽 +Z)부터 채운다.</summary>
         private Vector3 StackPoint(int slot, int index)
         {
+            if (trayGrid.Count > 0)
+                return TrayPoint(slot, index).Pos;
             int columns = Mathf.Max(1, stackColumns);
             int rows = Mathf.Max(1, Mathf.CeilToInt((float)state.ItemsPerSlot / columns));
             int col = index % columns;
@@ -375,10 +535,10 @@ namespace NevrianGlowFarm.Systems.Shop
             if (rowLayout.Count > 0)
             {
                 var r = rowLayout[Mathf.Min(row, rowLayout.Count - 1)];
-                return new Vector3(x, r.x + itemSize * 0.5f, r.y);
+                return new Vector3(x, SurfaceHeight(slot, index, x, r.y, r.x + itemSize * 0.5f), r.y);
             }
             float z = ((rows - 1) * 0.5f - row) * stackSpacing;
-            return new Vector3(x, topHeight + itemSize * 0.5f, z);
+            return new Vector3(x, SurfaceHeight(slot, index, x, z, topHeight + itemSize * 0.5f), z);
         }
 
         private Vector3 MessOffset(int slot, int index)

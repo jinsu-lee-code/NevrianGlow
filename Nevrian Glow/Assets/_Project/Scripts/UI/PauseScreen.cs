@@ -83,8 +83,10 @@ namespace NevrianGlowFarm.UI
                 return;
             }
             // 다른 화면이 열려 있거나 이번 프레임에 Esc로 닫혔으면 열지 않는다. 시작 전(타이틀)에도 열지 않는다.
+            // 튜토리얼이 닫기를 잠근 스킬 트리(5-7) 위에는 연다 — 그 화면은 Esc를 받지 않고, 일시정지를 닫으면 튜토리얼이 다시 연다
             var game = GameManager.Instance;
-            if (Current == null && !ClosedThisFrame && game != null && game.IsStarted)
+            bool overLocked = Current is SkillScreen skill && skill.IsCloseLocked;
+            if ((Current == null || overLocked) && !ClosedThisFrame && game != null && game.IsStarted)
                 Open();
         }
 

@@ -1,8 +1,8 @@
 ﻿key,value,unit,desc,source
 start_money,150,달러,시작 자금,GDD
-start_hotbar,tool_hoe_t1;tool_watering_can_t1;tool_mop_t1;,item_id,시작 핫바 4칸 (마지막 칸 비움),회신2 2-3
+start_hotbar,tool_hoe_1;tool_watering_can_1;tool_mop_1;,item_id,시작 핫바 4칸 (마지막 칸 비움),회신2 2-3
 start_bag,,item_id,시작 가방 (비어 있음),회신2 2-3
-start_storage,item_moonroot:2,item_id:개수,시작 창고,회신2 2-3
+start_storage,crop_moonroot:2,item_id:개수,시작 창고,회신2 2-3
 start_fruit_shelves,3,대,시작 매장 과일 진열대 (가공품 진열대 없음),회신2 2-1
 start_beds,8,밭,시작 밭 (4×2),레벨배치
 level_xp_base,100,xp,레벨업 필요량 = base + step × (레벨 − 1),회신 #3
@@ -33,7 +33,7 @@ trash_daily_min,1,개,평소 쓰레기 최소,회신 #20
 trash_daily_max,3,개,평소 쓰레기 최대,회신 #20
 trash_expand_base,10,개,매장 확장 직후 새 구역 쓰레기 = base + 늘어난 자리 × per_spot,회신 #20
 trash_expand_per_spot,2,개,,
-stain_per_customer,0.3,개,얼룩 = 손님 수 × 이 값,청소 v2
+stain_per_customer,0.3,개,얼룩 · 발자국 = 손님 수 × 이 값 (통로에도 생김),청소 v2
 scatter_unsold_ratio,0.15,,흩어진 상품 = 안 팔린 진열 × 이 값 + 손님 수 ÷ scatter_per_customers,청소 v2
 scatter_per_customers,3,명,,
 disorder_ratio,0.20,,"상품이 있는 진열 칸 중 흐트러지는 비율 (과일 진열대 1대 = 1칸, 일반 진열대 1층 = 1칸)",청소 v2
@@ -44,9 +44,17 @@ grade_a_min,0.80,,등급 A 하한,회신3 1-1
 grade_b_min,0.60,,등급 B 하한 (미만은 C),회신3 1-1
 customer_random,0.10,,오늘 손님 수 ±무작위 폭 (±10%),회신3 2-5
 stain_expand,4,개,매장 확장 직후 새 구역 얼룩 (2차),회신3 2-5
-store_width,40,m,기본 매장 가로 (2026-10-20),레벨배치
-store_depth,30,m,기본 매장 세로,레벨배치
-store_aisle_width,3.4,m,통로 폭 (위 · 아래 2줄),레벨배치
+store_width,12,m,"기본 매장 가로 (10/22, 게임 크기 기준)",레벨배치
+store_depth,10,m,기본 매장 세로,레벨배치
+store_aisle_width,1.4,m,통로 폭 (위 · 아래 2줄),레벨배치
 trash_bin_location,storage_side,,쓰레기통 위치: 창고 구역 옆(농장 문 쪽),레벨배치
 store_spots_fruit,4,자리,기본 매장 과일 진열대 자리 (가운데),회신 10/20
 store_spots_shelf,4,자리,"기본 매장 일반 진열대 자리 (벽 쪽, 2차)",회신 10/20
+tutorial_day1_buy_all,true,,튜토리얼 1일차: 피피 1명이 진열 2개 모두 구매,튜토리얼
+tutorial_day2_customers,3,명,튜토리얼 2일차 손님 수 고정,튜토리얼
+tutorial_day2_buy_all,true,,튜토리얼 2일차: 진열된 월광 뿌리 모두 구매 (레벨업 보장),튜토리얼
+tutorial_day2_stains,2,개,튜토리얼 2일차 발자국 수 (흩어진 상품 · 흐트러짐 0),튜토리얼
+tutorial_random_off,true,,튜토리얼 1~2일차 손님 무작위 · 장날 끔,튜토리얼
+stain_zone,floor_incl_aisle,,얼룩 · 발자국 생성 구역 = 바닥 − 가구 자리 − 계산대 − 창고 − 쓰레기통 (통로 포함),A2 10/22
+trash_zone,floor_excl_aisle,,쓰레기 생성 구역 = 바닥 − 가구 자리 − 통로 − 계산대 − 창고 − 쓰레기통,A2 10/22
+shop_buy_per_click,1,개,상점에서 한 번 누를 때 사는 개수 (수량 고르기 없음),10/22

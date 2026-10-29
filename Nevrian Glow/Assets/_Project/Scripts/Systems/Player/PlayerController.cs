@@ -71,12 +71,14 @@ namespace NevrianGlowFarm.Systems.Player
             if (sprintAction != null) sprintAction.action.Enable();
 
             PlayerInputGate.Changed += OnGateChanged;
+            GameEvents.DayChanged += OnDayChanged;
             ApplyCursor(PlayerInputGate.IsBlocked);
         }
 
         private void OnDisable()
         {
             PlayerInputGate.Changed -= OnGateChanged;
+            GameEvents.DayChanged -= OnDayChanged;
             if (lockCursor)
             {
                 Cursor.lockState = CursorLockMode.None;
@@ -121,6 +123,28 @@ namespace NevrianGlowFarm.Systems.Player
 
         private void OnGateChanged(bool blocked) => ApplyCursor(blocked);
 
+        // 시선 유도 2안 (2026-10-25): 새 날이 시작되면 위아래 시점을 수평선으로 되돌린다 (순간이동 없이 같은 자리에서 시작할 때 — 순간이동은 TeleportTo가 이미 정면).
+        // 마우스를 움직이면 그 자리에서 멈춘다
+        private const float PitchReturnSpeed = 90f; // 도/초
+        private bool returningPitch;
+
+        private void OnDayChanged(int day) => returningPitch = !Mathf.Approximately(pitch, 0f);
+
+        private void ReturnPitch()
+        {
+            if (!returningPitch)
+                return;
+            if (lookAction.action.ReadValue<Vector2>().sqrMagnitude > 0.01f)
+            {
+                returningPitch = false;
+                return;
+            }
+            pitch = Mathf.MoveTowards(pitch, 0f, PitchReturnSpeed * Time.unscaledDeltaTime);
+            cameraPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+            if (Mathf.Approximately(pitch, 0f))
+                returningPitch = false;
+        }
+
         // 화면(가방 · 창고 등)이 열려 조작이 잠기면 커서를 풀어 보이게 한다.
         private void ApplyCursor(bool blocked)
         {
@@ -141,6 +165,7 @@ namespace NevrianGlowFarm.Systems.Player
 
             // 조작이 잠겨도 중력은 계속 받는다 (입력만 0).
             bool blocked = PlayerInputGate.IsBlocked;
+            ReturnPitch();
             if (!blocked)
                 UpdateLook();
             Vector2 moveInput = UpdateMove(blocked);

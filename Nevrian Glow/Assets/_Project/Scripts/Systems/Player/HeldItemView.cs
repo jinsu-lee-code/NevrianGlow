@@ -149,6 +149,7 @@ namespace NevrianGlowFarm.Systems.Player
             if (!visible)
                 return;
 
+            UpdateVfx();
             Vector3 pos = holdPosition;
             Vector3 rot = holdRotation;
 
@@ -262,6 +263,73 @@ namespace NevrianGlowFarm.Systems.Player
 
         private static float Smooth(float x) => x * x * (3f - 2f * x);
 
+        // ── VFX (5-8): 물뿌리개 물줄기 · 대걸레 거품 ──
+
+        private GameObject stream;   // 물뿌리개 주둥이 아래 (모델이 바뀌면 함께 지워짐)
+        private GameObject foam;     // 월드 — 닦는 바닥 지점
+        private bool streamOn, foamOn;
+
+        private void UpdateVfx()
+        {
+            // 물줄기: 기울여 붓는 동안 (기울기 60% ~ 멈춤 끝)
+            bool pour = false;
+            if (stream != null && motion == Motion.Tilt && useLength > 0f)
+            {
+                float elapsed = Time.time - useStart;
+                pour = elapsed >= tiltHold * 0.6f && elapsed < tiltHold + 0.1f;
+            }
+            if (pour != streamOn)
+            {
+                streamOn = pour;
+                VfxManager.SetPlaying(stream, pour);
+            }
+
+            // 거품: 대걸레질 중 닦는 지점에 (한 덩어리씩 — 아트 bubble_foam)
+            bool scrub = motion == Motion.Push && mopTool != null && mopTool.IsMopping && mopTool.HasPoint;
+            if (scrub && foam == null)
+                foam = VfxManager.Attach(VfxCues.BubbleFoam, null);
+            if (foam != null)
+            {
+                if (scrub)
+                    foam.transform.position = mopTool.Point;
+                if (scrub != foamOn)
+                {
+                    foamOn = scrub;
+                    VfxManager.SetPlaying(foam, scrub);
+                }
+            }
+        }
+
+        // 물뿌리개 모델 앞쪽 위(주둥이)에 물줄기 — 루트 +Z가 주둥이 방향 (모델 +Z = 앞)
+        private void AttachStream()
+        {
+            streamOn = false;
+            if (!(shown is WateringCanData) || model == null)
+                return;
+            var renderers = model.GetComponentsInChildren<Renderer>();
+            if (renderers.Length == 0)
+                return;
+            var b = renderers[0].bounds;
+            foreach (var r in renderers)
+                b.Encapsulate(r.bounds);
+            var anchor = new GameObject("Spout").transform;
+            anchor.SetParent(model.transform, false);
+            // 월드 경계 → 모델 로컬: 앞(+Z) 끝, 위쪽 70% 높이
+            Vector3 front = model.transform.InverseTransformPoint(b.center + model.transform.forward * Vector3.Dot(b.extents, Abs(model.transform.forward)));
+            Vector3 top = model.transform.InverseTransformPoint(b.center + Vector3.up * b.extents.y * 0.4f);
+            anchor.localPosition = new Vector3(front.x, top.y, front.z);
+            anchor.localRotation = Quaternion.identity;
+            stream = VfxManager.Attach(VfxCues.WaterStream, anchor);
+        }
+
+        private static Vector3 Abs(Vector3 v) => new Vector3(Mathf.Abs(v.x), Mathf.Abs(v.y), Mathf.Abs(v.z));
+
+        private void OnDestroy()
+        {
+            if (foam != null)
+                Destroy(foam);
+        }
+
         // ── 모델 ───────────────────────────────────────────
 
         private void Show(ItemData item)
@@ -269,6 +337,11 @@ namespace NevrianGlowFarm.Systems.Player
             if (item == shown && model != null)
                 return;
             shown = item;
+            if (foamOn)
+            {
+                foamOn = false;
+                VfxManager.SetPlaying(foam, false);
+            }
             if (model != null)
                 Destroy(model);
             model = null;
@@ -293,6 +366,7 @@ namespace NevrianGlowFarm.Systems.Player
                 Destroy(c);
             foreach (var r in model.GetComponentsInChildren<Renderer>())
                 r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            AttachStream();
             equipStart = Time.time;
         }
 

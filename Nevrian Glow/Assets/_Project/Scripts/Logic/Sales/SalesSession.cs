@@ -17,18 +17,21 @@ namespace NevrianGlowFarm.Logic.Sales
         private readonly int firstWanted;
         private readonly double extraChance;
         private readonly int extraMax;
+        private readonly int everyWanted;
         private int baskets;
 
         /// <param name="firstWanted">첫 손님이 사는 개수 고정 (1일차 첫 손님 2개, 0 = 무작위)</param>
         /// <param name="extraChance">손님마다 1개 더 살 확률 (단골의 장바구니)</param>
         /// <param name="extraMax">1개 더 사도 넘지 않는 개수</param>
-        public SalesSession(int customerCount, SalesSpec spec, int firstWanted = 0, double extraChance = 0, int extraMax = 0)
+        /// <param name="everyWanted">모든 손님이 사려는 개수 고정 (튜토리얼 고정값 "진열된 것 모두 구매" — 진열 수를 넘기면 다 산다, 0 = 무작위)</param>
+        public SalesSession(int customerCount, SalesSpec spec, int firstWanted = 0, double extraChance = 0, int extraMax = 0, int everyWanted = 0)
         {
             this.spec = spec;
             Total = Math.Max(0, customerCount);
             this.firstWanted = Math.Max(0, firstWanted);
             this.extraChance = Math.Max(0, extraChance);
             this.extraMax = Math.Max(spec.PurchaseMax, extraMax);
+            this.everyWanted = Math.Max(0, everyWanted);
         }
 
         /// <summary>다음 손님이 사려는 개수 (손님 하나에 한 번 — 장바구니를 채울 때 부른다).</summary>
@@ -37,6 +40,8 @@ namespace NevrianGlowFarm.Logic.Sales
             baskets++;
             if (baskets == 1 && firstWanted > 0)
                 return firstWanted;
+            if (everyWanted > 0)
+                return everyWanted;
             return SalesRules.WithExtra(SalesRules.WantedCount(random, spec), extraChance, extraMax, random);
         }
 

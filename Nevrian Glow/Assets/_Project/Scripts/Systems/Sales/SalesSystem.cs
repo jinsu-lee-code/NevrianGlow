@@ -50,7 +50,7 @@ namespace NevrianGlowFarm.Systems.Sales
     /// 매출은 계산 때 달러에 더한다. 모든 손님이 나가면(또는 Space 건너뛰기 · 시간 초과) 경험치를 더하고 정산 단계로 넘긴다.
     /// 건너뛰기 = 가게 안 손님은 지금 사고 내고, 아직 안 온 손님은 같은 함수로 즉시 처리.
     /// </summary>
-    public class SalesSystem : MonoBehaviour
+    public class SalesSystem : MonoBehaviour, Tutorial.ITutorialHighlightSource
     {
         private const int PurchasePurpose = 2; // 손님 구매용 난수 흐름 (청소 배치 = 3)
         private const int CustomerPurpose = 5; // 손님 종류 · 서는 자리용 난수 흐름
@@ -163,6 +163,7 @@ namespace NevrianGlowFarm.Systems.Sales
             GameEvents.DayChanged += OnDayChanged;
             if (skipAction != null)
                 skipAction.action.Enable();
+            Tutorial.TutorialHighlights.Register(this);
         }
 
         private void OnDisable()
@@ -170,6 +171,23 @@ namespace NevrianGlowFarm.Systems.Sales
             GameEvents.PhaseChanged -= OnPhaseChanged;
             GameEvents.DayChanged -= OnDayChanged;
             PlayerInputGate.ReleaseWorld(this);
+            Tutorial.TutorialHighlights.Unregister(this);
+        }
+
+        // 튜토리얼 강조 (5-7): customers = 가게 안 첫 손님, customer_<id> = 그 종류의 손님 (없으면 첫 손님)
+        public bool TryGetHighlight(string name, string arg, out Tutorial.HighlightHit hit)
+        {
+            hit = default;
+            if (!name.StartsWith("customer") || customers.Count == 0)
+                return false;
+            CustomerAI pick = null;
+            foreach (var c in customers)
+                if (c != null && (pick == null || (c.Data != null && c.Data.Id == name)))
+                    pick = c;
+            if (pick == null)
+                return false;
+            hit = Tutorial.HighlightHit.At(pick.transform.position + Vector3.up * ((pick.Data != null ? pick.Data.Height : 1.6f) + 0.9f));
+            return true;
         }
 
         // 새 게임(1일차 알림)이면 모델을 처음으로. 불러오기는 이 다음 LoadFrom이 덮는다.
@@ -205,14 +223,22 @@ namespace NevrianGlowFarm.Systems.Sales
             double clean = CleaningSystem.Instance != null ? CleaningSystem.Instance.CurrentCleanliness() : 1.0;
             todayCleanliness = clean;
             todayTidiness = CleaningSystem.Instance != null ? CleaningSystem.Instance.CurrentTidiness() : 1.0;
+            // 튜토리얼 고정값 (5-7, 기획 튜토리얼 2절 — 진행 중인 날만): 무작위 끔(가운데 값) · 2일차부터 손님 수 고정 · 손님마다 진열된 것을 모두 구매
+            bool tutorial = Systems.Tutorial.TutorialSystem.IsActive;
             var countRandom = new SeededRandom(SeededRandom.SeedFor(seed, CountPurpose, today));
-            int count = model.TodayCount(today, clean, settings.FurnitureSpots, countRandom.NextDouble(), customerSpec);
+            double unit = tutorial && settings.TutorialRandomOff ? 0.5 : countRandom.NextDouble();
+            int count = model.TodayCount(today, clean, settings.FurnitureSpots, unit, customerSpec);
+            if (tutorial && today > 1 && settings.TutorialCustomers > 0)
+                count = settings.TutorialCustomers;
             double extra = StatSystem.Apply(extraBuyStat, 0.0); // 단골의 장바구니
-            session = new SalesSession(count, spec, today <= 1 ? settings.Day1FirstBuy : 0, extra, settings.PurchaseExtraMax);
-            purchaseRandom = new SeededRandom(SeededRandom.SeedFor(seed, PurchasePurpose, today));
-            customerRandom = new SeededRandom(SeededRandom.SeedFor(seed, CustomerPurpose, today));
             CollectTypes(today);
             CollectShelves();
+            // 모두 구매: 설정이 켜져 있거나, 오늘 튜토리얼이 레벨업을 안내하면(2일차 월광 4개 모두 → 누적 108 ≥ 100) 손님마다 진열 수만큼 사려 한다
+            bool buyAll = (tutorial && settings.TutorialBuyAll) || Systems.Tutorial.TutorialSystem.RequiredToday(Logic.Tutorial.TutorialEvents.LeveledUp) > 0f;
+            int everyWanted = buyAll ? Mathf.Max(1, DisplayedCount()) : 0;
+            session = new SalesSession(count, spec, today <= 1 ? settings.Day1FirstBuy : 0, extra, settings.PurchaseExtraMax, everyWanted);
+            purchaseRandom = new SeededRandom(SeededRandom.SeedFor(seed, PurchasePurpose, today));
+            customerRandom = new SeededRandom(SeededRandom.SeedFor(seed, CustomerPurpose, today));
             elapsed = 0f;
             spawnedNumber = 0;
             lastResult = null;
@@ -286,6 +312,7 @@ namespace NevrianGlowFarm.Systems.Sales
             Debug.Log($"[SalesSystem] {day}일차 장사 끝{(skipped ? " (건너뛰기)" : "")}: 손님 {result.Customers}명 (구매 {result.Buyers} · 빈손 {result.EmptyHanded}) · 판매 {result.ItemsSold}개 · 매출 {result.Revenue}달러 · 만족도 {model.Satisfaction:P0}");
             UpdateDebugView();
             Finished?.Invoke(result);
+            GameEvents.RaiseSalesFinished();
             if (advancePhase && GameManager.Instance != null && GameManager.Instance.Phase == DayPhase.Sales)
                 GameManager.Instance.AdvancePhase();
         }

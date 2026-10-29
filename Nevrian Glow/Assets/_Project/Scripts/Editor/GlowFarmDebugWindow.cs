@@ -31,6 +31,8 @@ namespace NevrianGlowFarm.Editor
         {
             DrawGameSection();
             EditorGUILayout.Space();
+            DrawTutorialSection();
+            EditorGUILayout.Space();
             DrawSaveSection();
             EditorGUILayout.Space();
             DrawFarmSection();
@@ -44,6 +46,38 @@ namespace NevrianGlowFarm.Editor
             DrawHotbarSection();
             EditorGUILayout.Space();
             DrawLogSection();
+        }
+
+        // 튜토리얼 (5-7): 현재 단계 · 진행, 건너뛰기 · 끄기 · 처음부터
+        private void DrawTutorialSection()
+        {
+            EditorGUILayout.LabelField("튜토리얼 (TutorialSystem)", EditorStyles.boldLabel);
+            var tutorial = Systems.Tutorial.TutorialSystem.Instance;
+            if (!Application.isPlaying || tutorial == null)
+            {
+                EditorGUILayout.HelpBox("플레이 중 Core 씬의 TutorialSystem이 있으면 현재 단계가 보인다 (없으면 Glow Farm/Setup/Create Tutorial HUD).", MessageType.None);
+                return;
+            }
+            var step = tutorial.Current;
+            EditorGUILayout.LabelField("상태", tutorial.Status.ToString());
+            if (step != null)
+            {
+                EditorGUILayout.LabelField("단계", $"{step.Id} ({step.Day}일차 {step.Phase})");
+                EditorGUILayout.LabelField("문구", step.Text);
+                EditorGUILayout.LabelField("완료", $"{step.CompleteEvent} — {tutorial.Progress.CurrentProgress:0.##} / {step.Condition.Threshold:0.##}");
+                EditorGUILayout.LabelField("잠금", string.IsNullOrEmpty(step.LocksText) ? "-" : step.LocksText);
+            }
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                using (new EditorGUI.DisabledScope(step == null))
+                    if (GUILayout.Button("이 단계 건너뛰기"))
+                        tutorial.DebugSkip();
+                using (new EditorGUI.DisabledScope(!tutorial.IsRunning))
+                    if (GUILayout.Button("끄기"))
+                        tutorial.DebugTurnOff();
+                if (GUILayout.Button("오늘 첫 단계부터"))
+                    tutorial.DebugRestart();
+            }
         }
 
         // 저장 (SaveSystem 6-1) — 타이틀 "이어하기"(5-6) 전까지 불러오기는 여기서. 자동 저장은 다음 날 아침마다.

@@ -91,6 +91,9 @@ namespace NevrianGlowFarm.Systems.Player
                 AudioManager.Play(SoundCues.UiToolSwitch);
                 SelectionChanged?.Invoke(selectedIndex);
             }
+            // 같은 칸을 다시 눌러도 "들었다"고 알린다 (튜토리얼 '1번을 눌러 괭이를 들어요' — 이미 든 채로 눌러도 되게)
+            if (index >= 0 && index < SlotCount)
+                NotifySelected();
         }
 
         /// <summary>한 칸 옮긴다 (양수 = 다음 칸). 끝에서는 반대쪽으로 돈다.</summary>
@@ -100,7 +103,14 @@ namespace NevrianGlowFarm.Systems.Player
             {
                 AudioManager.Play(SoundCues.UiToolSwitch);
                 SelectionChanged?.Invoke(selectedIndex);
+                NotifySelected();
             }
+        }
+
+        private void NotifySelected()
+        {
+            var item = SelectedItem;
+            GameEvents.RaiseHotbarSelected(item != null ? item.Id : null);
         }
 
         /// <summary>인벤토리 전체(핫바 → 가방)에 넣을 자리가 있는지.</summary>

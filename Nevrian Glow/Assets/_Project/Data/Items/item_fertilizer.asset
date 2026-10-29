@@ -17,4 +17,6 @@ MonoBehaviour:
   maxStack: 10
   canStore: 1
   heldPrefab: {fileID: 3949658059559800661, guid: e8a54fdf4c4812f4b8ff640248bd9e8b, type: 3}
+  worldModels: []
+  icon: {fileID: 21300000, guid: 9089e771d1ccba6498c593df51fccc0d, type: 3}
   growDaysReduction: 1

@@ -14,15 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.CropData
   id: crop_lanternfruit
   displayName: "\uB4F1\uBD88 \uC5F4\uB9E4"
+  description: 
   maxStack: 10
   canStore: 1
   heldPrefab: {fileID: 0}
+  worldModels:
+  - {fileID: 3182790750206005959, guid: b2e70a658e0020743af27647902da76c, type: 3}
+  icon: {fileID: 21300000, guid: 927dfcf769bd4564188b42ae59878c80, type: 3}
   greyboxColor: {r: 1, g: 0.8235294, b: 0.47843137, a: 1}
   stagePrefabs:
   - {fileID: 6492855999298447309, guid: 31666e8d0b5f8804aaa72bdde3f9bbbd, type: 3}
   - {fileID: 968485363519860326, guid: e4344ef0487ceb644890191b9b6de82e, type: 3}
   - {fileID: 8912540618261724665, guid: f7147c0a18e8d5c46a1e0ca72a7d1988, type: 3}
   - {fileID: 296768963799598503, guid: b984b51ec6abe1748bba54fc1a3ee5bc, type: 3}
+  modelScale: 1
   seedPrice: 70
   sellPrice: 110
   growDays: 6

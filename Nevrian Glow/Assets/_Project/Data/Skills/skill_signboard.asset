@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.SkillData
   id: skill_signboard
   displayName: "\uAC04\uD310"
+  description: "\uAD11\uACE0 \uACC4\uC218 p\uAC00 \uB2E8\uACC4\uB9C8\uB2E4 +0.01
+    (\uC18C\uBB38 \uC5C6\uC774 \uCC3E\uC544\uC624\uB294 \uC190\uB2D8 \uC99D\uAC00)"
   tab: "\uB9E4\uC7A5 \uC6B4\uC601"
   tabOrder: 2
   order: 102

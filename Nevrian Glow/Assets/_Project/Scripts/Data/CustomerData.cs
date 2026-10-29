@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace NevrianGlowFarm.Data
@@ -36,7 +37,27 @@ namespace NevrianGlowFarm.Data
         [Tooltip("이 일차부터 등장 (일)")]
         [SerializeField, Min(1)] private int unlockDay = 1;
 
+        [Header("대사 — 튜토리얼 진행 중 머리 위 말풍선 (기획 튜토리얼 4 · 5절, 게임 화면 글자 - '—' 쓰지 않음)")]
+        [Tooltip("들어올 때 — 일차 순서(1일차, 2일차, …), 모자라면 마지막 줄. 비우면 말 없음")]
+        [SerializeField] private List<string> enterLines = new List<string>();
+        [Tooltip("장바구니에 담을 때 (비우면 말 없음)")]
+        [SerializeField, TextArea(1, 2)] private string buyLine;
+        [Tooltip("나갈 때 (비우면 말 없음)")]
+        [SerializeField, TextArea(1, 2)] private string leaveLine;
+
         public GameObject Prefab => prefab;
+        public IReadOnlyList<string> EnterLines => enterLines;
+        public string BuyLine => buyLine;
+        public string LeaveLine => leaveLine;
+
+        /// <summary>그 일차의 들어올 때 대사 (없으면 null).</summary>
+        public string EnterLineFor(int day)
+        {
+            if (enterLines.Count == 0)
+                return null;
+            string line = enterLines[Mathf.Clamp(day - 1, 0, enterLines.Count - 1)];
+            return string.IsNullOrWhiteSpace(line) ? null : line;
+        }
         public CustomerBodySize BodySize => bodySize;
         public Color GreyboxColor => greyboxColor;
         public Vector3 BasketSocketOffset => basketSocketOffset;
