@@ -134,6 +134,49 @@
 | `Environment/Shaders/{PaintBrush,AerialPerspective}.shader` + `Materials_PP/mat_pp_{paint_brush,aerial_perspective}.mat` + `DeepBlue/Textures/tex_pp_lut_bg.png` | 10/29. 배경 후처리. **붓질**: 일반화 Kuwahara(4사분면 × 4 × 4 탭, 가장 잔잔한 쪽을 상대 분산으로 고름), 반경 2.5 px(1080p 기준), 가까이 0.5 → 90 m 0.2(처음 3.5 px · 0.85 → 0.35는 풀잎 하이라이트 · 작은 꽃이 묻혀서 낮춤), 하늘 · HDR 발광(휘도 1.1↑) 제외. **거리별 색**: 30 → 220 m 안개색 (0.36, 0.32, 0.58) 쪽으로 최대 40 %, 명암 70 % 유지, 380 ~ 520 m부터 0(구름 메시 보호), 10 m 안 6 % 진하게 · 10 % 채도. 둘 다 `PC_Renderer` 후처리 직전, 거리별 색 → 붓질 → 화면 외곽선 → 별빛 글레어 순, 카메라가 상점 박스 안이면 꺼짐. **LUT**: 32 단계 스트립(1024 × 32, sRGB 끔 · 압축 없음), 생성 스크립트로 구움 — 명암 S커브(0.42 기준, 양 끝 고정), 그늘 남보라 · 밝은 곳 살구 4 ~ 5 %, 보라 · 파랑 중간톤 채도 −4 %, 주황 +12 %, 시안 +10 %. `VP_DeepBlue` · `VP_DeepBlue_Day` 둘 다 Color Lookup 1(밤낮 고정), `VP_Shop_Interior`는 0 |
 | `tree_bg/Materials/mat_env_tree_bg_qt_leaf_{common,twisted}_{pink,orange,gold,teal,violet}.mat` | 10/29. 숲 잎 색 세트 5종 × 잎 모양 2종. 기본 잎 재질을 복사해 ToonLeaf 색 9개만 바꿈(`_Tint` 흰색). 분홍 끝 (1.0, 0.75, 0.88) · 주황 (1.0, 0.78, 0.55) · 금빛 (1.0, 0.92, 0.60) · 청록 (0.62, 1.0, 0.92) · 보라 (0.85, 0.75, 1.0), 뿌리는 각 색의 어두운 쪽, 그늘 · 수관 아래는 남보라 쪽. `BackGroundScene`의 `Forest_Groves` 430그루에 군락(7 m 연결)별로 배정, 시드 1029 — 다시 배정하려면 같은 규칙(군락 주색 + 12 % 확률 · 군락당 2그루까지 다른 색, 비율 21 · 21 · 21 · 21 · 16 %) |
 | `tree_bg/Textures/tex_env_tree_bg_qt_leaves_{common,twisted}_veinmask.png` + `tree_bg/Substance~/leaf_veins.sbs` | 10/29. 잎맥 마스크(선형 회색, BC4, 1024). Substance Designer 그래프 `leaf_veins`의 출력 `vein_mask_common` · `vein_mask_twisted`를 그대로 내보낸 것. 입력은 `leaf_space.py`가 원본 잎 텍스처 알파에서 뽑은 16비트 맵(`leaf_*_along` 밑동 0 → 끝 1, `leaf_*_across` 주맥 0 → 가장자리 1)과 알파. 무늬: 주맥 반폭 across 0.055 ~ 0.095(+ 끝으로 0.035 가늘어짐), 곁선 1쌍 = along − 0.35 × across가 0.33 ~ 0.37인 띠 × 주맥 가까이(across 0.36 ~ 0.52), 곁선 세기 70 %, 잎 가장자리 안쪽만, Clouds 2로 흔들림 1.2. ToonLeaf `_VeinMap`으로 연결, `qt_leaf` 재질 12개 `_VeinMapStrength` 0.32 · `_VeinMapNear` 9 m · `_VeinMapFar` 15 m. 바로 앞의 `_veined` 텍스처(밝게 구운 잎맥)는 지움 |
+| `Props/pot/Models/prop_pot_{grandma,small,hanging}.fbx` | 10/29. 상점 그레이박스 화분(유니티 기본 원기둥) 교체용 모델 3종. 크기는 지금 그레이박스 자리 그대로 — 할머니 화분 지름 0.70 × 높이 0.44 m(`BigPot` 2개), 바닥 작은 화분 0.36 × 0.30 m(`Pot` 4개), 걸이 화분 0.60 × 0.36 m(`Hanging/Planter_*/Pot` 4개). 각 252 tris, 피벗 바닥 가운데, 스케일 1, 위쪽 흙 홈. **재질 · 프리팹은 아직 없음**(모델만). 할머니 화분은 `GrandmaSleep`(잿빛 → 색)용이라 재질을 `ToonProp`으로 만들 예정 |
+| `Props/sign_open/Models/prop_sign_open.fbx` + `@opened` · `@close` · `@open` · `@sway` | 10/29. 하루 끝 연출용 걸이 OPEN/CLOSED 팻말(데모 스토리 「가게 문 닫기」). 아래 「걸이 팻말 Animator 맵핑」 참고. **재질 · 프리팹 · 배치는 아직 없음**(모델과 애니메이션만) |
+
+## 걸이 팻말 Animator 맵핑 (`Props/sign_open`, 10/29)
+
+### 구조 (FBX 계층, 루트 = 벽에 닿는 점)
+
+```
+prop_sign_open_hanger            걸이 막대 + 벽 핀 2개 (벽에 고정, 움직이지 않음)
+├ prop_sign_open_rope_loop_L/R   막대에 걸친 끈 고리 (고정)
+├ prop_sign_open_rope_L/R_upper  끈 윗조각 (위 끝 고정, 회전 · 길이만 바뀜)
+└ prop_sign_open_swing           흔들림 축 (막대 가운데)
+  ├ prop_sign_open_board         판 — 뒤집기(세로축 회전) + 3 cm 오르내림
+  │ ├ prop_sign_open_text_open   앞면 글자 (메이플스토리 Bold)
+  │ └ prop_sign_open_text_closed 뒷면 글자
+  └ prop_sign_open_rope_knee_L/R 끈이 X자로 꺾이는 점
+    └ prop_sign_open_rope_L/R_lower 끈 아랫조각
+```
+
+- 크기: 판 0.40 × 0.25 × 0.03 m, 걸이 폭 0.26 m, 끈 약 0.25 m, 전체 높이 약 0.38 m. 판 · 끈 · 걸이 합쳐 약 2,000 tris(글자 1,488 포함).
+- 재질 슬롯(FBX 이름만, 아직 임시 색): `mat_prop_sign_open_front` · `_back` · `_wood` · `_rope` · `_letters` · `_metal`. 끈은 `tex_rope_basecolor`(꼬임 AO를 구운 Base Color)를 쓸 예정.
+
+### 클립
+
+| 파일 | 길이 | 움직이는 것 | Loop |
+|---|---|---|---|
+| `prop_sign_open@opened.fbx` | 1프레임 | 정지 OPEN 자세 (기본 상태용) | 끔 |
+| `prop_sign_open@close.fbx` | 31프레임 / 24 fps ≈ 1.25초 | OPEN → CLOSED: 판 180° 회전(195°까지 넘어갔다 흔들리며 멈춤) + 3 cm 올라감, 끈이 가운데서 X자로 꼬임 | 끔 |
+| `prop_sign_open@open.fbx` | 31프레임 ≈ 1.25초 | CLOSED → OPEN: 반대 방향으로 돌아 꼬임이 풀림 + 3 cm 내려감 | 끔 |
+| `prop_sign_open@sway.fbx` | 72프레임 = 3초 | `swing`만 벽과 나란히 ±2.5° 왕복 (걸이 · 고리 · 끈 윗끝은 고정) | **켬** |
+
+- FBX Import: Rig = Generic, `@` 파일은 Avatar Definition = Copy From Other Avatar(`prop_sign_open`) 권장. `@sway`는 Animation 탭에서 **Loop Time 켬**.
+
+### Animator (농장 문 `ac_env_farm_door`와 같은 방식)
+
+| 항목 | 값 |
+|---|---|
+| 파라미터 | Bool **`IsClosed`** (기본 false) |
+| Base Layer | `Opened`(기본, `@opened`) → `Close`(`@close`, `IsClosed` = true, Has Exit Time 끔) → `Open`(`@open`, `IsClosed` = false, Has Exit Time 끔) → 다시 `Close` … 클립이 끝나면 마지막 자세 유지 |
+| 2번 레이어 `Sway` | **Blending = Additive**, Weight 1, 상태 하나(`@sway`, Loop). Additive라서 뒤집는 중에도 흔들림이 겹친다 |
+
+- 게임에서 부르는 곳(개발): 판매가 끝날 때 `SetBool("IsClosed", true)`, 다음 날 아침 `false`. 데모 스토리상 정산 창을 2–3초 늦게 띄우면 뒤집기가 보인다(선택).
+- 아직 남은 것(아트): 프리팹 `pf_prop_sign_open` + 컨트롤러, ToonProp 재질(남색 나무 · 발광 글자), 뒤집을 때 판이 벽 쪽(걸이 뒤)으로 최대 약 17 cm 들어가는 것 정리. 배치 위치는 나중에 정함.
 
 ## 이름을 안 바꾼 것
 
