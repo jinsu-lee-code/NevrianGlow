@@ -77395,6 +77395,64 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8922442108212626317, guid: eb161b48917d72f44bfd28f9f8c06842, type: 3}
   m_PrefabInstance: {fileID: 900434781}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &901603311
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 901603312}
+  - component: {fileID: 901603313}
+  m_Layer: 0
+  m_Name: MoonClock
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &901603312
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 901603311}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1568024062}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &901603313
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 901603311}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b973980a2cb6934985ab102c52cebaf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonClock
+  moon: {fileID: 741625004}
+  riseAzimuth: -55
+  setAzimuth: 55
+  peakElevation: 38
+  belowElevation: -10
+  shop: 0.08
+  farming: 0.32
+  cleanDisplay: 0.55
+  sales: 0.88
+  night: 1.12
+  glideSeconds: 5
+  salesSeconds: 60
+  preview: 0
+  previewT: 0.32
 --- !u!1001 &902838488
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -126728,6 +126786,7 @@ Transform:
   - {fileID: 600414472}
   - {fileID: 1795421279}
   - {fileID: 1392744140}
+  - {fileID: 901603312}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1568992820
