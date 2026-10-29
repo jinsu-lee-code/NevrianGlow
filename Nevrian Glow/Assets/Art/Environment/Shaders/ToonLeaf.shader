@@ -34,6 +34,11 @@ Shader "DSEWA/ToonLeaf"
         _CardNormal ("Card Facing Mix (each card catches its own light)", Range(0, 1)) = 0
         _LeafOutline ("Dark Outline Round Each Leaf (from alpha)", Range(0, 1)) = 0
         _LeafOutlineWidth ("Outline Width (alpha range)", Range(0.02, 0.5)) = 0.18
+        [Header(Vein Mask for painted leaf cards)]
+        _VeinMap ("Vein Mask (linear grey, Substance leaf_veins.sbs)", 2D) = "black" {}
+        _VeinMapStrength ("Vein Brighten (0 = off)", Range(0, 1)) = 0
+        _VeinMapNear ("Vein Full Until (m from camera)", Float) = 8
+        _VeinMapFar ("Vein Gone From (m from camera)", Float) = 16
         [Header(Vein)]
         _VeinColor ("Midrib Color (multiply)", Color) = (0.55, 0.60, 0.95, 1)
         _VeinWidth ("Midrib Half Width (uv)", Range(0, 0.1)) = 0.028
@@ -95,12 +100,16 @@ Shader "DSEWA/ToonLeaf"
             half4 _Tint;
             half _Desaturation, _Brightness;
             half4 _CrownSkyColor, _CrownUnderColor, _CrownRimColor;
-            half _CrownSky, _CrownUnder, _CrownRim, _CrownRimWidth;
+            half _CrownSky, _CrownUnder, _CrownRim, _CrownRimWidth;
+
             half _WakeExempt;
+            half _VeinMapStrength;
+            float _VeinMapNear, _VeinMapFar;
         CBUFFER_END
 
         TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
         TEXTURE2D(_PaintMap); SAMPLER(sampler_PaintMap);
+        TEXTURE2D(_VeinMap); SAMPLER(sampler_VeinMap);
 
         // Whole-leaf sway about the pivot (the leaf base), stronger toward the tip, plus a small up/down flutter.
         float3 LeafBend(float3 positionWS, float4 color)
@@ -241,6 +250,15 @@ Shader "DSEWA/ToonLeaf"
                 color *= 1 - _LeafOutline * (1 - smoothstep(_Cutoff, _Cutoff + _LeafOutlineWidth, texC.a));
                 half3 paint = SAMPLE_TEXTURE2D(_PaintMap, sampler_PaintMap, i.uv).rgb;
                 color *= lerp(half3(1, 1, 1), paint * 2.0h, _PaintStrength);
+                // vein mask (2026-10-29, user: dense veins on every leaf can read as creepy / trypophobic): a midrib and one
+                // short pair of side strokes from the Substance graph, a little lighter in the leaf's own colour, and only on
+                // leaves near the camera, so the canopy stays clean colour shapes at a distance
+                if (_VeinMapStrength > 0)
+                {
+                    half vm = SAMPLE_TEXTURE2D(_VeinMap, sampler_VeinMap, i.uv).r;
+                    half vfade = 1 - smoothstep(_VeinMapNear, _VeinMapFar, distance(i.positionWS, _WorldSpaceCameraPos));
+                    color *= 1 + _VeinMapStrength * vm * vfade;
+                }
 
                 // Midrib: a line down u = 0.5, narrowing toward the tip, one-pixel anti-aliased.
                 float d = abs(i.uv.x - 0.5);

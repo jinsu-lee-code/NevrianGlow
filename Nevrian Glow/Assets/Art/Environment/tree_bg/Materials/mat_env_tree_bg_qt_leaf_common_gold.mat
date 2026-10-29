@@ -24,11 +24,15 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 4a7994f58c864c74b8b644950a57fe5c, type: 3}
+        m_Texture: {fileID: 2800000, guid: b24be98b00e493f429b6dea88d6e24d7, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _PaintMap:
         m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _VeinMap:
+        m_Texture: {fileID: 2800000, guid: 3aa59e443b792514ca298ac1ce1b198b, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
@@ -63,6 +67,9 @@ Material:
     - _TexDetailFloor: 0.45
     - _TexDetailMid: 0.48235294
     - _Threshold: 0.393
+    - _VeinMapFar: 15
+    - _VeinMapNear: 9
+    - _VeinMapStrength: 0.32
     - _VeinStrength: 0
     - _VeinTaper: 0.7
     - _VeinWidth: 0.028
