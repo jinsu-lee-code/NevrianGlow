@@ -27,10 +27,10 @@ Material:
     m_Floats:
     - _FadeEnd: 90
     - _FadeStart: 8
-    - _FarStrength: 0.35
+    - _FarStrength: 0.2
     - _GlowKeep: 1.1
-    - _NearStrength: 0.85
-    - _Radius: 3.5
+    - _NearStrength: 0.5
+    - _Radius: 2.5
     - _Sharpness: 8
     m_Colors: []
   m_BuildTextureStacks: []

@@ -10,10 +10,10 @@ Shader "Hidden/DSEWA/PaintBrush"
 {
     Properties
     {
-        _Radius ("Brush Radius (px at 1080p)", Range(1, 8)) = 3.5
+        _Radius ("Brush Radius (px at 1080p)", Range(1, 8)) = 2.5
         _Sharpness ("Pick Calmest Side", Range(1, 16)) = 8
-        _NearStrength ("Strength Near", Range(0, 1)) = 0.85
-        _FarStrength ("Strength Far", Range(0, 1)) = 0.35
+        _NearStrength ("Strength Near", Range(0, 1)) = 0.5
+        _FarStrength ("Strength Far", Range(0, 1)) = 0.2
         _FadeStart ("Near Until (m)", Float) = 8
         _FadeEnd ("Far From (m)", Float) = 90
         _GlowKeep ("Keep Glows Above (HDR luminance)", Float) = 1.1
