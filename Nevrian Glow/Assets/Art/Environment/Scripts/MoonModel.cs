@@ -72,8 +72,6 @@ public class MoonModel : MonoBehaviour
     static readonly int CloudParamsId = Shader.PropertyToID("_SkyCloudParams");
     static readonly int CloudSpeedId = Shader.PropertyToID("_PanoCloudSpeed");
     static readonly int CloudTintId = Shader.PropertyToID("_SkyCloudTint");
-    // moon on screen for the light-shaft pass (DSEWA/LightShafts): xy = viewport position, z = 1 while the moon is drawn
-    static readonly int MoonScreenId = Shader.PropertyToID("_DSEWA_MoonScreen");
     MaterialPropertyBlock mpb;
 
     static float EditorTime()
@@ -98,7 +96,6 @@ public class MoonModel : MonoBehaviour
 
     void OnBeginCamera(ScriptableRenderContext ctx, Camera cam)
     {
-        Shader.SetGlobalVector(MoonScreenId, Vector4.zero);   // no shafts unless the moon is drawn for this camera
         if (mesh == null || material == null || moonLight == null || cam.cameraType == CameraType.Preview) return;
         if (nightVolume != null && nightVolume.weight < visibleFrom) return;
 
@@ -122,8 +119,6 @@ public class MoonModel : MonoBehaviour
         // spin around the moon's own up axis (craters drift across the face)
         Quaternion rot = Quaternion.LookRotation(-d, Vector3.up) * Quaternion.Euler(0, time * spinSpeed, 0) * Quaternion.Euler(modelRotation);
         Matrix4x4 m = Matrix4x4.TRS(eye + dPos * distance, rot, Vector3.one * size) * Matrix4x4.Translate(-mesh.bounds.center);
-        Vector3 vp = cam.WorldToViewportPoint(eye + dPos * 1000f);
-        Shader.SetGlobalVector(MoonScreenId, new Vector4(vp.x, vp.y, vp.z > 0f ? 1f : 0f, 0f));
         float glow = 1f + glowPulse * Mathf.Sin(time * 2f * Mathf.PI / Mathf.Max(glowPeriod, 0.1f));
 
         // phase light: from the camera side, tilted towards the lit-side direction on screen
