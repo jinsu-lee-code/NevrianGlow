@@ -198,11 +198,12 @@ namespace NevrianGlowFarm.Editor
 
         // ── 확장 밭 자리 (수정사항 10/29: 해금되는 밭을 맵 곳곳에, 시작 밭과 같은 규격, 해금 전에는 울타리만, 걸어서 이동) ──
 
-        // 처음 만들 때의 자리 (2026-10-30 지형 조사: 평평하고 · 길 · 나무 · 바위 · 배경 소품이 없고 · 플레이 구역 안인 곳). 이미 있으면 씬의 자리를 그대로 둔다
+        // 처음 만들 때의 자리 (2026-10-30 지형 조사: 평평하고 · 나무 · 바위가 없고 · 울타리 전체가 아트 PlayAreaBounds 다각형 안(벽에서 1.3 m 이상)인 곳).
+        // 이미 있으면 씬의 자리를 그대로 둔다 — 옮길 때도 울타리가 플레이 구역 벽 밖으로 나가지 않게 (처음 자리 (-27, 0) · (-41, 0)은 벽 밖이라 걸어 들어갈 수 없었음)
         private static readonly (string Name, string Label, Vector3 Position, float Yaw)[] DefaultSites =
         {
-            ("FieldSite_1", "서쪽 밭", new Vector3(-27f, 0f, 0f), 270f),
-            ("FieldSite_2", "먼 서쪽 밭", new Vector3(-41f, 0f, 0f), 270f),
+            ("FieldSite_1", "서쪽 밭", new Vector3(-23f, 0f, 0f), 270f),
+            ("FieldSite_2", "남동쪽 밭", new Vector3(17f, 0f, -26f), 270f),
         };
 
         [MenuItem("Glow Farm/Setup/Build Farm Field Sites")]

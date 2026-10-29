@@ -22,10 +22,14 @@ namespace NevrianGlowFarm.Systems.Farm
         [SerializeField, Min(0f)] private float margin = 0.3f;
         [Tooltip("지형을 기다리는 최대 시간 (초)")]
         [SerializeField, Min(0f)] private float waitTimeout = 10f;
+        [Tooltip("열린 확장 밭(울타리 안)에서 숨기는 배경 소품(꽃 · 버섯 · 덤불)의 최대 크기 — 이보다 크거나 콜라이더가 있는 것은 그대로 (m)")]
+        [SerializeField, Min(0f)] private float propMaxSize = 4f;
 
         [Header("디버그")]
         [Tooltip("지운 풀 수 (읽기 전용)")]
         [SerializeField] private int clearedInstances;
+        [Tooltip("숨긴 배경 소품 수 (읽기 전용)")]
+        [SerializeField] private int hiddenProps;
 
         private Terrain terrain;
         private bool cloned;
@@ -79,9 +83,11 @@ namespace NevrianGlowFarm.Systems.Farm
                 rects.Add(new Rect(r.xMin - margin, r.yMin - margin, r.width + margin * 2f, r.height + margin * 2f));
             }
             // 열린 확장 밭(흩어진 밭, 수정사항 10/29)은 울타리 안 둘레 길까지
-            rects.AddRange(grid.OpenSiteGroundRects());
+            var sites = grid.OpenSiteGroundRects();
+            rects.AddRange(sites);
             if (rects.Count == 0)
                 return;
+            hiddenProps += HideProps(terrain.gameObject.scene, sites, propMaxSize);
 
             // 원본 에셋을 건드리지 않게 처음 한 번 사본으로 바꾼다 (지형 · 충돌 둘 다)
             if (!cloned)
@@ -143,6 +149,33 @@ namespace NevrianGlowFarm.Systems.Farm
                     td.SetDetailLayer(x0, y0, p, d);
             }
             return removed;
+        }
+
+        /// <summary>
+        /// 배경 씬에서 월드 x · z 사각형 안에 놓인 작은 소품(콜라이더 없는 MeshRenderer — 꽃 · 버섯 · 덤불)을 숨긴다. 숨긴 수.
+        /// 확장 밭 자리가 플레이 구역 안 소품 위에 놓여서(2026-10-30) 열린 밭 칸 사이로 소품이 솟지 않게. 아트 씬 · 에셋은 그대로, 실행 중 렌더러만 끈다.
+        /// </summary>
+        internal static int HideProps(UnityEngine.SceneManagement.Scene scene, List<Rect> rects, float maxSize)
+        {
+            if (rects.Count == 0 || !scene.IsValid())
+                return 0;
+            int hidden = 0;
+            foreach (var root in scene.GetRootGameObjects())
+                foreach (var r in root.GetComponentsInChildren<MeshRenderer>())
+                {
+                    var b = r.bounds;
+                    if (!r.enabled || b.size.x > maxSize || b.size.z > maxSize || r.GetComponentInParent<Collider>() != null)
+                        continue;
+                    var p = new Vector2(b.center.x, b.center.z);
+                    foreach (var rect in rects)
+                        if (rect.Contains(p))
+                        {
+                            r.enabled = false;
+                            hidden++;
+                            break;
+                        }
+                }
+            return hidden;
         }
 
         // 밭이 있는 지형 (배경 씬이 Additive로 올라온 뒤)
