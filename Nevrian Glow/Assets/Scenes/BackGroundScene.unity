@@ -7592,9 +7592,10 @@ MonoBehaviour:
   edgeBand: 0.5
   centerOnLighthouse: 1
   stageRadii:
-  - 0
+  - 16
   - 50
   - 110
+  farmAwakeRadius: 27
   fullRadius: 360
   waveSeconds: 3
   heartWaveSeconds: 5
@@ -76626,6 +76627,7 @@ Transform:
   - {fileID: 2042033816}
   - {fileID: 595153496}
   - {fileID: 74603627}
+  - {fileID: 1382929718}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &853376399
@@ -116465,6 +116467,52 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6428874319275476398, guid: 72c95febf4b98e34dae716e903ff5cff, type: 3}
   m_PrefabInstance: {fileID: 1382415873}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1382929717
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1382929718}
+  - component: {fileID: 1382929719}
+  m_Layer: 0
+  m_Name: InteractHighlight
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1382929718
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1382929717}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 851025529}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1382929719
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1382929717}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a8246ec15dec5842998f0e85a4d0bde, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractHighlight
+  outlineMaterial: {fileID: 2100000, guid: 8060fa4fe07cf9247bd1c34eed2aa79f, type: 2}
+  maxRendererSize: 6
 --- !u!1001 &1383839544
 PrefabInstance:
   m_ObjectHideFlags: 0

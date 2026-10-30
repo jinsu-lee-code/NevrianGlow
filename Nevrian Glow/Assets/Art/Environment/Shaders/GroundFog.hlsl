@@ -24,11 +24,16 @@ float WorldWakeDistance(float3 positionWS)
 }
 
 // 0 = inside the coloured area, 1 = outside (asleep); 0 everywhere while off
+float4 _DSEWA_WakeFarm;     // xy = farm (x, z), z = always-awake radius round the farm (m, 0 = none)
 float WorldWakeOutside(float3 positionWS)
 {
     if (_DSEWA_WakeParams.z < 0.5) return 0;
     float soft = max(_DSEWA_WakeParams.y, 0.01);
-    return smoothstep(_DSEWA_WakeParams.x - soft, _DSEWA_WakeParams.x + soft, WorldWakeDistance(positionWS));
+    float o = smoothstep(_DSEWA_WakeParams.x - soft, _DSEWA_WakeParams.x + soft, WorldWakeDistance(positionWS));
+    // the farmland is never grey (2026-10-30, user)
+    if (_DSEWA_WakeFarm.z > 0)
+        o = min(o, smoothstep(_DSEWA_WakeFarm.z - soft, _DSEWA_WakeFarm.z + soft, distance(positionWS.xz, _DSEWA_WakeFarm.xy)));
+    return o;
 }
 
 // The fog lifts with the grey (2026-10-30, user: "clear the fog together with the grey zone"): inside the coloured
@@ -60,7 +65,7 @@ half3 ApplyWorldWakeBand(half3 color, float3 positionWS, half bandScale)
     if (_DSEWA_WakeParams.z < 0.5) return color;
     float soft = max(_DSEWA_WakeParams.y, 0.01);
     float d = WorldWakeDistance(positionWS);
-    float outside = smoothstep(_DSEWA_WakeParams.x - soft, _DSEWA_WakeParams.x + soft, d);
+    float outside = WorldWakeOutside(positionWS);   // farm circle included
     half lum = dot(color, half3(0.299, 0.587, 0.114));
     half3 res = lerp(color, lum * half3(0.78, 0.82, 0.95) * 0.72, outside);
     float bandW = _DSEWA_WakeBand.a > 0 ? _DSEWA_WakeBand.a : 1.0;

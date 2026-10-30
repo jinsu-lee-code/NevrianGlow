@@ -52,6 +52,8 @@ public class WorldAwakening : MonoBehaviour
     public bool centerOnLighthouse = true;
     [Tooltip("Coloured radius round the lighthouse per stage: dark / floor 1 / floor 2 (m). The heart wave runs to Full Radius")]
     public float[] stageRadii = { 0f, 50f, 110f };
+    [Tooltip("Always awake round the farm (2026-10-30, user: the farmland is never grey): circle round Farm Centre (m, 0 = off)")]
+    public float farmAwakeRadius = 21f;
     [Tooltip("Heart (ending): the last wave runs this far, then the effect switches off")]
     public float fullRadius = 360f;
     [Tooltip("Seconds for a wave to reach its stage's edge (planner: lighthouse_restore_wave_time 3)")]
@@ -84,6 +86,7 @@ public class WorldAwakening : MonoBehaviour
     [Range(0f, 1f)] public float particlesAsleep = 0.2f;
 
     static readonly int WakeAId = Shader.PropertyToID("_DSEWA_WakeA");
+    static readonly int WakeFarmId = Shader.PropertyToID("_DSEWA_WakeFarm");
     static readonly int WakeParamsId = Shader.PropertyToID("_DSEWA_WakeParams");
     static readonly int WakeBandId = Shader.PropertyToID("_DSEWA_WakeBand");
 
@@ -170,6 +173,7 @@ public class WorldAwakening : MonoBehaviour
     {
         Shader.SetGlobalVector(WakeParamsId, Vector4.zero);
         Shader.SetGlobalVector(WakeBandId, Vector4.zero);
+        Shader.SetGlobalVector(WakeFarmId, Vector4.zero);
         radiusNow = -1f; stageNow = -1; waveT = 1f;
         foreach (var r in lakeRenderers) if (r != null) r.SetPropertyBlock(null);
         for (int i = 0; i < particles.Length; i++)
@@ -189,6 +193,7 @@ public class WorldAwakening : MonoBehaviour
         Vector3 lh = lighthouse != null ? lighthouse.transform.position : farmCenter;
         Vector3 from = centerOnLighthouse ? lh : farmCenter;
         Shader.SetGlobalVector(WakeAId, new Vector4(from.x, from.z, lh.x, lh.z));
+        Shader.SetGlobalVector(WakeFarmId, new Vector4(farmCenter.x, farmCenter.z, Mathf.Max(0f, farmAwakeRadius), 0f));
         float band = edgeBand, bandWidth = 1f;
         bool on;
         if (centerOnLighthouse)
@@ -256,7 +261,8 @@ public class WorldAwakening : MonoBehaviour
                 if (show && gated)
                 {
                     Vector3 fp = f.go.transform.position;
-                    show = Vector2.Distance(new Vector2(fp.x, fp.z), new Vector2(lh.x, lh.z)) <= radiusNow - vfxMargin;
+                    show = Vector2.Distance(new Vector2(fp.x, fp.z), new Vector2(lh.x, lh.z)) <= radiusNow - vfxMargin
+                        || (farmAwakeRadius > 0f && Vector2.Distance(new Vector2(fp.x, fp.z), new Vector2(farmCenter.x, farmCenter.z)) <= farmAwakeRadius - vfxMargin);
                 }
                 ShowAreaFx(ref f, show);
                 areaFx[i] = f;
