@@ -11,7 +11,8 @@ using UnityEngine.UI;
 /// New-game intro (lighthouse spec v2 section 3, reworked 2026-10-30, user: the flyover "looks like a battle intro" -
 /// farming games open on a quiet arrival, so: fade out, fade in, slowly getting lighter). A few still shots of the grey
 /// farm, each fading in from black, drifting a little and fading out (the shots are the child transforms named
-/// "Shot.."; the camera looks along their blue axis) -> the last fade-in is slow and lands on the player's eyes ->
+/// "Shot.."; the camera looks along their blue axis; a shot with an "End" child moves to that framing instead of drifting -
+/// the tower shot tilts up to the heart) -> the last fade-in is slow and lands on the player's eyes ->
 /// letter 1 opens. New game only; any key jumps to the last fade-in. No shots = only the slow fade-in on the player.
 /// Hooks into the game without changing game code: it is a GameScreen, so while it plays the player input is locked
 /// and no other screen opens - the title's "open letter 1" waits and is opened here at the end. Continue also raises
@@ -28,6 +29,7 @@ public class IntroDirector : GameScreen
     [Tooltip("Per shot: held after the fade in")] public float shotHold = 2.2f;
     [Tooltip("Per shot: fade out to black")] public float shotFadeOut = 1.2f;
     [Tooltip("Metres each shot drifts along its view (a slow push, so the still is alive)")] public float shotDrift = 1.2f;
+    [Tooltip("A shot with an 'End' child (it moves to that framing) is held this many extra Shot Holds longer")] public float endHoldExtra = 1f;
     [Tooltip("Last fade-in, on the player's eyes - slow, 'slowly getting lighter'")] public float finalFadeIn = 3f;
     public float fieldOfView = 50f;
     [Tooltip("Keys are ignored this long after the start, so the click that started the game does not skip it")] public float skipAfter = 0.6f;
@@ -101,10 +103,17 @@ public class IntroDirector : GameScreen
             for (int i = 0; i < shots.Count && !skip; i++)
             {
                 var s = shots[i];
-                for (float t = 0f; t < len && !skip; t += Time.unscaledDeltaTime)
+                var end = s.Find("End");   // optional: the shot moves from its own framing to this one (e.g. tilting up the tower)
+                float shotLen = end != null ? len + shotHold * endHoldExtra : len;
+                for (float t = 0f; t < shotLen && !skip; t += Time.unscaledDeltaTime)
                 {
-                    cam.transform.SetPositionAndRotation(s.position + s.forward * shotDrift * (t / len), s.rotation);
-                    float lit = Mathf.Min(Mathf.Clamp01(t / shotFadeIn), Mathf.Clamp01((len - t) / shotFadeOut));
+                    if (end != null)
+                    {
+                        float k = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((t - shotFadeIn * 0.5f) / (shotLen - shotFadeIn * 0.5f - shotFadeOut)));
+                        cam.transform.SetPositionAndRotation(Vector3.Lerp(s.position, end.position, k), Quaternion.Slerp(s.rotation, end.rotation, k));
+                    }
+                    else cam.transform.SetPositionAndRotation(s.position + s.forward * shotDrift * (t / shotLen), s.rotation);
+                    float lit = Mathf.Min(Mathf.Clamp01(t / shotFadeIn), Mathf.Clamp01((shotLen - t) / shotFadeOut));
                     SetBlack(1f - Mathf.SmoothStep(0f, 1f, lit));
                     skip = Skipped();
                     yield return null;
