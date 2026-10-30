@@ -3,7 +3,32 @@ guid: 9b3a4e13eb96c77469829757fc71596b
 ModelImporter:
   serializedVersion: 24300
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: mat_prop_sign_open_back
+    second: {fileID: 2100000, guid: 6ef159cfab3e4e641a31fcc7536d8c42, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: mat_prop_sign_open_front
+    second: {fileID: 2100000, guid: 33be771c21460864c8a3d209a1c0e8a8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: mat_prop_sign_open_letters
+    second: {fileID: 2100000, guid: 66224ebc90f7e004a8f22b049e310302, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: mat_prop_sign_open_rope
+    second: {fileID: 2100000, guid: 363a4e10d52e27a4aafd1b5b206243fd, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: mat_prop_sign_open_wood
+    second: {fileID: 2100000, guid: 5fe0df2ddf6ca6a4ab3858473c938c0d, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0

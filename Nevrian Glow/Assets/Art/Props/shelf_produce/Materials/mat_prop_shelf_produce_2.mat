@@ -41,14 +41,21 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _AlbedoSteps: 0
     - _AmbientStrength: 0.7
     - _BumpScale: 1
+    - _CavityCut: 0
+    - _EdgeBreakup: 0
+    - _EdgeNoiseScale: 9
     - _GlossSize: 0.06
     - _GlossSoftness: 0.04
     - _GlossStrength: 0
+    - _GlowNoShadow: 1
     - _HeightGrad: 0.5
     - _HeightTopLift: 0.32
     - _LightColorAmount: 0.3
+    - _MidBand: 0
+    - _MidTone: 0.55
     - _OcclusionDirect: 0.8
     - _OcclusionStrength: 1
     - _OutlineWidth: 0.006
@@ -67,6 +74,8 @@ Material:
     - _ShadowBlur: 1.5
     - _ShadowSaturation: 1.3
     - _Softness: 0.08
+    - _TermStrength: 0
+    - _TermWidth: 0.08
     - _TexGlowSoftness: 0.2
     - _TexGlowStrength: 2
     - _TexGlowThreshold: 0.3
@@ -83,6 +92,7 @@ Material:
     - _RimColor: {r: 1, g: 0.82, b: 0.6, a: 1}
     - _ShadowTint: {r: 0.56, g: 0.54, b: 0.86, a: 1}
     - _SkyColor: {r: 0.88, g: 0.9, b: 1, a: 1}
+    - _TermColor: {r: 0.95, g: 0.45, b: 0.54999995, a: 1}
     - _TexGlowPulse: {r: 0.7, g: 1.2, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

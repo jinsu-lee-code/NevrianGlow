@@ -50,6 +50,7 @@ Material:
     - _GlossSize: 0.06
     - _GlossSoftness: 0.04
     - _GlossStrength: 0
+    - _GlowNoShadow: 1
     - _HeightGrad: 0.5
     - _HeightTopLift: 0.32
     - _LightColorAmount: 0.3

@@ -25,7 +25,8 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _DetailKeep: 0.7
+    - _CloudRayBoost: 2
+    - _DetailKeep: 0.5
     - _GlowKeep: 1.1
     - _HazeAmount: 0.4
     - _HazeCurve: 1.2
@@ -34,14 +35,43 @@ Material:
     - _HazeSideSpread: 2
     - _HazeStart: 30
     - _HazeSunAmount: 1
-    - _NearDeepen: 0.06
-    - _NearEnd: 10
-    - _NearSaturate: 0.1
-    - _SkyFrom: 380
-    - _SkyFull: 520
+    - _LayerColAmount: 0.7
+    - _LayerDesat: 0.2
+    - _LayerMode: 0
+    - _LayerSoft: 0.22
+    - _MistAmount: 0.75
+    - _MistBase: -1
+    - _MistFade: 25
+    - _MistHeight: 6
+    - _MistStart: 25
+    - _NearDeepen: 0.18
+    - _NearEnd: 12
+    - _NearSaturate: 0.18
+    - _RayAmount: 0.3
+    - _RayDecay: 0.965
+    - _RayFalloff: 2.2
+    - _RayLength: 0.75
+    - _RayOnSky: 0.35
+    - _RimAmount: 1
+    - _RimNight: 0.25
+    - _RimSpread: 1.5
+    - _RimStart: 22
+    - _RimWidth: 5
+    - _SkyFrom: 420
+    - _SkyFull: 560
     m_Colors:
+    - _CloudRayColor: {r: 1, g: 0.78, b: 0.9, a: 1}
     - _HazeColor: {r: 0.36, g: 0.32, b: 0.58, a: 1}
     - _HazeIceColor: {r: 0.18, g: 0.38, b: 0.7, a: 1}
     - _HazeSunColor: {r: 0.85, g: 0.5, b: 0.32, a: 1}
+    - _LayerColFar: {r: 0.5, g: 0.43, b: 0.74, a: 1}
+    - _LayerColHorizon: {r: 0.44, g: 0.39, b: 0.66, a: 1}
+    - _LayerColMid: {r: 0.4, g: 0.33, b: 0.64, a: 1}
+    - _LayerEdges: {r: 10, g: 32, b: 90, a: 0}
+    - _LayerHaze: {r: 0.12, g: 0.45, b: 0.5, a: 0}
+    - _MistColor: {r: 0.62, g: 0.58, b: 0.85, a: 1}
+    - _RayColor: {r: 1, g: 0.66, b: 0.42, a: 1}
+    - _RimColor: {r: 1, g: 0.62, b: 0.38, a: 1}
+    - _RimNightColor: {r: 0.45, g: 0.6, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
