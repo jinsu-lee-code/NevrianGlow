@@ -15,6 +15,13 @@ Shader "DSEWA/ToonSoil"
         _BaseColor ("Base Color", Color) = (0.6, 0.8, 0.8, 1)
         _WorldTile ("World Tiling (m per texture repeat, 0 = mesh UV)", Float) = 0
         _Pastel ("Pastel (lift toward white)", Range(0, 1)) = 0.25
+        [Header(Soil Palette)]
+        _SoilCrustColor ("Crust Colour (untilled)", Color) = (1, 1, 1, 1)
+        _SoilDugColor ("Dug Colour (tilled)", Color) = (1, 1, 1, 1)
+        _GameColorAmount ("Game Colour Amount (FarmGrid's _BaseColor: 1 = all game, 0 = palette only)", Range(0, 1)) = 1
+        _TerrainBlend ("Outer Rim Melts Into The Ground (RVT colour, 0 = off)", Range(0, 1)) = 0
+        _TerrainBlendWidth ("Outer Rim Blend Width (mesh units)", Range(0.05, 0.8)) = 0.35
+        _TerrainBlendTint ("Outer Rim Ground Calibration (RVT colour x this, to match the ground as drawn)", Color) = (1, 1, 1, 1)
         [Header(Soil State)]
         _Till ("Till (whole cell, 0 = crust, 1 = dug)", Range(0, 1)) = 0
         _Hit0 ("Hoe Hit 0 (x, z, -, strength)", Vector) = (0, 0, 0, 0)
@@ -92,6 +99,10 @@ Shader "DSEWA/ToonSoil"
             float4 _BaseMap_ST;
             float _WorldTile;
             half4 _BaseColor;
+            half4 _SoilCrustColor, _SoilDugColor;
+            half _GameColorAmount, _TerrainBlend;
+            float _TerrainBlendWidth;
+            half4 _TerrainBlendTint;
             half _Pastel, _Wrap, _Softness;
             float _Till, _DigRadius, _FurrowHeight, _FurrowCount, _CellHalf, _CrustContrast, _Hole, _Mound, _EdgeFade;
             float4 _EdgeOpen;
@@ -141,6 +152,13 @@ Shader "DSEWA/ToonSoil"
             float d = min(min(lerp(h - p.x, 1e3, _EdgeOpen.x), lerp(h + p.x, 1e3, _EdgeOpen.y)),
                           min(lerp(h - p.y, 1e3, _EdgeOpen.z), lerp(h + p.y, 1e3, _EdgeOpen.w)));
             return saturate(d / h / max(_EdgeFade, 0.01));
+        }
+        // distance to the nearest side with no neighbour cell (the field's outer rim); far away inside the field
+        float SoilOuterDist(float2 p)
+        {
+            float h = _CellHalf;
+            return min(min(lerp(h - p.x, 1e3, _EdgeOpen.x), lerp(h + p.x, 1e3, _EdgeOpen.y)),
+                       min(lerp(h - p.y, 1e3, _EdgeOpen.z), lerp(h + p.y, 1e3, _EdgeOpen.w)));
         }
         float SoilFurrow(float2 p) { return cos(p.y / _CellHalf * 3.14159 * _FurrowCount); }
         float SoilHeight(float2 p)
@@ -207,6 +225,8 @@ Shader "DSEWA/ToonSoil"
             #include "Assets/Art/Environment/Shaders/CloudShadow.hlsl"
             #include "Assets/Art/Environment/Shaders/ToonShadow.hlsl"
             #include "Assets/Art/Environment/Shaders/GroundFog.hlsl"
+            #include "Assets/Art/Environment/Shaders/RuntimeVirtualTexture.hlsl"
+            float4 _DSEWA_GroundShadowColor, _DSEWA_GroundLitColor, _DSEWA_GroundLight;   // ground ramp / colours (RVT, as ToonFoliage)
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
             TEXTURE2D(_BumpMap); SAMPLER(sampler_BumpMap);
@@ -275,7 +295,23 @@ Shader "DSEWA/ToonSoil"
                 float pit = saturate(_Hole * smoothstep(0.32, 0.0, length(i.positionOS.xz)));
                 tex *= 1.0 + 0.25 * _Mound * smoothstep(0.3, 0.0, length(i.positionOS.xz));   // fresh covered soil, a touch lighter
                 tex *= lerp(1.0, 0.3, pit);
-                half3 base = tex * _BaseColor.rgb;
+                // own palette (2026-10-30, user: the plot soil looked muddled and dark): the game's cell colours (grey /
+                // blue / dark blue) only tint it; wet comes from SoilFX's _Wet below
+                half3 own = lerp(_SoilCrustColor.rgb, _SoilDugColor.rgb, saturate(max(dig, _Till)));
+                half3 base = tex * lerp(own, _BaseColor.rgb, _GameColorAmount);
+                // the field's outer rim melts into the ground under it (2026-10-30, user: blend the plot into the
+                // surrounding soil): terrain albedo from the RVT, over a ragged band
+                // (applied to the final colour below, lit like the ground itself - the RVT holds the ground albedo)
+                half4 ground = 0;
+                half rimK = 0;
+                // sample the ground just outside the field (the ground right under the cells can be another layer)
+                float2 outDir = i.positionWS.xz - TransformObjectToWorld(float3(0, 0, 0)).xz;
+                float2 rvtXZ = i.positionWS.xz + normalize(outDir + 1e-4) * 0.25;
+                if (_TerrainBlend > 0 && SampleRVT(rvtXZ, ground))
+                {
+                    float wob = (SoilNoise(i.positionWS.xz * 2.5) - 0.5) * _TerrainBlendWidth * 0.8;
+                    rimK = (1.0 - smoothstep(0.0, _TerrainBlendWidth, SoilOuterDist(i.positionOS.xz) + wob)) * _TerrainBlend;
+                }
                 // wet: darker, bluer, less chalky; the furrow troughs hold water
                 half wet = SoilWet(i.positionOS.xz);
                 base *= lerp(half3(1, 1, 1), _WetTint.rgb * _WetDarken, wet);
@@ -358,6 +394,14 @@ Shader "DSEWA/ToonSoil"
                 col += tex * smoothstep(_TexGlowThreshold, _TexGlowThreshold + _TexGlowSoftness, texLum)
                        * _TexGlowStrength * lerp(_TexGlowPulse.x, _TexGlowPulse.y, breath);
 
+                if (rimK > 0)
+                {
+                    half4 gl = _DSEWA_GroundLight.w > 0 ? _DSEWA_GroundLight : half4(0.12, 0.1, 0.0, 0);
+                    half litG = smoothstep(gl.x, gl.x + gl.y, saturate(light.direction.y) * shadow + gl.z);
+                    half3 groundLit = _DSEWA_GroundLight.w > 0 ? max(_DSEWA_GroundLitColor.rgb, 0.05) : half3(1, 1, 1);
+                    half3 groundShadow = _DSEWA_GroundLight.w > 0 ? _DSEWA_GroundShadowColor.rgb : half3(0.5, 0.5, 0.6);
+                    col = lerp(col, ground.rgb * lerp(groundShadow, groundLit, litG) * _TerrainBlendTint.rgb, rimK);
+                }
                 col = ApplyGroundFog(col, i.positionWS);
                 col = MixFog(col, i.fogFactor);
                 return half4(col, 1);

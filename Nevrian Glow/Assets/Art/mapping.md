@@ -6,7 +6,7 @@
 ## 개발에 부탁할 것 (10/30)
 
 - ~~밭 틀(두둑 테두리) 빼기~~ → **10/30 아트 쪽에서 처리**: `pf_env_plot` 프리팹 안의 `Model`을 꺼 둠. `FarmGrid`가 그대로 놓아도 빈 오브젝트라 틀 · 바닥 흙이 안 보입니다 (Bed Prefab 칸은 그대로 둬도 되고 비워도 됨). 칸 흙 `pf_env_plot_soil`만 남아 붙은 칸끼리 한 밭으로 보입니다.
-- **밭 흙 색 (선택)**: 칸 흙 색은 `FarmGrid`의 Untilled / Tilled / Wet Color가 정합니다 (지금 회색 · 파랑 · 진한 파랑 — 풀밭에 묻혀 어둡게 보임). 따뜻한 갈색 보라 쪽으로 바꿀 값은 기획 · 아트가 정해서 따로 드릴게요.
+- ~~밭 흙 색~~ → **10/30 아트 쪽에서 처리**: 흙 셰이더가 자기 색(안 갈음 · 갈음)을 쓰고 `FarmGrid`의 Untilled / Tilled / Wet Color는 15 %만 섞습니다. 개발 쪽은 바꿀 것 없음 (색을 바꿔도 거의 안 보임). 젖음은 `SoilFX.SetWet`으로 셰이더가 처리.
 
 ## 요청서 항목
 
@@ -37,7 +37,7 @@
 | `env_ground_tile` | `Environment/Ground/Textures/tex_env_ground_tile_*`, `Environment/DeepBlue/Textures/tex_env_ground_tile_deepblue_*` | 1024 타일 | 여러 벌(보라 A/B/C · 길 · 딥블루 A/B/C) — 지형 레이어 `TL_*`가 사용 중 |
 | `env_shop_floor` | `Environment/shop_floor/Materials/mat_env_shop_floor.mat`, `Textures/tex_env_shop_floor_{albedo,normal,ao}.png` | 1024 타일 | 가게 바닥 나무 판자. 바닥 12 × 10 m 평면에 쓸 때 타일링 5 × 4.17(재질에 들어 있음) |
 | `env_plot` | `Environment/plot/pf_env_plot.prefab`, `Models/env_plot.fbx` | 4.0 × 0.2 × 4.0 m · 192 tris | 두둑 테두리(2×2칸 = 4 × 4 m). **10/30: 게임에서 뺌 — 프리팹 안 `Model`을 꺼 둠 (위 「개발에 부탁할 것」 참고).** 판자 + 청록 기둥 + 칸 사이 낮은 칸막이 + 바닥 흙. 칸 흙은 따로(아래). 두둑 가운데가 피벗 — 칸 중심은 (±1, 0, ±1) |
-| (env_plot 칸 흙) | `Environment/plot/pf_env_plot_soil.prefab`, `Models/env_plot_soil.fbx` | 1.66 × 0.11 × 1.66 m · 1,560 tris | `farm_cell`의 `Soil` 자식 교체용. 흰 바탕 + 회색 흙덩이 질감이라 `FarmCellView`가 칠하는 `_BaseColor`가 그대로 보임. 셰이더 `Environment/Shaders/ToonSoil` + 스크립트 `Environment/Scripts/SoilFX.cs`(`Model`에 붙어 있음): 괭이가 땅에 닿을 때 `OnTillHit(진행도 0~1, 맞은 위치)`, 심을 때 `OnPlant()`, 불러오기 후 `SetTill()`, 수확 후 `ResetSoil()`. 젖음은 기존처럼 색으로 |
+| (env_plot 칸 흙) | `Environment/plot/pf_env_plot_soil.prefab`, `Models/env_plot_soil.fbx` | 1.66 × 0.11 × 1.66 m · 1,560 tris | `farm_cell`의 `Soil` 자식 교체용. **10/30부터 흙 색은 재질이 정함**(아래 「요청서에 없는 것」 10/30 밭 흙 참고) — `FarmCellView`가 칠하는 `_BaseColor`는 15 %만 섞임. 셰이더 `Environment/Shaders/ToonSoil` + 스크립트 `Environment/Scripts/SoilFX.cs`(`Model`에 붙어 있음): 괭이가 땅에 닿을 때 `OnTillHit(진행도 0~1, 맞은 위치)`, 심을 때 `OnPlant()`, 불러오기 후 `SetTill()`, 수확 후 `ResetSoil()`. 젖음은 기존처럼 색으로 |
 | `tool_seedbag` | `Props/seedbag/pf_tool_seedbag.prefab` (원본 `_Source/Teal_Pouch_Glowing_Leaves_1296`) | 임시 0.3 m | Varco 원본 그대로, 피벗 바닥 가운데(요청서는 손잡이 쥐는 곳) |
 | `tool_fertilizer` | `Props/fertilizer/pf_tool_fertilizer.prefab`, `Models/tool_fertilizer.fbx` | 높이 0.18 m | **Varco 원본 → 재모델로 교체** (프리팹 GUID 그대로). 병 · 액체 분리, 재질 `mat_tool_fertilizer_*` (셰이더 `ToonCrystal` · `Props/Shaders/ToonLiquid`). 액체 `Model/tool_fertilizer_liquid`에 `Props/Scripts/LiquidWobble.cs` — 병이 움직이면 수면이 출렁이고, **`Fill`(0~1)을 내리면 액체가 줄어듦**(비료 사용량 표시용). 이 스크립트가 없으면 액체가 안 보임. 원본은 `_Source/`에 그대로. 피벗 바닥 가운데 |
 | (요청서 없음 · 계산대 소품) | `Props/counter/pf_prop_counter_bell.prefab`, `Models/prop_counter_bell.fbx` | 0.17 × 0.13 × 0.17 m | 계산대 위 종. 돔 `Model/Bell_Dome`, 누름쇠 `Model/Bell_Dome/Bell_Plunger` |
@@ -147,6 +147,8 @@
 | `Environment/Scripts/IntroDirector.cs` + 배경 씬 `== Cinematics ==/IntroDirector` | 10/30. 새 게임 시작 연출: 검은 화면에서 잿빛 농장 장면 3개(`Shot01~03`, 자식 위치 = 구도)가 서서히 밝아졌다 어두워지고, 마지막에 플레이어 눈으로 3초에 걸쳐 밝아진 뒤 편지 ①. 약 20초, 아무 키 = 마지막 밝아지기로. **게임 코드 수정 없음** — `GameScreen`이라 그동안 입력이 잠기고 편지 ①은 끝나고 엶. 이어하기는 재생 안 함(같은 프레임의 불러오기 결과로 구분). 재생 중 HUD 캔버스는 꺼 둠 |
 | `Environment/Scripts/MapFlyover.cs` + 배경 씬 `== Cinematics ==/MapFlyover` | 10/30. 맵 한 바퀴 궤도(높이 28 m · 12초, 등대 앞 감속) — 엔딩용. 경로 = 자식 `WP00~07`. 자체 카메라를 켜고 그동안 플레이어 카메라를 끔 (Cinemachine 필요 없음) |
 | `Sky/Shaders/ToonSky.shader`, `DeepBlue/M_Sky_DeepBlue.mat`, `Shaders/AerialPerspective.shader`, `Materials_PP/mat_pp_aerial_perspective.mat` | 10/30. 눈알 행성 지평선: 해 쪽(북, 낮 쪽 사막)은 뜨거운 노을빛이 구름 위까지, 반대쪽(남, 밤 쪽 얼음)은 지평선 얼음빛 + 그 위 하늘이 어두워짐. 먼 안개도 북쪽 따뜻 · 남쪽 차갑게 |
+| `Environment/plot/Textures/tex_env_plot_soil_clods_{albedo,normal}.png`, `Environment/plot/Materials/mat_env_plot_cellsoil.mat`, `Environment/Shaders/ToonSoil.shader` | 10/30. 밭 흙 다시 손봄. ① 10/28에 「주변 땅과 맞추기」로 넣었던 지형 낙엽 텍스처(`tex_env_ground_alien_litter`) 대신 **밭 전용 흙덩이 텍스처**(크고 작은 흙덩이 + 부스러기, 이음새 없음, 1.6 m 반복, 노멀 0.5)로 교체. ② 셰이더에 밭 색(`_SoilCrustColor` 안 갈음 · `_SoilDugColor` 갈음)과 게임 색 비율(`_GameColorAmount` 0.15) 추가. ③ 젖은 흙: 더 어둡고 푸르게(`_WetDarken` 0.4) + 고랑 물웅덩이 0.55, 젖은 광택(`_WetGloss`)은 0 — 켜면 찢어진 흰 조각처럼 보임. ④ **밭 바깥 테두리가 주변 땅으로 번짐**(`_TerrainBlend` 1, 폭 0.5): 이웃 칸이 없는 쪽만, RVT에서 밭 바로 바깥 지형 색을 읽어 지형과 같은 방식으로 빛을 입힘. RVT 색이 실제 화면의 땅보다 밝고 파래서 보정색 `_TerrainBlendTint` (1.0, 0.72, 0.45)를 곱함 — 밭을 다른 땅 위로 옮기면 이 값만 다시 맞추면 됨. RVT(`Terrain_LookDev`의 `RuntimeVirtualTexture`)가 켜져 있어야 함. 옛 텍스처 `tex_env_plot_soil_detail` · `_normal`은 남겨 둠. 색 · 크기 · 보정값은 아트에서 정한 값 |
+| `Environment/Scripts/LightUpDirector.cs` + 배경 씬 `== Cinematics ==/LightUpDirector`, `MapFlyover.cs`, `GroundFog.cs`, `Shaders/GroundFog.hlsl` · `AerialPerspective.shader` | 10/30. 등대 층이 켜질 때 위에서 내려다보는 컷(영역이 넓어지는 모습, 높이 최대 150 m). 잿빛 지대가 걷히면 그 안의 안개 · 먼 안개도 함께 65 % 걷힘(`GroundFog.clearWhenAwake`). 연출 카메라가 켜진 동안 오브젝트 외곽선 패스를 끄고 그림자 거리를 60 m로 줄임(엔딩 맵 한 바퀴 12.6 → 11.7 ms) |
 
 ## 걸이 팻말 Animator 맵핑 (`Props/sign_open`, 10/29)
 
