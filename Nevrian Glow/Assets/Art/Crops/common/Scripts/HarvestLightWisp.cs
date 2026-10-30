@@ -5,15 +5,15 @@ using UnityEngine;
 /// harvested crop, arcs over the farm and sinks into the lighthouse at its lit front, which flares once
 /// (LighthouseGoal.Pulse). Spawned by CropReadyGlow when a ready crop is harvested. If the crop's cell is gone by the
 /// next frame (the farm scene unloading, not a harvest) the wisp removes itself without flying.
-/// 2026-10-30, user: the flight to the lighthouse is off by default - the lighthouse rises with the level (sales), not
-/// with harvests, so a harvest flying into the tower taught the wrong rule. The light now only pops up from the crop
-/// and fades (Fly To Lighthouse off); turning it on brings the old flight back.
+/// 2026-10-30, planner (lighthouse spec v2): the light flies into the heart on top (LighthouseGoal.HeartPoint), not the
+/// lit floors - the floors climb with the level (sales), the heart gathers the harvested light for the ending.
+/// Fly To Lighthouse off = the light only pops up from the crop and fades.
 /// All numbers are my own values.
 /// </summary>
 public class HarvestLightWisp : MonoBehaviour
 {
-    [Tooltip("Off: the light pops up from the crop and fades. On: it flies on into the lighthouse (old behaviour)")]
-    public bool flyToLighthouse = false;
+    [Tooltip("On: the light flies on into the lighthouse's heart (orb on top). Off: it only pops up from the crop and fades")]
+    public bool flyToLighthouse = true;
     [Tooltip("Off mode: seconds the light hangs at the top of its rise before it fades")]
     public float hangTime = 0.5f;
     [Tooltip("Seconds of the first rise before it turns to the lighthouse")]
@@ -50,7 +50,7 @@ public class HarvestLightWisp : MonoBehaviour
         start = transform.position;
         lift = start + Vector3.up * riseHeight;
         if (lighthouse == null) lighthouse = FindFirstObjectByType<LighthouseGoal>();
-        target = lighthouse != null ? lighthouse.LightFront() : start + Vector3.up * 30f;
+        target = lighthouse != null ? lighthouse.HeartPoint() : start + Vector3.up * 30f;
         flight = Mathf.Max(minFlight, Vector3.Distance(lift, target) / Mathf.Max(speed, 0.1f));
         // the glow and its trail run for the whole flight; the bursts only play on cue
         foreach (var ps in GetComponentsInChildren<ParticleSystem>())

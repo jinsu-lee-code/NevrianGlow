@@ -6,7 +6,8 @@ using UnityEngine.Events;
 /// The game's goal (2026-10-28, user: "the goal is lighting the whole lighthouse - that restores the planet's turning").
 /// Nevria stopped turning and is stuck in twilight; the old Lumian "turning beacon" is dark. As the player grows and
 /// sells, its windows light up floor by floor from the foot; when the last floor is lit the orb on top wakes, a beam
-/// shoots into the sky and the sky turns from night to the first dawn.
+/// shoots into the sky. (2026-10-30, lighthouse spec v2: no first sunrise - the planet does not start turning, the sky
+/// stays fixed; Turn Sky At Ending keeps the old dawn turn as an option.)
 ///
 /// Game hook-up (two calls):
 ///   SetProgress(level / targetLevel)   // 0..1, any time; the light climbs to it over climbSeconds
@@ -43,6 +44,8 @@ public class LighthouseGoal : MonoBehaviour
     public float beamHeight = 400f;
     public float beamWidth = 2.2f;
     public float beamSeconds = 2.5f;
+    [Tooltip("Off (2026-10-30, lighthouse spec v2): the sky stays fixed at the twilight - no first sunrise. On: the sky turns to Dawn Hour after the beam")]
+    public bool turnSkyAtEnding = false;
     [Tooltip("Sky turns to this hour (0..24) - dawn")] public float dawnHour = 5.5f;
     public float skyTurnSeconds = 10f;
     public DayNightBlend dayNight;
@@ -83,6 +86,14 @@ public class LighthouseGoal : MonoBehaviour
         return new Vector3(b.center.x, Mathf.Lerp(b.min.y, b.max.y, Mathf.Clamp01(ShownProgress / Mathf.Max(orbAt, 0.01f))), b.center.z);
     }
 
+    /// <summary>World point of the heart (orb on top) - harvest light sinks in here (lighthouse spec v2).</summary>
+    public Vector3 HeartPoint()
+    {
+        if (orb != null) return orb.bounds.center;
+        if (windows != null) { var b = windows.bounds; return new Vector3(b.center.x, b.max.y, b.center.z); }
+        return transform.position + Vector3.up * 10f;
+    }
+
     /// <summary>A brief flare along the lit front (a harvest's light arriving, HarvestLightWisp).</summary>
     public void Pulse() => flash = Mathf.Max(flash, 1f);
 
@@ -115,7 +126,7 @@ public class LighthouseGoal : MonoBehaviour
         audioSource.PlayOneShot(clip, volume);
     }
 
-    /// <summary>Goal reached: orb wakes, the beam goes up, the sky turns to dawn.</summary>
+    /// <summary>Goal reached: any dark floors fill, the heart (orb) wakes, the beam goes up. The sky stays fixed unless Turn Sky At Ending.</summary>
     public void PlayEnding()
     {
         if (ending || !Application.isPlaying) return;
@@ -216,7 +227,7 @@ public class LighthouseGoal : MonoBehaviour
             yield return null;
         }
         // the sky starts turning: night -> first dawn (hours wrap past midnight)
-        if (dayNight != null)
+        if (turnSkyAtEnding && dayNight != null)
         {
             savedHour = dayNight.hour;
             if (Application.isEditor)
@@ -258,8 +269,8 @@ public class LighthouseGoal : MonoBehaviour
         foreach (var r in extraGlow) yield return r;
     }
 
-    [ContextMenu("Preview: Next Floor (+0.2)")]
-    void PreviewNext() => SetProgress(progress + 0.2f);
+    [ContextMenu("Preview: Next Floor (+0.5)")]
+    void PreviewNext() => SetProgress(progress + 0.5f);
 
     [ContextMenu("Preview: Play Ending")]
     void PreviewEnding() => PlayEnding();
