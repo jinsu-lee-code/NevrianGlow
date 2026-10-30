@@ -70,4 +70,25 @@ half3 ApplyWorldWake(half3 color, float3 positionWS)
     return ApplyWorldWakeBand(color, positionWS, 1.0h);
 }
 
+// Dead in the grey (2026-10-30, user: "trees in the grey zone without leaves or fruit, like dead trees"): materials that
+// opt in (leaves, fruit) vanish outside the coloured area. Vertices well outside collapse (every pass: colour, shadow,
+// depth, outline - nothing is drawn there at all); across the soft edge the colour pass dissolves them in with a noise,
+// so leaves and fruit grow back as the wave passes.
+bool WorldWakeDeadVertex(float3 positionWS)
+{
+    return _DSEWA_WakeParams.z > 0.5 && WorldWakeOutside(positionWS) > 0.995;
+}
+
+// clip() argument for the colour pass: negative = cut
+float WorldWakeDeadClip(float3 positionWS)
+{
+    if (_DSEWA_WakeParams.z < 0.5) return 1;
+    float3 cell = floor(positionWS * 3.0);
+    float h = frac(sin(dot(cell, float3(12.9898, 78.233, 37.719))) * 43758.5453);
+    return h * 0.98 + 0.01 - WorldWakeOutside(positionWS);
+}
+
+// NaN position: the GPU drops every triangle touching it (a fixed point would stretch boundary triangles into streaks)
+#define DSEWA_DEAD_VERT(cs, ws) if (_DeadInGrey > 0.5 && WorldWakeDeadVertex(ws)) cs = asfloat(0x7fc00000u).xxxx;
+
 #endif

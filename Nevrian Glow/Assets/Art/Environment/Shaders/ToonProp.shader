@@ -89,6 +89,7 @@ Shader "DSEWA/ToonProp"
         [Header(World Awakening   WorldAwakening   default off)]
         _AwakeResponse ("Glow Follows The World Waking (0 = off)", Range(0, 1)) = 0
         [ToggleUI] _WakeExempt ("Keep Colour Outside The Waking Circle (lighthouse)", Float) = 0
+        [ToggleUI] _DeadInGrey ("Gone Outside The Waking Circle (dead trees: no fruit)", Float) = 0
         [Header(Transparency   blend One Zero and ZWrite 1 is opaque)]
         _Opacity ("Opacity (face middle)", Range(0, 1)) = 1
         _OpacityEdge ("Extra Opacity At The Silhouette", Range(0, 1)) = 0
@@ -130,6 +131,7 @@ Shader "DSEWA/ToonProp"
 
         HLSLINCLUDE
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+        #include "Assets/Art/Environment/Shaders/GroundFog.hlsl"   // world waking (dead in the grey) in every pass
 
         CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
@@ -160,7 +162,7 @@ Shader "DSEWA/ToonProp"
             float _PlantSway, _PlantSwaySpeed, _PlantNod, _PlantNodSpeed;
             float _RevealY, _RevealSoft, _RevealFlash, _RevealFlicker, _RevealGrey;
             half4 _RevealDark;
-            half _AwakeResponse, _WakeExempt;
+            half _AwakeResponse, _WakeExempt, _DeadInGrey;
             half4 _PearlSilver;
             float _PearlAmount, _PearlBandSize, _PearlAround, _PearlNormalStrength, _PearlTintGain, _PearlBlur, _PearlGrainAngle, _PearlRefRadius, _PearlDepth, _PearlInner, _PearlCore, _PearlOrient, _PearlHueSpread, _PearlViewShift, _PearlPastel, _PearlFacing, _PearlSheen, _PearlShadowSide;
         CBUFFER_END
@@ -298,6 +300,7 @@ Shader "DSEWA/ToonProp"
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
                 VertexPositionInputs pos = GetVertexPositionInputs(Deform(input.positionOS.xyz, input.color));
                 o.positionCS = pos.positionCS;
+                DSEWA_DEAD_VERT(o.positionCS, pos.positionWS)
                 o.positionWS = pos.positionWS;
                 o.normalWS = TransformObjectToWorldNormal(input.normalOS);
                 o.uv = TRANSFORM_TEX(input.uv, _BaseMap);
@@ -312,6 +315,7 @@ Shader "DSEWA/ToonProp"
 
             half4 frag(Varyings i, bool frontFace : SV_IsFrontFace) : SV_Target
             {
+                if (_DeadInGrey > 0.5) clip(WorldWakeDeadClip(i.positionWS));   // fruit grows back as the wave passes
                 half3 tex = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv).rgb;
                 half texV = max(tex.r, max(tex.g, tex.b));
 
@@ -513,6 +517,7 @@ Shader "DSEWA/ToonProp"
                 float3 positionWS = TransformObjectToWorld(Deform(input.positionOS.xyz, input.color));
                 positionWS += TransformObjectToWorldNormal(input.normalOS) * _OutlineWidth * OutlineObjectScale();
                 o.positionCS = TransformWorldToHClip(positionWS);
+                DSEWA_DEAD_VERT(o.positionCS, positionWS)
                 o.fogFactor = ComputeFogFactor(o.positionCS.z);
                 return o;
             }
@@ -550,6 +555,7 @@ Shader "DSEWA/ToonProp"
                 float3 lightDir = _LightDirection;
             #endif
                 float4 positionCS = TransformWorldToHClip(ApplyShadowBias(positionWS, normalWS, lightDir));
+                DSEWA_DEAD_VERT(positionCS, positionWS)
             #if UNITY_REVERSED_Z
                 positionCS.z = min(positionCS.z, UNITY_NEAR_CLIP_VALUE);
             #else
@@ -578,7 +584,10 @@ Shader "DSEWA/ToonProp"
             float4 vert(Attributes input) : SV_POSITION
             {
                 UNITY_SETUP_INSTANCE_ID(input);
-                return TransformObjectToHClip(Deform(input.positionOS.xyz, input.color));
+                float3 deadWS = TransformObjectToWorld(Deform(input.positionOS.xyz, input.color));
+                float4 deadCS = TransformWorldToHClip(deadWS);
+                DSEWA_DEAD_VERT(deadCS, deadWS)
+                return deadCS;
             }
 
             half frag() : SV_Target { return 0; }
@@ -604,7 +613,9 @@ Shader "DSEWA/ToonProp"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 Varyings o;
-                o.positionCS = TransformObjectToHClip(Deform(input.positionOS.xyz, input.color));
+                float3 deadWS = TransformObjectToWorld(Deform(input.positionOS.xyz, input.color));
+                o.positionCS = TransformWorldToHClip(deadWS);
+                DSEWA_DEAD_VERT(o.positionCS, deadWS)
                 o.normalWS = TransformObjectToWorldNormal(input.normalOS);
                 return o;
             }

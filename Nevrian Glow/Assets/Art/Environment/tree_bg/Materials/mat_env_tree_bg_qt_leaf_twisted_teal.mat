@@ -48,6 +48,7 @@ Material:
     - _CrownSky: 0.25
     - _CrownUnder: 0.8
     - _Cutoff: 0.35
+    - _DeadInGrey: 1
     - _Desaturation: 0.18
     - _EdgeStrength: 0
     - _EdgeWidth: 0.45
