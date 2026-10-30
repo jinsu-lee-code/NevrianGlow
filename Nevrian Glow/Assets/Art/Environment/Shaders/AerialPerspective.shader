@@ -40,11 +40,13 @@ Shader "Hidden/DSEWA/AerialPerspective"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+            #include "Assets/Art/Environment/Shaders/GroundFog.hlsl"   // the haze lifts with the grey (WorldWakeFogScale)
 
             float4 _HazeColor;
             float4 _HazeSunColor, _HazeIceColor;
             float _HazeSunAmount, _HazeIceAmount, _HazeSideSpread;
             float _HazeStart, _HazeEnd, _HazeAmount, _HazeCurve, _DetailKeep, _NearEnd, _NearDeepen, _NearSaturate, _GlowKeep, _SkyFrom, _SkyFull;
+            float _DSEWA_HazeCut;   // 0 = as authored; LightUpDirector's high top view thins the haze (1 = off)
             float4 _DSEWA_InteriorBoxMin, _DSEWA_InteriorBoxMax;   // shop box from InteriorFill: background-only effect, off while the camera is inside
 
             bool CameraInShop()
@@ -70,6 +72,8 @@ Shader "Hidden/DSEWA/AerialPerspective"
 
                 // far: toward the haze, keeping part of the pixel's own value around the haze colour
                 float t = pow(smoothstep(_HazeStart, _HazeEnd, d), _HazeCurve) * _HazeAmount * (1 - glow);
+                t *= 1 - saturate(_DSEWA_HazeCut);
+                t *= WorldWakeFogScale(ComputeWorldSpacePosition(uv, raw, UNITY_MATRIX_I_VP));
                 t *= 1 - smoothstep(_SkyFrom, _SkyFull, d);   // cloud and sky meshes far out keep their painted look
                 // eyeball planet (2026-10-30): warmer haze towards the sun's azimuth (day side desert), colder away from it
                 // (night side ice)

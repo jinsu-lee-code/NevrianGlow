@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 /// <summary>
 /// Map flyover (lighthouse spec v2, 2026-10-30): one loop over the map at about 28 m in about 12 s, slowing down in
@@ -32,6 +33,11 @@ public class MapFlyover : MonoBehaviour
     [Tooltip("Where the loop starts, degrees clockwise from north (90 = east; the lighthouse in the north then comes at 3/4)")] public float startAngle = 90f;
     [Range(4, 16)] public int ringPoints = 8;
 
+    [Header("Cutscene cost (2026-10-30, ending perf: the wide views draw ~20k batches)")]
+    [Tooltip("Per-object outline feature (RenderObjects, DSEWAOutline passes) - switched off while this camera is in use")]
+    public ScriptableRendererFeature outlineFeature;
+    [Tooltip("URP shadow distance while this camera is in use (0 = leave it)")] public float cutShadowDistance = 60f;
+
     [Header("Editor preview")]
     [Tooltip("Moves the preview camera gizmo along the loop (0..1 of the time)")] [Range(0f, 1f)] public float preview;
 
@@ -40,6 +46,7 @@ public class MapFlyover : MonoBehaviour
     const int Samples = 600;
     Vector3[] pts; float[] timeAt;   // sampled curve and its normalised time (slow-down included)
     Camera cam, hiddenMain;
+    bool cutCost; bool outlineWas; float shadowWas;
     bool skip;
 
     // ---------- playback ----------
@@ -123,11 +130,32 @@ public class MapFlyover : MonoBehaviour
         cam.fieldOfView = fieldOfView;
         cam.farClipPlane = Mathf.Max(cam.farClipPlane, 3000f);
         cam.enabled = true;
+        CutCost(true);
+    }
+
+    // Wide cutscene views see the whole map: no per-object outline pass, shorter shadows. Both live on shared assets,
+    // so they are always put back (EndCamera, OnDisable - also when play mode stops mid-cut).
+    void CutCost(bool on)
+    {
+        if (on == cutCost) return;
+        var urp = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
+        if (on)
+        {
+            if (outlineFeature != null) { outlineWas = outlineFeature.isActive; outlineFeature.SetActive(false); }
+            if (urp != null && cutShadowDistance > 0f) { shadowWas = urp.shadowDistance; urp.shadowDistance = cutShadowDistance; }
+        }
+        else
+        {
+            if (outlineFeature != null) outlineFeature.SetActive(outlineWas);
+            if (urp != null && cutShadowDistance > 0f && shadowWas > 0f) urp.shadowDistance = shadowWas;
+        }
+        cutCost = on;
     }
 
     void EndCamera()
     {
         if (cam != null) cam.enabled = false;
+        CutCost(false);
         if (hiddenMain != null) hiddenMain.enabled = true;
         hiddenMain = null;
     }
@@ -135,6 +163,7 @@ public class MapFlyover : MonoBehaviour
     void OnDisable()
     {
         if (IsPlaying || hiddenMain != null) { EndCamera(); IsPlaying = false; }
+        CutCost(false);
     }
 
     // ---------- path ----------

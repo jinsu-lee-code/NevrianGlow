@@ -6,18 +6,6 @@
 float4 _DSEWA_GroundFog;        // start (m), end (m), max amount, height falloff (1/m above the camera)
 float4 _DSEWA_GroundFogColor;   // rgb, a = 1 when set
 
-half3 ApplyGroundFog(half3 color, float3 positionWS)
-{
-    if (_DSEWA_GroundFogColor.a < 0.5) return color;
-    float d = distance(positionWS, _WorldSpaceCameraPos);
-    float f = saturate((d - _DSEWA_GroundFog.x) / max(_DSEWA_GroundFog.y - _DSEWA_GroundFog.x, 1e-3));
-    f = f * f * (3 - 2 * f);
-    // high ground (hill tops) keeps a little more of its own colour
-    f *= exp(-max(positionWS.y - _WorldSpaceCameraPos.y, 0) * _DSEWA_GroundFog.w);
-    return lerp(color, _DSEWA_GroundFogColor.rgb, f * _DSEWA_GroundFog.z);
-}
-
-
 // World waking (WorldAwakening, 2026-10-28, user: "grey outside the circle"): colour lives only near the farm and the
 // lighthouse (a capsule from one to the other) and spreads outward as the lighthouse lights up. Outside it the
 // background goes grey and its glows sleep; a faint light band rides the edge. Off (z = 0) = everything as authored.
@@ -41,6 +29,27 @@ float WorldWakeOutside(float3 positionWS)
     if (_DSEWA_WakeParams.z < 0.5) return 0;
     float soft = max(_DSEWA_WakeParams.y, 0.01);
     return smoothstep(_DSEWA_WakeParams.x - soft, _DSEWA_WakeParams.x + soft, WorldWakeDistance(positionWS));
+}
+
+// The fog lifts with the grey (2026-10-30, user: "clear the fog together with the grey zone"): inside the coloured
+// area the fog thins by _DSEWA_FogWakeClear (0 = no change), so the light wave pushes the fog back as it spreads.
+float _DSEWA_FogWakeClear;
+float WorldWakeFogScale(float3 positionWS)
+{
+    if (_DSEWA_WakeParams.z < 0.5) return 1;
+    return 1 - saturate(_DSEWA_FogWakeClear) * (1 - WorldWakeOutside(positionWS));
+}
+
+half3 ApplyGroundFog(half3 color, float3 positionWS)
+{
+    if (_DSEWA_GroundFogColor.a < 0.5) return color;
+    float d = distance(positionWS, _WorldSpaceCameraPos);
+    float f = saturate((d - _DSEWA_GroundFog.x) / max(_DSEWA_GroundFog.y - _DSEWA_GroundFog.x, 1e-3));
+    f = f * f * (3 - 2 * f);
+    // high ground (hill tops) keeps a little more of its own colour
+    f *= exp(-max(positionWS.y - _WorldSpaceCameraPos.y, 0) * _DSEWA_GroundFog.w);
+    f *= WorldWakeFogScale(positionWS);
+    return lerp(color, _DSEWA_GroundFogColor.rgb, f * _DSEWA_GroundFog.z);
 }
 
 // bandScale: how strongly this surface shows the wave band. Ground (terrain, grass) keeps it faint so the wave reads on

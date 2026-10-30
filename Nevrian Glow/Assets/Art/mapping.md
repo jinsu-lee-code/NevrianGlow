@@ -5,7 +5,7 @@
 
 ## 개발에 부탁할 것 (10/30)
 
-- **밭 틀(두둑 테두리) 빼기**: `Farm` 씬 `FarmGrid`의 **Bed Prefab** 칸을 비워 주세요 (지금 `Environment/plot/pf_env_plot` — 판자 · 청록 기둥 · 칸막이). 비우면 틀 없이 흙 칸만 놓입니다 (코드 그대로, `bedPrefab`이 비면 안 만듦). 흙 칸 `pf_env_plot_soil`은 붙은 칸끼리 테두리를 없애 한 밭처럼 보이니 그대로 두면 됩니다.
+- ~~밭 틀(두둑 테두리) 빼기~~ → **10/30 아트 쪽에서 처리**: `pf_env_plot` 프리팹 안의 `Model`을 꺼 둠. `FarmGrid`가 그대로 놓아도 빈 오브젝트라 틀 · 바닥 흙이 안 보입니다 (Bed Prefab 칸은 그대로 둬도 되고 비워도 됨). 칸 흙 `pf_env_plot_soil`만 남아 붙은 칸끼리 한 밭으로 보입니다.
 - **밭 흙 색 (선택)**: 칸 흙 색은 `FarmGrid`의 Untilled / Tilled / Wet Color가 정합니다 (지금 회색 · 파랑 · 진한 파랑 — 풀밭에 묻혀 어둡게 보임). 따뜻한 갈색 보라 쪽으로 바꿀 값은 기획 · 아트가 정해서 따로 드릴게요.
 
 ## 요청서 항목
@@ -36,7 +36,7 @@
 | `env_farm_door` | `Environment/farm_door/pf_env_farm_door.prefab` (10/21 새로), `Models/env_farm_door.fbx` | — | **프리팹 = `Model`(FBX) + `Portal`(포탈 VFX, 문짝 뒤) + Animator `Animations/ac_env_farm_door`**. Bool `IsOpen` 켜면 `anim_env_farm_door_open`(0.9초, 문짝 80° 안쪽(계단 반대)으로 열리고 포탈이 0.25 → 1배로 커짐), 끄면 `_close`, 기본 상태 `Closed`. 배경 씬의 장식용 `Shop_Door`는 지움. 재질 3개 `mat_env_farm_door_*` — 사용자가 편 UV에 Varco 원본(상점 입구1) 색을 구운 텍스처 `Textures/tex_env_farm_door_{frame,door,stairs}_albedo` 연결 |
 | `env_ground_tile` | `Environment/Ground/Textures/tex_env_ground_tile_*`, `Environment/DeepBlue/Textures/tex_env_ground_tile_deepblue_*` | 1024 타일 | 여러 벌(보라 A/B/C · 길 · 딥블루 A/B/C) — 지형 레이어 `TL_*`가 사용 중 |
 | `env_shop_floor` | `Environment/shop_floor/Materials/mat_env_shop_floor.mat`, `Textures/tex_env_shop_floor_{albedo,normal,ao}.png` | 1024 타일 | 가게 바닥 나무 판자. 바닥 12 × 10 m 평면에 쓸 때 타일링 5 × 4.17(재질에 들어 있음) |
-| `env_plot` | `Environment/plot/pf_env_plot.prefab`, `Models/env_plot.fbx` | 4.0 × 0.2 × 4.0 m · 192 tris | 두둑 테두리(2×2칸 = 4 × 4 m). **10/30: 게임에서 빼기로 함 — 위 「개발에 부탁할 것」 참고.** 판자 + 청록 기둥 + 칸 사이 낮은 칸막이 + 바닥 흙. 칸 흙은 따로(아래). 두둑 가운데가 피벗 — 칸 중심은 (±1, 0, ±1) |
+| `env_plot` | `Environment/plot/pf_env_plot.prefab`, `Models/env_plot.fbx` | 4.0 × 0.2 × 4.0 m · 192 tris | 두둑 테두리(2×2칸 = 4 × 4 m). **10/30: 게임에서 뺌 — 프리팹 안 `Model`을 꺼 둠 (위 「개발에 부탁할 것」 참고).** 판자 + 청록 기둥 + 칸 사이 낮은 칸막이 + 바닥 흙. 칸 흙은 따로(아래). 두둑 가운데가 피벗 — 칸 중심은 (±1, 0, ±1) |
 | (env_plot 칸 흙) | `Environment/plot/pf_env_plot_soil.prefab`, `Models/env_plot_soil.fbx` | 1.66 × 0.11 × 1.66 m · 1,560 tris | `farm_cell`의 `Soil` 자식 교체용. 흰 바탕 + 회색 흙덩이 질감이라 `FarmCellView`가 칠하는 `_BaseColor`가 그대로 보임. 셰이더 `Environment/Shaders/ToonSoil` + 스크립트 `Environment/Scripts/SoilFX.cs`(`Model`에 붙어 있음): 괭이가 땅에 닿을 때 `OnTillHit(진행도 0~1, 맞은 위치)`, 심을 때 `OnPlant()`, 불러오기 후 `SetTill()`, 수확 후 `ResetSoil()`. 젖음은 기존처럼 색으로 |
 | `tool_seedbag` | `Props/seedbag/pf_tool_seedbag.prefab` (원본 `_Source/Teal_Pouch_Glowing_Leaves_1296`) | 임시 0.3 m | Varco 원본 그대로, 피벗 바닥 가운데(요청서는 손잡이 쥐는 곳) |
 | `tool_fertilizer` | `Props/fertilizer/pf_tool_fertilizer.prefab`, `Models/tool_fertilizer.fbx` | 높이 0.18 m | **Varco 원본 → 재모델로 교체** (프리팹 GUID 그대로). 병 · 액체 분리, 재질 `mat_tool_fertilizer_*` (셰이더 `ToonCrystal` · `Props/Shaders/ToonLiquid`). 액체 `Model/tool_fertilizer_liquid`에 `Props/Scripts/LiquidWobble.cs` — 병이 움직이면 수면이 출렁이고, **`Fill`(0~1)을 내리면 액체가 줄어듦**(비료 사용량 표시용). 이 스크립트가 없으면 액체가 안 보임. 원본은 `_Source/`에 그대로. 피벗 바닥 가운데 |

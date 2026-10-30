@@ -75,7 +75,12 @@ public class LighthouseProgressLink : MonoBehaviour
     {
         yield return new WaitForSeconds(delaySeconds);
         var t = Target;
-        if (t != null && !t.IsEnding) t.SetProgress(ProgressOf(level));
+        if (t == null || t.IsEnding) yield break;
+        float p = ProgressOf(level);
+        // a new floor: the top-view cutscene (LightUpDirector) lights it; no new floor (level-up inside a stage): as before
+        var cut = LightUpDirector.Instance;
+        if (p > t.progress + 1e-4f && cut != null && cut.isActiveAndEnabled) cut.Play(() => t.SetProgress(p), p);
+        else t.SetProgress(p);
     }
 
     void SyncNow()
