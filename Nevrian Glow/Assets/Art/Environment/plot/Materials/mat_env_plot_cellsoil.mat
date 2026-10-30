@@ -73,7 +73,7 @@ Material:
     - _WetDarken: 0.55
     - _WetGloss: 0.5
     - _WetPuddle: 0.4
-    - _WetSparkle: 1
+    - _WetSparkle: 0
     - _WorldTile: 5
     - _Wrap: 0.5
     m_Colors:

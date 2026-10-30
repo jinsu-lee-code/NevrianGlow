@@ -44,16 +44,43 @@ public class MapFlyover : MonoBehaviour
 
     // ---------- playback ----------
 
-    public void Play(Action onDone = null)
+    /// <summary>Fly the loop. keepCamera: stay on the flyover camera when done (the caller moves it on and calls Release).</summary>
+    public void Play(Action onDone = null, bool keepCamera = false)
     {
         if (!Application.isPlaying || IsPlaying) return;
-        StartCoroutine(Run(onDone));
+        running = StartCoroutine(Run(onDone, keepCamera));
     }
 
-    /// <summary>Jump to the end (e.g. any key in the intro). onDone still fires.</summary>
+    /// <summary>Stop where it is (e.g. any key in the intro). onDone still fires.</summary>
     public void Skip() => skip = true;
 
-    IEnumerator Run(Action onDone)
+    /// <summary>The flyover camera (while playing or kept) and the player camera it switched off.</summary>
+    public Camera FlyCamera => cam;
+    public Camera HiddenMain => hiddenMain;
+
+    /// <summary>Switch to the flyover camera without flying (for still shots, e.g. the intro); Release() gives it back.</summary>
+    public Camera TakeCamera()
+    {
+        if (!Application.isPlaying) return null;
+        BeginCamera();
+        return cam;
+    }
+
+    /// <summary>Back to the player camera after Play(.., keepCamera: true) or TakeCamera().</summary>
+    public void Release() => EndCamera();
+
+    /// <summary>Cut off at once, no onDone, player camera back.</summary>
+    public void Stop()
+    {
+        if (running != null) StopCoroutine(running);
+        running = null;
+        EndCamera();
+        IsPlaying = false;
+    }
+
+    Coroutine running;
+
+    IEnumerator Run(Action onDone, bool keepCamera)
     {
         IsPlaying = true; skip = false;
         Bake();
@@ -64,8 +91,9 @@ public class MapFlyover : MonoBehaviour
             cam.transform.SetPositionAndRotation(p, r);
             yield return null;
         }
-        EndCamera();
+        if (!keepCamera) EndCamera();
         IsPlaying = false;
+        running = null;
         onDone?.Invoke();
     }
 
@@ -106,7 +134,7 @@ public class MapFlyover : MonoBehaviour
 
     void OnDisable()
     {
-        if (IsPlaying) { EndCamera(); IsPlaying = false; }
+        if (IsPlaying || hiddenMain != null) { EndCamera(); IsPlaying = false; }
     }
 
     // ---------- path ----------

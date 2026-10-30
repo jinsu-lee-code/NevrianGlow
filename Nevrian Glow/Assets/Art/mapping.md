@@ -3,6 +3,11 @@
 요청서: 노션 "아트 에셋 요청서 (art)" (이진수, 2026-10-08). 파일명은 요청서 id 그대로 — 모델 = `<id>.fbx`, 프리팹 = `pf_<id>`, 재질 = `mat_<id>_부위`, 텍스처 = `tex_<id>_맵`.
 프리팹은 모두 루트(0,0,0 / 1,1,1) 아래 `Model` 자식 구조. 크기는 프리팹에서 실제 m로 맞춤.
 
+## 개발에 부탁할 것 (10/30)
+
+- **밭 틀(두둑 테두리) 빼기**: `Farm` 씬 `FarmGrid`의 **Bed Prefab** 칸을 비워 주세요 (지금 `Environment/plot/pf_env_plot` — 판자 · 청록 기둥 · 칸막이). 비우면 틀 없이 흙 칸만 놓입니다 (코드 그대로, `bedPrefab`이 비면 안 만듦). 흙 칸 `pf_env_plot_soil`은 붙은 칸끼리 테두리를 없애 한 밭처럼 보이니 그대로 두면 됩니다.
+- **밭 흙 색 (선택)**: 칸 흙 색은 `FarmGrid`의 Untilled / Tilled / Wet Color가 정합니다 (지금 회색 · 파랑 · 진한 파랑 — 풀밭에 묻혀 어둡게 보임). 따뜻한 갈색 보라 쪽으로 바꿀 값은 기획 · 아트가 정해서 따로 드릴게요.
+
 ## 요청서 항목
 
 | 요청서 id | 프리팹 · 모델 (Assets/Art/…) | 실제 크기 | 요청서와 다른 점 |
@@ -31,7 +36,7 @@
 | `env_farm_door` | `Environment/farm_door/pf_env_farm_door.prefab` (10/21 새로), `Models/env_farm_door.fbx` | — | **프리팹 = `Model`(FBX) + `Portal`(포탈 VFX, 문짝 뒤) + Animator `Animations/ac_env_farm_door`**. Bool `IsOpen` 켜면 `anim_env_farm_door_open`(0.9초, 문짝 80° 안쪽(계단 반대)으로 열리고 포탈이 0.25 → 1배로 커짐), 끄면 `_close`, 기본 상태 `Closed`. 배경 씬의 장식용 `Shop_Door`는 지움. 재질 3개 `mat_env_farm_door_*` — 사용자가 편 UV에 Varco 원본(상점 입구1) 색을 구운 텍스처 `Textures/tex_env_farm_door_{frame,door,stairs}_albedo` 연결 |
 | `env_ground_tile` | `Environment/Ground/Textures/tex_env_ground_tile_*`, `Environment/DeepBlue/Textures/tex_env_ground_tile_deepblue_*` | 1024 타일 | 여러 벌(보라 A/B/C · 길 · 딥블루 A/B/C) — 지형 레이어 `TL_*`가 사용 중 |
 | `env_shop_floor` | `Environment/shop_floor/Materials/mat_env_shop_floor.mat`, `Textures/tex_env_shop_floor_{albedo,normal,ao}.png` | 1024 타일 | 가게 바닥 나무 판자. 바닥 12 × 10 m 평면에 쓸 때 타일링 5 × 4.17(재질에 들어 있음) |
-| `env_plot` | `Environment/plot/pf_env_plot.prefab`, `Models/env_plot.fbx` | 4.0 × 0.2 × 4.0 m · 192 tris | 두둑 테두리(2×2칸 = 4 × 4 m). 판자 + 청록 기둥 + 칸 사이 낮은 칸막이 + 바닥 흙. 칸 흙은 따로(아래). 두둑 가운데가 피벗 — 칸 중심은 (±1, 0, ±1) |
+| `env_plot` | `Environment/plot/pf_env_plot.prefab`, `Models/env_plot.fbx` | 4.0 × 0.2 × 4.0 m · 192 tris | 두둑 테두리(2×2칸 = 4 × 4 m). **10/30: 게임에서 빼기로 함 — 위 「개발에 부탁할 것」 참고.** 판자 + 청록 기둥 + 칸 사이 낮은 칸막이 + 바닥 흙. 칸 흙은 따로(아래). 두둑 가운데가 피벗 — 칸 중심은 (±1, 0, ±1) |
 | (env_plot 칸 흙) | `Environment/plot/pf_env_plot_soil.prefab`, `Models/env_plot_soil.fbx` | 1.66 × 0.11 × 1.66 m · 1,560 tris | `farm_cell`의 `Soil` 자식 교체용. 흰 바탕 + 회색 흙덩이 질감이라 `FarmCellView`가 칠하는 `_BaseColor`가 그대로 보임. 셰이더 `Environment/Shaders/ToonSoil` + 스크립트 `Environment/Scripts/SoilFX.cs`(`Model`에 붙어 있음): 괭이가 땅에 닿을 때 `OnTillHit(진행도 0~1, 맞은 위치)`, 심을 때 `OnPlant()`, 불러오기 후 `SetTill()`, 수확 후 `ResetSoil()`. 젖음은 기존처럼 색으로 |
 | `tool_seedbag` | `Props/seedbag/pf_tool_seedbag.prefab` (원본 `_Source/Teal_Pouch_Glowing_Leaves_1296`) | 임시 0.3 m | Varco 원본 그대로, 피벗 바닥 가운데(요청서는 손잡이 쥐는 곳) |
 | `tool_fertilizer` | `Props/fertilizer/pf_tool_fertilizer.prefab`, `Models/tool_fertilizer.fbx` | 높이 0.18 m | **Varco 원본 → 재모델로 교체** (프리팹 GUID 그대로). 병 · 액체 분리, 재질 `mat_tool_fertilizer_*` (셰이더 `ToonCrystal` · `Props/Shaders/ToonLiquid`). 액체 `Model/tool_fertilizer_liquid`에 `Props/Scripts/LiquidWobble.cs` — 병이 움직이면 수면이 출렁이고, **`Fill`(0~1)을 내리면 액체가 줄어듦**(비료 사용량 표시용). 이 스크립트가 없으면 액체가 안 보임. 원본은 `_Source/`에 그대로. 피벗 바닥 가운데 |
@@ -136,6 +141,12 @@
 | `tree_bg/Textures/tex_env_tree_bg_qt_leaves_{common,twisted}_veinmask.png` + `tree_bg/Substance~/leaf_veins.sbs` | 10/29. 잎맥 마스크(선형 회색, BC4, 1024). Substance Designer 그래프 `leaf_veins`의 출력 `vein_mask_common` · `vein_mask_twisted`를 그대로 내보낸 것. 입력은 `leaf_space.py`가 원본 잎 텍스처 알파에서 뽑은 16비트 맵(`leaf_*_along` 밑동 0 → 끝 1, `leaf_*_across` 주맥 0 → 가장자리 1)과 알파. 무늬: 주맥 반폭 across 0.055 ~ 0.095(+ 끝으로 0.035 가늘어짐), 곁선 1쌍 = along − 0.35 × across가 0.33 ~ 0.37인 띠 × 주맥 가까이(across 0.36 ~ 0.52), 곁선 세기 70 %, 잎 가장자리 안쪽만, Clouds 2로 흔들림 1.2. ToonLeaf `_VeinMap`으로 연결, `qt_leaf` 재질 12개 `_VeinMapStrength` 0.32 · `_VeinMapNear` 9 m · `_VeinMapFar` 15 m. 바로 앞의 `_veined` 텍스처(밝게 구운 잎맥)는 지움 |
 | `Props/pot/Models/prop_pot_{grandma,small,hanging}.fbx` | 10/29. 상점 그레이박스 화분(유니티 기본 원기둥) 교체용 모델 3종. 크기는 지금 그레이박스 자리 그대로 — 할머니 화분 지름 0.70 × 높이 0.44 m(`BigPot` 2개), 바닥 작은 화분 0.36 × 0.30 m(`Pot` 4개), 걸이 화분 0.60 × 0.36 m(`Hanging/Planter_*/Pot` 4개). 각 252 tris, 피벗 바닥 가운데, 스케일 1, 위쪽 흙 홈. **재질 · 프리팹은 아직 없음**(모델만). 할머니 화분은 `GrandmaSleep`(잿빛 → 색)용이라 재질을 `ToonProp`으로 만들 예정 |
 | `Props/sign_open/Models/prop_sign_open.fbx` + `@opened` · `@close` · `@open` · `@sway` | 10/29. 하루 끝 연출용 걸이 OPEN/CLOSED 팻말(데모 스토리 「가게 문 닫기」). 아래 「걸이 팻말 Animator 맵핑」 참고. **재질 · 프리팹 · 배치는 아직 없음**(모델과 애니메이션만) |
+| `Environment/plot/Materials/mat_env_plot_cellsoil.mat` | 10/30. 젖은 흙 반짝임(`_WetSparkle`) 1 → 0. 보는 각도에 따라 흙알갱이가 켜졌다 꺼지는 방식이라 걸을 때 흰 점이 지글거려 화면이 깨져 보였음 (기획 피드백). 젖은 색 · 물웅덩이는 그대로 |
+| `Crops/common/FX/pf_vfx_harvest_wisp.prefab`, `Crops/common/Scripts/HarvestLightWisp.cs` | 10/30. 등대 기획서 v2: 수확 빛이 아치를 그리며 등대 꼭대기 심장(`LighthouseGoal.HeartPoint`)으로 들어감 (약 6초). 등대 층은 레벨로만 오름 |
+| `Environment/Scripts/LighthouseProgressLink.cs`, `LighthouseGoal.cs` | 10/30. 등대 3단계: Lv 4 → 1층, Lv 9 → 2층 (`floorLevels`), 심장은 엔딩만. 엔딩에서 하늘이 새벽으로 돌던 것 끔(`turnSkyAtEnding`, 첫 해돋이 삭제) |
+| `Environment/Scripts/IntroDirector.cs` + 배경 씬 `== Cinematics ==/IntroDirector` | 10/30. 새 게임 시작 연출: 검은 화면에서 잿빛 농장 장면 3개(`Shot01~03`, 자식 위치 = 구도)가 서서히 밝아졌다 어두워지고, 마지막에 플레이어 눈으로 3초에 걸쳐 밝아진 뒤 편지 ①. 약 20초, 아무 키 = 마지막 밝아지기로. **게임 코드 수정 없음** — `GameScreen`이라 그동안 입력이 잠기고 편지 ①은 끝나고 엶. 이어하기는 재생 안 함(같은 프레임의 불러오기 결과로 구분). 재생 중 HUD 캔버스는 꺼 둠 |
+| `Environment/Scripts/MapFlyover.cs` + 배경 씬 `== Cinematics ==/MapFlyover` | 10/30. 맵 한 바퀴 궤도(높이 28 m · 12초, 등대 앞 감속) — 엔딩용. 경로 = 자식 `WP00~07`. 자체 카메라를 켜고 그동안 플레이어 카메라를 끔 (Cinemachine 필요 없음) |
+| `Sky/Shaders/ToonSky.shader`, `DeepBlue/M_Sky_DeepBlue.mat`, `Shaders/AerialPerspective.shader`, `Materials_PP/mat_pp_aerial_perspective.mat` | 10/30. 눈알 행성 지평선: 해 쪽(북, 낮 쪽 사막)은 뜨거운 노을빛이 구름 위까지, 반대쪽(남, 밤 쪽 얼음)은 지평선 얼음빛 + 그 위 하늘이 어두워짐. 먼 안개도 북쪽 따뜻 · 남쪽 차갑게 |
 
 ## 걸이 팻말 Animator 맵핑 (`Props/sign_open`, 10/29)
 
