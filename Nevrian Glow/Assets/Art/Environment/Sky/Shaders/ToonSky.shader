@@ -33,6 +33,18 @@ Shader "DSEWA/ToonSky"
         _SunsetAmount ("Sunset Amount", Range(0, 1)) = 0
         _SunsetHeight ("Sunset Height", Range(0.01, 1)) = 0.25
         _SunsetSpread ("Sunset Azimuth Falloff (higher = narrower)", Range(0.5, 16)) = 3
+        _SunsetOverClouds ("Sunset Over Clouds (desert glow, drawn last)", Range(0, 1)) = 0
+        [Header(Ending sky opening)]
+        _OpenSkyTint ("Opened Sky Tint (x the clear twilight gradient where the clouds burnt away)", Color) = (1, 1, 1, 1)
+        _OpenSkyStars ("Opened Sky Stars (painted stars, upper sky only)", Range(0, 4)) = 1.2
+        [Header(Night Side Ice (eyeball planet))]
+        _IceAmount ("Night Side Ice Amount", Range(0, 1)) = 0
+        _IceColor ("Ice Glow (at the horizon)", Color) = (0.55, 0.85, 1, 1)
+        _IceDarkColor ("Ice Dark (above the glow)", Color) = (0.02, 0.04, 0.12, 1)
+        _IceHeight ("Ice Glow Height", Range(0.01, 0.5)) = 0.08
+        _IceDarkHeight ("Ice Dark Height", Range(0.05, 1)) = 0.45
+        _IceDarkAmount ("Ice Dark Amount", Range(0, 1)) = 0.5
+        _IceSpread ("Ice Azimuth Falloff (higher = narrower)", Range(0.5, 16)) = 3
         [Header(Volumetric Cloud Layer (toon raymarch overhead))]
         _VolAmount ("Volumetric Amount", Range(0, 1)) = 0
         _VolBottom ("Layer Bottom (m)", Float) = 1200
@@ -269,6 +281,11 @@ Shader "DSEWA/ToonSky"
                 half _MidHeight, _BandHeight, _BandAmount, _Dither;
                 half4 _SunsetColor, _SunsetHotColor;
                 half _SunsetAmount, _SunsetHeight, _SunsetSpread;
+                half4 _IceColor, _IceDarkColor;
+                half _SunsetOverClouds;
+                half4 _OpenSkyTint;
+                half _OpenSkyStars;
+                half _IceAmount, _IceHeight, _IceDarkHeight, _IceDarkAmount, _IceSpread;
                 float _VolAmount, _VolBottom, _VolTop, _VolScale, _VolCoverage, _VolDensity, _VolSteps;
                 float4 _VolWind, _VolHorizonFade, _VolSunSideFade;
                 float _VolLightStep, _VolLightAbsorb, _VolErode, _VolShadeThreshold, _VolEdge, _VolSideFalloff;
@@ -493,6 +510,11 @@ Shader "DSEWA/ToonSky"
                 p += dot(p, p + 45.32);
                 return frac(p.x * p.y);
             }
+
+            // ending sky dissolve (2026-10-30, user: "a radial dissolve when it shoots into the sky"): set by EndingDirector.
+            // xyz = world direction of the centre (where the beam meets the sky), w = radius (radians, 0 = off)
+            float4 _DSEWA_SkyDissolve;
+            float4 _DSEWA_SkyDissolveEdge;   // rgb = edge glow colour, a = edge width (radians)
 
             float ValueNoise2(float2 p)
             {
@@ -1004,6 +1026,7 @@ Shader "DSEWA/ToonSky"
                 if (up < 0) color = lerp(_HorizonColor.rgb, _GroundColor.rgb, saturate(-up * _GroundFade));
                 // Bright haze band hugging the horizon (both sides, so it also hides the ground's far edge)
                 color = lerp(color, _BandColor.rgb, (1 - smoothstep(0, _BandHeight, abs(up))) * _BandAmount);
+                half3 clearSky = color;   // the cloudless twilight gradient - what the ending's opened sky shows
 
                 // Painted sky (2026-10-26, user: "a Ghibli-cloud skybox", then "make the clouds drift and only the stars
                 // twinkle"). Layered like Skyrim's weather sky / OptiFine custom sky layers: a static background, its
@@ -1014,6 +1037,9 @@ Shader "DSEWA/ToonSky"
                 half3 pano = 0;
                 half panoCloud = 0;
                 half3 cloudRaw = 0;
+                half skyGlow = 0;
+                half skyHole = 0;        // ending: where the clouds have burnt away (drawn last, over the day / sunset)
+                half3 holeStars = 0;
                 if (panoK > 0)
                 {
                     float2 puv = float2(atan2(dir.x, dir.z) * (0.5 / PI) + 0.5 + _PanoRotation / 360.0,
@@ -1030,6 +1056,20 @@ Shader "DSEWA/ToonSky"
                     half4 hi = SAMPLE_TEXTURE2D_LOD(_PanoCloudHigh, sampler_PanoTex, puv + drift * _PanoCloudSpeed.y, 0);
                     half3 cl = lerp(lo.rgb, hi.rgb, hi.a);
                     half ca = 1 - (1 - lo.a) * (1 - hi.a);                                   // high over low
+                    // ending: the clouds dissolve away in a ragged ring spreading from where the beam meets the sky
+                    if (_DSEWA_SkyDissolve.w > 0)
+                    {
+                        float3 sc = normalize(_DSEWA_SkyDissolve.xyz + float3(0, 1e-4, 0));
+                        float sAng = acos(clamp(dot(dir, sc), -1, 1));
+                        float sn = ValueNoise2(puv * float2(36, 18)) * 0.7 + ValueNoise2(puv * float2(90, 45)) * 0.3;
+                        float sEdge = sAng - _DSEWA_SkyDissolve.w + (sn - 0.5) * 0.35;
+                        float sw = max(_DSEWA_SkyDissolveEdge.a, 0.005);
+                        float hole = 1 - smoothstep(-sw * 0.3, sw * 0.3, sEdge);
+                        skyGlow = (1 - smoothstep(0, sw, abs(sEdge))) * ca;   // glowing rim where cloud is burning away
+                        ca *= 1 - hole;
+                        skyHole = hole * panoK;
+                        holeStars = bg.rgb * bg.a * tw * _OpenSkyStars * smoothstep(0.25, 0.8, up);
+                    }
                     pano = cl * _PanoTint.rgb;                                                // cloud colour (rgb is bled past the edge)
                     panoCloud = ca * panoK;
                     cloudRaw = cl;
@@ -1186,9 +1226,36 @@ Shader "DSEWA/ToonSky"
                     // Unclamped lerp: UE's Cloud Opacity 1.2157 pushes the cloud past its colour, as the original does
                     color += (cloud - color) * (cover * smoothstep(0, _CloudHorizonFade, up) * _CloudOpacity);
                 }
+                // 2026-10-30 (user): the opened sky showed the white painted sun-side sky; a night sky broke the always-
+                // twilight planet - open onto the clear twilight gradient (no clouds) with a few stars up high instead;
+                // before the eyeball-planet horizons, so the desert sunset and the ice glow still paint the opened sky
+                color = lerp(color, clearSky * _OpenSkyTint.rgb + holeStars, skyHole);
+                if (skyHole > 0)   // the sun stays where it is (user: it must not vanish) - drawn again over the opened sky
+                {
+                    float sCos = dot(dir, L);
+                    float sAng = acos(clamp(sCos, -1, 1));
+                    float sAa = fwidth(sAng);
+                    half3 withSun = color + _SunColor.rgb * pow(saturate(sCos), _GlowPower) * _GlowAmount;
+                    withSun = lerp(withSun, _SunColor.rgb, (1 - smoothstep(_HaloSize - sAa, _HaloSize + sAa, sAng)) * _HaloAmount);
+                    withSun = lerp(withSun, _SunColor.rgb * _SunBrightness, 1 - smoothstep(_SunSize - sAa, _SunSize + sAa, sAng));
+                    color = lerp(color, withSun, skyHole);
+                }
+                // Eyeball planet horizons (2026-10-30, user: day side desert in the north, ice in the south). Drawn last, over
+                // the painted clouds, so the low cloud bank takes the colour too. Sun side: the sunset glow again, hot and
+                // bright over the clouds. Opposite side: a cold ice glow hugs the horizon and the sky above it sinks darker.
+                color = lerp(color, _SunsetHotColor.rgb, saturate(hMask * azMask * _SunsetOverClouds));
+                if (_IceAmount > 0)
+                {
+                    float iceAz = pow(1 - az, _IceSpread) * _IceAmount;
+                    float iceLow = 1 - smoothstep(0, _IceHeight, up > 0 ? up : -up * 4);
+                    float iceHigh = (1 - smoothstep(_IceHeight, _IceDarkHeight, up)) * step(0, up) * (1 - iceLow);
+                    color = lerp(color, _IceDarkColor.rgb, saturate(iceHigh * iceAz * _IceDarkAmount));
+                    color = lerp(color, _IceColor.rgb, saturate(iceLow * iceAz));
+                }
                 // +-0.5 LSB dither against banding in the long smooth gradient
                 float2 px = i.positionCS.xy;
                 color += (frac(sin(dot(px, float2(12.9898, 78.233))) * 43758.5453) - 0.5) * (_Dither / 255.0);
+                color += _DSEWA_SkyDissolveEdge.rgb * skyGlow;
                 return half4(color, 1);
             }
             ENDHLSL

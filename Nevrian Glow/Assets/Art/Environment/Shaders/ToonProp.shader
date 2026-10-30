@@ -56,6 +56,29 @@ Shader "DSEWA/ToonProp"
         _DistGlowRange ("Distance Boost Start / End (m)", Vector) = (10, 60, 0, 0)
         _GlowMax ("Brightest Channel Cap (0 = off)", Range(0, 8)) = 0
         _FootBlend ("Foot Blend Into Ground (m above terrain, 0 = off)", Range(0, 2)) = 0
+        [Header(Pearl   nacre bands on the lit face   default off)]
+        _PearlAmount ("Pearl Amount (0 = off)", Range(0, 1)) = 0
+        [NoScaleOffset] _PearlBase ("Nacre Base Colour (Substance nacre_layers)", 2D) = "white" {}
+        [NoScaleOffset][Normal] _PearlNormal ("Nacre Normal", 2D) = "bump" {}
+        [NoScaleOffset] _PearlRough ("Nacre Roughness", 2D) = "black" {}
+        _PearlBandSize ("Texture Tile Height (m)", Float) = 4
+        _PearlAround ("Texture Tiles Around", Float) = 4
+        _PearlNormalStrength ("Normal Strength", Range(0, 2)) = 1
+        _PearlTintGain ("Base Colour Variation x", Range(0, 6)) = 3
+        _PearlBlur ("Soften (reads blurrier mips, 0 = sharp)", Range(0, 6)) = 0
+        _PearlGrainAngle ("Grain Angle From Vertical (deg)", Range(-80, 80)) = 0
+        _PearlRefRadius ("Grain Angle Measured At Radius (m)", Float) = 4
+        _PearlDepth ("Inner Layer Depth (parallax, tile units)", Range(0, 0.5)) = 0.12
+        _PearlInner ("Inner Layer Show-Through", Range(0, 1)) = 0.6
+        _PearlSilver ("Body Lustre Colour (silver / cream)", Color) = (0.93, 0.92, 0.98, 1)
+        _PearlCore ("Body Lustre (bright core face-on)", Range(0, 1)) = 0.35
+        _PearlOrient ("Orient (overtone ring round the highlight)", Range(0, 2)) = 0.6
+        _PearlHueSpread ("Hue Change Between Bands", Range(0, 1)) = 0.37
+        _PearlViewShift ("Hue Shift With View Angle", Range(0, 3)) = 1.2
+        _PearlPastel ("Pastel (1 = white, 0 = full rainbow)", Range(0, 1)) = 0.55
+        _PearlFacing ("Face-On Only (power)", Range(0, 6)) = 1.5
+        _PearlSheen ("Lustre Highlight", Range(0, 2)) = 0.4
+        _PearlShadowSide ("On The Shadow Side (sky light)", Range(0, 1)) = 0.4
         [Header(Reveal By Height   LighthouseGoal   default off)]
         _RevealY ("Lit Below World Y (99999 = all lit)", Float) = 99999
         _RevealSoft ("Reveal Edge (m)", Float) = 0.6
@@ -66,6 +89,7 @@ Shader "DSEWA/ToonProp"
         [Header(World Awakening   WorldAwakening   default off)]
         _AwakeResponse ("Glow Follows The World Waking (0 = off)", Range(0, 1)) = 0
         [ToggleUI] _WakeExempt ("Keep Colour Outside The Waking Circle (lighthouse)", Float) = 0
+        [ToggleUI] _DeadInGrey ("Gone Outside The Waking Circle (dead trees: no fruit)", Float) = 0
         [Header(Transparency   blend One Zero and ZWrite 1 is opaque)]
         _Opacity ("Opacity (face middle)", Range(0, 1)) = 1
         _OpacityEdge ("Extra Opacity At The Silhouette", Range(0, 1)) = 0
@@ -107,6 +131,7 @@ Shader "DSEWA/ToonProp"
 
         HLSLINCLUDE
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+        #include "Assets/Art/Environment/Shaders/GroundFog.hlsl"   // world waking (dead in the grey) in every pass
 
         CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
@@ -137,7 +162,9 @@ Shader "DSEWA/ToonProp"
             float _PlantSway, _PlantSwaySpeed, _PlantNod, _PlantNodSpeed;
             float _RevealY, _RevealSoft, _RevealFlash, _RevealFlicker, _RevealGrey;
             half4 _RevealDark;
-            half _AwakeResponse, _WakeExempt;
+            half _AwakeResponse, _WakeExempt, _DeadInGrey;
+            half4 _PearlSilver;
+            float _PearlAmount, _PearlBandSize, _PearlAround, _PearlNormalStrength, _PearlTintGain, _PearlBlur, _PearlGrainAngle, _PearlRefRadius, _PearlDepth, _PearlInner, _PearlCore, _PearlOrient, _PearlHueSpread, _PearlViewShift, _PearlPastel, _PearlFacing, _PearlSheen, _PearlShadowSide;
         CBUFFER_END
         // set by WorldAwakening: 1 = the world still asleep (glows dimmed), 0 = awake (unset = 0, so nothing changes)
         float _DSEWA_WorldSleep;
@@ -252,6 +279,8 @@ Shader "DSEWA/ToonProp"
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
             TEXTURE2D(_GlowMaskMap);
+            TEXTURE2D(_PearlBase); SAMPLER(sampler_PearlBase);
+            TEXTURE2D(_PearlNormal); TEXTURE2D(_PearlRough);
 
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; half4 color : COLOR; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct Varyings
@@ -271,6 +300,7 @@ Shader "DSEWA/ToonProp"
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
                 VertexPositionInputs pos = GetVertexPositionInputs(Deform(input.positionOS.xyz, input.color));
                 o.positionCS = pos.positionCS;
+                DSEWA_DEAD_VERT(o.positionCS, pos.positionWS)
                 o.positionWS = pos.positionWS;
                 o.normalWS = TransformObjectToWorldNormal(input.normalOS);
                 o.uv = TRANSFORM_TEX(input.uv, _BaseMap);
@@ -285,6 +315,7 @@ Shader "DSEWA/ToonProp"
 
             half4 frag(Varyings i, bool frontFace : SV_IsFrontFace) : SV_Target
             {
+                if (_DeadInGrey > 0.5) clip(WorldWakeDeadClip(i.positionWS));   // fruit grows back as the wave passes
                 half3 tex = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, i.uv).rgb;
                 half texV = max(tex.r, max(tex.g, tex.b));
 
@@ -327,6 +358,68 @@ Shader "DSEWA/ToonProp"
                 // (2026-10-26, user: "the further the tree fruit, the brighter it should glow")
                 half distK = lerp(1.0h, _DistGlowBoost, smoothstep(_DistGlowRange.x, max(_DistGlowRange.y, _DistGlowRange.x + 0.01), distance(i.positionWS, _WorldSpaceCameraPos)));
                 color += _RimColor.rgb * smoothstep(_RimMin, _RimMax, 1.0 - saturate(dot(N, V))) * _RimStrength * distK;
+
+                // pearl / nacre (2026-10-30; depth pass after "looks like a cheap pearl"): the Substance nacre_layers maps
+                // wrapped round the object (grain rings the tower), in layers like a real pearl -
+                //  inner layer: the nacre colour read again shifted by the view (parallax), so a second pattern drifts
+                //               under the surface as you walk and the shell reads as translucent layers;
+                //  body lustre: face-on the colour lifts toward silver / cream (the bright core of a good pearl);
+                //  surface: a sharp highlight over a broad soft glow, following the nacre normal;
+                //  orient: the pink / green overtone only in a ring round the highlight, not over the whole face.
+                // Strongest face-on and on the lit face; the shade side keeps a little.
+                if (_PearlAmount > 0)
+                {
+                    float3 rel = i.positionWS - GetObjectToWorldMatrix()._m03_m13_m23;
+                    float around = (atan2(rel.x, rel.z) / TWO_PI + 0.5) * max(round(_PearlAround), 1.0);
+                    // texture x (the grain direction) runs up the object, y round it (2026-10-30, user: grain pointing up)
+                    // slanted grain (2026-10-30, user: 45 degrees): a shear, not a rotation - the wrap jump stays a whole
+                    // number of tiles, so no seam. The angle holds at Ref Radius (wider parts lean less, narrower more)
+                    float hgt = rel.y / max(_PearlBandSize, 0.05);
+                    float tilesAround = max(round(_PearlAround), 1.0);
+                    float tiltS = tan(radians(_PearlGrainAngle)) * max(_PearlBandSize, 0.05) / (TWO_PI * max(_PearlRefRadius, 0.1) / tilesAround);
+                    float2 puv = float2(hgt, around + tiltS * hgt);
+                    // derivatives without the jump where atan wraps (no seam line from the mip pick)
+                    float2 puv2 = float2(puv.x, frac(around + 0.5) + tiltS * hgt);
+                    float2 dx = ddx(puv), dy = ddy(puv), dx2 = ddx(puv2), dy2 = ddy(puv2);
+                    dx.y = abs(dx.y) < abs(dx2.y) ? dx.y : dx2.y;
+                    dy.y = abs(dy.y) < abs(dy2.y) ? dy.y : dy2.y;
+                    float blurK = exp2(_PearlBlur);   // softened: pretend the pixel covers more texture, so a blurrier mip is read
+                    dx *= blurK; dy *= blurK;
+                    // tangent frame of the wrap: texture x = up (Bw), texture y = round the object (Tw)
+                    float3 Tw0 = normalize(float3(rel.z, 0, -rel.x) + 1e-5);
+                    float ga = radians(_PearlGrainAngle);
+                    float3 Bw = normalize(float3(0, cos(ga), 0) - Tw0 * sin(ga));   // along the grain
+                    float3 Tw = normalize(Tw0 * cos(ga) + float3(0, sin(ga), 0));  // across it
+                    half3 nBase = SAMPLE_TEXTURE2D_GRAD(_PearlBase, sampler_PearlBase, puv, dx, dy).rgb;
+                    half3 nTs = UnpackNormal(SAMPLE_TEXTURE2D_GRAD(_PearlNormal, sampler_PearlBase, puv, dx, dy));
+                    half nRough = SAMPLE_TEXTURE2D_GRAD(_PearlRough, sampler_PearlBase, puv, dx, dy).r;
+                    float3 Np = normalize(N + (Bw * nTs.x + Tw * nTs.y) * _PearlNormalStrength);
+                    float nv = saturate(dot(Np, V));
+                    // inner layer, seen through the surface: parallax along the view, deeper at grazing angles
+                    float2 vt = float2(dot(V, Bw), dot(V, Tw));
+                    float2 iuv = puv - vt * (_PearlDepth / max(nv, 0.3));
+                    half3 iBase = SAMPLE_TEXTURE2D_GRAD(_PearlBase, sampler_PearlBase, iuv * 1.37 + 0.31, dx * 2.0, dy * 2.0).rgb;
+                    float ihue = (iBase.r - iBase.b) * _PearlHueSpread * 6.0 + nv * _PearlViewShift;
+                    half3 iRain = lerp(0.5h + 0.5h * cos(TWO_PI * (ihue + half3(0.0h, 0.33h, 0.67h))), 1.0h, _PearlPastel);
+                    half3 tint = 1.0h + (nBase / max(dot(nBase, 0.3333h), 1e-3h) - 1.0h) * _PearlTintGain;
+                    half facing = pow(nv, _PearlFacing);
+                    half k = _PearlAmount * lerp(_PearlShadowSide, 1.0h, lit) * facing;
+                    // inner layer showing through, then the body lustre lifting the core toward silver / cream
+                    color = lerp(color, color * tint * iRain * 1.15h, k * _PearlInner);
+                    half core = pow(nv, 3.0h) * _PearlCore * _PearlAmount * lerp(0.35h, 1.0h, lit);
+                    color = lerp(color, max(color, _PearlSilver.rgb * (0.55h + 0.45h * lit)), core);
+                    // surface: sharp highlight over a broad soft glow
+                    float3 H = normalize(light.direction + V);
+                    half nh = saturate(dot(Np, H));
+                    half sharpness = lerp(80.0h, 12.0h, saturate(nRough * 3.0h));
+                    half spec = (pow(nh, sharpness) * 0.7h + pow(nh, 5.0h) * 0.3h) * direct;
+                    color += _PearlSilver.rgb * light.color * spec * _PearlSheen * _PearlAmount * lit * (1.0h - nRough);
+                    // orient: overtone ring round the highlight
+                    float ohue = nh * 2.5 + dot(Np, V) * _PearlViewShift + (nBase.r - nBase.b) * _PearlHueSpread * 4.0;
+                    half3 oRain = 0.5h + 0.5h * cos(TWO_PI * (ohue + half3(0.0h, 0.33h, 0.67h)));
+                    half ring = smoothstep(0.55h, 0.85h, nh) * (1.0h - smoothstep(0.9h, 0.99h, nh));
+                    color += (oRain - 0.35h) * ring * _PearlOrient * 0.25h * _PearlAmount * lit * direct;
+                }
 
                 // 5: glow from the original painting's brightest parts
                 float3 objPos = GetObjectToWorldMatrix()._m03_m13_m23;
@@ -424,6 +517,7 @@ Shader "DSEWA/ToonProp"
                 float3 positionWS = TransformObjectToWorld(Deform(input.positionOS.xyz, input.color));
                 positionWS += TransformObjectToWorldNormal(input.normalOS) * _OutlineWidth * OutlineObjectScale();
                 o.positionCS = TransformWorldToHClip(positionWS);
+                DSEWA_DEAD_VERT(o.positionCS, positionWS)
                 o.fogFactor = ComputeFogFactor(o.positionCS.z);
                 return o;
             }
@@ -461,6 +555,7 @@ Shader "DSEWA/ToonProp"
                 float3 lightDir = _LightDirection;
             #endif
                 float4 positionCS = TransformWorldToHClip(ApplyShadowBias(positionWS, normalWS, lightDir));
+                DSEWA_DEAD_VERT(positionCS, positionWS)
             #if UNITY_REVERSED_Z
                 positionCS.z = min(positionCS.z, UNITY_NEAR_CLIP_VALUE);
             #else
@@ -489,7 +584,10 @@ Shader "DSEWA/ToonProp"
             float4 vert(Attributes input) : SV_POSITION
             {
                 UNITY_SETUP_INSTANCE_ID(input);
-                return TransformObjectToHClip(Deform(input.positionOS.xyz, input.color));
+                float3 deadWS = TransformObjectToWorld(Deform(input.positionOS.xyz, input.color));
+                float4 deadCS = TransformWorldToHClip(deadWS);
+                DSEWA_DEAD_VERT(deadCS, deadWS)
+                return deadCS;
             }
 
             half frag() : SV_Target { return 0; }
@@ -515,7 +613,9 @@ Shader "DSEWA/ToonProp"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 Varyings o;
-                o.positionCS = TransformObjectToHClip(Deform(input.positionOS.xyz, input.color));
+                float3 deadWS = TransformObjectToWorld(Deform(input.positionOS.xyz, input.color));
+                o.positionCS = TransformWorldToHClip(deadWS);
+                DSEWA_DEAD_VERT(o.positionCS, deadWS)
                 o.normalWS = TransformObjectToWorldNormal(input.normalOS);
                 return o;
             }

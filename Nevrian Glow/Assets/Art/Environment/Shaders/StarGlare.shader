@@ -13,6 +13,8 @@ Shader "Hidden/DSEWA/StarGlare"
         _Rotation ("Rotation (degrees)", Range(0, 180)) = 15
         _Spin ("Slow Spin (degrees per second)", Float) = 2
         _Saturation ("Ray Saturation Boost", Range(0, 2)) = 1.2
+        _NearNoRays ("No Rays Closer Than (m)", Float) = 5
+        _NearFullRays ("Full Rays From (m)", Float) = 20
     }
     SubShader
     {
@@ -28,7 +30,7 @@ Shader "Hidden/DSEWA/StarGlare"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
 
-            float _Threshold, _Intensity, _Length, _Rays, _Rotation, _Spin, _Saturation;
+            float _Threshold, _Intensity, _Length, _Rays, _Rotation, _Spin, _Saturation, _NearNoRays, _NearFullRays;
             float _DSEWA_GlareDim;   // set by GlareFatigue: 0 = full rays, 1 = gone (2026-10-27)
 
             half3 Bright(float2 uv)
@@ -41,7 +43,10 @@ Shader "Hidden/DSEWA/StarGlare"
             #endif
                 half3 c = SAMPLE_TEXTURE2D_X_LOD(_BlitTexture, sampler_LinearClamp, uv, 0).rgb;
                 half m = max(c.r, max(c.g, c.b));
-                return c * saturate((m - _Threshold) / max(m, 1e-3));   // keeps the hue of the light
+                // 2026-10-30 (user: "far bright lights should sparkle, but near ones sparkle too and it hurts the eyes"):
+                // lights close to the camera throw no rays, fading in with distance
+                float near = smoothstep(_NearNoRays, max(_NearFullRays, _NearNoRays + 0.01), LinearEyeDepth(raw, _ZBufferParams));
+                return c * saturate((m - _Threshold) / max(m, 1e-3)) * near;   // keeps the hue of the light
             }
 
             half4 Frag(Varyings input) : SV_Target

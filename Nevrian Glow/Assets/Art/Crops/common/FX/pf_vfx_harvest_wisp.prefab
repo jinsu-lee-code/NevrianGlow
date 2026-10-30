@@ -24371,6 +24371,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9f6c1656e64790b46afad12f6cbfaefc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HarvestLightWisp
+  flyToLighthouse: 1
+  hangTime: 0.5
   riseTime: 0.6
   riseHeight: 1.6
   speed: 9

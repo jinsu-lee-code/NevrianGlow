@@ -31,6 +31,18 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _PearlBase:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _PearlNormal:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _PearlRough:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _AmbientShade: 0.1
@@ -41,6 +53,7 @@ Material:
     - _CapSpeed: 1.3
     - _CapStart: 0.45
     - _CapWaves: 2
+    - _DeadInGrey: 1
     - _Delight: 0
     - _DelightLevel: 0.75
     - _DistGlowBoost: 2.2
@@ -58,6 +71,24 @@ Material:
     - _OpacityEdge: 0
     - _OutlineWidth: 0.006
     - _PaletteMix: 0
+    - _PearlAmount: 0
+    - _PearlAround: 4
+    - _PearlBandSize: 4
+    - _PearlBlur: 0
+    - _PearlCore: 0.35
+    - _PearlDepth: 0.12
+    - _PearlFacing: 1.5
+    - _PearlGrainAngle: 0
+    - _PearlHueSpread: 0.37
+    - _PearlInner: 0.6
+    - _PearlNormalStrength: 1
+    - _PearlOrient: 0.6
+    - _PearlPastel: 0.55
+    - _PearlRefRadius: 4
+    - _PearlShadowSide: 0.4
+    - _PearlSheen: 0.4
+    - _PearlTintGain: 3
+    - _PearlViewShift: 1.2
     - _PlantNod: 0
     - _PlantNodSpeed: 2.4
     - _PlantSway: 0
@@ -67,6 +98,7 @@ Material:
     - _ReceiveShadows: 1
     - _RevealFlash: 0
     - _RevealFlicker: 0
+    - _RevealGrey: 0
     - _RevealSoft: 0.6
     - _RevealY: 99999
     - _RimMax: 0.84
@@ -80,6 +112,7 @@ Material:
     - _TexGlowStrength: 3.2
     - _TexGlowThreshold: 0.5
     - _Threshold: 0.35
+    - _WakeExempt: 0
     - _ZWrite: 1
     m_Colors:
     - _DistGlowRange: {r: 12, g: 70, b: 0, a: 0}
@@ -97,6 +130,7 @@ Material:
     - _PaletteDark: {r: 0.11999995, g: 0.13999996, b: 0.33999997, a: 1}
     - _PaletteLight: {r: 0.76, g: 0.86, b: 1, a: 1}
     - _PaletteMid: {r: 0.45, g: 0.45, b: 0.86, a: 1}
+    - _PearlSilver: {r: 0.93, g: 0.92, b: 0.97999996, a: 1}
     - _RevealDark: {r: 0.11999995, g: 0.11999995, b: 0.19999996, a: 1}
     - _RimColor: {r: 0.75, g: 0.8, b: 1, a: 1}
     - _ShadowColor: {r: 0.16, g: 0.66, b: 0.7, a: 1}

@@ -9,6 +9,7 @@ Shader "DSEWA/ToonLeaf"
     {
         _BaseMap ("Silhouette (alpha)", 2D) = "white" {}
         [ToggleUI] _WakeExempt ("Keep Colour Outside The Waking Circle (crops)", Float) = 0
+        [ToggleUI] _DeadInGrey ("Gone Outside The Waking Circle (dead trees: no leaves)", Float) = 0
         _Cutoff ("Alpha Clip", Range(0, 1)) = 0.5
         _RootColor ("Root Color", Color) = (0.02, 0.04, 0.16, 1)
         _TipColor ("Tip Color", Color) = (0.20, 0.34, 0.91, 1)
@@ -80,6 +81,7 @@ Shader "DSEWA/ToonLeaf"
 
         HLSLINCLUDE
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+        #include "Assets/Art/Environment/Shaders/GroundFog.hlsl"   // world waking (dead in the grey) in every pass
 
         CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
@@ -102,7 +104,7 @@ Shader "DSEWA/ToonLeaf"
             half4 _CrownSkyColor, _CrownUnderColor, _CrownRimColor;
             half _CrownSky, _CrownUnder, _CrownRim, _CrownRimWidth;
 
-            half _WakeExempt;
+            half _WakeExempt, _DeadInGrey;
             half _VeinMapStrength;
             float _VeinMapNear, _VeinMapFar;
         CBUFFER_END
@@ -175,6 +177,7 @@ Shader "DSEWA/ToonLeaf"
                 float3 positionWS = LeafBend(TransformObjectToWorld(input.positionOS.xyz), input.color);
                 o.positionWS = positionWS;
                 o.positionCS = TransformWorldToHClip(positionWS);
+                DSEWA_DEAD_VERT(o.positionCS, positionWS)
                 o.normalWS = TransformObjectToWorldNormal(input.normalOS);
                 o.uv = TRANSFORM_TEX(input.uv, _BaseMap);
                 o.color = input.color;
@@ -193,6 +196,7 @@ Shader "DSEWA/ToonLeaf"
             half4 frag(Varyings i, bool isFront : SV_IsFrontFace) : SV_Target
             {
                 ClipAlpha(i.uv);
+                if (_DeadInGrey > 0.5) clip(WorldWakeDeadClip(i.positionWS));   // leaves grow back as the wave passes
                 float3 N = normalize(i.normalWS);
                 // tree cards carry one outward crown normal (vertex alpha 0): flipping it for the back face pointed it into
                 // the crown, so a lit leaf went dark whenever its back was seen (2026-10-27, user: "leaves fall into shadow
@@ -325,6 +329,7 @@ Shader "DSEWA/ToonLeaf"
             #endif
                 if (dot(normalWS, lightDir) < 0) normalWS = -normalWS;   // two-sided: bias along the lit side
                 o.positionCS = TransformWorldToHClip(ApplyShadowBias(positionWS, normalWS, lightDir));
+                DSEWA_DEAD_VERT(o.positionCS, positionWS)
             #if UNITY_REVERSED_Z
                 o.positionCS.z = min(o.positionCS.z, UNITY_NEAR_CLIP_VALUE);
             #else
@@ -356,7 +361,9 @@ Shader "DSEWA/ToonLeaf"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 Varyings o;
-                o.positionCS = TransformWorldToHClip(LeafBend(TransformObjectToWorld(input.positionOS.xyz), input.color));
+                float3 deadWS = LeafBend(TransformObjectToWorld(input.positionOS.xyz), input.color);
+                o.positionCS = TransformWorldToHClip(deadWS);
+                DSEWA_DEAD_VERT(o.positionCS, deadWS)
                 o.uv = TRANSFORM_TEX(input.uv, _BaseMap);
                 return o;
             }
@@ -384,7 +391,9 @@ Shader "DSEWA/ToonLeaf"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 Varyings o;
-                o.positionCS = TransformWorldToHClip(LeafBend(TransformObjectToWorld(input.positionOS.xyz), input.color));
+                float3 deadWS = LeafBend(TransformObjectToWorld(input.positionOS.xyz), input.color);
+                o.positionCS = TransformWorldToHClip(deadWS);
+                DSEWA_DEAD_VERT(o.positionCS, deadWS)
                 o.normalWS = TransformObjectToWorldNormal(input.normalOS);
                 o.uv = TRANSFORM_TEX(input.uv, _BaseMap);
                 return o;

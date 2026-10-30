@@ -6,23 +6,12 @@
 float4 _DSEWA_GroundFog;        // start (m), end (m), max amount, height falloff (1/m above the camera)
 float4 _DSEWA_GroundFogColor;   // rgb, a = 1 when set
 
-half3 ApplyGroundFog(half3 color, float3 positionWS)
-{
-    if (_DSEWA_GroundFogColor.a < 0.5) return color;
-    float d = distance(positionWS, _WorldSpaceCameraPos);
-    float f = saturate((d - _DSEWA_GroundFog.x) / max(_DSEWA_GroundFog.y - _DSEWA_GroundFog.x, 1e-3));
-    f = f * f * (3 - 2 * f);
-    // high ground (hill tops) keeps a little more of its own colour
-    f *= exp(-max(positionWS.y - _WorldSpaceCameraPos.y, 0) * _DSEWA_GroundFog.w);
-    return lerp(color, _DSEWA_GroundFogColor.rgb, f * _DSEWA_GroundFog.z);
-}
-
-
 // World waking (WorldAwakening, 2026-10-28, user: "grey outside the circle"): colour lives only near the farm and the
 // lighthouse (a capsule from one to the other) and spreads outward as the lighthouse lights up. Outside it the
 // background goes grey and its glows sleep; a faint light band rides the edge. Off (z = 0) = everything as authored.
 float4 _DSEWA_WakeA;        // xy = farm (x, z), zw = lighthouse (x, z)
 float4 _DSEWA_WakeParams;   // x = radius (m), y = edge softness (m), z = on (1), w = edge band strength
+float4 _DSEWA_WakeBand;     // rgb = edge band colour (gold life light), a = band width x the edge (0 = old cyan band)
 
 float WorldWakeDistance(float3 positionWS)
 {
@@ -35,24 +24,85 @@ float WorldWakeDistance(float3 positionWS)
 }
 
 // 0 = inside the coloured area, 1 = outside (asleep); 0 everywhere while off
+float4 _DSEWA_WakeFarm;     // xy = farm (x, z), z = always-awake radius round the farm (m, 0 = none)
 float WorldWakeOutside(float3 positionWS)
 {
     if (_DSEWA_WakeParams.z < 0.5) return 0;
     float soft = max(_DSEWA_WakeParams.y, 0.01);
-    return smoothstep(_DSEWA_WakeParams.x - soft, _DSEWA_WakeParams.x + soft, WorldWakeDistance(positionWS));
+    float o = smoothstep(_DSEWA_WakeParams.x - soft, _DSEWA_WakeParams.x + soft, WorldWakeDistance(positionWS));
+    // the farmland is never grey (2026-10-30, user)
+    if (_DSEWA_WakeFarm.z > 0)
+        o = min(o, smoothstep(_DSEWA_WakeFarm.z - soft, _DSEWA_WakeFarm.z + soft, distance(positionWS.xz, _DSEWA_WakeFarm.xy)));
+    return o;
 }
 
-half3 ApplyWorldWake(half3 color, float3 positionWS)
+// The fog lifts with the grey (2026-10-30, user: "clear the fog together with the grey zone"): inside the coloured
+// area the fog thins by _DSEWA_FogWakeClear (0 = no change), so the light wave pushes the fog back as it spreads.
+float _DSEWA_FogWakeClear;
+float WorldWakeFogScale(float3 positionWS)
+{
+    if (_DSEWA_WakeParams.z < 0.5) return _DSEWA_WakeFarm.w > 0.5 ? 1 - saturate(_DSEWA_FogWakeClear) : 1;   // all awake: stays lifted
+    return 1 - saturate(_DSEWA_FogWakeClear) * (1 - WorldWakeOutside(positionWS));
+}
+
+half3 ApplyGroundFog(half3 color, float3 positionWS)
+{
+    if (_DSEWA_GroundFogColor.a < 0.5) return color;
+    float d = distance(positionWS, _WorldSpaceCameraPos);
+    float f = saturate((d - _DSEWA_GroundFog.x) / max(_DSEWA_GroundFog.y - _DSEWA_GroundFog.x, 1e-3));
+    f = f * f * (3 - 2 * f);
+    // high ground (hill tops) keeps a little more of its own colour
+    f *= exp(-max(positionWS.y - _WorldSpaceCameraPos.y, 0) * _DSEWA_GroundFog.w);
+    f *= WorldWakeFogScale(positionWS);
+    return lerp(color, _DSEWA_GroundFogColor.rgb, f * _DSEWA_GroundFog.z);
+}
+
+// bandScale: how strongly this surface shows the wave band. Ground (terrain, grass) keeps it faint so the wave reads on
+// the things standing round you (trees, bushes, props flash gold as it passes and keep a short afterglow) rather than
+// as a ring painted on the ground (2026-10-30, user).
+half3 ApplyWorldWakeBand(half3 color, float3 positionWS, half bandScale)
 {
     if (_DSEWA_WakeParams.z < 0.5) return color;
     float soft = max(_DSEWA_WakeParams.y, 0.01);
     float d = WorldWakeDistance(positionWS);
-    float outside = smoothstep(_DSEWA_WakeParams.x - soft, _DSEWA_WakeParams.x + soft, d);
+    float outside = WorldWakeOutside(positionWS);   // farm circle included
     half lum = dot(color, half3(0.299, 0.587, 0.114));
     half3 res = lerp(color, lum * half3(0.78, 0.82, 0.95) * 0.72, outside);
-    float x = (d - _DSEWA_WakeParams.x) / soft;
-    res += half3(0.45, 0.85, 1.0) * exp(-x * x * 1.5) * _DSEWA_WakeParams.w * (0.25 + lum);
+    float bandW = _DSEWA_WakeBand.a > 0 ? _DSEWA_WakeBand.a : 1.0;
+    float x = (d - _DSEWA_WakeParams.x) / (soft * bandW);
+    half3 bandCol = _DSEWA_WakeBand.a > 0 ? _DSEWA_WakeBand.rgb : half3(0.45, 0.85, 1.0);
+    // sharp ahead of the front, a longer afterglow behind it (inside the restored area)
+    float g = x < 0 ? exp(-x * x * 0.35) : exp(-x * x * 3.0);
+    float w = g * _DSEWA_WakeParams.w * bandScale;
+    res += bandCol * w * (0.25 + lum);
+    res += res * bandCol * w * 0.5;   // the surface itself flares a little brighter as it wakes
     return res;
 }
+
+half3 ApplyWorldWake(half3 color, float3 positionWS)
+{
+    return ApplyWorldWakeBand(color, positionWS, 1.0h);
+}
+
+// Dead in the grey (2026-10-30, user: "trees in the grey zone without leaves or fruit, like dead trees"): materials that
+// opt in (leaves, fruit) vanish outside the coloured area. Vertices well outside collapse (every pass: colour, shadow,
+// depth, outline - nothing is drawn there at all); across the soft edge the colour pass dissolves them in with a noise,
+// so leaves and fruit grow back as the wave passes.
+bool WorldWakeDeadVertex(float3 positionWS)
+{
+    return _DSEWA_WakeParams.z > 0.5 && WorldWakeOutside(positionWS) > 0.995;
+}
+
+// clip() argument for the colour pass: negative = cut
+float WorldWakeDeadClip(float3 positionWS)
+{
+    if (_DSEWA_WakeParams.z < 0.5) return 1;
+    float3 cell = floor(positionWS * 3.0);
+    float h = frac(sin(dot(cell, float3(12.9898, 78.233, 37.719))) * 43758.5453);
+    return h * 0.98 + 0.01 - WorldWakeOutside(positionWS);
+}
+
+// NaN position: the GPU drops every triangle touching it (a fixed point would stretch boundary triangles into streaks)
+#define DSEWA_DEAD_VERT(cs, ws) if (_DeadInGrey > 0.5 && WorldWakeDeadVertex(ws)) cs = asfloat(0x7fc00000u).xxxx;
 
 #endif

@@ -26,7 +26,14 @@ public class GroundFog : MonoBehaviour
     [Tooltip("Max Amount at night; blended by the night post volume's weight (DayNightBlend drives it)")]
     [Range(0f, 1f)] public float nightAmount = 0.25f;
     public Volume nightVolume;
+    [Header("Lifts with the grey")]
+    [Tooltip("Inside the coloured (awake) area the fog and the aerial haze thin by this much - the light wave pushes the fog back. 0 = no change")]
+    [Range(0f, 1f)] public float clearWhenAwake = 0.65f;
 
+    /// <summary>Cutscenes scale the fog for a moment (LightUpDirector's high top view); runtime only, 1 = as authored.</summary>
+    public static float CutsceneScale = 1f;
+
+    static readonly int WakeClearId = Shader.PropertyToID("_DSEWA_FogWakeClear");
     static readonly int FogId = Shader.PropertyToID("_DSEWA_GroundFog");
     static readonly int ColorId = Shader.PropertyToID("_DSEWA_GroundFogColor");
     static readonly int HorizonId = Shader.PropertyToID("_HorizonColor");
@@ -38,6 +45,7 @@ public class GroundFog : MonoBehaviour
     {
         RenderPipelineManager.beginContextRendering -= OnBeginRendering;
         Shader.SetGlobalVector(ColorId, Vector4.zero);
+        Shader.SetGlobalFloat(WakeClearId, 0f);
     }
 
     void OnBeginRendering(ScriptableRenderContext ctx, System.Collections.Generic.List<Camera> cams) => Push();
@@ -50,7 +58,8 @@ public class GroundFog : MonoBehaviour
             c = sky.HasProperty(BandId) ? Color.Lerp(sky.GetColor(HorizonId), sky.GetColor(BandId), bandMix) : sky.GetColor(HorizonId);
         c = Color.Lerp(c, tint, tintAmount);
         float amount = nightVolume != null ? Mathf.Lerp(maxAmount, nightAmount, nightVolume.weight) : maxAmount;
-        Shader.SetGlobalVector(FogId, new Vector4(start, end, amount, heightFalloff));
+        Shader.SetGlobalVector(FogId, new Vector4(start, end, amount * CutsceneScale, heightFalloff));
         Shader.SetGlobalVector(ColorId, new Vector4(c.r, c.g, c.b, 1f));
+        Shader.SetGlobalFloat(WakeClearId, clearWhenAwake);
     }
 }

@@ -30,7 +30,10 @@ Material:
     - _HazeAmount: 0.4
     - _HazeCurve: 1.2
     - _HazeEnd: 220
+    - _HazeIceAmount: 1
+    - _HazeSideSpread: 2
     - _HazeStart: 30
+    - _HazeSunAmount: 1
     - _NearDeepen: 0.06
     - _NearEnd: 10
     - _NearSaturate: 0.1
@@ -38,5 +41,7 @@ Material:
     - _SkyFull: 520
     m_Colors:
     - _HazeColor: {r: 0.36, g: 0.32, b: 0.58, a: 1}
+    - _HazeIceColor: {r: 0.18, g: 0.38, b: 0.7, a: 1}
+    - _HazeSunColor: {r: 0.85, g: 0.5, b: 0.32, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
