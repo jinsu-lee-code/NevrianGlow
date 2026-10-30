@@ -34,6 +34,9 @@ Shader "DSEWA/ToonSky"
         _SunsetHeight ("Sunset Height", Range(0.01, 1)) = 0.25
         _SunsetSpread ("Sunset Azimuth Falloff (higher = narrower)", Range(0.5, 16)) = 3
         _SunsetOverClouds ("Sunset Over Clouds (desert glow, drawn last)", Range(0, 1)) = 0
+        [Header(Ending sky opening)]
+        _OpenSkyTint ("Opened Sky Tint (x the clear twilight gradient where the clouds burnt away)", Color) = (1, 1, 1, 1)
+        _OpenSkyStars ("Opened Sky Stars (painted stars, upper sky only)", Range(0, 4)) = 1.2
         [Header(Night Side Ice (eyeball planet))]
         _IceAmount ("Night Side Ice Amount", Range(0, 1)) = 0
         _IceColor ("Ice Glow (at the horizon)", Color) = (0.55, 0.85, 1, 1)
@@ -280,6 +283,8 @@ Shader "DSEWA/ToonSky"
                 half _SunsetAmount, _SunsetHeight, _SunsetSpread;
                 half4 _IceColor, _IceDarkColor;
                 half _SunsetOverClouds;
+                half4 _OpenSkyTint;
+                half _OpenSkyStars;
                 half _IceAmount, _IceHeight, _IceDarkHeight, _IceDarkAmount, _IceSpread;
                 float _VolAmount, _VolBottom, _VolTop, _VolScale, _VolCoverage, _VolDensity, _VolSteps;
                 float4 _VolWind, _VolHorizonFade, _VolSunSideFade;
@@ -1021,6 +1026,7 @@ Shader "DSEWA/ToonSky"
                 if (up < 0) color = lerp(_HorizonColor.rgb, _GroundColor.rgb, saturate(-up * _GroundFade));
                 // Bright haze band hugging the horizon (both sides, so it also hides the ground's far edge)
                 color = lerp(color, _BandColor.rgb, (1 - smoothstep(0, _BandHeight, abs(up))) * _BandAmount);
+                half3 clearSky = color;   // the cloudless twilight gradient - what the ending's opened sky shows
 
                 // Painted sky (2026-10-26, user: "a Ghibli-cloud skybox", then "make the clouds drift and only the stars
                 // twinkle"). Layered like Skyrim's weather sky / OptiFine custom sky layers: a static background, its
@@ -1032,6 +1038,8 @@ Shader "DSEWA/ToonSky"
                 half panoCloud = 0;
                 half3 cloudRaw = 0;
                 half skyGlow = 0;
+                half skyHole = 0;        // ending: where the clouds have burnt away (drawn last, over the day / sunset)
+                half3 holeStars = 0;
                 if (panoK > 0)
                 {
                     float2 puv = float2(atan2(dir.x, dir.z) * (0.5 / PI) + 0.5 + _PanoRotation / 360.0,
@@ -1059,6 +1067,8 @@ Shader "DSEWA/ToonSky"
                         float hole = 1 - smoothstep(-sw * 0.3, sw * 0.3, sEdge);
                         skyGlow = (1 - smoothstep(0, sw, abs(sEdge))) * ca;   // glowing rim where cloud is burning away
                         ca *= 1 - hole;
+                        skyHole = hole * panoK;
+                        holeStars = bg.rgb * bg.a * tw * _OpenSkyStars * smoothstep(0.25, 0.8, up);
                     }
                     pano = cl * _PanoTint.rgb;                                                // cloud colour (rgb is bled past the edge)
                     panoCloud = ca * panoK;
@@ -1215,6 +1225,20 @@ Shader "DSEWA/ToonSky"
                     cloud += _SunColor.rgb * pow(saturate(cosA), _GlowPower * 0.5) * _GlowAmount * lit;   // brighter near the sun
                     // Unclamped lerp: UE's Cloud Opacity 1.2157 pushes the cloud past its colour, as the original does
                     color += (cloud - color) * (cover * smoothstep(0, _CloudHorizonFade, up) * _CloudOpacity);
+                }
+                // 2026-10-30 (user): the opened sky showed the white painted sun-side sky; a night sky broke the always-
+                // twilight planet - open onto the clear twilight gradient (no clouds) with a few stars up high instead;
+                // before the eyeball-planet horizons, so the desert sunset and the ice glow still paint the opened sky
+                color = lerp(color, clearSky * _OpenSkyTint.rgb + holeStars, skyHole);
+                if (skyHole > 0)   // the sun stays where it is (user: it must not vanish) - drawn again over the opened sky
+                {
+                    float sCos = dot(dir, L);
+                    float sAng = acos(clamp(sCos, -1, 1));
+                    float sAa = fwidth(sAng);
+                    half3 withSun = color + _SunColor.rgb * pow(saturate(sCos), _GlowPower) * _GlowAmount;
+                    withSun = lerp(withSun, _SunColor.rgb, (1 - smoothstep(_HaloSize - sAa, _HaloSize + sAa, sAng)) * _HaloAmount);
+                    withSun = lerp(withSun, _SunColor.rgb * _SunBrightness, 1 - smoothstep(_SunSize - sAa, _SunSize + sAa, sAng));
+                    color = lerp(color, withSun, skyHole);
                 }
                 // Eyeball planet horizons (2026-10-30, user: day side desert in the north, ice in the south). Drawn last, over
                 // the painted clouds, so the low cloud bank takes the colour too. Sun side: the sunset glow again, hot and

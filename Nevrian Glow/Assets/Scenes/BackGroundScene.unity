@@ -51776,7 +51776,7 @@ MonoBehaviour:
   skyDissolveRadius: 1.9
   skyDissolveSeconds: 5
   skyDissolveEdge: {r: 3.2, g: 2.1, b: 0.9, a: 0.18}
-  domeMaterial: {fileID: 2100000, guid: e3ba13a8a179bb744bf8cb57241909c6, type: 2}
+  domeMaterial: {fileID: 0}
   domeLead: 2
   fadeOutSeconds: 1
   fadeInSeconds: 1.5

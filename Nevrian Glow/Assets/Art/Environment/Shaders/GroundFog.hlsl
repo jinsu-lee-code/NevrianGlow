@@ -41,7 +41,7 @@ float WorldWakeOutside(float3 positionWS)
 float _DSEWA_FogWakeClear;
 float WorldWakeFogScale(float3 positionWS)
 {
-    if (_DSEWA_WakeParams.z < 0.5) return 1;
+    if (_DSEWA_WakeParams.z < 0.5) return _DSEWA_WakeFarm.w > 0.5 ? 1 - saturate(_DSEWA_FogWakeClear) : 1;   // all awake: stays lifted
     return 1 - saturate(_DSEWA_FogWakeClear) * (1 - WorldWakeOutside(positionWS));
 }
 

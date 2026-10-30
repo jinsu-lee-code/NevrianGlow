@@ -25,14 +25,14 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _BandAmount: 0.35
+    - _BandAmount: 0.3
     - _BandScale: 24
     - _Fade: 1
-    - _Fill: 0.04
-    - _IntersectStrength: 2.5
-    - _IntersectWidth: 3
+    - _Fill: 0.07
+    - _IntersectStrength: 5
+    - _IntersectWidth: 5
     - _RimPower: 3
-    - _RimStrength: 1.2
+    - _RimStrength: 2.2
     m_Colors:
     - _Color: {r: 1.6, g: 1.1, b: 0.55, a: 1}
   m_BuildTextureStacks: []

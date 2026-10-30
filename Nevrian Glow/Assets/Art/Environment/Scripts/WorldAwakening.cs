@@ -193,7 +193,6 @@ public class WorldAwakening : MonoBehaviour
         Vector3 lh = lighthouse != null ? lighthouse.transform.position : farmCenter;
         Vector3 from = centerOnLighthouse ? lh : farmCenter;
         Shader.SetGlobalVector(WakeAId, new Vector4(from.x, from.z, lh.x, lh.z));
-        Shader.SetGlobalVector(WakeFarmId, new Vector4(farmCenter.x, farmCenter.z, Mathf.Max(0f, farmAwakeRadius), 0f));
         float band = edgeBand, bandWidth = 1f;
         bool on;
         if (centerOnLighthouse)
@@ -227,6 +226,9 @@ public class WorldAwakening : MonoBehaviour
             on = p < 0.999f;
         }
         Shader.SetGlobalVector(WakeParamsId, new Vector4(radiusNow, edge, on ? 1f : 0f, band));
+        // w = 1: the whole world is awake (after the heart wave) - the fog stays lifted once the effect switches off
+        bool allAwake = !on && Application.isPlaying && (centerOnLighthouse ? stageNow >= 3 : p >= 0.999f);
+        Shader.SetGlobalVector(WakeFarmId, new Vector4(farmCenter.x, farmCenter.z, Mathf.Max(0f, farmAwakeRadius), allAwake ? 1f : 0f));
         Shader.SetGlobalVector(WakeBandId, new Vector4(bandColor.r, bandColor.g, bandColor.b, bandWidth));
 
         foreach (var r in lakeRenderers)

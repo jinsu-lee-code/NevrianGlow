@@ -27,6 +27,8 @@ Material:
     m_Floats:
     - _Intensity: 1.4
     - _Length: 0.08
+    - _NearFullRays: 20
+    - _NearNoRays: 5
     - _Rays: 3
     - _Rotation: 15
     - _Saturation: 1.2
