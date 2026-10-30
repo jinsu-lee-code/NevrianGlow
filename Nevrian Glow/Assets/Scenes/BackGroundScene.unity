@@ -7441,6 +7441,17 @@ MonoBehaviour:
   endRadius: 260
   edge: 6
   edgeBand: 0.5
+  centerOnLighthouse: 1
+  stageRadii:
+  - 0
+  - 50
+  - 110
+  fullRadius: 360
+  waveSeconds: 3
+  heartWaveSeconds: 5
+  waveBand: 1.8
+  waveBandWidth: 1.5
+  bandColor: {r: 1, g: 0.8, b: 0.45, a: 1}
   lakeRenderers:
   - {fileID: 337497489112753356}
   lakeFloats:
@@ -7464,6 +7475,8 @@ MonoBehaviour:
     appearAt: 0.85
   - group: {fileID: 676238575}
     appearAt: 0.95
+  vfxRoots: []
+  vfxMargin: 3
   particles:
   - {fileID: 6577622455158709504}
   - {fileID: 5230271719683352724}
@@ -47261,6 +47274,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1899526960416834558, guid: 27485ffd5283d6a498ce3dd9a1514f8f, type: 3}
   m_PrefabInstance: {fileID: 539518134}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &539636011
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 539636012}
+  m_Layer: 0
+  m_Name: ShotTower
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &539636012
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 539636011}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.11831659, y: 0.042438865, z: 0.005061432, w: 0.9920557}
+  m_LocalPosition: {x: -11, y: 7, z: -38}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 595153496}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &541944860
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -51045,6 +51089,77 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 9217219545631607437, guid: 81f8f527e79abf542b0cfd3ff9e78221, type: 3}
   m_PrefabInstance: {fileID: 591558348}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &595153495
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 595153496}
+  - component: {fileID: 595153497}
+  m_Layer: 0
+  m_Name: EndingDirector
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &595153496
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 595153495}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 670079865}
+  - {fileID: 539636012}
+  m_Father: {fileID: 851025529}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &595153497
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 595153495}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c475b0297a338546b5b6866850cfedc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EndingDirector
+  panel: {fileID: 670079864}
+  fadeTime: 0.15
+  lighthouse: {fileID: 1416070709}
+  world: {fileID: 93161104}
+  flyover: {fileID: 1869831832}
+  fadeImage: {fileID: 630592308}
+  potName: pf_prop_pot_grandma
+  potCameraOffset: {x: 0, y: 1.1, z: -1.9}
+  shakeAmount: 1.6
+  shakeSeconds: 1.4
+  pushIn: 28
+  pullBackSeconds: 1.2
+  shakeFrequency: 22
+  skyDissolveRadius: 1.9
+  skyDissolveSeconds: 5
+  skyDissolveEdge: {r: 3.2, g: 2.1, b: 0.9, a: 0.18}
+  domeMaterial: {fileID: 2100000, guid: e3ba13a8a179bb744bf8cb57241909c6, type: 2}
+  domeLead: 2
+  fadeOutSeconds: 1
+  fadeInSeconds: 1.5
+  holdAfterWave: 1.5
+  whiteFadeSeconds: 1.2
+  potHold: 4
+  endFadeSeconds: 1.5
+  hideHud: 1
 --- !u!1001 &599015397
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -53766,6 +53881,81 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8922442108212626317, guid: eb161b48917d72f44bfd28f9f8c06842, type: 3}
   m_PrefabInstance: {fileID: 629423872}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &630592306
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 630592307}
+  - component: {fileID: 630592309}
+  - component: {fileID: 630592308}
+  m_Layer: 0
+  m_Name: Fade
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &630592307
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 630592306}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 670079865}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &630592308
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 630592306}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 0, g: 0, b: 0, a: 0}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &630592309
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 630592306}
+  m_CullTransparentMesh: 1
 --- !u!1001 &632714639
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -61467,6 +61657,103 @@ Transform:
   - {fileID: 1688419801}
   m_Father: {fileID: 1035484830}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &670079864
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 670079865}
+  - component: {fileID: 670079868}
+  - component: {fileID: 670079867}
+  - component: {fileID: 670079866}
+  m_Layer: 0
+  m_Name: Panel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!224 &670079865
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 670079864}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 630592307}
+  m_Father: {fileID: 595153496}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0, y: 0}
+--- !u!225 &670079866
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 670079864}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &670079867
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 670079864}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
+  m_UiScaleMode: 1
+  m_ReferencePixelsPerUnit: 100
+  m_ScaleFactor: 1
+  m_ReferenceResolution: {x: 1920, y: 1080}
+  m_ScreenMatchMode: 0
+  m_MatchWidthOrHeight: 0
+  m_PhysicalUnit: 3
+  m_FallbackScreenDPI: 96
+  m_DefaultSpriteDPI: 96
+  m_DynamicPixelsPerUnit: 1
+  m_PresetInfoIsWorld: 0
+--- !u!223 &670079868
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 670079864}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 0
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: -1
+  m_TargetDisplay: 0
 --- !u!1001 &671403607
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -75521,6 +75808,7 @@ Transform:
   m_Children:
   - {fileID: 1869831831}
   - {fileID: 2042033816}
+  - {fileID: 595153496}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &853376399
@@ -116534,7 +116822,7 @@ MonoBehaviour:
   - {fileID: 745880758}
   climbBurst: {fileID: 5433530479732198682, guid: 24535aeabd728ad41b3c8b13c7146b6a, type: 3}
   progress: 0
-  climbSeconds: 2.5
+  climbSeconds: 4
   orbAt: 1
   darkColor: {r: 0.1, g: 0.1, b: 0.18, a: 1}
   extraDarkColor: {r: 1, g: 1, b: 1, a: 1}
@@ -116546,6 +116834,14 @@ MonoBehaviour:
   beamHeight: 400
   beamWidth: 2.2
   beamSeconds: 2.5
+  beamAtClipTime: 7.75
+  gatherMaterial: {fileID: 2100000, guid: b93b7512bba40524f9debbe0baae8985, type: 2}
+  gatherSeconds: 4.5
+  gatherRate: {x: 40, y: 260}
+  gatherFlight: {x: 1.2, y: 2.2}
+  gatherRadius: {x: 3, y: 12}
+  gatherColor: {r: 1, g: 0.82, b: 0.45, a: 1}
+  gatherSize: 1.6
   turnSkyAtEnding: 0
   dawnHour: 5.5
   skyTurnSeconds: 10

@@ -506,6 +506,11 @@ Shader "DSEWA/ToonSky"
                 return frac(p.x * p.y);
             }
 
+            // ending sky dissolve (2026-10-30, user: "a radial dissolve when it shoots into the sky"): set by EndingDirector.
+            // xyz = world direction of the centre (where the beam meets the sky), w = radius (radians, 0 = off)
+            float4 _DSEWA_SkyDissolve;
+            float4 _DSEWA_SkyDissolveEdge;   // rgb = edge glow colour, a = edge width (radians)
+
             float ValueNoise2(float2 p)
             {
                 float2 i = floor(p), f = frac(p);
@@ -1026,6 +1031,7 @@ Shader "DSEWA/ToonSky"
                 half3 pano = 0;
                 half panoCloud = 0;
                 half3 cloudRaw = 0;
+                half skyGlow = 0;
                 if (panoK > 0)
                 {
                     float2 puv = float2(atan2(dir.x, dir.z) * (0.5 / PI) + 0.5 + _PanoRotation / 360.0,
@@ -1042,6 +1048,18 @@ Shader "DSEWA/ToonSky"
                     half4 hi = SAMPLE_TEXTURE2D_LOD(_PanoCloudHigh, sampler_PanoTex, puv + drift * _PanoCloudSpeed.y, 0);
                     half3 cl = lerp(lo.rgb, hi.rgb, hi.a);
                     half ca = 1 - (1 - lo.a) * (1 - hi.a);                                   // high over low
+                    // ending: the clouds dissolve away in a ragged ring spreading from where the beam meets the sky
+                    if (_DSEWA_SkyDissolve.w > 0)
+                    {
+                        float3 sc = normalize(_DSEWA_SkyDissolve.xyz + float3(0, 1e-4, 0));
+                        float sAng = acos(clamp(dot(dir, sc), -1, 1));
+                        float sn = ValueNoise2(puv * float2(36, 18)) * 0.7 + ValueNoise2(puv * float2(90, 45)) * 0.3;
+                        float sEdge = sAng - _DSEWA_SkyDissolve.w + (sn - 0.5) * 0.35;
+                        float sw = max(_DSEWA_SkyDissolveEdge.a, 0.005);
+                        float hole = 1 - smoothstep(-sw * 0.3, sw * 0.3, sEdge);
+                        skyGlow = (1 - smoothstep(0, sw, abs(sEdge))) * ca;   // glowing rim where cloud is burning away
+                        ca *= 1 - hole;
+                    }
                     pano = cl * _PanoTint.rgb;                                                // cloud colour (rgb is bled past the edge)
                     panoCloud = ca * panoK;
                     cloudRaw = cl;
@@ -1213,6 +1231,7 @@ Shader "DSEWA/ToonSky"
                 // +-0.5 LSB dither against banding in the long smooth gradient
                 float2 px = i.positionCS.xy;
                 color += (frac(sin(dot(px, float2(12.9898, 78.233))) * 43758.5453) - 0.5) * (_Dither / 255.0);
+                color += _DSEWA_SkyDissolveEdge.rgb * skyGlow;
                 return half4(color, 1);
             }
             ENDHLSL

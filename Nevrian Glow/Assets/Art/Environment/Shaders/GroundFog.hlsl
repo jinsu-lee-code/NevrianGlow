@@ -23,6 +23,7 @@ half3 ApplyGroundFog(half3 color, float3 positionWS)
 // background goes grey and its glows sleep; a faint light band rides the edge. Off (z = 0) = everything as authored.
 float4 _DSEWA_WakeA;        // xy = farm (x, z), zw = lighthouse (x, z)
 float4 _DSEWA_WakeParams;   // x = radius (m), y = edge softness (m), z = on (1), w = edge band strength
+float4 _DSEWA_WakeBand;     // rgb = edge band colour (gold life light), a = band width x the edge (0 = old cyan band)
 
 float WorldWakeDistance(float3 positionWS)
 {
@@ -42,7 +43,10 @@ float WorldWakeOutside(float3 positionWS)
     return smoothstep(_DSEWA_WakeParams.x - soft, _DSEWA_WakeParams.x + soft, WorldWakeDistance(positionWS));
 }
 
-half3 ApplyWorldWake(half3 color, float3 positionWS)
+// bandScale: how strongly this surface shows the wave band. Ground (terrain, grass) keeps it faint so the wave reads on
+// the things standing round you (trees, bushes, props flash gold as it passes and keep a short afterglow) rather than
+// as a ring painted on the ground (2026-10-30, user).
+half3 ApplyWorldWakeBand(half3 color, float3 positionWS, half bandScale)
 {
     if (_DSEWA_WakeParams.z < 0.5) return color;
     float soft = max(_DSEWA_WakeParams.y, 0.01);
@@ -50,9 +54,20 @@ half3 ApplyWorldWake(half3 color, float3 positionWS)
     float outside = smoothstep(_DSEWA_WakeParams.x - soft, _DSEWA_WakeParams.x + soft, d);
     half lum = dot(color, half3(0.299, 0.587, 0.114));
     half3 res = lerp(color, lum * half3(0.78, 0.82, 0.95) * 0.72, outside);
-    float x = (d - _DSEWA_WakeParams.x) / soft;
-    res += half3(0.45, 0.85, 1.0) * exp(-x * x * 1.5) * _DSEWA_WakeParams.w * (0.25 + lum);
+    float bandW = _DSEWA_WakeBand.a > 0 ? _DSEWA_WakeBand.a : 1.0;
+    float x = (d - _DSEWA_WakeParams.x) / (soft * bandW);
+    half3 bandCol = _DSEWA_WakeBand.a > 0 ? _DSEWA_WakeBand.rgb : half3(0.45, 0.85, 1.0);
+    // sharp ahead of the front, a longer afterglow behind it (inside the restored area)
+    float g = x < 0 ? exp(-x * x * 0.35) : exp(-x * x * 3.0);
+    float w = g * _DSEWA_WakeParams.w * bandScale;
+    res += bandCol * w * (0.25 + lum);
+    res += res * bandCol * w * 0.5;   // the surface itself flares a little brighter as it wakes
     return res;
+}
+
+half3 ApplyWorldWake(half3 color, float3 positionWS)
+{
+    return ApplyWorldWakeBand(color, positionWS, 1.0h);
 }
 
 #endif

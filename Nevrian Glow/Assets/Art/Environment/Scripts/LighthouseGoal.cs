@@ -44,6 +44,18 @@ public class LighthouseGoal : MonoBehaviour
     public float beamHeight = 400f;
     public float beamWidth = 2.2f;
     public float beamSeconds = 2.5f;
+    [Tooltip("Seconds into the ending (the ending clip) when the beam erupts - sfx_lighthouse_ending swells hardest at 7.75 s")]
+    public float beamAtClipTime = 7.75f;
+
+    [Header("Ending: light gathering into the heart")]
+    [Tooltip("Particle material for the gathering light (soft round glow, e.g. mat_vfx_crop_ready_halo). Empty = no gathering")]
+    public Material gatherMaterial;
+    [Tooltip("Seconds of gathering before the beam")] public float gatherSeconds = 4.5f;
+    [Tooltip("Motes per second at the start / just before the beam")] public Vector2 gatherRate = new Vector2(40f, 260f);
+    [Tooltip("Seconds a mote takes from where it rises to the heart")] public Vector2 gatherFlight = new Vector2(1.2f, 2.2f);
+    [Tooltip("Where the motes rise from: radius round the tower axis (m) at the foot")] public Vector2 gatherRadius = new Vector2(3f, 12f);
+    public Color gatherColor = new Color(1f, 0.82f, 0.45f, 1f);
+    public float gatherSize = 1.6f;
     [Tooltip("Off (2026-10-30, lighthouse spec v2): the sky stays fixed at the twilight - no first sunrise. On: the sky turns to Dawn Hour after the beam")]
     public bool turnSkyAtEnding = false;
     [Tooltip("Sky turns to this hour (0..24) - dawn")] public float dawnHour = 5.5f;
@@ -75,6 +87,12 @@ public class LighthouseGoal : MonoBehaviour
     /// <summary>The lighthouse in the loaded scenes (GrandmaSleep follows it from the shop scene).</summary>
     public static LighthouseGoal Active { get; private set; }
     public bool IsEnding => ending;
+    /// <summary>Frame of the last SetProgressImmediate (a load / new game) - WorldAwakening snaps instead of sending a wave.</summary>
+    public int ImmediateFrame { get; private set; } = -100;
+    /// <summary>Time.time the ending beam started to rise (-1 = not yet) - EndingDirector shakes the camera on it.</summary>
+    public float BeamStartTime { get; private set; } = -1f;
+    /// <summary>The ending beam has finished rising (WorldAwakening sends the last wave after it).</summary>
+    public bool BeamUp { get; private set; }
     /// <summary>The progress the climbing light has reached right now (WorldAwakening follows this).</summary>
     public float ShownProgress => shown < 0f ? progress : shown;
 
@@ -108,6 +126,7 @@ public class LighthouseGoal : MonoBehaviour
     /// <summary>Jump straight to a progress with no climb, flash or sound (a loaded save, a new game).</summary>
     public void SetProgressImmediate(float value)
     {
+        ImmediateFrame = Time.frameCount;
         progress = Mathf.Clamp01(value);
         shown = progress; flash = 0f;
         if (!ending) orbWake = shown >= orbAt - 1e-4f ? 1f : 0f;
@@ -208,13 +227,21 @@ public class LighthouseGoal : MonoBehaviour
     IEnumerator Ending()
     {
         ending = true;
+        float endingStart = Time.time;
         PlaySound(endingClip);
         SetProgress(1f);
         while (shown < 1f - 1e-4f) yield return null;
         // orb charges up
         for (float t = 0; t < 1.5f; t += Time.deltaTime) { orbWake = Mathf.SmoothStep(0, 1, t / 1.5f); yield return null; }
         orbWake = 1f;
-        // beam
+        // light gathers from the tower foot up the pillar into the heart, swelling toward the beam
+        float gatherFrom = Mathf.Max(Time.time, endingStart + beamAtClipTime - gatherSeconds);
+        while (Time.time < gatherFrom) yield return null;
+        if (gatherMaterial != null) StartCoroutine(Gather(endingStart + beamAtClipTime));
+        // beam: wait for the swell of the ending clip
+        while (Time.time - endingStart < beamAtClipTime) yield return null;
+        BeamStartTime = Time.time;
+        flash = 1f;
         if (beam == null) beam = MakeBeam();
         beam.gameObject.SetActive(true);
         Vector3 top = orb != null ? orb.bounds.center : transform.position;
@@ -226,6 +253,7 @@ public class LighthouseGoal : MonoBehaviour
             beam.position = top + Vector3.up * beamHeight * k * 0.5f;
             yield return null;
         }
+        BeamUp = true;
         // the sky starts turning: night -> first dawn (hours wrap past midnight)
         if (turnSkyAtEnding && dayNight != null)
         {
@@ -247,6 +275,74 @@ public class LighthouseGoal : MonoBehaviour
             dayNight.Apply();
         }
         onEndingFinished?.Invoke();
+    }
+
+    // gathering motes: each rises from round the tower foot / along the pillar and curls up into the heart (a quadratic
+    // curve: up the pillar first, then in). Driven by hand through SetParticles so every mote lands on the heart.
+    IEnumerator Gather(float until)
+    {
+        var go = new GameObject("EndingGather");
+        go.transform.SetParent(transform, false);
+        var ps = go.AddComponent<ParticleSystem>();
+        ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        var main = ps.main;
+        main.simulationSpace = ParticleSystemSimulationSpace.World;
+        main.startSpeed = 0f; main.startLifetime = 100f; main.maxParticles = 1500; main.playOnAwake = false; main.loop = false;
+        var em = ps.emission; em.enabled = false;
+        var sh = ps.shape; sh.enabled = false;
+        var pr = go.GetComponent<ParticleSystemRenderer>();
+        pr.sharedMaterial = gatherMaterial;
+        pr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        ps.Play();
+
+        Vector3 heart = HeartPoint();
+        Vector3 foot = new Vector3(heart.x, transform.position.y, heart.z);
+        var starts = new System.Collections.Generic.List<Vector3>();
+        var ctrls = new System.Collections.Generic.List<Vector3>();
+        var ages = new System.Collections.Generic.List<float>();
+        var lives = new System.Collections.Generic.List<float>();
+        var buf = new ParticleSystem.Particle[1500];
+        float start = Time.time, carry = 0f;
+        while (Time.time < until + gatherFlight.y)
+        {
+            float dt = Time.deltaTime;
+            if (Time.time < until)
+            {
+                float k = Mathf.InverseLerp(start, until, Time.time);
+                carry += Mathf.Lerp(gatherRate.x, gatherRate.y, k * k) * dt;
+                while (carry >= 1f && starts.Count < buf.Length)
+                {
+                    carry -= 1f;
+                    float a = Random.value * Mathf.PI * 2f;
+                    bool onPillar = Random.value < 0.45f;
+                    float r = onPillar ? Random.Range(2.5f, 4f) : Random.Range(gatherRadius.x, gatherRadius.y);
+                    float y = onPillar ? Random.Range(0f, (heart.y - foot.y) * 0.6f) : Random.Range(0f, 2f);
+                    var p0 = foot + new Vector3(Mathf.Cos(a) * r, y, Mathf.Sin(a) * r);
+                    starts.Add(p0);
+                    ctrls.Add(new Vector3(foot.x + Mathf.Cos(a) * r * 0.35f, Mathf.Lerp(p0.y, heart.y, 0.8f), foot.z + Mathf.Sin(a) * r * 0.35f));
+                    ages.Add(0f);
+                    lives.Add(Random.Range(gatherFlight.x, gatherFlight.y));
+                }
+            }
+            int n = 0;
+            for (int i = starts.Count - 1; i >= 0; i--)
+            {
+                ages[i] += dt;
+                float u = ages[i] / lives[i];
+                if (u >= 1f) { starts.RemoveAt(i); ctrls.RemoveAt(i); ages.RemoveAt(i); lives.RemoveAt(i); flash = Mathf.Max(flash, 0.35f); continue; }
+                float e = u * u;   // slow off the ground, quick into the heart
+                Vector3 pos = (1 - e) * (1 - e) * starts[i] + 2 * (1 - e) * e * ctrls[i] + e * e * heart;
+                var c = gatherColor; c.a = Mathf.Clamp01(u * 4f) * (1f - Mathf.Clamp01((u - 0.9f) * 10f));
+                buf[n].position = pos;
+                buf[n].startColor = c;
+                buf[n].startSize = gatherSize * Mathf.Lerp(0.7f, 1.2f, u);
+                buf[n].remainingLifetime = 10f; buf[n].startLifetime = 100f;
+                n++;
+            }
+            ps.SetParticles(buf, n);
+            yield return null;
+        }
+        Destroy(go);
     }
 
     Transform MakeBeam()
