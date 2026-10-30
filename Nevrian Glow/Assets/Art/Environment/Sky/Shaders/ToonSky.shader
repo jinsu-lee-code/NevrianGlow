@@ -33,6 +33,15 @@ Shader "DSEWA/ToonSky"
         _SunsetAmount ("Sunset Amount", Range(0, 1)) = 0
         _SunsetHeight ("Sunset Height", Range(0.01, 1)) = 0.25
         _SunsetSpread ("Sunset Azimuth Falloff (higher = narrower)", Range(0.5, 16)) = 3
+        _SunsetOverClouds ("Sunset Over Clouds (desert glow, drawn last)", Range(0, 1)) = 0
+        [Header(Night Side Ice (eyeball planet))]
+        _IceAmount ("Night Side Ice Amount", Range(0, 1)) = 0
+        _IceColor ("Ice Glow (at the horizon)", Color) = (0.55, 0.85, 1, 1)
+        _IceDarkColor ("Ice Dark (above the glow)", Color) = (0.02, 0.04, 0.12, 1)
+        _IceHeight ("Ice Glow Height", Range(0.01, 0.5)) = 0.08
+        _IceDarkHeight ("Ice Dark Height", Range(0.05, 1)) = 0.45
+        _IceDarkAmount ("Ice Dark Amount", Range(0, 1)) = 0.5
+        _IceSpread ("Ice Azimuth Falloff (higher = narrower)", Range(0.5, 16)) = 3
         [Header(Volumetric Cloud Layer (toon raymarch overhead))]
         _VolAmount ("Volumetric Amount", Range(0, 1)) = 0
         _VolBottom ("Layer Bottom (m)", Float) = 1200
@@ -269,6 +278,9 @@ Shader "DSEWA/ToonSky"
                 half _MidHeight, _BandHeight, _BandAmount, _Dither;
                 half4 _SunsetColor, _SunsetHotColor;
                 half _SunsetAmount, _SunsetHeight, _SunsetSpread;
+                half4 _IceColor, _IceDarkColor;
+                half _SunsetOverClouds;
+                half _IceAmount, _IceHeight, _IceDarkHeight, _IceDarkAmount, _IceSpread;
                 float _VolAmount, _VolBottom, _VolTop, _VolScale, _VolCoverage, _VolDensity, _VolSteps;
                 float4 _VolWind, _VolHorizonFade, _VolSunSideFade;
                 float _VolLightStep, _VolLightAbsorb, _VolErode, _VolShadeThreshold, _VolEdge, _VolSideFalloff;
@@ -1185,6 +1197,18 @@ Shader "DSEWA/ToonSky"
                     cloud += _SunColor.rgb * pow(saturate(cosA), _GlowPower * 0.5) * _GlowAmount * lit;   // brighter near the sun
                     // Unclamped lerp: UE's Cloud Opacity 1.2157 pushes the cloud past its colour, as the original does
                     color += (cloud - color) * (cover * smoothstep(0, _CloudHorizonFade, up) * _CloudOpacity);
+                }
+                // Eyeball planet horizons (2026-10-30, user: day side desert in the north, ice in the south). Drawn last, over
+                // the painted clouds, so the low cloud bank takes the colour too. Sun side: the sunset glow again, hot and
+                // bright over the clouds. Opposite side: a cold ice glow hugs the horizon and the sky above it sinks darker.
+                color = lerp(color, _SunsetHotColor.rgb, saturate(hMask * azMask * _SunsetOverClouds));
+                if (_IceAmount > 0)
+                {
+                    float iceAz = pow(1 - az, _IceSpread) * _IceAmount;
+                    float iceLow = 1 - smoothstep(0, _IceHeight, up > 0 ? up : -up * 4);
+                    float iceHigh = (1 - smoothstep(_IceHeight, _IceDarkHeight, up)) * step(0, up) * (1 - iceLow);
+                    color = lerp(color, _IceDarkColor.rgb, saturate(iceHigh * iceAz * _IceDarkAmount));
+                    color = lerp(color, _IceColor.rgb, saturate(iceLow * iceAz));
                 }
                 // +-0.5 LSB dither against banding in the long smooth gradient
                 float2 px = i.positionCS.xy;

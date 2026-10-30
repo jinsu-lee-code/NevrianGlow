@@ -114,6 +114,11 @@ Material:
     - _GroundFade: 12
     - _HaloAmount: 0.08
     - _HaloSize: 0.1
+    - _IceAmount: 1
+    - _IceDarkAmount: 0.6
+    - _IceDarkHeight: 0.3
+    - _IceHeight: 0.15
+    - _IceSpread: 2
     - _MidHeight: 0.3
     - _Moon2Size: 0.03
     - _Moon3Size: 0.022
@@ -140,9 +145,10 @@ Material:
     - _StarTwinkle: 0.55
     - _SunBrightness: 3.5
     - _SunSize: 0.035
-    - _SunsetAmount: 0.2
-    - _SunsetHeight: 0.22
-    - _SunsetSpread: 2.5
+    - _SunsetAmount: 0.6
+    - _SunsetHeight: 0.25
+    - _SunsetOverClouds: 0.7
+    - _SunsetSpread: 3
     - _VolAmount: 0
     - _VolBottom: 1200
     - _VolCoverage: 0.6
@@ -212,6 +218,8 @@ Material:
     - _GiantShadow: {r: 0.049999014, g: 0.06999879, b: 0.19999847, a: 1}
     - _GroundColor: {r: 0.32, g: 0.42, b: 0.62, a: 1}
     - _HorizonColor: {r: 0.38, g: 0.58, b: 0.78, a: 1}
+    - _IceColor: {r: 0.5, g: 0.82, b: 1, a: 1}
+    - _IceDarkColor: {r: 0.02, g: 0.04, b: 0.12, a: 1}
     - _MidColor: {r: 0.16, g: 0.22, b: 0.48, a: 1}
     - _Moon2Dir: {r: 0.858452, g: 0.4067367, b: 0.3124509, a: 0}
     - _Moon2Lit: {r: 1, g: 0.9019608, b: 0.9490196, a: 1}
@@ -242,8 +250,8 @@ Material:
     - _StarWarm: {r: 1, g: 0.78, b: 0.6, a: 1}
     - _StormColor: {r: 0.95, g: 0.55, b: 0.75, a: 1}
     - _SunColor: {r: 1, g: 0.74, b: 0.58, a: 1}
-    - _SunsetColor: {r: 0.22744909, g: 0.18039036, b: 0.47843128, a: 1}
-    - _SunsetHotColor: {r: 0.82, g: 0.52, b: 0.62, a: 1}
+    - _SunsetColor: {r: 0.95, g: 0.55, b: 0.36, a: 1}
+    - _SunsetHotColor: {r: 1, g: 0.72, b: 0.42, a: 1}
     - _VolHaze: {r: 0.03, g: 0.16, b: 0.85, a: 0}
     - _VolHorizonFade: {r: 0, g: 0.04, b: 0, a: 0}
     - _VolLitFar: {r: 0.13333166, g: 0.17254734, b: 0.3921551, a: 1}
