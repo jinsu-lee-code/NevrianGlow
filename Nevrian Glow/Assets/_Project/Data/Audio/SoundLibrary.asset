@@ -377,5 +377,25 @@ MonoBehaviour:
     loop: 0
     pitchJitter: 0.05
     cooldown: 0.05
+  - id: sfx_hoe_till
+    clips:
+    - {fileID: 8300000, guid: 2f35eb2b90fafec4988b39a6bd8066ad, type: 3}
+    - {fileID: 8300000, guid: 2fb7bfbe5511d594cbb4f06fe00bed3e, type: 3}
+    - {fileID: 8300000, guid: 9369e08dffeb74b4f9a2eaca89bcb249, type: 3}
+    bus: 0
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0.05
+    cooldown: 0.05
+  - id: sfx_ui_hover
+    clips:
+    - {fileID: 8300000, guid: 8b07dbfae5a7c0742b4fd96b279ca007, type: 3}
+    bus: 1
+    volume: 1
+    spatial: 0
+    loop: 0
+    pitchJitter: 0
+    cooldown: 0.05
   minDistance: 1
   maxDistance: 15

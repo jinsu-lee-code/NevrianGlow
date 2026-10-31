@@ -7,6 +7,7 @@ namespace NevrianGlowFarm.Core
     public static class SoundCues
     {
         // 핵심 행동 (2D)
+        public const string HoeTill = "sfx_hoe_till"; // 사운드 납품 10.30 (변형 3)
         public const string SeedPlant = "sfx_seed_plant";
         public const string WaterPour = "sfx_water_pour";
         public const string HarvestPull = "sfx_harvest_pull";
@@ -41,6 +42,7 @@ namespace NevrianGlowFarm.Core
 
         // UI (2D, UI 버스)
         public const string UiClick = "sfx_ui_click";
+        public const string UiHover = "sfx_ui_hover"; // 사운드 납품 10.30 — 버튼 · 칸에 마우스를 올릴 때
         public const string UiBuySuccess = "sfx_ui_buy_success";
         public const string UiBuyFail = "sfx_ui_buy_fail";
         public const string UiSkillLearn = "sfx_ui_skill_learn";

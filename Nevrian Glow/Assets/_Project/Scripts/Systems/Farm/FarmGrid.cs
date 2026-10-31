@@ -314,6 +314,8 @@ namespace NevrianGlowFarm.Systems.Farm
             if (held is HoeData hoe)
             {
                 changed = FarmRules.TryTill(cell, hoe.WorkPerUse, settings.TillWorkRequired);
+                if (changed)
+                    AudioManager.Play(SoundCues.HoeTill, CellPosition(index)); // 흙을 판 괭이질마다 (사운드 납품 10.30, 변형 3)
                 if (changed && FarmRules.GetStatus(cell, default) == FarmCellStatus.Tilled)
                     GameEvents.RaiseCellTilled(index); // 마지막 괭이질 — 칸 개간 완료
             }
