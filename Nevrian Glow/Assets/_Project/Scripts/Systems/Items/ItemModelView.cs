@@ -42,6 +42,9 @@ namespace NevrianGlowFarm.Systems.Items
             return true;
         }
 
+        /// <summary>프리팹의 가장 긴 변 (m, 루트 크기 1 기준) — 손에 들 때 크기 맞추기 (HeldItemView).</summary>
+        public static float LongestSide(GameObject prefab) => prefab != null ? Measure(prefab).x : 1f;
+
         private static Vector2 Measure(GameObject prefab)
         {
             if (sizes.TryGetValue(prefab, out var measure))

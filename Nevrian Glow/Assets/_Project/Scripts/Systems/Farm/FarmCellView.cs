@@ -26,6 +26,8 @@ namespace NevrianGlowFarm.Systems.Farm
         [SerializeField] private string harvestTrigger = "Harvest";
         [Tooltip("재수확 작물 모델 Animator의 '다시 열림' 트리거 — 봉오리 → 열매")]
         [SerializeField] private string regrowTrigger = "Regrow";
+        [Tooltip("재수확 작물 모델 Animator의 '거둔 뒤' 상태 — 막 만든 모델(이어하기 · 날 바뀜)이 열매 없는 나무면 거둠 동작 없이 바로 이 상태로")]
+        [SerializeField] private string harvestedState = "IdleHarvested";
         [Tooltip("다 자란 작물의 숨쉬는 빛 높이 — 모델 꼭대기 위 (m, 아트 0.35)")]
         [SerializeField, Min(0f)] private float glowAbove = 0.35f;
         [Tooltip("다 자란 작물 위로 솟는 가는 빛기둥 재질 (URP Unlit 가산 — Build Farm Layout이 만들어 넣음). 비우면 빛기둥 없음 — 시선 유도 1안 (2026-10-25)")]
@@ -44,6 +46,7 @@ namespace NevrianGlowFarm.Systems.Farm
         private GameObject shownModel;
         private Animator fruitAnimator;   // 지금 모델이 열매 트리거를 가진 경우만
         private bool fruitShown;          // 지금 모델에 열매가 보이는지 (새로 만든 완성 모델은 열매가 달려 있음)
+        private bool fruitFresh;          // 모델을 막 만들어 아직 열매를 맞춘 적이 없는지
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 
         public int Index => index;
@@ -205,6 +208,7 @@ namespace NevrianGlowFarm.Systems.Farm
             if (animator != null && HasTrigger(animator, harvestTrigger) && HasTrigger(animator, regrowTrigger))
                 fruitAnimator = animator;
             fruitShown = true;
+            fruitFresh = true;
         }
 
         private CropModelTarget modelTarget;
@@ -251,17 +255,24 @@ namespace NevrianGlowFarm.Systems.Farm
 
         /// <summary>
         /// 재수확 작물의 열매 (FarmGrid가 Show 다음에 부른다). ready = 거둘 수 있음, regrowing = 한 번 이상 거두고 다시 열리는 중.
-        /// 열매가 보여야 하는데 숨어 있으면 다시 열림, 반대면 거둠 트리거 — 불러온 직후 다시 열리는 중인 나무는 거둠으로 봉오리 상태가 된다.
+        /// 열매가 보여야 하는데 숨어 있으면 다시 열림, 반대면 거둠 트리거.
+        /// 막 만든 모델(이어하기 · 날 바뀜)이 다시 열리는 중이면 거둠 동작 없이 '거둔 뒤' 상태로 바로 — 열매가 열렸다 떨어지는 모습이 보이던 것 (버그 리포트 10/30 2번)
         /// </summary>
         public void SetFruit(bool ready, bool regrowing)
         {
             SetGlow(ready);
             if (fruitAnimator == null)
                 return;
+            bool fresh = fruitFresh;
+            fruitFresh = false;
             bool wanted = ready || !regrowing;
             if (wanted == fruitShown)
                 return;
-            fruitAnimator.SetTrigger(wanted ? regrowTrigger : harvestTrigger);
+            int harvestedHash = string.IsNullOrEmpty(harvestedState) ? 0 : Animator.StringToHash(harvestedState);
+            if (fresh && !wanted && harvestedHash != 0 && fruitAnimator.HasState(0, harvestedHash))
+                fruitAnimator.Play(harvestedHash, 0, 0f);
+            else
+                fruitAnimator.SetTrigger(wanted ? regrowTrigger : harvestTrigger);
             fruitShown = wanted;
         }
 

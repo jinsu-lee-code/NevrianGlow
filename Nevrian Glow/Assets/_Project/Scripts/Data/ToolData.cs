@@ -11,8 +11,11 @@ namespace NevrianGlowFarm.Data
         [Header("동작")]
         [Tooltip("좌클릭 후 효과가 들어가기까지 — 동작(기울이기 등)이 끝나는 시점, 그동안은 다시 쓸 수 없다 (초)")]
         [SerializeField, Min(0f)] private float useDelay;
+        [Tooltip("한 번 쓴 뒤 다시 쓸 수 있기까지 — 연타로 너무 빨리 쓰지 않게, 그동안 좌클릭 · 동작을 받지 않는다 (초)")]
+        [SerializeField, Min(0f)] private float useCooldown;
 
         public override int MaxStack => 1;
         public float UseDelay => useDelay;
+        public float UseCooldown => useCooldown;
     }
 }

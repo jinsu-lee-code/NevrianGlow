@@ -184,12 +184,42 @@ namespace NevrianGlowFarm.Editor
                 y = Row(title, x, y, 40f, 8f, keepWidth: true);
             else if (panel.Find("BagTitle") is RectTransform bagTitle)
                 y = Row(bagTitle, x, y, 30f, 6f, keepWidth: true);
-            if (panel.Find("BagGrid") is RectTransform bag)
+            var bag = panel.Find("BagGrid") as RectTransform;
+            if (bag != null)
                 y = Row(bag, x, y, Slot * 2f + Gap, 16f, keepWidth: false);
-            if (panel.Find("HotbarTitle") is RectTransform hotbarTitle)
+            var hotbarTitle = panel.Find("HotbarTitle") as RectTransform;
+            if (hotbarTitle != null)
                 y = Row(hotbarTitle, x, y, 30f, 6f, keepWidth: true);
-            if (panel.Find("HotbarGrid") is RectTransform hotbarGrid)
+            var hotbarGrid = panel.Find("HotbarGrid") as RectTransform;
+            if (hotbarGrid != null)
                 Row(hotbarGrid, x, y, Slot, 0f, keepWidth: false);
+            LinkBagGrowth(panel, bag, hotbarTitle, hotbarGrid);
+        }
+
+        // 가방 확장으로 줄이 늘면 핫바 제목 · 핫바 칸을 내리고 패널을 키운다 — 실행 중에 SlotGridView가 (버그 리포트 10/30 6번)
+        internal static void LinkBagGrowth(Transform panel, RectTransform bag, RectTransform hotbarTitle, RectTransform hotbarGrid)
+        {
+            if (bag == null)
+                return;
+            SlotGridView view = null;
+            foreach (var v in panel.GetComponentsInChildren<SlotGridView>(true))
+            {
+                var so0 = new SerializedObject(v);
+                if (so0.FindProperty("slotParent").objectReferenceValue == bag)
+                    view = v;
+            }
+            if (view == null)
+                return;
+            var so = new SerializedObject(view);
+            var list = so.FindProperty("pushDown");
+            var pushed = new List<RectTransform>();
+            if (hotbarTitle != null) pushed.Add(hotbarTitle);
+            if (hotbarGrid != null) pushed.Add(hotbarGrid);
+            list.arraySize = pushed.Count;
+            for (int i = 0; i < pushed.Count; i++)
+                list.GetArrayElementAtIndex(i).objectReferenceValue = pushed[i];
+            so.FindProperty("growPanel").objectReferenceValue = panel as RectTransform;
+            so.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static float Row(RectTransform rt, float x, float top, float height, float gapAfter, bool keepWidth)

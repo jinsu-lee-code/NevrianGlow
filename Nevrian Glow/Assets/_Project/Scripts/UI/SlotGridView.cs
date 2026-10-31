@@ -37,6 +37,12 @@ namespace NevrianGlowFarm.UI
         [Tooltip("빈 칸에 쓰는 글자")]
         [SerializeField] private string emptyLabel = "-";
 
+        [Header("줄이 늘 때")]
+        [Tooltip("칸 줄이 늘면(가방 확장) 늘어난 높이만큼 아래로 내릴 것 — 핫바 제목 · 핫바 칸 (버그 리포트 10/30 6번: 겹침)")]
+        [SerializeField] private RectTransform[] pushDown = new RectTransform[0];
+        [Tooltip("칸 줄이 늘면 늘어난 높이만큼 키울 창 패널 (비우면 키우지 않음)")]
+        [SerializeField] private RectTransform growPanel;
+
         private readonly List<HotbarSlotView> slots = new List<HotbarSlotView>();
 
         /// <summary>칸을 눌렀을 때 (칸 묶음, 칸 번호).</summary>
@@ -90,6 +96,26 @@ namespace NevrianGlowFarm.UI
                 slots[i].SetIcon(item != null ? item.Icon : null);
                 slots[i].SetSelected(false, slotColor, slotColor);
             }
+            FitRows(source.SlotCount);
+        }
+
+        // 격자(열 고정) 높이를 칸 줄 수에 맞추고, 바뀐 만큼 아래 묶음을 내리고 패널을 키운다 — 줄 수가 같으면 그대로
+        private void FitRows(int count)
+        {
+            if (!(slotParent is RectTransform area) || !slotParent.TryGetComponent<UnityEngine.UI.GridLayoutGroup>(out var grid)
+                || grid.constraint != UnityEngine.UI.GridLayoutGroup.Constraint.FixedColumnCount || grid.constraintCount <= 0)
+                return;
+            int rows = Mathf.Max(1, Mathf.CeilToInt(count / (float)grid.constraintCount));
+            float height = rows * grid.cellSize.y + (rows - 1) * grid.spacing.y + grid.padding.vertical;
+            float delta = height - area.rect.height;
+            if (Mathf.Abs(delta) < 0.5f)
+                return;
+            area.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
+            foreach (var rt in pushDown)
+                if (rt != null)
+                    rt.anchoredPosition -= new Vector2(0f, delta);
+            if (growPanel != null)
+                growPanel.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, growPanel.rect.height + delta);
         }
 
         private TooltipContent TooltipOf(int index)

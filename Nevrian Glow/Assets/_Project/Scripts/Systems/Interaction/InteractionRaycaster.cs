@@ -78,6 +78,7 @@ namespace NevrianGlowFarm.Systems.Interaction
         public event Action<string> PromptChanged;
 
         private static int refreshRequestedFrame = -1;
+        private float nextUseTime;
 
         /// <summary>
         /// 보고 있는 대상의 상태가 상호작용 없이 바뀌었을 때(누르고 있는 동안 닦이는 얼룩 등) 이번 프레임에 프롬프트를 다시 받게 한다.
@@ -159,10 +160,13 @@ namespace NevrianGlowFarm.Systems.Interaction
                 promptDirty = true;
             }
 
-            if (useAction.action.WasPressedThisFrame() && IsAlive(useTarget) && !string.IsNullOrEmpty(usePrompt))
+            // 도구 쿨타임(ToolData.UseCooldown — 괭이 0.3초, 버그 리포트 10/30) 동안은 좌클릭을 받지 않는다 (효과 · 동작 모두)
+            if (useAction.action.WasPressedThisFrame() && Time.time >= nextUseTime && IsAlive(useTarget) && !string.IsNullOrEmpty(usePrompt))
             {
                 useTarget.Use(held);
                 promptDirty = true;
+                if (held is ToolData tool)
+                    nextUseTime = Time.time + tool.UseCooldown;
                 ItemUsed?.Invoke(held);
             }
 

@@ -191,6 +191,51 @@ namespace NevrianGlowFarm.Editor
             Debug.Log("[Setup] 농장 문: " + note);
         }
 
+        // ── 11. 할머니 화분 (아트 피드백 10/30) ──
+
+        private const string GrandmaPotArt = "Assets/Art/Props/pot/pf_prop_pot_grandma.prefab";
+        private const string GrandmaPotSpot = "BigPot"; // 가게 안쪽 큰 화분 그레이박스(원기둥) — 같은 크기 0.70 × 0.44 m (mapping.md 10/29)
+
+        // 가게 안쪽 왼쪽 구석 큰 화분 자리에 아트 할머니 화분(GrandmaSleep — 등대를 따라 잿빛 → 색)을 놓고 그 원기둥만 숨긴다 (위의 식물은 그대로).
+        // 이름은 아트 프리팹 이름 그대로 — 엔딩(EndingDirector)이 이 이름으로 찾는다. 여러 번 실행해도 하나만.
+        [MenuItem("Glow Farm/Setup/Connect Art (11) Grandma Pot")]
+        private static void GrandmaPotMenu()
+        {
+            var art = AssetDatabase.LoadAssetAtPath<GameObject>(GrandmaPotArt);
+            var shop = UnityEngine.SceneManagement.SceneManager.GetSceneByName("Shop");
+            if (art == null || !shop.isLoaded)
+            {
+                Debug.LogError($"[Setup] 할머니 화분: {(art == null ? "아트 프리팹 없음 " + GrandmaPotArt : "Shop 씬을 함께 연다")}");
+                return;
+            }
+            Transform spot = null, existing = null;
+            foreach (var root in shop.GetRootGameObjects())
+                foreach (var t in root.GetComponentsInChildren<Transform>(true))
+                {
+                    if (t.name == art.name)
+                        existing = t;
+                    else if (t.name == GrandmaPotSpot && t.TryGetComponent<Renderer>(out _) && (spot == null || t.position.x < spot.position.x))
+                        spot = t;
+                }
+            if (spot == null)
+            {
+                Debug.LogError($"[Setup] 할머니 화분: Shop 씬에 '{GrandmaPotSpot}' 자리가 없음");
+                return;
+            }
+            var pot = existing != null ? existing.gameObject : (GameObject)PrefabUtility.InstantiatePrefab(art, spot.parent);
+            if (existing == null)
+            {
+                Undo.RegisterCreatedObjectUndo(pot, "Place Grandma Pot");
+                // 원기둥 바닥(피벗 가운데 → 바닥)에 화분 바닥(피벗 바닥 가운데)을 — 숨기기 전에 잰다
+                var floor = spot.GetComponent<Renderer>().bounds.min.y;
+                pot.transform.SetPositionAndRotation(new Vector3(spot.position.x, floor, spot.position.z), spot.parent.rotation);
+            }
+            pot.name = art.name;
+            spot.gameObject.SetActive(false);
+            UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(shop);
+            Debug.Log($"[Setup] 할머니 화분: {(existing != null ? "이미 있음" : "놓음")} ({pot.transform.position}) · 그레이박스 원기둥 숨김");
+        }
+
         // ── 7. 과일 진열대 2종 ──
 
         public const string FruitShelfBase = "Assets/_Project/Prefabs/Shop/fruit_shelf.prefab";
