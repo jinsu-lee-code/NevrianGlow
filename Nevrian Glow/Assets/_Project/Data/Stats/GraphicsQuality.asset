@@ -25,7 +25,7 @@ MonoBehaviour:
     renderScale: 0.8
     smaa: 0
   - displayName: "\uBCF4\uD1B5"
-    shadowDistance: 100
+    shadowDistance: 80
     shadowResolution: 2048
     shadowCascades: 4
     grassDistanceScale: 0.7
@@ -36,7 +36,7 @@ MonoBehaviour:
     renderScale: 1
     smaa: 1
   - displayName: "\uB192\uC74C"
-    shadowDistance: 120
+    shadowDistance: 80
     shadowResolution: 4096
     shadowCascades: 4
     grassDistanceScale: 1

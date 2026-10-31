@@ -53,8 +53,8 @@ namespace NevrianGlowFarm.Data
         [Header("즉시 정산 (최종 기획서 v2.0 — 장사 시작 → 페이드 → 정산)")]
         [Tooltip("장사를 시작하면 결과를 바로 계산해 정산 화면으로 — 끄면 예전처럼 손님이 다 다녀간 뒤 (켜면 손님은 정산 창 뒤 배경)")]
         [SerializeField] private bool instantSettlement = true;
-        [Tooltip("장사 시작 페이드 (초) — 어두워지는 동안 결과를 계산하고 정산 화면과 함께 밝아진다")]
-        [SerializeField, Min(0f)] private float instantFade = 0.35f;
+        [Tooltip("장사 시작 페이드 (초, 기획서 v2.0 단계 전환 0.3) — 어두워지는 동안 결과를 계산하고 정산 화면과 함께 밝아진다")]
+        [SerializeField, Min(0f)] private float instantFade = 0.3f;
         [Tooltip("정산 창 뒤 배경 손님이 들어오는 간격 — 최소 ~ 최대 무작위 (초, 기획 3 ~ 6)")]
         [SerializeField] private Vector2 backgroundInterval = new Vector2(3f, 6f);
 

@@ -31,6 +31,8 @@ namespace NevrianGlowFarm.Systems.Rendering
         [SerializeField] private Material paintBrushMaterial;
         [Tooltip("아트 거리 안개 재질 (Art/Environment/Materials_PP/mat_pp_aerial_perspective) — 효과를 찾는 데만 쓴다")]
         [SerializeField] private Material aerialMaterial;
+        [Tooltip("아트 화면 외곽선 재질 (Art/Environment/Materials_PP/mat_pp_screen_outline) — 효과를 찾는 데만 쓴다, 비우면 외곽선 거리는 아트 값")]
+        [SerializeField] private Material outlineMaterial;
 
         [Header("조정값")]
         [Tooltip("초점 흐림을 얹는 볼륨 우선순위 — 아트 배경 볼륨(2)보다 높고 가게 실내 볼륨(10)보다 낮게")]
@@ -90,6 +92,8 @@ namespace NevrianGlowFarm.Systems.Rendering
                     Swap(pass, ApplyBrush);
                 else if (pass.passMaterial == aerialMaterial)
                     Swap(pass, ApplyHaze);
+                else if (outlineMaterial != null && pass.passMaterial == outlineMaterial)
+                    Swap(pass, ApplyOutline);
             }
             swappedPasses = swapped.Count;
         }
@@ -116,6 +120,13 @@ namespace NevrianGlowFarm.Systems.Rendering
             m.SetFloat(HazeStart, layers.HazeStart);
             m.SetFloat(HazeEnd, Mathf.Max(layers.HazeEnd, layers.HazeStart + 0.01f));
             m.SetFloat(HazeDetailKeep, layers.HazeDetailKeep);
+        }
+
+        // 화면 외곽선(Hidden/DSEWA/ScreenOutline): 먼 배경에는 선을 긋지 않게 끝 거리만 (선 색 · 굵기는 아트 값)
+        private void ApplyOutline(Material m)
+        {
+            m.SetFloat(BrushFadeStart, layers.OutlineFadeStart);
+            m.SetFloat(BrushFadeEnd, Mathf.Max(layers.OutlineFadeEnd, layers.OutlineFadeStart + 0.01f));
         }
 
         // 초점 흐림: 거리 · 크기만 얹는다 (모드는 아트 볼륨 값 — 아트가 끄면 꺼진 채, 가게 안은 실내 볼륨이 끈다)

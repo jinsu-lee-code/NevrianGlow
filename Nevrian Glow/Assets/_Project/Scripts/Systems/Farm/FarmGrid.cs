@@ -352,6 +352,8 @@ namespace NevrianGlowFarm.Systems.Farm
                 RefreshCell(index, true, tillHit: held is HoeData);
                 if (held is SeedData)
                     views[index].Planted();
+                else if (held is FertilizerData)
+                    views[index].GrowBurst(); // 바로 하루 자란 모델이 튀어 오른다
                 Interaction.InteractionRaycaster.RequestPromptRefresh(); // 동작이 늦게 끝나는 도구도 결과(성장 정보 등)를 바로 보이게
             }
         }

@@ -35,6 +35,8 @@ namespace NevrianGlowFarm.Systems.Interaction
         [SerializeField] private LayerMask interactableMask;
         [Tooltip("프롬프트에 붙이는 손 동작 키 이름")]
         [SerializeField] private string handKeyLabel = "E";
+        [Tooltip("꾹 누르는 손 동작(수확)에 붙이는 키 이름")]
+        [SerializeField] private string handHoldKeyLabel = "E 꾹";
         [Tooltip("프롬프트에 붙이는 아이템 사용 키 이름")]
         [SerializeField] private string useKeyLabel = "좌클릭";
         [Tooltip("프롬프트에 붙이는 보조 사용 키 이름")]
@@ -52,6 +54,8 @@ namespace NevrianGlowFarm.Systems.Interaction
 
         private Collider lastCollider;
         private IHandInteractable handTarget;
+        private IHandHoldTarget handHold;
+        private float holdTime;
         private IItemUseTarget useTarget;
         private ISecondaryUseTarget secondaryTarget;
         private IAimPointTarget aimTarget;
@@ -71,6 +75,8 @@ namespace NevrianGlowFarm.Systems.Interaction
         /// <summary>지금 보고 있는 우클릭 대상. 없으면 null.</summary>
         public ISecondaryUseTarget SecondaryTarget => IsAlive(secondaryTarget) ? secondaryTarget : null;
         public string Prompt => prompt;
+        /// <summary>E 꾹 누르기 진행 (0 ~ 1, 누르지 않으면 0) — 화면 가운데 고리(HoldRingView)가 읽는다.</summary>
+        public float HoldProgress => holdTime > 0f && settings.HandHoldSeconds > 0f ? Mathf.Clamp01(holdTime / settings.HandHoldSeconds) : 0f;
         public bool HasHit => hasHit;
         public Vector3 HitPoint => hitPoint;
 
@@ -133,6 +139,8 @@ namespace NevrianGlowFarm.Systems.Interaction
                 // 이전 구역의 대상(밭 칸)이 남아 가게 안에서 "괭이로 갈기" 프롬프트가 뜨고 좌클릭이 그 칸에 들어갔다 (발견 2026-10-24)
                 lastCollider = null;
                 handTarget = null;
+                handHold = null;
+                holdTime = 0f;
                 useTarget = null;
                 secondaryTarget = null;
                 infoTarget = null;
@@ -154,10 +162,31 @@ namespace NevrianGlowFarm.Systems.Interaction
                 RefreshPrompt();
 
             var held = hotbar.SelectedItem;
-            if (interactAction.action.WasPressedThisFrame() && IsAlive(handTarget) && !string.IsNullOrEmpty(handPrompt))
+            bool handReady = IsAlive(handTarget) && !string.IsNullOrEmpty(handPrompt);
+            if (handReady && IsAlive(handHold) && handHold.HandNeedsHold && settings.HandHoldSeconds > 0f)
             {
-                handTarget.InteractHand();
-                promptDirty = true;
+                // 꾹 누르기(수확): 누르는 동안 고리가 차고, 다 차면 한 번. 누른 채 다음 작물을 보면 그 작물에서 다시 처음부터
+                if (interactAction.action.IsPressed())
+                {
+                    holdTime += Time.deltaTime;
+                    if (holdTime >= settings.HandHoldSeconds)
+                    {
+                        holdTime = 0f;
+                        handTarget.InteractHand();
+                        promptDirty = true;
+                    }
+                }
+                else
+                    holdTime = 0f;
+            }
+            else
+            {
+                holdTime = 0f;
+                if (handReady && interactAction.action.WasPressedThisFrame())
+                {
+                    handTarget.InteractHand();
+                    promptDirty = true;
+                }
             }
 
             // 도구 쿨타임(ToolData.UseCooldown — 괭이 0.3초, 버그 리포트 10/30) 동안은 좌클릭을 받지 않는다 (효과 · 동작 모두)
@@ -200,6 +229,8 @@ namespace NevrianGlowFarm.Systems.Interaction
                 ClearAimTarget();
             aimTarget = newAim;
             handTarget = hitCollider != null ? hitCollider.GetComponentInParent<IHandInteractable>() : null;
+            handHold = handTarget as IHandHoldTarget;
+            holdTime = 0f;
             useTarget = hitCollider != null ? hitCollider.GetComponentInParent<IItemUseTarget>() : null;
             secondaryTarget = hitCollider != null ? hitCollider.GetComponentInParent<ISecondaryUseTarget>() : null;
             infoTarget = hitCollider != null ? hitCollider.GetComponentInParent<IAimInfoTarget>() : null;
@@ -226,7 +257,8 @@ namespace NevrianGlowFarm.Systems.Interaction
             builder.Clear();
             Append(useKeyLabel, usePrompt);
             Append(secondaryKeyLabel, secondaryPrompt);
-            Append(handKeyLabel, handPrompt);
+            bool hold = IsAlive(handHold) && handHold.HandNeedsHold && settings.HandHoldSeconds > 0f;
+            Append(hold ? handHoldKeyLabel : handKeyLabel, handPrompt);
             // 정보 한 줄 (키 없음) — 자라는 작물의 성장 정보
             string info = IsAlive(infoTarget) ? infoTarget.GetAimInfo() : null;
             if (!string.IsNullOrEmpty(info))

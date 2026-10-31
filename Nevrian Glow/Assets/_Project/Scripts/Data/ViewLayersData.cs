@@ -36,6 +36,12 @@ namespace NevrianGlowFarm.Data
         [Tooltip("가장 먼 곳의 흐림 크기 (URP 가우스 반경)")]
         [SerializeField, Range(0.5f, 1.5f)] private float blurRadius = 0.5f;
 
+        [Header("외곽선 — 먼 배경은 빼기 (아트 피드백 10/30)")]
+        [Tooltip("화면 외곽선이 옅어지기 시작하는 거리 (m)")]
+        [SerializeField, Min(0f)] private float outlineFadeStart = 40f;
+        [Tooltip("화면 외곽선이 다 사라지는 거리 — 이 너머 먼 배경(원경)에는 선을 긋지 않는다. 그림자 거리 · 나무 LOD1 시작과 맞춘다 (m)")]
+        [SerializeField, Min(0f)] private float outlineFadeEnd = 80f;
+
         public float BrushStrength => brushStrength;
         public float NearEnd => nearEnd;
         public float BrushEnd => brushEnd;
@@ -46,5 +52,7 @@ namespace NevrianGlowFarm.Data
         public float BlurStart => blurStart;
         public float BlurEnd => blurEnd;
         public float BlurRadius => blurRadius;
+        public float OutlineFadeStart => outlineFadeStart;
+        public float OutlineFadeEnd => outlineFadeEnd;
     }
 }

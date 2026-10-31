@@ -70,6 +70,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Systems.Zones.ZoneDoor
   destination: {fileID: 0}
   doorAnimator: {fileID: 3147624160814781149}
+  portal: {fileID: 3920988509509421473}
+  portalTime: 0.6
+  portalSpeed: 2.5
   usablePhase: 1
   advancesPhase: 1
   openParameter: IsOpen
@@ -158,6 +161,11 @@ PrefabInstance:
 --- !u!95 &3147624160814781149 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 7832150951343655257, guid: f23a39f2248bb6c46aa4c02d9092d8a4, type: 3}
+  m_PrefabInstance: {fileID: 5125088354657819524}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &3920988509509421473 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8175685829665772069, guid: f23a39f2248bb6c46aa4c02d9092d8a4, type: 3}
   m_PrefabInstance: {fileID: 5125088354657819524}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &4756304749451377257 stripped

@@ -32,7 +32,7 @@ MonoBehaviour:
   dailyCustomerCap: 30
   buyCount: 3
   instantSettlement: 1
-  instantFade: 0.35
+  instantFade: 0.3
   backgroundInterval: {x: 3, y: 6}
   tutorialCustomers: 3
   tutorialBuyAll: 1
