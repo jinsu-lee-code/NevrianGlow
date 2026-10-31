@@ -85,14 +85,29 @@ Material:
     - _BodyHazeLow: 0.55
     - _BodyLimb: 0.6
     - _BodyMid: 1
+    - _CloudClean: 0
+    - _CloudCleanRadius: 3
+    - _CloudCoreShadow: 0.25
     - _CloudCoverage: 0.63
     - _CloudCurve: 0.3
     - _CloudEdge: 0.001
+    - _CloudEdgeCrisp: 0
+    - _CloudEmit: 0
+    - _CloudEmitBody: 0.25
+    - _CloudEmitEdge: 0.4
+    - _CloudEmitOffset: 0.005
+    - _CloudEmitSilver: 1
+    - _CloudEmitSpread: 2
     - _CloudHorizonFade: 0.12
     - _CloudLightOffset: 0.25
     - _CloudLitBias: 0.06
     - _CloudOpacity: 0
     - _CloudScale: 1.2
+    - _CloudShade: 1
+    - _CloudShadeSoft: 0.05
+    - _CloudShadeSteps: 2
+    - _CloudShadeThreshold: 0.42
+    - _CloudShadowDepth: 0.5
     - _CloudSpeed: 1
     - _DayEdgeAmount: 0.6
     - _DaySide: 1
@@ -123,7 +138,9 @@ Material:
     - _Moon2Size: 0.03
     - _Moon3Size: 0.022
     - _Moon4Size: 0.014
+    - _OpenSkyStars: 1.6
     - _PanoAmount: 1
+    - _PanoCloudAmount: 0
     - _PanoCloudFront: 1
     - _PanoHorizon: 0.03
     - _PanoRotation: 0
@@ -193,8 +210,14 @@ Material:
     - _AuroraTaper: {r: 0.55, g: 0.85, b: 0.7, a: 1}
     - _AuroraUndulate: {r: 0.14, g: 3, b: 0.45, a: 1}
     - _BandColor: {r: 0.7, g: 0.86, b: 0.92, a: 1}
+    - _CloudEmitBodyColor: {r: 0.35, g: 0.3, b: 0.7, a: 1}
+    - _CloudEmitBodySunColor: {r: 0.6, g: 0.35, b: 0.3, a: 1}
+    - _CloudEmitColor: {r: 1.4, g: 0.85, b: 0.55, a: 1}
     - _CloudLitColor: {r: 1, g: 1, b: 1, a: 1}
+    - _CloudLitFar: {r: 1, g: 0.96, b: 1.04, a: 1}
+    - _CloudLitSun: {r: 1.1, g: 0.88, b: 0.75, a: 1}
     - _CloudShadowColor: {r: 1, g: 1, b: 1, a: 1}
+    - _CloudShadowColor2: {r: 0.34, g: 0.31, b: 0.68, a: 1}
     - _CloudWind: {r: 0.012, g: 0.004, b: 0, a: 0}
     - _DayCloudTint: {r: 1.1, g: 1.05, b: 1.1, a: 1}
     - _DayEdgeColor: {r: 1, g: 0.38, b: 0.16, a: 1}
@@ -229,6 +252,8 @@ Material:
     - _Moon3Orbit: {r: 0.8, g: 220, b: 0.25, a: 4}
     - _Moon4Dir: {r: 0.55797875, g: 0.7880108, b: -0.2601899, a: 0}
     - _Moon4Orbit: {r: 0.55, g: 160, b: 0.35, a: 2}
+    - _OpenSkyColor: {r: 0.035, g: 0.035, b: 0.11999995, a: 1}
+    - _OpenSkyTint: {r: 1, g: 1, b: 1, a: 1}
     - _OverallColor: {r: 1, g: 1, b: 1, a: 1}
     - _PanoCloudMask: {r: 0.25, g: 0.45, b: 0, a: 0}
     - _PanoCloudSpeed: {r: 0.15, g: 0.35, b: 0, a: 0}

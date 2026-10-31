@@ -72,6 +72,7 @@ Shader "DSEWA/ToonSoft"
         _TexGlowSoftness ("Glow Edge Softness", Range(0.01, 0.5)) = 0.2
         _TexGlowPulse ("Glow Min / Max Over The Breath (1, 1 = steady)", Vector) = (1, 1, 0, 0)
         [NoScaleOffset] _GlowMask ("Texture Glow Mask (optional, white = may glow)", 2D) = "white" {}
+        [Toggle] _GlowNoShadow ("Glowing Parts Cast No Shadow (needs a glow mask)", Float) = 0
         _PulsePeriod ("Breath Period (s)", Range(0.2, 20)) = 4.5
         [Header(Outline)]
         _OutlineColor ("Outline Color", Color) = (0.1, 0.1, 0.26, 1)
@@ -87,6 +88,7 @@ Shader "DSEWA/ToonSoft"
 
         CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
+            float _GlowNoShadow;
             half4 _BaseColor;
             half _Pastel, _Wrap, _Softness;
             half _BumpScale, _OcclusionStrength, _OcclusionDirect;
@@ -145,6 +147,7 @@ Shader "DSEWA/ToonSoft"
             #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
             #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS   // lamp shadows (2026-10-30: shop orb lamps)
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -275,7 +278,9 @@ Shader "DSEWA/ToonSoft"
                     half3 addLight = 0;
                     uint pixelLightCount = GetAdditionalLightsCount();
                     LIGHT_LOOP_BEGIN(pixelLightCount)
-                        Light al = GetAdditionalLight(lightIndex, i.positionWS);
+                        // the shadow-mask overload is the one that reads the lamp's own shadow map
+                        Light al = GetAdditionalLight(lightIndex, i.positionWS, half4(1, 1, 1, 1));
+                        al.shadowAttenuation = lerp(1.0h, al.shadowAttenuation, _ReceiveShadows);
                         half aw = (dot(N, al.direction) + _Wrap) / (1.0 + _Wrap);
                         half alit = CelLit(aw, i.positionWS) * lerp(1.0h, occ, _OcclusionDirect);
                         if (_TermStrength > 0) termAll = max(termAll, CelTerm(aw, i.positionWS) * saturate(al.distanceAttenuation * 4.0));
@@ -410,8 +415,12 @@ Shader "DSEWA/ToonSoft"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
             float3 _LightDirection;
             float3 _LightPosition;
-            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; UNITY_VERTEX_INPUT_INSTANCE_ID };
-            float4 vert(Attributes input) : SV_POSITION
+            // glowing bits (crystal sprouts on the shelves) give light, so they cast no shadow: a sprout right under a low
+            // lamp threw a blade-shaped shadow across the floor (2026-10-30)
+            TEXTURE2D(_GlowMask); SAMPLER(sampler_GlowMask);
+            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; UNITY_VERTEX_INPUT_INSTANCE_ID };
+            struct ShadowVaryings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; };
+            ShadowVaryings vert(Attributes input)
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
@@ -427,9 +436,16 @@ Shader "DSEWA/ToonSoft"
             #else
                 positionCS.z = max(positionCS.z, UNITY_NEAR_CLIP_VALUE);
             #endif
-                return positionCS;
+                ShadowVaryings o;
+                o.positionCS = positionCS;
+                o.uv = TRANSFORM_TEX(input.uv, _BaseMap);   // same uv the forward pass samples the mask with
+                return o;
             }
-            half4 frag() : SV_Target { return 0; }
+            half4 frag(ShadowVaryings i) : SV_Target
+            {
+                if (_GlowNoShadow > 0.5) clip(0.5 - SAMPLE_TEXTURE2D(_GlowMask, sampler_GlowMask, i.uv).r);
+                return 0;
+            }
             ENDHLSL
         }
 

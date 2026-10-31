@@ -245,6 +245,30 @@ Shader "DSEWA/ToonSky"
         _PanoCloudSpeed ("Cloud Drift (x low, y high: deg per second around the sky)", Vector) = (0.15, 0.35, 0, 0)
         _PanoStarTwinkle ("Painted Star Twinkle (x speed, y depth, z brightness)", Vector) = (1.5, 0.8, 1, 0)
         _PanoCloudFront ("Painted Clouds In Front Of Planets", Range(0, 1)) = 1
+        [Header(Cloud Shading)]
+        _PanoCloudAmount ("Painted Clouds Amount (0 = hide the painted clouds)", Range(0, 1)) = 1
+        _CloudClean ("Clean Paint (0 = painted texture, 1 = smooth toon fill)", Range(0, 1)) = 0
+        _CloudCleanRadius ("Clean Radius (texels)", Range(1, 12)) = 6
+        _CloudEdgeCrisp ("Crisp Edges (alpha cut)", Range(0, 1)) = 0
+        _CloudShade ("Cloud Shading (0 = painted as is)", Range(0, 1)) = 0
+        _CloudShadeThreshold ("Light / Shadow Split (painted brightness)", Range(0, 1)) = 0.6
+        _CloudShadeSoft ("Split Softness", Range(0.005, 0.3)) = 0.06
+        _CloudShadeSteps ("Value Bands In The Light (0 = smooth)", Range(0, 6)) = 2
+        _CloudShadowColor2 ("Shadow Side (sky colour sinks in)", Color) = (0.36, 0.33, 0.7, 1)
+        _CloudShadowDepth ("Shadow Depth", Range(0, 1)) = 0.55
+        _CloudLitSun ("Lit Side Towards The Sun", Color) = (1.12, 0.84, 0.7, 1)
+        _CloudLitFar ("Lit Side Away From The Sun", Color) = (0.92, 0.88, 1.08, 1)
+        _CloudCoreShadow ("Shadow Core (darker inside the shadow)", Range(0, 1)) = 0.3
+        [Header(Cloud Emission)]
+        _CloudEmit ("Cloud Emission (0 = off)", Range(0, 2)) = 0
+        [HDR] _CloudEmitColor ("Silver Lining Colour (edges facing the sun)", Color) = (1.4, 0.85, 0.55, 1)
+        _CloudEmitSilver ("Silver Lining", Range(0, 2)) = 1
+        _CloudEmitEdge ("Soft Edge Glow", Range(0, 2)) = 0.4
+        _CloudEmitOffset ("Silver Lining Width (texture uv)", Range(0.001, 0.02)) = 0.005
+        [HDR] _CloudEmitBodyColor ("Body Glow (lit from inside, far side)", Color) = (0.35, 0.3, 0.7, 1)
+        [HDR] _CloudEmitBodySunColor ("Body Glow (sun side)", Color) = (0.6, 0.35, 0.3, 1)
+        _CloudEmitBody ("Body Glow", Range(0, 1)) = 0.25
+        _CloudEmitSpread ("Sun-Side Falloff (higher = narrower)", Range(0.5, 8)) = 2
         [Header(Day Side towards the main light   0 is off)]
         _DaySide ("Day Side Amount", Range(0, 1)) = 0
         _DaySideRange ("Day Side Blend (dot with light: start, full)", Vector) = (-0.1, 0.6, 0, 0)
@@ -338,6 +362,11 @@ Shader "DSEWA/ToonSky"
                 half _CloudHorizonFade, _CloudOpacity;
                 half4 _PanoTint;
                 half _PanoAmount, _PanoRotation, _PanoHorizon, _PanoCloudFront;
+                half _CloudEmit, _CloudEmitSilver, _CloudEmitEdge, _CloudEmitOffset, _CloudEmitBody, _CloudEmitSpread;
+                half _CloudShade, _CloudShadeThreshold, _CloudShadeSoft, _CloudShadeSteps, _CloudShadowDepth, _CloudCoreShadow;
+                half _CloudClean, _CloudCleanRadius, _CloudEdgeCrisp, _PanoCloudAmount;
+                half4 _CloudShadowColor2, _CloudLitSun, _CloudLitFar;
+                half4 _CloudEmitColor, _CloudEmitBodyColor, _CloudEmitBodySunColor;
                 float4 _PanoCloudSpeed, _PanoStarTwinkle;
             CBUFFER_END
             TEXTURE2D(_PanoTex); SAMPLER(sampler_PanoTex);
@@ -1036,6 +1065,7 @@ Shader "DSEWA/ToonSky"
                 float panoK = _PanoAmount * smoothstep(-0.005, _PanoHorizon, up);
                 half3 pano = 0;
                 half panoCloud = 0;
+                half cloudSilver = 0, cloudEdge = 0;
                 half3 cloudRaw = 0;
                 half skyGlow = 0;
                 half skyHole = 0;        // ending: where the clouds have burnt away (drawn last, over the day / sunset)
@@ -1054,8 +1084,72 @@ Shader "DSEWA/ToonSky"
                     float2 drift = float2(_Time.y / 360.0, 0);
                     half4 lo = SAMPLE_TEXTURE2D_LOD(_PanoCloudLow, sampler_PanoTex, puv + drift * _PanoCloudSpeed.x, 0);
                     half4 hi = SAMPLE_TEXTURE2D_LOD(_PanoCloudHigh, sampler_PanoTex, puv + drift * _PanoCloudSpeed.y, 0);
+                    // clean paint (2026-10-30, user: "can't the paper feel go?"): the painted layers carry paper grain, brush
+                    // streaks and watercolour edges with a dark fringe. Average the colour over a small disc (alpha-weighted,
+                    // so the fringe and the empty sky do not bleed in) and cut the alpha into a crisp edge: the painter's big
+                    // light / shadow layout stays, the paper goes; the cel ramp below then flattens it into bands
+                    if (_CloudClean > 0)
+                    {
+                        float2 tx = float2(1.0 / 2048.0, 1.0 / 1024.0) * _CloudCleanRadius;
+                        half4 sLo = half4(lo.rgb * lo.a, lo.a), sHi = half4(hi.rgb * hi.a, hi.a);
+                        [unroll] for (int ci = 0; ci < 12; ci++)
+                        {
+                            float ang = ci * 0.5235988 + (ci & 1) * 0.26;
+                            float2 o = float2(cos(ang), sin(ang)) * tx * ((ci & 1) ? 1.0 : 0.55);
+                            half4 a1 = SAMPLE_TEXTURE2D_LOD(_PanoCloudLow, sampler_PanoTex, puv + o + drift * _PanoCloudSpeed.x, 0);
+                            half4 a2 = SAMPLE_TEXTURE2D_LOD(_PanoCloudHigh, sampler_PanoTex, puv + o + drift * _PanoCloudSpeed.y, 0);
+                            sLo += half4(a1.rgb * a1.a, a1.a);
+                            sHi += half4(a2.rgb * a2.a, a2.a);
+                        }
+                        half3 loC = sLo.rgb / max(sLo.a, 1e-3), hiC = sHi.rgb / max(sHi.a, 1e-3);
+                        lo.rgb = lerp(lo.rgb, loC, _CloudClean * step(1e-3, sLo.a));
+                        hi.rgb = lerp(hi.rgb, hiC, _CloudClean * step(1e-3, sHi.a));
+                        if (_CloudEdgeCrisp > 0)
+                        {
+                            half aLo = sLo.a / 13.0, aHi = sHi.a / 13.0;
+                            lo.a = lerp(lo.a, smoothstep(0.38, 0.52, aLo), _CloudEdgeCrisp);
+                            hi.a = lerp(hi.a, smoothstep(0.38, 0.52, aHi), _CloudEdgeCrisp);
+                        }
+                    }
                     half3 cl = lerp(lo.rgb, hi.rgb, hi.a);
-                    half ca = 1 - (1 - lo.a) * (1 - hi.a);                                   // high over low
+                    // cloud shading (2026-10-30, user: the cloud shadows): the painted brightness is split into a lit side and
+                    // a shadow side like a cel ramp; the shadow takes the sky's blue-violet (the colour sinks in, as in the
+                    // painted reference), the lit side warms towards the sun's azimuth and cools away from it, and the
+                    // light side is cut into a few flat value bands
+                    if (_CloudShade > 0)
+                    {
+                        half lum = dot(cl, half3(0.299, 0.587, 0.114));
+                        half litK = smoothstep(_CloudShadeThreshold - _CloudShadeSoft, _CloudShadeThreshold + _CloudShadeSoft, lum);
+                        float cAz0 = saturate(dot(normalize(dir.xz + 1e-5), normalize(L.xz + 1e-5)) * 0.5 + 0.5);
+                        half3 litTint = lerp(_CloudLitFar.rgb, _CloudLitSun.rgb, cAz0 * cAz0);
+                        half lb = lum;
+                        if (_CloudShadeSteps > 0.5)
+                        {
+                            half q = (lum - _CloudShadeThreshold) / max(1 - _CloudShadeThreshold, 1e-3) * _CloudShadeSteps;
+                            half qs = (floor(q) + smoothstep(0.8, 1.0, frac(q))) / _CloudShadeSteps;
+                            lb = lerp(_CloudShadeThreshold, 1, saturate(qs));
+                        }
+                        half3 litCol = cl * (lb / max(lum, 1e-3)) * litTint;
+                        // shadow: keep a little of the painted shape, sink towards the sky colour, darker in its core
+                        half core = 1 - smoothstep(0, _CloudShadeThreshold, lum);
+                        half3 shCol = lerp(cl, _CloudShadowColor2.rgb * (0.6 + 0.4 * lum / max(_CloudShadeThreshold, 1e-3)), _CloudShadowDepth);
+                        shCol *= 1 - _CloudCoreShadow * core;
+                        cl = lerp(cl, lerp(shCol, litCol, litK), _CloudShade);
+                    }
+                    half ca = (1 - (1 - lo.a) * (1 - hi.a)) * _PanoCloudAmount;             // high over low
+                    // cloud emission: the cloud's edge that faces the sun (alpha drops one step towards the sun) = silver lining
+                    if (_CloudEmit > 0)
+                    {
+                        float2 sunUV = float2(atan2(L.x, L.z) * (0.5 / PI) + 0.5 + _PanoRotation / 360.0, asin(clamp(L.y, -1, 1)) / PI + 0.5);
+                        float2 dUV = sunUV - puv;
+                        dUV.x = frac(dUV.x + 0.5) - 0.5;
+                        dUV = normalize(dUV + 1e-5) * _CloudEmitOffset;
+                        half4 lo2 = SAMPLE_TEXTURE2D_LOD(_PanoCloudLow, sampler_PanoTex, puv + dUV + drift * _PanoCloudSpeed.x, 0);
+                        half4 hi2 = SAMPLE_TEXTURE2D_LOD(_PanoCloudHigh, sampler_PanoTex, puv + dUV + drift * _PanoCloudSpeed.y, 0);
+                        half ca2 = 1 - (1 - lo2.a) * (1 - hi2.a);
+                        cloudSilver = saturate((ca - ca2) * 3);
+                        cloudEdge = saturate(ca * (1 - ca) * 4);
+                    }
                     // ending: the clouds dissolve away in a ragged ring spreading from where the beam meets the sky
                     if (_DSEWA_SkyDissolve.w > 0)
                     {
@@ -1174,6 +1268,13 @@ Shader "DSEWA/ToonSky"
                 color = lerp(color, c4, a4 * f4);
                 // painted clouds pass in front of the planets and moons
                 color = lerp(color, pano * _OverallColor.rgb, panoCloud * _PanoCloudFront);
+                if (_CloudEmit > 0 && panoCloud > 0)
+                {
+                    float cAz = pow(saturate(dot(normalize(dir.xz + 1e-5), normalize(L.xz + 1e-5)) * 0.5 + 0.5), _CloudEmitSpread);
+                    half3 rimE = _CloudEmitColor.rgb * (cloudSilver * _CloudEmitSilver + cloudEdge * _CloudEmitEdge) * (0.2 + 0.8 * cAz);
+                    half3 bodyE = lerp(_CloudEmitBodyColor.rgb, _CloudEmitBodySunColor.rgb, cAz) * _CloudEmitBody;
+                    color += (rimE + bodyE) * panoCloud * _CloudEmit * _PanoCloudFront;
+                }
 
                 // Aurora: in the upper atmosphere, so in front of the planets and moons (additive glow)
                 if (_AuroraAmount > 0 && up > 0)
