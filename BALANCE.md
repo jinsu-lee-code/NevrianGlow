@@ -25,7 +25,8 @@
 | 핫바 칸 수 · 시작 핫바 | `Data/Stats/InventorySettings.asset` · `GameStartSettings.asset` | — | 2-3 · 2-4 |
 | 씨앗 | `Data/Items/item_seed_*.asset` | — | 2-12 |
 | 콘텐츠 목록 (id → 에셋) | `Data/ContentDatabase.asset` (자동 수집) | — | — |
-| 그래픽 품질 3단계 (그림자 · 풀 · 반사 · 창밖 · 3D 해상도) · 지역 카메라 먼 거리 | `Data/Stats/GraphicsQuality.asset` · `Data/Zones/zone_*.asset`(cameraFarClip, 가게 120 m) | — | TASKS 7-7 (2026-10-30, 개발 임시) |
+| 그래픽 품질 3단계 (그림자 · 풀 · 반사 · 창밖 · 3D 해상도 · SMAA) · 지역 카메라 먼 거리 | `Data/Stats/GraphicsQuality.asset` · `Data/Zones/zone_*.asset`(cameraFarClip, 가게 120 m) | — | TASKS 7-7 (2026-10-30, 개발 임시) · 보통 그림자 100 m · 4단계 · 풀 ×0.7 · SMAA (2026-10-31) |
+| 근경 · 중경 · 원경 (붓 터치 · 거리 안개 · 초점 흐림 거리) | `Data/Stats/ViewLayers.asset` | — | TASKS 7-8 (2026-10-31, 개발 임시 · 아트 확인 대기) |
 
 CSV 양식 (2026-10-10, 2-1): 첫 열 `id`, 나머지 열 이름 = 에셋 필드 이름, 숫자 소수점은 `.`, 색은 `#RRGGBB`, 다른 콘텐츠 참조는 상대 id. 현재 값 양식 = 저장소 `CSV/crops.csv` (메뉴 `Glow Farm/Data/Export Crops CSV...`로 다시 만들 수 있음).
 | 아이템 (씨앗 · 비료 · 쓰레기) | `Data/Items/item_*.asset` | — | 2-12 |

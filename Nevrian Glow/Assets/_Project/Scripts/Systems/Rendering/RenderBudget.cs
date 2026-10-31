@@ -13,7 +13,7 @@ namespace NevrianGlowFarm.Systems.Rendering
     /// 그리기 예산 (최적화 2026-10-30). 측정에서 무거웠던 것을 실행 중에만 줄인다 — 아트 씬 · 스크립트 · URP 에셋 파일은 그대로.
     /// · 호수 평면 반사(아트 PlanarReflection)는 장면 전체를 그림자까지 한 번 더 그린다 → 호수가 카메라 화면 안에 있을 때만 켠다 (가게 안에서는 늘 꺼짐).
     /// · 지역마다 카메라 먼 거리(ZoneProfileData) — 가게 안에서 500 m 밖 농장 배경을 벽 너머로 그리지 않게.
-    /// · 그래픽 품질 단계(설정 화면, GraphicsQualityData) — 해 그림자 · 풀 거리 · 밀도 · 가게 창밖 풍경 · 3D 해상도 배율.
+    /// · 그래픽 품질 단계(설정 화면, GraphicsQualityData) — 해 그림자 · 풀 거리 · 밀도 · 가게 창밖 풍경 · 3D 해상도 배율 · 가장자리 계단(SMAA).
     /// URP 에셋 값은 끝날 때 되돌린다 (에디터에서 아트가 보는 화면이 바뀌지 않게).
     /// </summary>
     public class RenderBudget : MonoBehaviour
@@ -42,6 +42,7 @@ namespace NevrianGlowFarm.Systems.Rendering
         [SerializeField] private float farClip;
 
         private UniversalRenderPipelineAsset pipeline;
+        private UniversalAdditionalCameraData viewCameraData;
         private float originalShadowDistance;
         private int originalShadowResolution;
         private int originalCascades;
@@ -79,6 +80,7 @@ namespace NevrianGlowFarm.Systems.Rendering
             }
             defaultFarClip = viewCamera.farClipPlane;
             farClip = defaultFarClip;
+            viewCameraData = viewCamera.GetUniversalAdditionalCameraData();
         }
 
         private void OnEnable()
@@ -143,6 +145,11 @@ namespace NevrianGlowFarm.Systems.Rendering
                 pipeline.mainLightShadowmapResolution = tier.ShadowResolution;
                 pipeline.shadowCascadeCount = tier.ShadowCascades;
                 pipeline.renderScale = tier.RenderScale;
+            }
+            if (viewCameraData != null)
+            {
+                viewCameraData.antialiasing = tier.Smaa ? AntialiasingMode.SubpixelMorphologicalAntiAliasing : AntialiasingMode.None;
+                viewCameraData.antialiasingQuality = AntialiasingQuality.High;
             }
             ApplyGrass();
             ApplyWindow();

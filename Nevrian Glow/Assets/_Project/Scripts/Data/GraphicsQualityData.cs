@@ -41,6 +41,8 @@ namespace NevrianGlowFarm.Data
             [Header("화면")]
             [Tooltip("3D 화면 해상도 배율 — UI는 그대로 (배)")]
             [SerializeField, Range(0.5f, 1f)] private float renderScale = 1f;
+            [Tooltip("가장자리 계단 현상 줄임 (SMAA) — 울타리 · 가는 나뭇가지가 덜 깨진다")]
+            [SerializeField] private bool smaa;
 
             public string DisplayName => displayName;
             public float ShadowDistance => shadowDistance;
@@ -52,6 +54,7 @@ namespace NevrianGlowFarm.Data
             public float WindowViewScale => windowViewScale;
             public bool WindowViewShadows => windowViewShadows;
             public float RenderScale => renderScale;
+            public bool Smaa => smaa;
         }
 
         [Tooltip("품질 단계 — 가벼운 것부터 (설정 화면 순서). 설정 값은 이 목록의 번호")]

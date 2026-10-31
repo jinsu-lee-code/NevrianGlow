@@ -23,16 +23,18 @@ MonoBehaviour:
     windowViewScale: 0.3
     windowViewShadows: 0
     renderScale: 0.8
+    smaa: 0
   - displayName: "\uBCF4\uD1B5"
-    shadowDistance: 80
+    shadowDistance: 100
     shadowResolution: 2048
-    shadowCascades: 3
-    grassDistanceScale: 0.6
+    shadowCascades: 4
+    grassDistanceScale: 0.7
     grassDensityScale: 0.75
     lakeReflection: 1
     windowViewScale: 0.4
     windowViewShadows: 0
     renderScale: 1
+    smaa: 1
   - displayName: "\uB192\uC74C"
     shadowDistance: 120
     shadowResolution: 4096
@@ -43,4 +45,5 @@ MonoBehaviour:
     windowViewScale: 0.5
     windowViewShadows: 1
     renderScale: 1
+    smaa: 1
   defaultTier: 1

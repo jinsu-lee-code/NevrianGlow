@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec9be70c9491a8842a1fecab366ae55d, type: 3}
+  m_Name: ViewLayers
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.ViewLayersData
+  brushStrength: 0.5
+  nearEnd: 8
+  brushEnd: 35
+  brushFarStrength: 0
+  hazeStart: 55
+  hazeEnd: 320
+  hazeDetailKeep: 0.8
+  blurStart: 90
+  blurEnd: 320
+  blurRadius: 0.5
