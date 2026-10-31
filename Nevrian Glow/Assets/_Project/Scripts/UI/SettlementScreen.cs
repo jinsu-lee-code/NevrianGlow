@@ -6,6 +6,7 @@ using NevrianGlowFarm.Systems.Sales;
 using NevrianGlowFarm.Systems.Shop;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace NevrianGlowFarm.UI
@@ -32,20 +33,27 @@ namespace NevrianGlowFarm.UI
         [SerializeField] private TMP_Text nextDayLabel;
         [Tooltip("데모 종료 화면 (Core UICanvas/DemoEndScreen)")]
         [SerializeField] private DemoEndScreen demoEndScreen;
+        [Tooltip("경험치 막대 채움 (Filled 가로 이미지 — 비우면 막대 없음, 10/30 정산 경험치 바)")]
+        [SerializeField] private Image expFill;
+        [Tooltip("경험치 막대 글자 (Lv · 지금 / 필요)")]
+        [SerializeField] private TMP_Text expLabel;
 
         [Header("조정값")]
         [Tooltip("평소 버튼 글자")]
         [SerializeField] private string nextDayText = "다음 날";
         [Tooltip("데모 마지막 날 버튼 글자")]
         [SerializeField] private string demoEndText = "데모 결과 보기";
-        [Tooltip("본문이 한 글자씩 나오는 빠르기 — 0이면 한 번에 (글자/초, 수정사항 10/28). 나오는 중에 '다음 날'을 누르면 먼저 다 보인다")]
-        [SerializeField, Min(0f)] private float typeSpeed = 60f;
+        [Tooltip("본문이 한 줄씩 나오는 간격 — 0이면 한 번에 (초, 최종 기획서 v2.0 0.25초 · 10/28의 글자 단위 대신). 나오는 중에 '다음 날' · Enter를 누르면 먼저 다 보인다")]
+        [SerializeField, Min(0f)] private float lineInterval = 0.25f;
+        [Tooltip("본문이 다 나온 뒤 경험치 막대가 차오르는 시간 (초)")]
+        [SerializeField, Min(0f)] private float expFillTime = 0.8f;
 
         private bool advancing;
-        private float typed = -1f;   // 지금 보이는 글자 수 (−1 = 다 보임)
+        private float typed = -1f;   // 지금 보이는 줄 수 (−1 = 다 보임)
         private int typeTotal;
         private bool pending;
         private bool yielding;
+        private float expFrom, expTo, expAnim = -1f;   // 막대 채움 (0~1) · 차오르는 진행 (−1 = 멈춤)
 
         public static SettlementScreen Instance { get; private set; }
 
@@ -115,18 +123,22 @@ namespace NevrianGlowFarm.UI
             }
         }
 
-        /// <summary>본문이 아직 한 글자씩 나오는 중인지.</summary>
+        /// <summary>본문이 아직 한 줄씩 나오는 중인지.</summary>
         public bool IsTyping => typed >= 0f;
 
         private void Update()
         {
             if (IsOpen && IsTyping)
             {
-                typed += typeSpeed * Time.unscaledDeltaTime;
-                bodyLabel.maxVisibleCharacters = Mathf.Min(typeTotal, (int)typed);
+                typed += Time.unscaledDeltaTime / Mathf.Max(0.01f, lineInterval);
+                bodyLabel.maxVisibleLines = Mathf.Clamp(1 + (int)typed, 1, typeTotal);
                 if (typed >= typeTotal)
                     FinishTyping();
+                else if (Keyboard.current != null && (Keyboard.current.enterKey.wasPressedThisFrame || Keyboard.current.numpadEnterKey.wasPressedThisFrame))
+                    FinishTyping(); // Enter로 한 번에 (기획 v2.0) — 다음 Enter는 버튼이 받는다
             }
+            if (IsOpen && expAnim >= 0f)
+                AnimateExp();
             if (!pending || IsOpen)
                 return;
             // 다른 화면(가방 등)이 열려 있으면 먼저 닫아 본다 — 닫을 수 없는 상태면 다음 프레임에 다시.
@@ -168,23 +180,56 @@ namespace NevrianGlowFarm.UI
             StartTyping();
         }
 
-        // 정산 글자가 한 번에 나오지 않고 하나씩 (수정사항 10/28) — 실제 시간으로, 화면이 멈춰 있어도
+        // 정산이 한 줄씩 (최종 기획서 v2.0: 매출 → 손님 → 등급 → 경험치가 0.25초 간격) — 실제 시간으로, 화면이 멈춰 있어도
         private void StartTyping()
         {
             typed = -1f;
             bodyLabel.maxVisibleCharacters = int.MaxValue;
-            if (typeSpeed <= 0f)
+            bodyLabel.maxVisibleLines = int.MaxValue;
+            PrepareExp();
+            if (lineInterval <= 0f)
+            {
+                FinishTyping();
                 return;
+            }
             bodyLabel.ForceMeshUpdate();
-            typeTotal = bodyLabel.textInfo.characterCount;
+            typeTotal = Mathf.Max(1, bodyLabel.textInfo.lineCount);
             typed = 0f;
-            bodyLabel.maxVisibleCharacters = 0;
+            bodyLabel.maxVisibleLines = 1;
         }
 
         private void FinishTyping()
         {
             typed = -1f;
-            bodyLabel.maxVisibleCharacters = int.MaxValue;
+            bodyLabel.maxVisibleLines = int.MaxValue;
+            if (expFill != null && expAnim < 0f)
+                expAnim = 0f; // 본문이 다 나오면 경험치 막대가 차오른다
+        }
+
+        // 경험치 막대 (10/30 "정산에 경험치 바"): 오늘 받기 전 → 받은 뒤. 레벨업이면 새 레벨의 0에서 지금까지 (글자에 '레벨 업!')
+        private void PrepareExp()
+        {
+            expAnim = -1f;
+            if (expFill == null)
+                return;
+            var game = GameManager.Instance;
+            int required = game != null ? Mathf.Max(1, game.ExpRequired) : 1;
+            int now = game != null ? game.Exp : 0;
+            int gained = Report.Exp.Exp;
+            expTo = Mathf.Clamp01(now / (float)required);
+            expFrom = Report.Exp.LeveledUp ? 0f : Mathf.Clamp01((now - gained) / (float)required);
+            expFill.fillAmount = expFrom;
+            if (expLabel != null)
+                expLabel.text = $"Lv {Report.Level}   경험치 {now} / {required}" + (Report.Exp.LeveledUp ? "   레벨 업!" : string.Empty);
+        }
+
+        private void AnimateExp()
+        {
+            expAnim += Time.unscaledDeltaTime / Mathf.Max(0.01f, expFillTime);
+            float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(expAnim));
+            expFill.fillAmount = Mathf.Lerp(expFrom, expTo, t);
+            if (expAnim >= 1f)
+                expAnim = -1f;
         }
 
         private bool IsDemoEnd => GameManager.Instance != null && RunSummary.IsDemoLastDay(Report.Day, GameManager.Instance.DemoLastDay);

@@ -29,6 +29,11 @@ MonoBehaviour:
   satisfactionTidy: 0.35
   satisfactionSuccess: 0.3
   customerRandom: 0.1
+  dailyCustomerCap: 30
+  buyCount: 3
+  instantSettlement: 1
+  instantFade: 0.35
+  backgroundInterval: {x: 3, y: 6}
   tutorialCustomers: 3
   tutorialBuyAll: 1
   tutorialRandomOff: 1

@@ -45,6 +45,18 @@ namespace NevrianGlowFarm.Data
         [SerializeField, Range(0f, 1f)] private float satisfactionSuccess = 0.3f;
         [Tooltip("오늘 손님 ± 무작위 폭 (0.1 = ±10%, customer_random)")]
         [SerializeField, Range(0f, 1f)] private float customerRandom = 0.1f;
+        [Tooltip("하루 손님 상한 — 매장 홍보로 늘어도 이 안에서 (명, 0이면 상한 없음 · customer_daily_cap, 최종 기획서 v2.0 30)")]
+        [SerializeField, Min(0)] private int dailyCustomerCap;
+        [Tooltip("손님 한 명이 사려는 개수 — 더 큰 장바구니가 더한다 (개, 0이면 예전 무작위 · customer_buy_count, 최종 기획서 v2.0 3)")]
+        [SerializeField, Min(0)] private int buyCount;
+
+        [Header("즉시 정산 (최종 기획서 v2.0 — 장사 시작 → 페이드 → 정산)")]
+        [Tooltip("장사를 시작하면 결과를 바로 계산해 정산 화면으로 — 끄면 예전처럼 손님이 다 다녀간 뒤 (켜면 손님은 정산 창 뒤 배경)")]
+        [SerializeField] private bool instantSettlement = true;
+        [Tooltip("장사 시작 페이드 (초) — 어두워지는 동안 결과를 계산하고 정산 화면과 함께 밝아진다")]
+        [SerializeField, Min(0f)] private float instantFade = 0.35f;
+        [Tooltip("정산 창 뒤 배경 손님이 들어오는 간격 — 최소 ~ 최대 무작위 (초, 기획 3 ~ 6)")]
+        [SerializeField] private Vector2 backgroundInterval = new Vector2(3f, 6f);
 
         [Header("튜토리얼 고정값 — 튜토리얼이 진행 중인 날만 (기획 튜토리얼 2절, game_settings tutorial_*)")]
         [Tooltip("2일차부터 손님 수 고정 — 0이면 모델대로 (명, tutorial_day2_customers)")]
@@ -87,6 +99,11 @@ namespace NevrianGlowFarm.Data
         [SerializeField, Min(0.1f)] private float walkClipSpeed = 1.62f;
 
         public float AdRate => adRate;
+        public int DailyCustomerCap => dailyCustomerCap;
+        public int BuyCount => buyCount;
+        public bool InstantSettlement => instantSettlement;
+        public float InstantFade => instantFade;
+        public Vector2 BackgroundInterval => new Vector2(Mathf.Max(0.5f, Mathf.Min(backgroundInterval.x, backgroundInterval.y)), Mathf.Max(0.5f, Mathf.Max(backgroundInterval.x, backgroundInterval.y)));
         public int FurnitureSpots => furnitureSpots;
         public int PurchaseExtraMax => Mathf.Max(PurchaseMax, purchaseExtraMax);
         public int Day1FirstBuy => day1FirstBuy;

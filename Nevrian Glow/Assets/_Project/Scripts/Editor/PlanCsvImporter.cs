@@ -794,6 +794,8 @@ namespace NevrianGlowFarm.Editor
                 Float("satisfaction_w_tidy", "satisfactionTidy");
                 Float("satisfaction_w_success", "satisfactionSuccess");
                 Float("customer_random", "customerRandom");
+                Int("customer_daily_cap", "dailyCustomerCap"); // 하루 손님 상한 30 (최종 기획서 v2.0)
+                Int("customer_buy_count", "buyCount");          // 손님 구매 3개 고정 + 더 큰 장바구니
                 // 가구 자리 = 과일 진열대 자리 + 일반 진열대 자리 (진열 가구 P-4 전까지 손님 상한에만 씀)
                 if (CsvValue.TryInt(V("store_spots_fruit"), out int fruitSpots) && CsvValue.TryInt(V("store_spots_shelf"), out int shelfSpots))
                     so.FindProperty("furnitureSpots").intValue = fruitSpots + shelfSpots;

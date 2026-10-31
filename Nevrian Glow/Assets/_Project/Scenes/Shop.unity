@@ -6886,6 +6886,8 @@ MonoBehaviour:
   sellPriceStat: {fileID: 11400000, guid: 2214fc0dcdc9ee0489de0f73ab987230, type: 2}
   adRateStat: {fileID: 11400000, guid: c2158f9c29cc77b4f9b4b9edf7efea25, type: 2}
   extraBuyStat: {fileID: 11400000, guid: f749632b3543b084dbdb3e727d8e8f3c, type: 2}
+  basketStat: {fileID: 11400000, guid: e2a63c4cca1f364469d6400e223e4332, type: 2}
+  promoStat: {fileID: 11400000, guid: 0b3d150752024a34a906680836c71db3, type: 2}
   browseSpread: 1.6
   browseGap: 0.6
   stuckLimit: 90

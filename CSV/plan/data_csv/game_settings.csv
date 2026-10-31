@@ -26,6 +26,8 @@ same_day_clean_min,0.8,,당일 손님 × (min + (1 − min) × 청결도),회신
 satisfaction_w_clean,0.35,,만족도 가중치: 청결도,손님수
 satisfaction_w_tidy,0.35,,만족도 가중치: 정돈도,손님수
 satisfaction_w_success,0.30,,만족도 가중치: 구매 성공률,손님수
+customer_daily_cap,30,명,"하루 손님 상한 고정 (매장 홍보로 늘어도 이 안, 기획서 본문 — CSV 열은 개발이 추가)",최종 기획서 v2.0 10/29
+customer_buy_count,3,개,"손님 구매 개수 고정 + 더 큰 장바구니 (buy_min · buy_max 대신, 기획서 본문 — CSV 열은 개발이 추가)",최종 기획서 v2.0 10/29
 buy_min,1,개,손님 구매 개수 최소 (균등),회신 #19
 buy_max,3,개,손님 구매 개수 최대 (균등),회신 #19
 buy_extra_max,4,개,단골의 장바구니로 늘어날 수 있는 최대,회신2 2-5
