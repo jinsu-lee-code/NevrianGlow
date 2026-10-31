@@ -214,7 +214,7 @@ namespace NevrianGlowFarm.Systems.Farm
                 if (cell.IsFertilized)
                     return "비료 - 이미 줬음 (작물당 1번)";
                 int have = hotbar != null ? hotbar.SelectedCount : 0;
-                return $"{held.DisplayName} 주기 - 성장 {fertilizer.GrowDaysReduction}일 단축, 내일부터 ({have}개)";
+                return $"{held.DisplayName} 주기 - 바로 {fertilizer.GrowDaysReduction}일 자람 ({have}개)";
             }
             if (held is WateringCanData can)
             {
@@ -532,6 +532,20 @@ namespace NevrianGlowFarm.Systems.Farm
                     break;
                 rects.Add(site.GroundRect(settings));
                 firstCell += site.Plots * settings.CellsPerPlot;
+            }
+            return rects;
+        }
+
+        /// <summary>모든 확장 밭 자리(열리기 전 포함)의 바닥 사각형 + 여유(m) — 울타리 안 빈터 만들기(배경 나무 숨김, 길 끝 자리 10/31).</summary>
+        public List<Rect> AllSiteGroundRects(float margin)
+        {
+            var rects = new List<Rect>();
+            if (!HasSites || settings == null)
+                return rects;
+            foreach (var site in fieldSites)
+            {
+                var r = site.GroundRect(settings);
+                rects.Add(new Rect(r.xMin - margin, r.yMin - margin, r.width + margin * 2f, r.height + margin * 2f));
             }
             return rects;
         }

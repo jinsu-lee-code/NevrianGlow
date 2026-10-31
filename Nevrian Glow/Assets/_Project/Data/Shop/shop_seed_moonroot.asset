@@ -15,7 +15,8 @@ MonoBehaviour:
   id: shop_seed_moonroot
   displayName: "\uC6D4\uAD11 \uBFCC\uB9AC \uC528\uC557"
   description: "\uC2EC\uC740 \uB2E4\uC74C \uB0A0 \uC218\uD655\uD558\uB294 \uAE30\uBCF8
-    \uC791\uBB3C"
+    \uC791\uBB3C \xB7 \uD558\uB8E8 \uC785\uACE0 12\uAC1C, \uB808\uBCA8\uB9C8\uB2E4
+    +2 (\uCD5C\uB300 40)"
   sortOrder: 10
   category: "\uC528\uC557"
   hidden: 0
@@ -24,9 +25,12 @@ MonoBehaviour:
   tiers:
   - price: 5
     requirements: []
-  dailyStock: 28000000
+  priceGrowthAfterTiers: 0
+  dailyStock: 0c000000
   stockFromNextDay: 0
-  bonusStock: 80
-  bonusStockLevel: 6
+  bonusStock: 0
+  bonusStockLevel: 0
+  stockPerLevel: 2
+  stockMax: 40
   item: {fileID: 11400000, guid: 951abf54dedae774fa34f4dbea44d508, type: 2}
   count: 1

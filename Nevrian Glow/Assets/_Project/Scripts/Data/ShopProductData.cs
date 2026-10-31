@@ -69,6 +69,8 @@ namespace NevrianGlowFarm.Data
         [SerializeField] private bool repeatable;
         [Tooltip("단계별 가격 · 해금 조건 — 반복 상품은 첫 줄만 쓴다")]
         [SerializeField] private List<ShopTierEntry> tiers = new List<ShopTierEntry>();
+        [Tooltip("단계를 다 산 뒤에도 계속 — 다음 가격 = 직전 가격 × 이 값, 조건은 마지막 단계 (배, 0이면 마지막 단계에서 끝 · 기획 shop.csv '직전 가격 × N' 10/30)")]
+        [SerializeField, Min(0f)] private float priceGrowthAfterTiers;
 
         [Header("입고")]
         [Tooltip("일차별 하루 입고량 (1일차부터, 마지막 값이 이후 계속). 비우면 무제한 (개)")]
@@ -79,6 +81,10 @@ namespace NevrianGlowFarm.Data
         [SerializeField, Min(0)] private int bonusStock;
         [Tooltip("레벨 보너스 입고가 시작되는 레벨 (0이면 없음 · 기획 game_settings stock_bonus_level, 수정사항 10/28: 레벨 6)")]
         [SerializeField, Min(0)] private int bonusStockLevel;
+        [Tooltip("레벨마다 늘어나는 하루 입고량 — 해금 레벨(없으면 1)에서 위 입고량, 레벨이 오를 때마다 이만큼. 있으면 레벨 보너스 입고 대신 (개, 0이면 없음 · 기획 shop.csv '레벨마다 +N' 10/30)")]
+        [SerializeField, Min(0)] private int stockPerLevel;
+        [Tooltip("레벨이 올라도 넘지 않는 하루 입고량 (개, 0이면 끝없음 · 기획 shop.csv stock_max)")]
+        [SerializeField, Min(0)] private int stockMax;
 
         public int SortOrder => sortOrder;
         public string Category => category;
@@ -89,9 +95,12 @@ namespace NevrianGlowFarm.Data
         public bool StockFromNextDay => stockFromNextDay;
         public int BonusStock => bonusStock;
         public int BonusStockLevel => bonusStockLevel;
+        public int StockPerLevel => stockPerLevel;
+        public int StockMax => stockMax;
+        public float PriceGrowthAfterTiers => priceGrowthAfterTiers;
 
         /// <summary>단계 이름 (목록 글자) — 하위 종류가 "철 괭이"처럼 바꾼다.</summary>
-        public virtual string TierLabel(int tier) => repeatable || tiers.Count <= 1 ? DisplayName : $"{DisplayName} {tier + 1}단계";
+        public virtual string TierLabel(int tier) => repeatable || (tiers.Count <= 1 && priceGrowthAfterTiers <= 0f) ? DisplayName : $"{DisplayName} {tier + 1}단계";
 
         /// <summary>이 단계의 목록 아이콘 — 하위 종류가 주는 아이템 · 도구의 아이콘으로 바꾼다. 없으면 null.</summary>
         public virtual Sprite IconFor(int tier) => icon;
@@ -106,7 +115,7 @@ namespace NevrianGlowFarm.Data
                     reqs.Add(r.ToLogic());
                 specs.Add(new TierSpec(t.Price, reqs));
             }
-            return new ProductSpec(Id, specs, repeatable, dailyStock, stockFromNextDay, bonusStock, bonusStockLevel);
+            return new ProductSpec(Id, specs, repeatable, dailyStock, stockFromNextDay, bonusStock, bonusStockLevel, stockPerLevel, stockMax, priceGrowthAfterTiers);
         }
     }
 }

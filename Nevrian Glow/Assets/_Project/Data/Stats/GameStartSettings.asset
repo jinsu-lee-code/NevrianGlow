@@ -27,7 +27,7 @@ MonoBehaviour:
   startPlantedFirstCell: 4
   startFruitShelves: 3
   startPlotCount: 2
-  maxPlotCount: 6
+  maxPlotCount: 12
   cellsPerPlot: 16
   tillWorkRequired: 3
   cellPitch: 2.5

@@ -28,6 +28,20 @@
 | 그래픽 품질 3단계 (그림자 · 풀 · 반사 · 창밖 · 3D 해상도 · SMAA) · 지역 카메라 먼 거리 | `Data/Stats/GraphicsQuality.asset` · `Data/Zones/zone_*.asset`(cameraFarClip, 가게 120 m) | — | TASKS 7-7 (2026-10-30, 개발 임시) · 보통 그림자 100 m · 4단계 · 풀 ×0.7 · SMAA (2026-10-31) |
 | 근경 · 중경 · 원경 (붓 터치 · 거리 안개 · 초점 흐림 거리) | `Data/Stats/ViewLayers.asset` | — | TASKS 7-8 (2026-10-31, 개발 임시 · 아트 확인 대기) |
 
+### 1-1. 기획 CSV 10/30 최종값 반영 (2026-11-01, TASKS 7-8 묶음 2)
+`CSV/plan/shop_csv/shop.csv`를 10/30 파일로 바꾸고, crops.csv(에셋 양식)의 값은 `data_csv/crops.csv` 수확량 · `items.csv` 판매가로 옮겨 Import Plan CSV.
+| 묶음 | 10/30 값 | 개발 위치 |
+|---|---|---|
+| 작물 | 월광 5 → 75 ×1 · 1일 / 버섯꽃 15 → 100 ×3 · 2일 · 물 없음 / 등불 20 → 95 ×5 · 4일 · 재수확 2일 × 5회 | crop_*.asset |
+| 씨앗 입고 | 월광 12 + 레벨마다 2 (최대 40) / 버섯꽃 · 등불 6 + 레벨마다 1 (최대 20, 레벨 2부터) — 해금 레벨에서 기본 입고 | shop_seed_*.asset `stockPerLevel` · `stockMax` (설명 글에서 읽음 — 열 대기) |
+| 비료 | 40 · 하루 6 + 레벨마다 1 (최대 10) · 레벨 5 · **주는 즉시 1일 성장**(작물당 1회 — 월광은 심은 날 수확) | shop_fertilizer · FarmRules.TryFertilize |
+| 도구 | 괭이 150 · 380 / 대걸레 200 · 500 / 물뿌리개 400 · 1000, 레벨 3 | shop_*_upgrade |
+| 밭 확장권 | 500 · 1250 · 3100 · 7800 · 19500, 5단계 × 32칸 → 확장 밭 자리 5곳(길 끝마다) | shop_plot_expand · Farm 씬 FieldSite_1~5 |
+| 가방 · 핫바 | 가방 100 ~ 6400 (×2) 7단계 · 핫바 100 · 200 · 400 · 800, 레벨 8 | shop_bag_expand · shop_hotbar_expand |
+| 새 상품 | 더 큰 장바구니 200 · 800 · 3200 · 12800 · 51200 → 이후 ×4 (손님 구매 +1개씩) / 매장 홍보 200 ~ 7800 → ×2.5 (손님 +20%씩, 하루 30명 안) / 수확물 품질 300 ~ 11700 → ×2.5 (판매가 +10%씩) | shop_big_basket · shop_store_promo · shop_crop_quality (StatUpgradeProductData — 단계당 값은 에셋, 장바구니 · 홍보는 장사 묶음 3에서 연결) |
+| 청소 | 1일차 쓰레기 15 · 얼룩 6, 얼룩 닦는 시간 × 1.4 | CleaningSettings (`stain_wipe_time_mult`는 개발이 game_settings에 추가) |
+| 빠짐 | 과일 진열대 추가(shop_layout.json 대기) · 스프링클러 · 가공 2종 | ID_MAP 없음 / 2차 |
+
 CSV 양식 (2026-10-10, 2-1): 첫 열 `id`, 나머지 열 이름 = 에셋 필드 이름, 숫자 소수점은 `.`, 색은 `#RRGGBB`, 다른 콘텐츠 참조는 상대 id. 현재 값 양식 = 저장소 `CSV/crops.csv` (메뉴 `Glow Farm/Data/Export Crops CSV...`로 다시 만들 수 있음).
 | 아이템 (씨앗 · 비료 · 쓰레기) | `Data/Items/item_*.asset` | — | 2-12 |
 

@@ -198,12 +198,18 @@ namespace NevrianGlowFarm.Editor
 
         // ── 확장 밭 자리 (수정사항 10/29: 해금되는 밭을 맵 곳곳에, 시작 밭과 같은 규격, 해금 전에는 울타리만, 걸어서 이동) ──
 
-        // 처음 만들 때의 자리 (2026-10-30 지형 조사: 평평하고 · 나무 · 바위가 없고 · 울타리 전체가 아트 PlayAreaBounds 다각형 안(벽에서 1.3 m 이상)인 곳).
+        // 처음 만들 때의 자리 — 배경 지형의 길 끝마다 하나 (사용자 2026-10-31 "맵의 길 끝마다 농장 하나씩", 밭 확장 5단계 · 단계마다 32칸).
+        // 지형 조사(길 레이어 골격의 끝점 → 그 길을 따라 들어오며 울타리 전체가 PlayAreaBounds 다각형 안(벽에서 1 m 이상) · 호수 밖 · 높낮이 1.6 m 안 ·
+        // 길과 22 % 이하로 겹치는 첫 자리, 출입구가 길 쪽). 남쪽 · 왼쪽 아래 끝은 호수 · 바깥 숲 벽이라 다음으로 가까운 길 자리.
+        // 울타리 안 나무 · 바위(7 m 이하)는 실행 중에 숨겨 빈터로 (FarmGrassClearer.ClearSites). 높이는 자리 바닥 평균 (Build 메뉴가 다시 잼).
         // 이미 있으면 씬의 자리를 그대로 둔다 — 옮길 때도 울타리가 플레이 구역 벽 밖으로 나가지 않게 (처음 자리 (-27, 0) · (-41, 0)은 벽 밖이라 걸어 들어갈 수 없었음)
         private static readonly (string Name, string Label, Vector3 Position, float Yaw)[] DefaultSites =
         {
-            ("FieldSite_1", "서쪽 밭", new Vector3(-23f, 0f, 0f), 270f),
-            ("FieldSite_2", "남동쪽 밭", new Vector3(17f, 0f, -26f), 270f),
+            ("FieldSite_1", "북서쪽 밭", new Vector3(-18.2f, 0f, 10f), 270f),     // 북쪽 고리 길 서쪽
+            ("FieldSite_2", "남서쪽 밭", new Vector3(-16.8f, 0f, -28f), 90f),     // 서쪽 대각선 길
+            ("FieldSite_3", "동쪽 밭", new Vector3(31.8f, 0f, -2f), 270f),        // 동쪽 둘레 길 끝
+            ("FieldSite_4", "남동쪽 밭", new Vector3(26f, 0f, -32.8f), 0f),       // 동쪽 둘레 길 · 호수 길이 만나는 끝
+            ("FieldSite_5", "남서쪽 끝 밭", new Vector3(-32.8f, 0f, -40f), 90f), // 서쪽 대각선 길 끝 (플레이 구역 벽)
         };
 
         [MenuItem("Glow Farm/Setup/Build Farm Field Sites")]
@@ -244,7 +250,7 @@ namespace NevrianGlowFarm.Editor
                 {
                     t = new GameObject(d.Name).transform;
                     t.SetParent(parent, false);
-                    t.position = d.Position;
+                    t.position = d.Position + Vector3.up * GroundHeight(d.Position);
                     t.rotation = Quaternion.Euler(0f, d.Yaw, 0f);
                 }
                 if (!t.TryGetComponent<FarmFieldSite>(out var site))
@@ -272,6 +278,25 @@ namespace NevrianGlowFarm.Editor
             if (settings.MaxPlotCount != room)
                 notes.Add($"주의: 최대 구획(GameStartSettings {settings.MaxPlotCount})과 자리 합({room})이 다름 — shop.csv 밭 확장권 단계 · 지급 칸 확인");
             return string.Join(" / ", notes);
+        }
+
+        // 자리 바닥 높이 = 배경 지형(열려 있으면) 자리 둘레 9점 평균 — 지형이 없으면 0 (배경 씬을 함께 열면 맞춰 놓음)
+        private static float GroundHeight(Vector3 p)
+        {
+            foreach (var terrain in Terrain.activeTerrains)
+            {
+                if (terrain == null || terrain.terrainData == null)
+                    continue;
+                Vector3 o = terrain.GetPosition(), s = terrain.terrainData.size;
+                if (p.x < o.x || p.x > o.x + s.x || p.z < o.z || p.z > o.z + s.z)
+                    continue;
+                float sum = 0f;
+                for (int i = -1; i <= 1; i++)
+                    for (int j = -1; j <= 1; j++)
+                        sum += terrain.SampleHeight(p + new Vector3(i * 5f, 0f, j * 9f)) + o.y;
+                return sum / 9f;
+            }
+            return 0f;
         }
 
         // 확장 밭 울타리: 밭 사각형 + 둘레 길 + 여유, 가까운 쪽(시작 밭 쪽) · 먼 쪽 가운데에 출입구 (걸어서 지나가게)

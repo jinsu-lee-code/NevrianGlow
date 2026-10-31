@@ -4,12 +4,13 @@ using NUnit.Framework;
 
 namespace NevrianGlowFarm.Tests
 {
+    /// <summary>비료 (기획 shop.csv 10/30): 주는 즉시 1일 성장, 작물당 1회.</summary>
     public class FertilizerTests
     {
-        // BALANCE 2-2 v1
+        // 기획 crops.csv 10/30: 월광 1일 · 버섯꽃 2일(물 없음) · 등불 4일, 재수확 2일 × 5회
         private static readonly CropSpec Moonroot = new CropSpec(1, 1, 1, 0, 1);
-        private static readonly CropSpec Mushroom = new CropSpec(2, 2, 2, 0, 1);
-        private static readonly CropSpec Lantern = new CropSpec(8, 1, 2, 4, 3);
+        private static readonly CropSpec Mushroom = new CropSpec(2, 2, 3, 0, 1);
+        private static readonly CropSpec Lantern = new CropSpec(4, 1, 5, 2, 5);
 
         private static FarmCell Planted(string id)
         {
@@ -32,15 +33,33 @@ namespace NevrianGlowFarm.Tests
         }
 
         [Test]
-        public void Mushroom_PlantedWithFertilizer_ReadyNextDay_Balance31()
+        public void Moonroot_ReadyTheDayItIsPlanted()
         {
-            // BALANCE 3-1 비료 행: 버섯꽃 1일차 심기 + 비료 → 2일차 (비료 없으면 3일차)
+            // "월광은 심은 날 바로 수확"
+            var c = Planted("crop_moonroot");
+            Assert.IsTrue(FarmRules.TryFertilize(c, Moonroot, 1));
+            Assert.IsTrue(FarmRules.IsReady(c, Moonroot));
+        }
+
+        [Test]
+        public void Mushroom_OneNightInsteadOfTwo()
+        {
             var with = Planted("crop_mushroomflower");
             Assert.IsTrue(FarmRules.TryFertilize(with, Mushroom, 1));
+            Assert.AreEqual(1, with.Age, "준 순간 하루 자람");
             Assert.AreEqual(1, NightsUntilReady(with, Mushroom));
 
             var without = Planted("crop_mushroomflower");
             Assert.AreEqual(2, NightsUntilReady(without, Mushroom));
+        }
+
+        [Test]
+        public void GrowsEvenWhenDry_NotPastReady()
+        {
+            var c = Planted("crop_lanternfruit");
+            Assert.IsTrue(FarmRules.TryFertilize(c, Lantern, 9));
+            Assert.AreEqual(4, c.Age, "다 자란 날을 넘지 않음");
+            Assert.IsTrue(FarmRules.IsReady(c, Lantern));
         }
 
         [Test]
@@ -49,32 +68,9 @@ namespace NevrianGlowFarm.Tests
             var c = Planted("crop_lanternfruit");
             Assert.IsTrue(FarmRules.TryFertilize(c, Lantern, 1));
             Assert.IsFalse(FarmRules.TryFertilize(c, Lantern, 1), "같은 날 두 번");
+            FarmRules.TryWater(c, Lantern);
             FarmRules.GrowOneNight(c, Lantern);
-            Assert.IsFalse(FarmRules.TryFertilize(c, Lantern, 1), "효과가 들어간 뒤에도");
-        }
-
-        [Test]
-        public void MinimumOneDay_MoonrootStillNeedsOneNight()
-        {
-            var c = Planted("crop_moonroot");
-            Assert.IsTrue(FarmRules.TryFertilize(c, Moonroot, 1));
-            Assert.IsFalse(FarmRules.IsReady(c, Moonroot), "심은 날 바로 다 자라지 않음");
-            Assert.AreEqual(1, NightsUntilReady(c, Moonroot));
-            Assert.AreEqual(1, FarmRules.RequiredDays(c, Moonroot));
-        }
-
-        [Test]
-        public void AlreadyGrownEnough_ReadyNextMorning_NotNow()
-        {
-            // GDD 4-9: 이미 자란 일수가 줄어든 필요 성장일 이상이면 다음 아침 수확 가능
-            var c = Planted("crop_mushroomflower");
-            FarmRules.TryWater(c, Mushroom);
-            FarmRules.GrowOneNight(c, Mushroom); // 1일 자람 (필요 2)
-            Assert.IsTrue(FarmRules.TryFertilize(c, Mushroom, 1));
-            Assert.AreEqual(FarmCellStatus.Growing, FarmRules.GetStatus(c, Mushroom), "준 순간에는 그대로");
-
-            FarmRules.GrowOneNight(c, Mushroom); // 물이 없어도 비료 효과는 들어간다
-            Assert.AreEqual(FarmCellStatus.Ready, FarmRules.GetStatus(c, Mushroom));
+            Assert.IsFalse(FarmRules.TryFertilize(c, Lantern, 1), "다음 날에도");
         }
 
         [Test]
@@ -90,23 +86,23 @@ namespace NevrianGlowFarm.Tests
         }
 
         [Test]
-        public void EffectEndsWithCrop_KeptForRegrow()
+        public void FirstGrowthOnly_RegrowKeepsItsDays_EndsWithCrop()
         {
             var lantern = Planted("crop_lanternfruit");
             FarmRules.TryFertilize(lantern, Lantern, 1);
-            Assert.AreEqual(7, NightsUntilReady(lantern, Lantern), "첫 성장 8 → 7");
+            Assert.AreEqual(3, NightsUntilReady(lantern, Lantern), "첫 성장 4 → 3");
             FarmRules.TryHarvest(lantern, Lantern);
-            Assert.AreEqual(3, NightsUntilReady(lantern, Lantern), "같은 포기의 재수확 4 → 3");
+            Assert.AreEqual(2, NightsUntilReady(lantern, Lantern), "재수확 간격 2는 그대로");
+            Assert.IsFalse(FarmRules.TryFertilize(lantern, Lantern, 1), "같은 포기에는 다시 못 줌");
 
             var moon = Planted("crop_moonroot");
             FarmRules.TryFertilize(moon, Moonroot, 1);
-            NightsUntilReady(moon, Moonroot);
             FarmRules.TryHarvest(moon, Moonroot);
-            Assert.IsFalse(moon.IsFertilized, "작물이 사라지면 효과도 사라짐");
+            Assert.IsFalse(moon.IsFertilized, "작물이 사라지면 표시도 사라짐");
         }
 
         [Test]
-        public void Save_KeepsPendingFertilizer_AndReadsOldCellLine()
+        public void Save_KeepsFertilized_AndOldPendingBecomesMarkOnly()
         {
             var farm = new FarmState(4, 1, id => Mushroom);
             FarmRules.TryTill(farm.Cells[0], 3f, 3f);
@@ -115,11 +111,17 @@ namespace NevrianGlowFarm.Tests
             var s = new SaveSnapshot();
             SaveState.CaptureFarm(farm, s);
             Assert.IsTrue(SaveFormat.TryRead(SaveFormat.Write(s), out var back, out string error), error);
-            Assert.AreEqual(1, back.Cells[0].PendingFertilizer);
+            Assert.AreEqual(1, back.Cells[0].FertilizerBonus);
+            Assert.AreEqual(1, back.Cells[0].Age);
 
-            // 4-6 이전 파일: cell 줄에 오늘 준 비료 칸이 없다 → 0
-            Assert.IsTrue(SaveFormat.TryRead("ngf_save 1\ncell 0 1 3 crop_moonroot 0 1 0 0\nend\n", out var old, out error), error);
-            Assert.AreEqual(0, old.Cells[0].PendingFertilizer);
+            // 10/30 전 파일: 오늘 준 비료(마지막 칸 1)는 밤에 준 표시만 — 성장일은 그대로 2
+            Assert.IsTrue(SaveFormat.TryRead("ngf_save 1\ncell 0 1 3 crop_mushroomflower 0 1 0 0 1\nend\n", out var old, out error), error);
+            var farm2 = new FarmState(4, 1, id => Mushroom);
+            SaveState.ApplyFarm(farm2, old);
+            var cell = farm2.Cells[0];
+            FarmRules.GrowOneNight(cell, Mushroom);
+            Assert.IsTrue(cell.IsFertilized);
+            Assert.AreEqual(2, FarmRules.RequiredDays(cell, Mushroom));
         }
     }
 }

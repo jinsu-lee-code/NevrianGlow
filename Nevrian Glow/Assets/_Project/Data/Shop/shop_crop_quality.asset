@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f09d2cfb619d4fe4d81de83a6ae2e328, type: 3}
+  m_Name: shop_crop_quality
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.StatUpgradeProductData
+  id: shop_crop_quality
+  displayName: "\uC218\uD655\uBB3C \uD488\uC9C8 \uC0C1\uC2B9"
+  description: "\uBAA8\uB4E0 \uC0C1\uD488 \uD310\uB9E4\uAC00 +10%\uC529 \xB7 6\uB2E8\uACC4\uBD80\uD130\uB294
+    \uC9C1\uC804 \uAC00\uACA9 \xD7 2.5"
+  sortOrder: 120
+  category: "\uD655\uC7A5"
+  hidden: 0
+  icon: {fileID: 0}
+  repeatable: 0
+  tiers:
+  - price: 300
+    requirements: []
+  - price: 750
+    requirements: []
+  - price: 1900
+    requirements: []
+  - price: 4700
+    requirements: []
+  - price: 11700
+    requirements: []
+  priceGrowthAfterTiers: 2.5
+  dailyStock: 
+  stockFromNextDay: 0
+  bonusStock: 0
+  bonusStockLevel: 0
+  stockPerLevel: 0
+  stockMax: 0
+  stat: {fileID: 11400000, guid: 2214fc0dcdc9ee0489de0f73ab987230, type: 2}
+  op: 1
+  perStep: 0.1

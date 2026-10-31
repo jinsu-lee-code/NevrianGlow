@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.BagExpandProductData
   id: shop_bag_expand
   displayName: "\uAC00\uBC29 \uD655\uC7A5"
-  description: "\uAC00\uBC29 +4\uCE78"
-  sortOrder: 100
+  description: "\uAC00\uBC29 +4\uCE78 (\uCD5C\uB300 32\uCE78)"
+  sortOrder: 80
   category: "\uD655\uC7A5"
   hidden: 0
   icon: {fileID: 0}
@@ -25,39 +25,42 @@ MonoBehaviour:
     requirements:
     - kind: 4
       targetId: 
-      value: 5
+      value: 8
   - price: 200
     requirements:
     - kind: 4
       targetId: 
-      value: 5
-  - price: 300
+      value: 8
+  - price: 400
     requirements:
     - kind: 4
       targetId: 
-      value: 5
-  - price: 500
-    requirements:
-    - kind: 4
-      targetId: 
-      value: 5
+      value: 8
   - price: 800
     requirements:
     - kind: 4
       targetId: 
-      value: 5
-  - price: 1200
-    requirements:
-    - kind: 4
-      targetId: 
-      value: 5
+      value: 8
   - price: 1600
     requirements:
     - kind: 4
       targetId: 
-      value: 5
+      value: 8
+  - price: 3200
+    requirements:
+    - kind: 4
+      targetId: 
+      value: 8
+  - price: 6400
+    requirements:
+    - kind: 4
+      targetId: 
+      value: 8
+  priceGrowthAfterTiers: 0
   dailyStock: 
   stockFromNextDay: 0
   bonusStock: 0
   bonusStockLevel: 0
+  stockPerLevel: 0
+  stockMax: 0
   slots: 4

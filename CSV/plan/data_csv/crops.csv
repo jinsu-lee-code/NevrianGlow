@@ -1,6 +1,6 @@
 ﻿crop_id,name_ko,name_en,growth_form,is_mushroom,seed_item_id,product_item_id,grow_days,needs_water,wet_days,yield_base,harvest_count,regrow_days,yield_growth_per_day,yield_max,requires_feed,feed_rule,digest_days,water_after_mature,can_be_giant,giant_chance,giant_yield_mult,stage_thresholds,glow_color,note,mvp
 crop_moonroot,월광 뿌리,Moonroot,normal,false,item_seed_moonroot,crop_moonroot,1,true,1,1,1,0,0,1,false,none,0,true,true,0.02,2.5,0.5;1.0,#62F2E1,기본 작물 · 진주핵꽃 최고 먹이,P0
-crop_mushroomflower,버섯꽃,Mushbloom,normal,true,item_seed_mushroomflower,crop_mushroomflower,2,false,0,2,1,0,0,2,false,none,0,false,true,0.02,2.5,0.5;1.0,#A08BFF,물 불필요,P0
-crop_lanternfruit,등불 열매,Lanternfruit,tree,false,item_seed_lanternfruit,crop_lanternfruit,4,true,1,2,5,2,0,2,false,none,0,true,false,0,1,0.3;0.6;1.0,#FFD27A,장기 투자 · 재수확,P0
+crop_mushroomflower,버섯꽃,Mushbloom,normal,true,item_seed_mushroomflower,crop_mushroomflower,2,false,0,3,1,0,0,3,false,none,0,false,true,0.02,2.5,0.5;1.0,#A08BFF,물 불필요 · 수확량 10/30 crops.csv,P0
+crop_lanternfruit,등불 열매,Lanternfruit,tree,false,item_seed_lanternfruit,crop_lanternfruit,4,true,1,5,5,2,0,5,false,none,0,true,false,0,1,0.3;0.6;1.0,#FFD27A,장기 투자 · 재수확 · 수확량 10/30 crops.csv,P0
 crop_spiralbloom,나선층꽃,Spiral Tierbloom,normal,false,item_seed_spiralbloom,item_spiral_petal,4,true,1,3,1,0,1,6,false,none,0,true,false,0,1,0.3;0.6;1.0,#62F2E1,"다 자란 뒤 물 준 날마다 수확량 +1, 최대 6에서 멈춤",phase2
 crop_pearlcore,진주핵꽃,Pearlcore Bloom,normal,false,item_seed_pearlcore,item_pearlcore,6,true,1,1,3,0,0,1,true,non_mushroom,3,false,false,0,1,0.3;0.6;1.0,#7DF29B,먹이 1개당 소화 3일 · 3회 수확 후 소멸,phase2

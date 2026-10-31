@@ -386,9 +386,10 @@ namespace NevrianGlowFarm.Systems.Cleaning
 
         // ── 대걸레 ──────────────────────────────────────────
 
-        /// <summary>닦는다: point에서 radius 안에 중심이 있는 얼룩마다 amount만큼 줄인다. 닦은 얼룩 수.</summary>
+        /// <summary>닦는다: point에서 radius 안에 중심이 있는 얼룩마다 amount(÷ 닦는 시간 배율)만큼 줄인다. 닦은 얼룩 수.</summary>
         public int Mop(Vector3 point, float radius, float amount)
         {
+            amount /= Mathf.Max(0.1f, settings.StainWipeTimeMult);
             int wiped = 0, cleared = 0;
             foreach (var s in stains)
             {

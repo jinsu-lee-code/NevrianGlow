@@ -15,7 +15,7 @@ MonoBehaviour:
   id: shop_hotbar_expand
   displayName: "\uD56B\uBC14 \uD655\uC7A5"
   description: "\uD56B\uBC14 +1\uCE78 (\uCD5C\uB300 8\uCE78)"
-  sortOrder: 110
+  sortOrder: 90
   category: "\uD655\uC7A5"
   hidden: 0
   icon: {fileID: 0}
@@ -25,24 +25,27 @@ MonoBehaviour:
     requirements:
     - kind: 4
       targetId: 
-      value: 5
+      value: 8
   - price: 200
     requirements:
     - kind: 4
       targetId: 
-      value: 5
-  - price: 300
-    requirements:
-    - kind: 4
-      targetId: 
-      value: 5
+      value: 8
   - price: 400
     requirements:
     - kind: 4
       targetId: 
-      value: 5
+      value: 8
+  - price: 800
+    requirements:
+    - kind: 4
+      targetId: 
+      value: 8
+  priceGrowthAfterTiers: 0
   dailyStock: 
   stockFromNextDay: 0
   bonusStock: 0
   bonusStockLevel: 0
+  stockPerLevel: 0
+  stockMax: 0
   slots: 1

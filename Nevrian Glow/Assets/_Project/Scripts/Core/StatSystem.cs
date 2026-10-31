@@ -6,7 +6,7 @@ using UnityEngine;
 namespace NevrianGlowFarm.Core
 {
     /// <summary>
-    /// 능력치 = 기본값 + 변경(Modifier) (노션 GDD 12장 StatSystem, TASKS 4-3). 변경은 배운 스킬 단계에서 모은다.
+    /// 능력치 = 기본값 + 변경(Modifier) (노션 GDD 12장 StatSystem, TASKS 4-3). 변경은 배운 스킬 단계 · 산 능력치 상품(CollectingModifiers)에서 모은다.
     /// 값을 쓰는 쪽(판매가 · 손님 수 · 성장일 · 핫바 칸)이 기본값과 능력치 에셋을 넘겨 계산을 받는다 — 계산은 Logic StatCalculator.
     /// 변경이 바뀌면 GameEvents.StatsChanged. Core 씬에 하나. 없으면(테스트 씬) 기본값 그대로.
     /// </summary>
@@ -26,6 +26,9 @@ namespace NevrianGlowFarm.Core
 
         public static StatSystem Instance => instance;
         public IReadOnlyList<StatModifier> Modifiers => modifiers;
+
+        /// <summary>스킬 밖에서 변경을 보태는 곳(상점 능력치 상품 — 10/30)이 Rebuild 때 목록에 더한다. 바뀌면 그쪽이 Rebuild를 부른다.</summary>
+        public static event System.Action<List<StatModifier>> CollectingModifiers;
 
         private void Awake()
         {
@@ -75,8 +78,11 @@ namespace NevrianGlowFarm.Core
             var game = GameManager.Instance;
             var next = new List<StatModifier>();
             if (game != null && game.IsStarted)
+            {
                 foreach (var skill in database.All<SkillData>())
                     skill.CollectModifiers(game.SkillLevel(skill.Id), next);
+                CollectingModifiers?.Invoke(next);
+            }
 
             if (Same(next))
                 return;

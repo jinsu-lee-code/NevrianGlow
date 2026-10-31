@@ -37,11 +37,11 @@ namespace NevrianGlowFarm.Logic.Farm
             return cell.TillProgress > 0f ? FarmCellStatus.Tilling : FarmCellStatus.Untilled;
         }
 
-        /// <summary>지금 목표까지 필요한 성장일. 처음은 성장일, 재수확 중이면 재수확 간격. 비료만큼 줄고 최소 1.</summary>
+        /// <summary>지금 목표까지 필요한 성장일. 처음은 성장일, 재수확 중이면 재수확 간격 (최소 1). 비료는 성장일을 줄이지 않고 자란 날을 더한다 (10/30).</summary>
         public static int RequiredDays(FarmCell cell, CropSpec spec)
         {
             int baseDays = cell.HarvestCount > 0 && spec.RegrowDays > 0 ? spec.RegrowDays : spec.GrowDays;
-            return Math.Max(1, baseDays - cell.FertilizerBonus);
+            return Math.Max(1, baseDays);
         }
 
         public static bool IsReady(FarmCell cell, CropSpec spec) => cell.HasCrop && cell.Age >= RequiredDays(cell, spec);
@@ -93,14 +93,15 @@ namespace NevrianGlowFarm.Logic.Farm
         public static bool CanFertilize(FarmCell cell, CropSpec spec) => cell.HasCrop && !IsReady(cell, spec) && !cell.IsFertilized;
 
         /// <summary>
-        /// 비료 (GDD 4-9, TASKS 4-6): 필요 성장일을 days만큼 줄인다 (최소 1일은 RequiredDays가 지킨다). 작물당 1회.
-        /// 효과는 그날 밤 성장 처리부터 — 이미 줄어든 성장일만큼 자랐어도 수확은 다음 아침.
+        /// 비료 (기획 shop.csv 10/30 "주는 즉시 1일 성장, 작물당 1회"): 준 순간 days일 자란다 (물 · 밤과 상관없이, 다 자란 날을 넘지 않음).
+        /// 성장일 1일 작물(월광)은 심은 날 바로 수확할 수 있다. FertilizerBonus = 준 비료(작물당 1회 표시) — 재수확 간격은 줄이지 않는다.
         /// </summary>
         public static bool TryFertilize(FarmCell cell, CropSpec spec, int days)
         {
             if (days <= 0 || !CanFertilize(cell, spec))
                 return false;
-            cell.PendingFertilizer = days;
+            cell.Age = Math.Min(cell.Age + days, RequiredDays(cell, spec));
+            cell.FertilizerBonus = days;
             return true;
         }
 
@@ -140,7 +141,8 @@ namespace NevrianGlowFarm.Logic.Farm
         }
 
         /// <summary>
-        /// 밤 성장 1회: 오늘 준 비료가 먼저 효과를 내고, 젖어 있는(물이 필요 없는 작물은 언제나) 자라는 중인 작물만 하루 자란다. 수분은 하루 줄어든다.
+        /// 밤 성장 1회: 젖어 있는(물이 필요 없는 작물은 언제나) 자라는 중인 작물만 하루 자란다. 수분은 하루 줄어든다.
+        /// (10/30 전 저장 파일의 '오늘 준 비료'는 준 표시로만 바꾼다 — 비료는 이제 준 순간 자란다.)
         /// </summary>
         public static void GrowOneNight(FarmCell cell, CropSpec spec)
         {

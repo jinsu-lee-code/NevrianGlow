@@ -31,11 +31,11 @@ MonoBehaviour:
   harvestFromModel: 1
   harvestTargetFrom: 0.45
   seedPrice: 20
-  sellPrice: 180
+  sellPrice: 95
   growDays: 4
   needsWater: 1
   wetDays: 1
-  harvestYield: 2
+  harvestYield: 5
   regrowDays: 2
   maxHarvests: 5
   giantChance: 0

@@ -14,22 +14,31 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.PlotExpandProductData
   id: shop_plot_expand
   displayName: "\uBC2D \uD655\uC7A5\uAD8C"
-  description: "\uB18D\uC7A5 \uC11C\uCABD \uC6B8\uD0C0\uB9AC \uBC16\uC5D0 \uC0C8
-    \uBC2D(\uC2DC\uC791 \uBC2D\uACFC \uAC19\uC740 8\uBC2D \xB7 32\uCE78)\uC774 \uC5F4\uB9B0\uB2E4,
-    \uAC78\uC5B4\uC11C \uAC00\uC694"
-  sortOrder: 90
+  description: "\uB18D\uC7A5 \uC11C\uCABD \uC6B8\uD0C0\uB9AC \uBC16\uBD80\uD130 \uC0C8
+    \uBC2D(8\uBC2D \xB7 32\uCE78)\uC774 \uD558\uB098\uC529 \uC5F4\uB9B0\uB2E4, \uAC78\uC5B4\uC11C
+    \uAC00\uC694 (\uC9C0\uAE08\uC740 5\uB2E8\uACC4, 192\uCE78\uAE4C\uC9C0)"
+  sortOrder: 70
   category: "\uD655\uC7A5"
   hidden: 0
   icon: {fileID: 0}
   repeatable: 0
   tiers:
-  - price: 1500
+  - price: 500
     requirements: []
-  - price: 4000
+  - price: 1250
     requirements: []
+  - price: 3100
+    requirements: []
+  - price: 7800
+    requirements: []
+  - price: 19500
+    requirements: []
+  priceGrowthAfterTiers: 0
   dailyStock: 
   stockFromNextDay: 0
   bonusStock: 0
   bonusStockLevel: 0
+  stockPerLevel: 0
+  stockMax: 0
   plots: 1
-  plotsPerTier: 0200000002000000
+  plotsPerTier: 0200000002000000020000000200000002000000

@@ -14,7 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.ItemProductData
   id: shop_seed_lanternfruit
   displayName: "\uB4F1\uBD88 \uC5F4\uB9E4 \uC528\uC557"
-  description: "4\uC77C \uB4A4 \uCCAB \uC218\uD655, 2\uC77C\uB9C8\uB2E4 \uCD1D 5\uD68C"
+  description: "4\uC77C \uB4A4 \uCCAB \uC218\uD655, \uC774\uD6C4 2\uC77C\uB9C8\uB2E4
+    5\uAC1C\uC529 (\uCD1D 5\uD68C) \xB7 \uD558\uB8E8 \uC785\uACE0 6\uAC1C, \uB808\uBCA8\uB9C8\uB2E4
+    +1 (\uCD5C\uB300 20)"
   sortOrder: 30
   category: "\uC528\uC557"
   hidden: 0
@@ -26,9 +28,12 @@ MonoBehaviour:
     - kind: 4
       targetId: 
       value: 2
-  dailyStock: 14000000
+  priceGrowthAfterTiers: 0
+  dailyStock: 06000000
   stockFromNextDay: 1
-  bonusStock: 40
-  bonusStockLevel: 6
+  bonusStock: 0
+  bonusStockLevel: 0
+  stockPerLevel: 1
+  stockMax: 20
   item: {fileID: 11400000, guid: 7163b34af8cd65b4294c0a9f1fa9a84b, type: 2}
   count: 1

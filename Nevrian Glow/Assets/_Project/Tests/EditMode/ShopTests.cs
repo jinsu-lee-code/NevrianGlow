@@ -86,6 +86,55 @@ namespace NevrianGlowFarm.Tests
             Assert.AreEqual(40, shop.StockToday(none, 3, 10), "보너스가 없는 상품은 그대로");
         }
 
+        // 기획 shop.csv 10/30: "하루 입고 12개, 레벨마다 +2 (최대 40)" · 비료 "하루 입고 6개(레벨 5), 레벨마다 +1 (최대 10)"
+        [Test]
+        public void StockPerLevel_FromUnlockLevel_Capped()
+        {
+            var shop = new ShopState();
+            var moonroot = new ProductSpec("shop_seed_moonroot", new[] { new TierSpec(5) }, true, new[] { 12 }, stockPerLevel: 2, stockMax: 40);
+            Assert.AreEqual(12, shop.StockToday(moonroot, 1, 1));
+            Assert.AreEqual(14, shop.StockToday(moonroot, 2, 2));
+            Assert.AreEqual(30, shop.StockToday(moonroot, 5, 10));
+            Assert.AreEqual(40, shop.StockToday(moonroot, 6, 20), "최대 40");
+
+            var level5 = new UnlockRequirement(UnlockKind.LevelAtLeast, null, 5);
+            var fertilizer = new ProductSpec("shop_fertilizer", new[] { new TierSpec(40, new[] { level5 }) }, true, new[] { 6 }, stockPerLevel: 1, stockMax: 10);
+            Assert.AreEqual(5, fertilizer.UnlockLevel);
+            Assert.AreEqual(6, shop.StockToday(fertilizer, 4, 5), "해금 레벨에서 기본 입고");
+            Assert.AreEqual(8, shop.StockToday(fertilizer, 5, 7));
+            Assert.AreEqual(10, shop.StockToday(fertilizer, 6, 12));
+
+            // 레벨마다 입고가 있으면 예전 레벨 보너스 입고는 쓰지 않는다
+            var both = new ProductSpec("shop_x", new[] { new TierSpec(5) }, true, new[] { 12 }, false, 80, 6, 2, 40);
+            Assert.AreEqual(22, shop.StockToday(both, 3, 6));
+        }
+
+        // 기획 shop.csv 10/30 새 상품: 정해진 5단계 뒤에는 "직전 가격 × 4"로 끝없이
+        [Test]
+        public void EndlessTiers_PriceGrowsAfterList()
+        {
+            var shop = new ShopState();
+            var ctx = new Context();
+            var basket = new ProductSpec("shop_big_basket", new[] { new TierSpec(200), new TierSpec(800), new TierSpec(3200) }, false, extraTierGrowth: 4.0);
+            Assert.IsTrue(shop.TryBuy(basket, ctx, 1_000_000, out var o1));
+            Assert.AreEqual(200, o1.Price);
+            shop.TryBuy(basket, ctx, 1_000_000, out _);
+            shop.TryBuy(basket, ctx, 1_000_000, out var o3);
+            Assert.AreEqual(3200, o3.Price);
+            var o4 = shop.Offer(basket, ctx, 1_000_000);
+            Assert.AreEqual(OfferStatus.Available, o4.Status, "목록 뒤에도 계속");
+            Assert.AreEqual(3, o4.Tier);
+            Assert.AreEqual(12800, o4.Price);
+            shop.TryBuy(basket, ctx, 1_000_000, out _);
+            Assert.AreEqual(51200, shop.Offer(basket, ctx, 1_000_000).Price);
+            Assert.AreEqual(4, shop.TiersBought("shop_big_basket"));
+
+            var tool = Tiered(new TierSpec(150), new TierSpec(380));
+            shop.TryBuy(tool, ctx, 10_000, out _);
+            shop.TryBuy(tool, ctx, 10_000, out _);
+            Assert.AreEqual(OfferStatus.MaxedOut, shop.Offer(tool, ctx, 10_000).Status, "배율이 없으면 마지막 단계에서 끝");
+        }
+
         [Test]
         public void SkillLevels_SetAndClamp()
         {

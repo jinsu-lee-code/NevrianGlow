@@ -41,6 +41,7 @@ namespace NevrianGlowFarm.Editor
             public readonly List<string> Skipped = new List<string>();
             public readonly List<string> Waiting = new List<string>();
             public readonly List<string> Problems = new List<string>();
+            public readonly List<string> Notes = new List<string>();
             public int Phase2;
 
             public string Summary => $"갱신 {Updated.Count} · 생성 {Created.Count} · 숨김 {Hidden.Count} · 건너뜀 {Skipped.Count} · 2차 {Phase2} · 시스템 대기 설정 {Waiting.Count} · 문제 {Problems.Count}";
@@ -289,15 +290,24 @@ namespace NevrianGlowFarm.Editor
                     report.Problems.Add($"상품 {planId}: 가격 · 최대 구매 · 지급값을 읽지 못함 — 건너뜀");
                     continue;
                 }
-                bool repeatable = maxPurchases == 0;
-                int tierCount = repeatable ? 1 : maxPurchases;
+                string description = table.Get(r, "description");
+                // 끝없는 단계 (10/30 새 상품): max_purchases 0 + 가격 여러 개 → 가격 수만큼 단계, 그 뒤는 "직전 가격 × N"(설명 글)
+                bool endless = maxPurchases == 0 && prices.Count > 1;
+                bool repeatable = maxPurchases == 0 && !endless;
+                int tierCount = repeatable ? 1 : endless ? prices.Count : maxPurchases;
                 if (prices.Count != tierCount)
                 {
                     report.Problems.Add($"상품 {planId}: 가격 {prices.Count}개 ≠ 단계 {tierCount}개 — 건너뜀");
                     continue;
                 }
+                float growth = 0f;
+                if (endless && !TryNumberAfter(table.Get(r, "price_growth"), description, PriceGrowthPattern, out growth))
+                    report.Problems.Add($"상품 {planId}: 마지막 단계 뒤 가격 배율(price_growth 열 · 설명 '직전 가격 × N')이 없음 — {prices.Count}단계에서 끝");
+                else if (endless)
+                    report.Notes.Add($"상품 {planId}: {prices.Count}단계 뒤 가격 × {growth} (설명 글에서)");
 
                 var so = new SerializedObject(product);
+                so.FindProperty("priceGrowthAfterTiers").floatValue = growth;
                 string category = table.Get(r, "category");
                 so.FindProperty("displayName").stringValue = table.Get(r, "name_ko");
                 so.FindProperty("description").stringValue = UiText.ForScreenFont(table.Get(r, "description")); // 툴팁 본문 (5-4c)
@@ -349,9 +359,19 @@ namespace NevrianGlowFarm.Editor
                     stock.GetArrayElementAtIndex(0).intValue = stockBase;
                 }
                 so.FindProperty("stockFromNextDay").boolValue = hasStock && unlock.Count > 0; // 입고가 있는 상품(씨앗)만
-                // 레벨 보너스 입고: stock_max가 기본보다 크면 stock_bonus_level부터 그만큼 (수정사항 10/28: 레벨 6 두 배)
                 int stockMax = 0;
-                bool hasBonus = hasStock && bonusStockLevel > 0 && CsvValue.TryInt(table.Get(r, "stock_max"), out stockMax) && stockMax > stockBase;
+                bool hasMax = hasStock && CsvValue.TryInt(table.Get(r, "stock_max"), out stockMax) && stockMax > stockBase;
+                // 레벨마다 입고 (10/30 "하루 입고 12개, 레벨마다 +2 (최대 40)"): stock_per_level 열, 없으면 설명 글 — 있으면 레벨 보너스 입고 대신
+                int perLevel = 0;
+                if (hasStock && TryNumberAfter(table.Get(r, "stock_per_level"), description, StockPerLevelPattern, out float perLevelValue))
+                {
+                    perLevel = Mathf.Max(0, Mathf.RoundToInt(perLevelValue));
+                    report.Notes.Add($"상품 {planId}: 하루 입고 {stockBase} + 레벨마다 {perLevel} (최대 {(hasMax ? stockMax.ToString() : "없음")})");
+                }
+                so.FindProperty("stockPerLevel").intValue = perLevel;
+                so.FindProperty("stockMax").intValue = perLevel > 0 && hasMax ? stockMax : 0;
+                // 레벨 보너스 입고: stock_max가 기본보다 크면 stock_bonus_level부터 그만큼 (수정사항 10/28: 레벨 6 두 배) — 레벨마다 입고가 없을 때만
+                bool hasBonus = perLevel == 0 && hasMax && bonusStockLevel > 0;
                 so.FindProperty("bonusStock").intValue = hasBonus ? stockMax : 0;
                 so.FindProperty("bonusStockLevel").intValue = hasBonus ? bonusStockLevel : 0;
 
@@ -413,6 +433,11 @@ namespace NevrianGlowFarm.Editor
                             report.Problems.Add($"상품 {planId}: 단계마다 다른 핫바 칸 수는 아직 못 넣음 — 첫 값만");
                         so.FindProperty("slots").intValue = grants.Count > 0 ? Mathf.Max(1, grants[0]) : 1;
                         break;
+                    case StatUpgradeProductData upgrade:
+                        // 단계마다 바뀌는 값(장바구니 +1 · 손님 +20% · 판매가 +10%)은 에셋에 — CSV grant_value는 단계 수(1)라 쓰지 않음
+                        if (upgrade.Stat == null)
+                            report.Problems.Add($"상품 {planId}: 능력치 에셋이 비어 있음 ({table.Get(r, "grant_kind")}) — Glow Farm/Setup/Create Shop Upgrades");
+                        break;
                 }
                 Apply(so, product, $"상품 {planId}{(hidden ? " (숨김)" : string.Empty)}", report);
                 if (hidden)
@@ -426,6 +451,23 @@ namespace NevrianGlowFarm.Editor
                     Hide(dev, $"상품 {e.DevId} (개발만)", report);
             }
             return plotsAdded;
+        }
+
+        // 10/30 shop.csv는 '레벨마다 +N' · '직전 가격 × N'을 설명 글로만 준다 (기획 확인 대기) — 열이 생기면 열 값을 먼저 쓴다
+        private static readonly System.Text.RegularExpressions.Regex StockPerLevelPattern =
+            new System.Text.RegularExpressions.Regex(@"레벨마다\s*\+\s*(\d+(?:\.\d+)?)");
+        private static readonly System.Text.RegularExpressions.Regex PriceGrowthPattern =
+            new System.Text.RegularExpressions.Regex(@"직전\s*가격\s*[×xX\*]\s*(\d+(?:\.\d+)?)");
+
+        private static bool TryNumberAfter(string column, string description, System.Text.RegularExpressions.Regex pattern, out float value)
+        {
+            if (CsvValue.TryFloat(column, out value) && value > 0f)
+                return true;
+            var m = string.IsNullOrEmpty(description) ? null : pattern.Match(description);
+            if (m != null && m.Success && CsvValue.TryFloat(m.Groups[1].Value, out value) && value > 0f)
+                return true;
+            value = 0f;
+            return false;
         }
 
         // grant_target "tool_hoe" → items.csv에서 tool_kind = hoe인 도구를 등급 순으로 → 개발 에셋
@@ -780,6 +822,7 @@ namespace NevrianGlowFarm.Editor
                 Int("trash_daily_max", "trashDailyMax");
                 Float("stain_per_customer", "stainPerCustomer");
                 Int("tutorial_day2_stains", "tutorialStains"); // 튜토리얼 고정값 (5-7)
+                Float("stain_wipe_time_mult", "stainWipeTimeMult"); // 얼룩 닦는 시간 × 1.4 (최종 기획서 v2.0)
                 Float("scatter_unsold_ratio", "scatterUnsoldRatio");
                 Float("scatter_per_customers", "scatterPerCustomers");
                 Float("disorder_ratio", "disorderRatio");
@@ -968,6 +1011,7 @@ namespace NevrianGlowFarm.Editor
             Section("숨김 (값은 넣음)", report.Hidden);
             Section("건너뜀 (개발 에셋 없음)", report.Skipped);
             Section("시스템 대기 설정 (game_settings.csv)", report.Waiting);
+            Section("설명 글에서 읽은 값 (기획 확인 대기 — 열로 받으면 그 값)", report.Notes);
             Section("생성", report.Created);
             Section("갱신 (값이 바뀐 에셋)", report.Updated);
             File.WriteAllText(ReportPath, sb.ToString(), new UTF8Encoding(false));
