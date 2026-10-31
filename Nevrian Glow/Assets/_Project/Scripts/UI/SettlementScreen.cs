@@ -254,8 +254,11 @@ namespace NevrianGlowFarm.UI
             ForceClose();
             if (demoEnd)
             {
-                GameEvents.RaiseDemoEndReached(day); // 엔딩 연출 자리 (아트 EndingDirector — 납품 대기)
-                demoEndScreen.Open();
+                // 엔딩 연출(아트 EndingDirector)이 이 신호에 화면으로 열리고, 끝나면 데모 종료 창을 스스로 연다 (아트 피드백 10/30 — 바로 열면 엔딩을 가림).
+                // 엔딩이 없는 씬(테스트)에서만 바로 연다
+                GameEvents.RaiseDemoEndReached(day);
+                if (Current == null)
+                    demoEndScreen.Open();
             }
             else if (GameManager.Instance != null)
                 GameManager.Instance.AdvanceToNextDay();
