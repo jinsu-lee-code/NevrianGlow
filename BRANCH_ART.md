@@ -196,3 +196,4 @@
 | 11/01 | **씨앗 가루 아트판 — 요청서 외 1개** (개발 전달 1-3, mapping.md 11/01) | `Art/Environment/FX/seed_dust/pf_vfx_seed_dust.prefab`, `Art/Environment/Editor/SeedDustSetup.cs` | 개발이 `VfxLibrary.asset`의 `vfx_seed_dust` 프리팹을 교체 |
 | 11/01 | **비료 성장 아트판 · 문 열림 0.6초 — 요청서 외 1개** (개발 전달 1-5, mapping.md 11/01) | `Art/Environment/FX/fertilizer_grow/pf_vfx_fertilizer_grow.prefab`, `Art/Environment/Editor/FertilizerGrowSetup.cs`, `Art/Environment/farm_door/Animations/ac_env_farm_door.controller` | 개발이 `FarmCellView.GrowBurst`에서 새 VFX를 재생 |
 | 11/01 | **확장 밭 4 · 5번 지형 평탄화 — 요청서 외 0개** (개발 전달 1-9, mapping.md 11/01) | `Art/Environment/DeepBlue/TD_LookDev_DeepBlue.asset`, `Art/Environment/Editor/FieldSiteFlattenSetup.cs` | 지형이 흙을 덮던 두 자리를 밭 높이로 맞춤 |
+| 11/01 | **바위 LOD Group 되돌림 — 요청서 외 −4개** (229c334 되돌림, mapping.md 11/01) | `Environment/cliff_bg/` 프리팹 4 · LOD1 모델 4 · `CliffLodSetup.cs`, `Scenes/BackGroundScene.unity` | 컷신 때 LOD1 바위가 검게 보여 원본으로 복귀 |

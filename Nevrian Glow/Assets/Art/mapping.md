@@ -23,7 +23,7 @@
 | 항목 | 회신 |
 |---|---|
 | 1-1 | 완료. `ViewLayers` 거리 값을 아트 원본에 옮김 (`9415afe`) |
-| 1-2 | 완료. 절벽 · 볼더에 LOD Group, 약 80 m 전환 (`229c334`) |
+| 1-2 | LOD Group은 컷신에서 바위가 검게 보여 되돌림. 절벽 · 볼더에 LOD 없음 |
 | 1-3 | 씨앗 가루는 아트판으로 교체 부탁: `pf_vfx_seed_dust`. E 꾹 수확 고리는 개발 임시본 유지 |
 | 1-4 | 오늘의 목표 칸 · 추천 꼬리표 · 편지 강조 글자 모두 그대로 유지 |
 | 1-5 | 문 열림을 0.6초로 맞춤. 비료는 `pf_vfx_fertilizer_grow`를 `GrowBurst`의 Sparkle 자리에 연결 부탁 (크기 코드 유지). 다 자란 작물 빛은 그대로 |
@@ -210,7 +210,7 @@
 | `Sky/LF_SunToon.asset` (해 `Directional Light`의 렌즈 플레어) | 10/30. 툰 렌즈 플레어 10요소(코로나 · 가로 줄 · 파스텔 육각 고스트), 가리면 사라짐 |
 | 배경 씬 `== Vegetation ==/StartFrame` | 10/30. 시작 화면 프레임용 큰 나무 2 · 덤불 2 (울타리 밖, 충돌체 없음) |
 | `Sky/Shaders/ToonSky.shader`, `DeepBlue/M_Sky_DeepBlue.mat` | 10/30. 그림 구름 끔(`_PanoCloudAmount` 0, 종이 결 때문) — 별 · 행성 · 해만. 구름 음영 · 발광 · 결 지우기 옵션 추가(그림 구름을 다시 켤 때용) |
-| `Environment/cliff_bg/Models/env_cliff_bg_{a,b,c,boulders}_lod1.fbx` + `cliff_bg/Editor/CliffLodSetup.cs`(메뉴 Glow Art/Rock LOD Groups) | 11/01. 바위 LOD Group(개발 전달 1-2). 절벽 3종 1,258 → 약 566 tris, 볼더 120 → 72 tris. 프리팹에 `Model_LOD1` + `LODGroup`, 약 80 m 전환(LOD Group은 화면 높이 기준이라 크기 배율 1 · 시야각 65° 기준), 페이드 없음. LOD1은 각진 면 그대로(노멀을 옮겨 받으면 외곽선 껍질이 비쳐 검게 보임). 씬에서 재질을 덮어쓴 인스턴스 8개는 LOD1에도 같은 재질 |
+| 바위 LOD Group (개발 전달 1-2) | 11/01. 만들었다가 **되돌림**: 컷신 때 LOD1 바위가 검게 보여서. 절벽 · 볼더 프리팹은 LOD 없는 원본으로 복귀, `env_cliff_bg_*_lod1.fbx` · `CliffLodSetup.cs` 삭제 |
 
 ## 걸이 팻말 Animator 맵핑 (`Props/sign_open`, 10/29)
 
