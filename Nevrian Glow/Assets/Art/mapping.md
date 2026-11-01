@@ -3,6 +3,18 @@
 요청서: 노션 "아트 에셋 요청서 (art)" (이진수, 2026-10-08). 파일명은 요청서 id 그대로 — 모델 = `<id>.fbx`, 프리팹 = `pf_<id>`, 재질 = `mat_<id>_부위`, 텍스처 = `tex_<id>_맵`.
 프리팹은 모두 루트(0,0,0 / 1,1,1) 아래 `Model` 자식 구조. 크기는 프리팹에서 실제 m로 맞춤.
 
+## 개발에 부탁할 것 (11/01)
+
+| 할 일 | 위치 | 넣을 것 |
+|---|---|---|
+| 쓰레기 아이콘 연결 (개발 전달 3장) | `_Project/Data/Items/item_trash.asset`의 `icon` | `Art/UI/Icons/icon_trash.png` |
+| 씨앗 가루 교체 (개발 전달 1-3) | `_Project/Data/Effects/VfxLibrary.asset`의 `vfx_seed_dust` 프리팹 | `Art/Environment/FX/seed_dust/pf_vfx_seed_dust.prefab` (scale 1, lifetime 0.8 그대로). 개발 임시본 `_Project/Prefabs/Effects/vfx_seed_dust.prefab`은 연결 뒤 지워도 됨 |
+| 씨앗 주머니 아이콘 쓰는 곳 결정 | HANDOFF의 남은 아이콘 3개 | `icon_tool_seedbag.png` 그림만 교체, 파일 · GUID 그대로 |
+| 상점 씬 정리 | `_Project/Scenes/Shop.unity` | 아래 **`Shop.unity` 미포함 (11/01)** 줄 참고 |
+
+- E 꾹 수확 고리 `ui_hold_ring.png`는 아트판이 없어 개발 임시본을 그대로 씁니다.
+- `Art/Environment/Sky/Textures/`의 `tex_env_sky_brushalpha` · `tex_env_sky_noise_11`은 구름용이 아니라 안개 재질이 씁니다. 지우지 마세요.
+
 ## 개발에 부탁할 것 (10/30)
 
 - ~~밭 틀(두둑 테두리) 빼기~~ → **10/30 아트 쪽에서 처리**: `pf_env_plot` 프리팹 안의 `Model`을 꺼 둠. `FarmGrid`가 그대로 놓아도 빈 오브젝트라 틀 · 바닥 흙이 안 보입니다 (Bed Prefab 칸은 그대로 둬도 되고 비워도 됨). 칸 흙 `pf_env_plot_soil`만 남아 붙은 칸끼리 한 밭으로 보입니다.
@@ -138,7 +150,7 @@
 | `Environment/Scripts/MoonModel.cs`, `Sky/Shaders/ToonMoon.shader` | 10/28. 하늘의 그림 구름층이 달 앞을 지나감(75 %), 달 크기 6° |
 | `shop_wall/Models/env_shop_window_{square,wide}.fbx` + `shop_wall/pf_env_shop_window_{square,wide}.prefab` + `pf_env_shop_wall`의 `FrontWindows` | 10/29. 받은 `window_optimized.fbx`(아치 창틀, 0.98 × 0.64 m, 삼각형 2,220)를 Mixar에서 다시 잡음: 삼각형 쌍을 사각형으로 합친 뒤 평면 분할 1번 → 전부 사각형 4,798면(원본 표면과 최대 2 mm 차이), 1.6배(깊이만 2.7배 — 벽 0.2 m 양면보다 기둥이 2 cm 이상 나오게) 후 기둥 사이(x −0.22~0.226) · 아치 아래 곧은 구간(z 0.16~0.23, 원본 단위)만 늘려 구멍 크기에 맞춤 — 경계를 꼭짓점 없는 빈 구간에 둬서 기둥 안쪽 면이 꺾이지 않음 — `wide` 4.47 × 2.06 × 0.49 m(입구 왼쪽 폭 4.1 m 구멍), `square` 2.37 × 2.06 × 0.49 m(오른쪽 폭 2.0 m 구멍). 피벗 = 창턱 바닥 가운데, Unity 배율 1. UV는 박스 투영(1 m당 약 420픽셀, 골조와 같은 밀도, 35° 안쪽으로 이어진 면 묶음마다 한 방향 — 결이 실제 모서리에서만 끊김). 재질 `shop_wall/Materials/mat_env_shop_window_frame.mat` = 골조 재질 복사(셸과 같은 툰 설정, 흑백 나뭇결 + 나뭇결 노멀), 기본색 (0.096, 0.244, 0.373) = 기존 아치 창틀 칠의 면적 평균색 ÷ 나뭇결 평균 밝기 0.89, 그림자 끔. 구멍 안은 기존 창 풍경(`WindowView`)이 그대로 보임 |
 | `shop_wall/Models/env_shop_awning.fbx` + `shop_wall/pf_env_shop_awning.prefab` + `pf_env_shop_wall`의 `FrontWindows/Awning_Front_1` | 10/29. 받은 차양(천 · 프레임 · 받침살 · 늘어진 시안 크리스탈 3개 · 고리, 폭 4.47 m, 벽에서 1.57 m)을 이름 그대로 넣음. 넓은 창(같은 폭 4.47 m) 바깥 위, 받침 상자 뒤를 바깥 벽면(z −5.2)에 붙이고 창틀 캡과 안 겹치게 0.25 m 올림. 재질을 상점 것으로 교체(천 = 커튼 `mat_env_shop_drape`, 프레임 · 받침살 = `mat_env_shop_window_frame`, 크리스탈 = `mat_env_shop_wisteria_cyan`, 고리 = `mat_env_shop_trim`), FBX 재질 가져오기 끔, 그림자 끔. 차양이 창 안에서 보이도록 정면 창 풍경 판 2장을 z −6.4 → −7.0 |
-| `Environment/Shaders/{PaintBrush,AerialPerspective}.shader` + `Materials_PP/mat_pp_{paint_brush,aerial_perspective}.mat` + `DeepBlue/Textures/tex_pp_lut_bg.png` | 10/29. 배경 후처리. **붓질**: 일반화 Kuwahara(4사분면 × 4 × 4 탭, 가장 잔잔한 쪽을 상대 분산으로 고름), 반경 2.5 px(1080p 기준), 가까이 0.5 → 90 m 0.2(처음 3.5 px · 0.85 → 0.35는 풀잎 하이라이트 · 작은 꽃이 묻혀서 낮춤), 하늘 · HDR 발광(휘도 1.1↑) 제외. **거리별 색**: 30 → 220 m 안개색 (0.36, 0.32, 0.58) 쪽으로 최대 40 %, 명암 70 % 유지, 380 ~ 520 m부터 0(구름 메시 보호), 10 m 안 6 % 진하게 · 10 % 채도. 둘 다 `PC_Renderer` 후처리 직전, 거리별 색 → 붓질 → 화면 외곽선 → 별빛 글레어 순, 카메라가 상점 박스 안이면 꺼짐. **LUT**: 32 단계 스트립(1024 × 32, sRGB 끔 · 압축 없음), 생성 스크립트로 구움 — 명암 S커브(0.42 기준, 양 끝 고정), 그늘 남보라 · 밝은 곳 살구 4 ~ 5 %, 보라 · 파랑 중간톤 채도 −4 %, 주황 +12 %, 시안 +10 %. `VP_DeepBlue` · `VP_DeepBlue_Day` 둘 다 Color Lookup 1(밤낮 고정), `VP_Shop_Interior`는 0 |
+| `Environment/Shaders/{PaintBrush,AerialPerspective}.shader` + `Materials_PP/mat_pp_{paint_brush,aerial_perspective}.mat` + `DeepBlue/Textures/tex_pp_lut_bg.png` | 10/29. 배경 후처리. **붓질**: 일반화 Kuwahara(4사분면 × 4 × 4 탭, 가장 잔잔한 쪽을 상대 분산으로 고름), 반경 2.5 px(1080p 기준), 가까이 0.5 → 90 m 0.2(처음 3.5 px · 0.85 → 0.35는 풀잎 하이라이트 · 작은 꽃이 묻혀서 낮춤), 하늘 · HDR 발광(휘도 1.1↑) 제외. **거리별 색**: 30 → 220 m 안개색 (0.36, 0.32, 0.58) 쪽으로 최대 40 %, 명암 70 % 유지, 380 ~ 520 m부터 0(구름 메시 보호), 10 m 안 6 % 진하게 · 10 % 채도. 둘 다 `PC_Renderer` 후처리 직전, 거리별 색 → 붓질 → 화면 외곽선 → 별빛 글레어 순, 카메라가 상점 박스 안이면 꺼짐. **LUT**: 32 단계 스트립(1024 × 32, sRGB 끔 · 압축 없음), 생성 스크립트로 구움 — 명암 S커브(0.42 기준, 양 끝 고정), 그늘 남보라 · 밝은 곳 살구 4 ~ 5 %, 보라 · 파랑 중간톤 채도 −4 %, 주황 +12 %, 시안 +10 %. `VP_DeepBlue` Color Lookup 1(`VP_DeepBlue_Day`는 11/01에 지움), `VP_Shop_Interior`는 0 |
 | `tree_bg/Materials/mat_env_tree_bg_qt_leaf_{common,twisted}_{pink,orange,gold,teal,violet}.mat` | 10/29. 숲 잎 색 세트 5종 × 잎 모양 2종. 기본 잎 재질을 복사해 ToonLeaf 색 9개만 바꿈(`_Tint` 흰색). 분홍 끝 (1.0, 0.75, 0.88) · 주황 (1.0, 0.78, 0.55) · 금빛 (1.0, 0.92, 0.60) · 청록 (0.62, 1.0, 0.92) · 보라 (0.85, 0.75, 1.0), 뿌리는 각 색의 어두운 쪽, 그늘 · 수관 아래는 남보라 쪽. `BackGroundScene`의 `Forest_Groves` 430그루에 군락(7 m 연결)별로 배정, 시드 1029 — 다시 배정하려면 같은 규칙(군락 주색 + 12 % 확률 · 군락당 2그루까지 다른 색, 비율 21 · 21 · 21 · 21 · 16 %) |
 | `tree_bg/Textures/tex_env_tree_bg_qt_leaves_{common,twisted}_veinmask.png` + `tree_bg/Substance~/leaf_veins.sbs` | 10/29. 잎맥 마스크(선형 회색, BC4, 1024). Substance Designer 그래프 `leaf_veins`의 출력 `vein_mask_common` · `vein_mask_twisted`를 그대로 내보낸 것. 입력은 `leaf_space.py`가 원본 잎 텍스처 알파에서 뽑은 16비트 맵(`leaf_*_along` 밑동 0 → 끝 1, `leaf_*_across` 주맥 0 → 가장자리 1)과 알파. 무늬: 주맥 반폭 across 0.055 ~ 0.095(+ 끝으로 0.035 가늘어짐), 곁선 1쌍 = along − 0.35 × across가 0.33 ~ 0.37인 띠 × 주맥 가까이(across 0.36 ~ 0.52), 곁선 세기 70 %, 잎 가장자리 안쪽만, Clouds 2로 흔들림 1.2. ToonLeaf `_VeinMap`으로 연결, `qt_leaf` 재질 12개 `_VeinMapStrength` 0.32 · `_VeinMapNear` 9 m · `_VeinMapFar` 15 m. 바로 앞의 `_veined` 텍스처(밝게 구운 잎맥)는 지움 |
 | `Props/pot/Models/prop_pot_{grandma,small,hanging}.fbx` | 10/29. 상점 그레이박스 화분(유니티 기본 원기둥) 교체용 모델 3종. 크기는 지금 그레이박스 자리 그대로 — 할머니 화분 지름 0.70 × 높이 0.44 m(`BigPot` 2개), 바닥 작은 화분 0.36 × 0.30 m(`Pot` 4개), 걸이 화분 0.60 × 0.36 m(`Hanging/Planter_*/Pot` 4개). 각 252 tris, 피벗 바닥 가운데, 스케일 1, 위쪽 흙 홈. **재질 · 프리팹은 아직 없음**(모델만). 할머니 화분은 `GrandmaSleep`(잿빛 → 색)용이라 재질을 `ToonProp`으로 만들 예정 |
@@ -168,6 +180,12 @@
 | `Props/Shaders/ToonSoft.shader` | 10/30. 포인트 라이트 그림자를 받음(`_ADDITIONAL_LIGHT_SHADOWS`). 빛나는 부분은 그림자를 만들지 않는 옵션 `_GlowNoShadow`(기본 끔, 과일 선반 재질 2개만 켬) |
 | `Shaders/AerialPerspective.shader` + `Materials_PP/mat_pp_aerial_perspective.mat` | 10/30. **배경 공간감**: 거리 층 계단식 흐림(10 / 32 / 90 m) + 층별 안개 색, 골짜기 낮은 안개, 먼 실루엣 노을 테두리광, 해 쪽 화면 빛줄기(구름 틈이면 굵고 분홍), 3D 구름은 건너뜀(`_DSEWA_Clouds`) |
 | `horizon/Models` 메시 10 · `horizon/Materials/mat_env_horizon_mountain_*` 재질 4 · `Shaders/ToonMountain.shader` · `Editor/HorizonMountainSetup.cs`(메뉴 Glow Art/Horizon Mountains) + 배경 씬 `== Terrain ==/HorizonMountains` | 11/01. 지평선 바위산 3겹(355 · 790 · 1450 m)과 그 사이 바닥. 층별 재질이 공기 색 · 대비를 정함. 게임 카메라 far clip 2500 m 안쪽이어야 보임. 터레인 산은 `AerialPerspective`의 Far Hills Air(지도 중심 150~235 m, 월드 고정), 테두리광은 90~150 m에서 꺼짐 |
+| `Shaders/ToonMistCard.shader` · `Materials/mat_env_toon_mist_card.mat` · `Editor/MistCardSetup.cs`(메뉴 Glow Art/Mist Cards) + 배경 씬 `== FX ==/MistCards` 20개 | 11/01. 월드에 고정된 볼륨 안개(상자 안 14스텝 레이마치, 빛 산란). 폭포 발치 · 호수 둘레 · 나무줄 뒤 + 산 발치 8개. 카메라를 따라 돌지 않음 |
+| `Shaders/AerialPerspective.shader` · `Materials_PP/mat_pp_aerial_perspective.mat` · `DeepBlue/VP_DeepBlue.asset` | 11/01. 먼 터레인 대기(`_FarAirAmount` .62, 150 ~ 235 m), 먼 산 테두리광 페이드(90 ~ 150 m), 화사함 `_VividSaturation` .28 · `_VividLift` .22(120 ~ 260 m, 잿빛 제외), 근경 보정 `_NearEnd` 22 · `_NearDeepen` .45 · `_NearSaturate` .45. 볼륨 채도 −6 → 8, 비네트 .2 → .12 |
+| `Shaders/StarGlare.shader` · `Materials_PP/mat_pp_star_glare.mat` | 11/01. 세기 4.5 · 길이 .09 · 문턱 .85. 채도로 발광체를 골라 흰 면(폭포 · 안개)은 `_PaleKeep` .1만 |
+| `Shaders/PaintBrush.shader` | 11/01. 가까운 곳은 붓질 없음: `_ClearUntil` 14 m부터 `_ClearFade` 16 m에 걸쳐 들어옴. `ViewLayers`가 덮어쓰지 않는 새 값이라 재질 값이 게임에도 적용됨 |
+| `Shaders/ToonLakeWater` · `ToonWaterfall` · `ToonRipple` · `ToonErode.shader` | 11/01. 물도 잿빛에서 회색이 되고 파도와 함께 색이 돌아옴(`ApplyWorldWakeBand` .35) |
+| 배경 씬 `== FX ==/WorldAwakening` | 11/01. `edgeBand` 0. 경계 빛 띠가 나무를 하얗게 만들던 원인이라 끔 |
 | `Sky/LF_SunToon.asset` (해 `Directional Light`의 렌즈 플레어) | 10/30. 툰 렌즈 플레어 10요소(코로나 · 가로 줄 · 파스텔 육각 고스트), 가리면 사라짐 |
 | 배경 씬 `== Vegetation ==/StartFrame` | 10/30. 시작 화면 프레임용 큰 나무 2 · 덤불 2 (울타리 밖, 충돌체 없음) |
 | `Sky/Shaders/ToonSky.shader`, `DeepBlue/M_Sky_DeepBlue.mat` | 10/30. 그림 구름 끔(`_PanoCloudAmount` 0, 종이 결 때문) — 별 · 행성 · 해만. 구름 음영 · 발광 · 결 지우기 옵션 추가(그림 구름을 다시 켤 때용) |
