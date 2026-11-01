@@ -39967,7 +39967,7 @@ MonoBehaviour:
   - {fileID: 2100000, guid: c85e15e406a9b3e4982ef432c3f9919e, type: 2}
   - {fileID: 2100000, guid: dc172edfbf9ba6040855e6f4f6822e52, type: 2}
   sun: {fileID: 229032402}
-  cloudLight: {fileID: 0}
+  cloudLight: {fileID: 1029419593}
   nightVolume: {fileID: 1380708533}
   spores: {fileID: 0}
   godrays: {fileID: 310068100}
@@ -110556,6 +110556,8 @@ MonoBehaviour:
   pitchLimit: 83
   eyeHeight: 1.7
   worldProgress: 1
+  alsoLoad: 
+  roomAmbient: {r: 0, g: 0, b: 0, a: 0}
 --- !u!81 &1733647178
 AudioListener:
   m_ObjectHideFlags: 0

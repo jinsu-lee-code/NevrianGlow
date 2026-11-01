@@ -142,6 +142,8 @@ public static class Cloud3DSetup
         drift.bobHeight = 0f;
         drift.swayDegrees = 0f;
         drift.previewInEditMode = true;
+        var dayNight = Object.FindFirstObjectByType<DayNightBlend>(FindObjectsInactive.Include);
+        if (dayNight != null) dayNight.cloudLight = sunLight;   // the old component went with the replaced group
 
         // kept when it already exists, so a hand-placed direction and colour survive a rebuild
         if (sky.transform.Find(NightLightName) == null)

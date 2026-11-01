@@ -94,7 +94,7 @@ Shader "DSEWA/ToonMountain"
             half frag() : SV_Target { return 0; }
             ENDHLSL
         }
-        // the renderer primes depth from the depth-normals prepass (see DSEWA/HorizonSilhouette): without this pass the
+        // the renderer primes depth from the depth-normals prepass: without this pass the
         // forward pass (depth Equal) draws nothing
         Pass
         {
