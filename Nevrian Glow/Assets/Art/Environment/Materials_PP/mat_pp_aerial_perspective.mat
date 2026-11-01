@@ -26,14 +26,14 @@ Material:
     m_Ints: []
     m_Floats:
     - _CloudRayBoost: 2
-    - _DetailKeep: 0.5
+    - _DetailKeep: 0.8
     - _GlowKeep: 1.1
     - _HazeAmount: 0.4
     - _HazeCurve: 1.2
-    - _HazeEnd: 220
+    - _HazeEnd: 320
     - _HazeIceAmount: 1
     - _HazeSideSpread: 2
-    - _HazeStart: 30
+    - _HazeStart: 55
     - _HazeSunAmount: 1
     - _LayerColAmount: 0.7
     - _LayerDesat: 0.2

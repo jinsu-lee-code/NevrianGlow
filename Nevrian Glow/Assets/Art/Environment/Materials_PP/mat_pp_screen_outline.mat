@@ -27,7 +27,7 @@ Material:
     m_Floats:
     - _Darken: 0.6
     - _DepthSens: 4
-    - _FadeEnd: 160
+    - _FadeEnd: 80
     - _FadeStart: 40
     - _InkMix: 0.55
     - _NormalSens: 0.8
