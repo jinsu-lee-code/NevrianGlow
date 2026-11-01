@@ -164,6 +164,7 @@
 | `Sky/Shaders/ToonSky.shader`, `DeepBlue/M_Sky_DeepBlue.mat` | 10/30. 그림 구름 끔(`_PanoCloudAmount` 0, 종이 결 때문) — 별 · 행성 · 해만. 구름 음영 · 발광 · 결 지우기 옵션 추가(그림 구름을 다시 켤 때용) |
 | `Sky/Shaders/ToonCloudVolume.shader` · `Scripts/ToonCloud.cs` · `Sky/Materials/mat_env_sky_cloud_toon_{,cumulus,tower,stratus}.mat` + 배경 씬 `== Sky ==/ToonClouds/Cloud_01~10` | 10/30. **3D 툰 구름**(지브리 구름 강좌 3편 참고, 스토리 문서 13 · 14): 거리장 광선 추적, 모양은 96³ 3D 텍스처로 구워 읽기만(구름 하나 +60 ms → 거의 0). 혹 2단 · 밑면 몽글 · 붓 그늘선 · 몽환 색 · 출렁임. 구름마다 모양 값 · 회전, 맵 둘레 300–350 m를 공전(플레이 중). 땅 그림자: 해에서 본 실루엣 맵(`Shaders/CloudShadow.hlsl`, 최대 4개) |
 | `Sky/Shaders/CloudLightShafts.shader` · `Scripts/CloudLightShafts.cs` · `Sky/Materials/mat_env_sky_cloud_shafts.mat` | 10/30. 구름 밑 빛기둥(천사의 사다리): 해 반대쪽으로 기운 줄무늬 띠, 천천히 일렁임. 구름 4개에 붙음 |
+| `Environment/cliff_bg/Models/env_cliff_bg_{a,b,c,boulders}_lod1.fbx` + `cliff_bg/Editor/CliffLodSetup.cs`(메뉴 Glow Art/Rock LOD Groups) | 11/01. 바위 LOD Group(개발 전달 1-2). 절벽 3종 1,258 → 약 566 tris, 볼더 120 → 72 tris. 프리팹에 `Model_LOD1` + `LODGroup`, 약 80 m 전환(LOD Group은 화면 높이 기준이라 크기 배율 1 · 시야각 65° 기준), 페이드 없음. LOD1은 각진 면 그대로(노멀을 옮겨 받으면 외곽선 껍질이 비쳐 검게 보임). 씬에서 재질을 덮어쓴 인스턴스 8개는 LOD1에도 같은 재질 |
 
 ## 걸이 팻말 Animator 맵핑 (`Props/sign_open`, 10/29)
 
