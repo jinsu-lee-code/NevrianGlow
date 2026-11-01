@@ -46,6 +46,18 @@ Shader "Hidden/DSEWA/AerialPerspective"
         _CloudRayBoost ("Cloud Gap Boost (rays through 3D cloud gaps)", Range(0, 4)) = 1.5
         [HDR] _CloudRayColor ("Cloud Gap Ray Colour", Color) = (1.0, 0.78, 0.9, 1)
         [Header(Valley Mist)]
+        _VividSaturation ("Awake Colours: Extra Saturation (grey stays grey)", Range(0, 1)) = 0.28
+        _VividLift ("Awake Colours: Midtone Lift", Range(0, 1)) = 0.22
+        _VividFadeStart ("Awake Colours Fade From (m)", Float) = 120
+        _VividFadeEnd ("Awake Colours Gone At (m)", Float) = 260
+        _FarAirAmount ("Far Hills Air (terrain rim, fixed to the world)", Range(0, 1)) = 0.62
+        _FarAirFrom ("Far Hills Air From (m from the map centre)", Float) = 150
+        _FarAirTo ("Far Hills Air Full At (m from the map centre)", Float) = 235
+        _FarAirColor ("Far Hills Air Colour", Color) = (0.52, 0.46, 0.72, 1)
+        _FarAirSunColor ("Far Hills Air Towards The Sun", Color) = (0.84, 0.56, 0.5, 1)
+        _FarAirIceColor ("Far Hills Air Away From The Sun", Color) = (0.38, 0.5, 0.78, 1)
+        _RimFadeStart ("Rim Fades From (m)", Float) = 90
+        _RimFadeEnd ("Rim Gone At (m)", Float) = 150
         _MistAmount ("Mist Amount", Range(0, 1)) = 0
         [HDR] _MistColor ("Mist Colour (linear)", Color) = (0.62, 0.58, 0.85, 1)
         _MistStart ("Mist From (m)", Float) = 55
@@ -91,6 +103,9 @@ Shader "Hidden/DSEWA/AerialPerspective"
             float4 _LayerEdges, _LayerHaze;
             float _MistAmount, _MistStart, _MistFade, _MistBase, _MistHeight;
             float _MistPatchSize, _MistPatchDrift, _MistPatchEdge, _MistScatter, _MistScatterTight, _MistGlowBleed, _MistGlowRadius;
+            float _FarAirAmount, _FarAirFrom, _FarAirTo, _RimFadeStart, _RimFadeEnd;
+            float _VividSaturation, _VividLift, _VividFadeStart, _VividFadeEnd;
+            float4 _FarAirColor, _FarAirSunColor, _FarAirIceColor;
 
             // world-fixed mist patches: soft value noise, two octaves, drifting slowly (they stay where they are as you walk)
             float MistHash(float2 p) { return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); }
@@ -279,6 +294,20 @@ Shader "Hidden/DSEWA/AerialPerspective"
                 float hazeLum = dot(hazeCol, float3(0.2126, 0.7152, 0.0722));
                 half3 hazed = hazeCol * lerp(1.0, lum / max(hazeLum, 1e-3), _DetailKeep * 0.5);
                 col.rgb = lerp(col.rgb, hazed, t);
+                // far hills: the terrain's rim sinks into the same air as the mountains behind it. Fixed to the world round the map
+                // centre, not to the camera, so nothing clears as you walk (2026-11-01, user)
+                if (_FarAirAmount > 0)
+                {
+                    float3 wpa = ComputeWorldSpacePosition(uv, raw, UNITY_MATRIX_I_VP);
+                    float airK = smoothstep(_FarAirFrom, _FarAirTo, length(wpa.xz)) * _FarAirAmount * (1 - glow) * (1 - saturate(_DSEWA_HazeCut)) * (1 - smoothstep(_SkyFrom, _SkyFull, d));
+                    float2 va = normalize(wpa.xz - _WorldSpaceCameraPos.xz + 1e-5);
+                    float azA = saturate(dot(va, normalize(_MainLightPosition.xz + 1e-5)) * 0.5 + 0.5);
+                    half3 airCol = lerp(_FarAirColor.rgb, _FarAirSunColor.rgb, pow(azA, _HazeSideSpread));
+                    airCol = lerp(airCol, _FarAirIceColor.rgb, pow(1 - azA, _HazeSideSpread));
+                    float airLum = dot(airCol, float3(0.299, 0.587, 0.114));
+                    airCol = lerp(airCol, airLum * half3(0.78, 0.82, 0.95) * 0.72, WorldWakeOutside(wpa));   // grey with the sleeping world
+                    col.rgb = lerp(col.rgb, airCol, airK);
+                }
                 float wake = WorldWakeFogScale(ComputeWorldSpacePosition(uv, raw, UNITY_MATRIX_I_VP)) * (1 - saturate(_DSEWA_HazeCut));
                 float skyKeep = 1 - smoothstep(_SkyFrom, _SkyFull, d);
                 if (_LayerMode > 0.5 && _LayerDesat > 0)   // each layer a little greyer
@@ -309,7 +338,7 @@ Shader "Hidden/DSEWA/AerialPerspective"
 
                 // sunset rim: far silhouettes that have open sky just above them get a thin bright edge, warm towards
                 // the sun's azimuth (day side), faint and cool on the far side
-                if (_RimAmount > 0 && d > _RimStart * 0.5)
+                if (_RimAmount > 0 && d > _RimStart * 0.5 && d < _RimFadeEnd)
                 {
                     float px = _RimWidth * (_ScreenParams.y / 1080.0);
                     float2 ofs = float2(0, px / _ScreenParams.y);
@@ -323,7 +352,7 @@ Shader "Hidden/DSEWA/AerialPerspective"
                         float azr = saturate(dot(normalize(vr + 1e-5), normalize(_MainLightPosition.xz + 1e-5)) * 0.5 + 0.5);
                         float sunW = pow(azr, _RimSpread);
                         half3 rc = lerp(_RimNightColor.rgb, _RimColor.rgb, sunW);
-                        float k2 = rim * smoothstep(_RimStart * 0.5, _RimStart, d) * _RimAmount * (1 - glow) * (_RimNight + (1 - _RimNight) * sunW);
+                        float k2 = rim * smoothstep(_RimStart * 0.5, _RimStart, d) * (1 - smoothstep(_RimFadeStart, _RimFadeEnd, d)) * _RimAmount * (1 - glow) * (_RimNight + (1 - _RimNight) * sunW);
                         col.rgb = lerp(col.rgb, rc, saturate(k2));
                     }
                 }
@@ -336,6 +365,16 @@ Shader "Hidden/DSEWA/AerialPerspective"
                 float l2 = dot(col.rgb, float3(0.2126, 0.7152, 0.0722));
                 col.rgb = lerp(l2.xxx, col.rgb, 1 + _NearSaturate * n);
                 col.rgb *= 1 - _NearDeepen * n;
+
+                // awake colours: brighter and richer where the world is awake, the grey is left alone (2026-11-01, user).
+                // Fades with distance so the far hills and mountains keep their air
+                if (_VividSaturation + _VividLift > 0)
+                {
+                    float vivid = (1 - WorldWakeOutside(ComputeWorldSpacePosition(uv, raw, UNITY_MATRIX_I_VP))) * (1 - glow) * (1 - smoothstep(_VividFadeStart, _VividFadeEnd, d));
+                    float l3 = dot(col.rgb, float3(0.2126, 0.7152, 0.0722));
+                    col.rgb = max(lerp(l3.xxx, col.rgb, 1 + _VividSaturation * vivid), 0);
+                    col.rgb = pow(col.rgb, 1 / (1 + _VividLift * vivid));
+                }
                 return col;
             }
             ENDHLSL

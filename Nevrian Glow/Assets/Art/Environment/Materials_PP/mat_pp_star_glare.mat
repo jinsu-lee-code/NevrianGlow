@@ -25,10 +25,11 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _Intensity: 1.4
-    - _Length: 0.08
+    - _Intensity: 4.5
+    - _Length: 0.09
     - _NearFullRays: 20
     - _NearNoRays: 5
+    - _PaleKeep: 0.1
     - _Rays: 3
     - _Rotation: 15
     - _Saturation: 1.2

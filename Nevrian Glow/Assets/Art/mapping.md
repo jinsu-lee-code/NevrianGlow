@@ -158,7 +158,8 @@
 | `shop_decor/Materials/mat_env_shop_orb_glow.mat` · `mat_env_shop_orb_halo.mat`, `Shaders/LightHalo.shader`, `pf_env_shop_decor`의 `OrbLamp_*/Orb/OrbLight` · `OrbHalo` · 새 `OrbLamp_Counter` | 10/30. 상점 오브 등: 반짝임(맥동) 끄고 반투명 유리, 주홍빛 포인트 라이트(세기 10 · 6.5 m, 그림자 부드럽게) + 공기 산란 빛무리. 카운터 위에 같은 등 하나 추가. 장식 124개 그림자 켬. 스탠드 랜턴은 상점 씬에서 빠짐 |
 | `Props/Shaders/ToonSoft.shader` | 10/30. 포인트 라이트 그림자를 받음(`_ADDITIONAL_LIGHT_SHADOWS`). 빛나는 부분은 그림자를 만들지 않는 옵션 `_GlowNoShadow`(기본 끔, 과일 선반 재질 2개만 켬) |
 | `Shaders/AerialPerspective.shader` + `Materials_PP/mat_pp_aerial_perspective.mat` | 10/30. **배경 공간감**: 거리 층 계단식 흐림(10 / 32 / 90 m) + 층별 안개 색, 골짜기 낮은 안개, 먼 실루엣 노을 테두리광, 해 쪽 화면 빛줄기(구름 틈이면 굵고 분홍), 3D 구름은 건너뜀(`_DSEWA_Clouds`) |
-| `horizon/` 재질 2 · `Shaders/HorizonSilhouette.shader` · `Scripts/HorizonRingBuilder.cs` + 배경 씬 `== Terrain ==/HorizonSilhouettes` | 10/30. 지형 밖 지평선 능선 고리 2겹(290 · 360 m): 해 쪽 메사, 반대쪽 얼음 능선, 옆은 언덕. 메시는 불러올 때 생성 |
+| `horizon/` 재질 2 · `Shaders/HorizonSilhouette.shader` · `Scripts/HorizonRingBuilder.cs` + 배경 씬 `== Terrain ==/HorizonSilhouettes` | 10/30. 지형 밖 지평선 능선 고리 2겹(290 · 360 m): 해 쪽 메사, 반대쪽 얼음 능선, 옆은 언덕. 메시는 불러올 때 생성. 11/01부터 꺼 둠 (아래 바위산으로 교체) |
+| `horizon/Models` 메시 10 · `horizon/Materials/mat_env_horizon_mountain_*` 재질 4 · `Shaders/ToonMountain.shader` · `Editor/HorizonMountainSetup.cs`(메뉴 Glow Art/Horizon Mountains) + 배경 씬 `== Terrain ==/HorizonMountains` | 11/01. 지평선 바위산 3겹(355 · 790 · 1450 m)과 그 사이 바닥. 층별 재질이 공기 색 · 대비를 정함. 게임 카메라 far clip 2500 m 안쪽이어야 보임. 터레인 산은 `AerialPerspective`의 Far Hills Air(지도 중심 150~235 m, 월드 고정), 테두리광은 90~150 m에서 꺼짐 |
 | `Sky/LF_SunToon.asset` (해 `Directional Light`의 렌즈 플레어) | 10/30. 툰 렌즈 플레어 10요소(코로나 · 가로 줄 · 파스텔 육각 고스트), 가리면 사라짐 |
 | 배경 씬 `== Vegetation ==/StartFrame` | 10/30. 시작 화면 프레임용 큰 나무 2 · 덤불 2 (울타리 밖, 충돌체 없음) |
 | `Sky/Shaders/ToonSky.shader`, `DeepBlue/M_Sky_DeepBlue.mat` | 10/30. 그림 구름 끔(`_PanoCloudAmount` 0, 종이 결 때문) — 별 · 행성 · 해만. 구름 음영 · 발광 · 결 지우기 옵션 추가(그림 구름을 다시 켤 때용) |

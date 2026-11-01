@@ -20,6 +20,9 @@ public static class MistCardSetup
         new Vector4(-13, -48, 30, 4), new Vector4(15, -44, 34, 4.5f), new Vector4(2, -36, 26, 3.5f),
         new Vector4(27, -54, 26, 4), new Vector4(-27, -56, 24, 4),
         new Vector4(-72, -12, 54, 8), new Vector4(-64, 30, 46, 7), new Vector4(72, 22, 54, 8), new Vector4(36, 70, 50, 7),
+        // along the feet of the near ridges, so the layers behind them rise out of mist
+        new Vector4(310, 0, 170, 22), new Vector4(219, 219, 170, 20), new Vector4(0, 310, 170, 24), new Vector4(-219, 219, 170, 20),
+        new Vector4(-310, 0, 170, 22), new Vector4(-219, -219, 170, 20), new Vector4(0, -310, 170, 24), new Vector4(219, -219, 170, 20),
     };
 
     [MenuItem("Glow Art/Mist Cards")]

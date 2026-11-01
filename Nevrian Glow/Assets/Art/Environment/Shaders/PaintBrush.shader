@@ -16,6 +16,8 @@ Shader "Hidden/DSEWA/PaintBrush"
         _FarStrength ("Strength Far", Range(0, 1)) = 0.2
         _FadeStart ("Near Until (m)", Float) = 8
         _FadeEnd ("Far From (m)", Float) = 90
+        _ClearUntil ("No Brush Closer Than (m)", Float) = 14
+        _ClearFade ("Brush Comes In Over (m)", Float) = 16
         _GlowKeep ("Keep Glows Above (HDR luminance)", Float) = 1.1
     }
     SubShader
@@ -32,7 +34,7 @@ Shader "Hidden/DSEWA/PaintBrush"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
 
-            float _Radius, _Sharpness, _NearStrength, _FarStrength, _FadeStart, _FadeEnd, _GlowKeep;
+            float _Radius, _Sharpness, _NearStrength, _FarStrength, _FadeStart, _FadeEnd, _GlowKeep, _ClearUntil, _ClearFade;
             float4 _DSEWA_InteriorBoxMin, _DSEWA_InteriorBoxMax;   // shop box from InteriorFill: background-only effect, off while the camera is inside
 
             bool CameraInShop()
@@ -72,6 +74,7 @@ Shader "Hidden/DSEWA/PaintBrush"
             #endif
                 float d = LinearEyeDepth(raw, _ZBufferParams);
                 float strength = lerp(_NearStrength, _FarStrength, smoothstep(_FadeStart, _FadeEnd, d));
+                strength *= smoothstep(_ClearUntil, _ClearUntil + _ClearFade, d);   // 2026-11-01: what is close keeps its detail, or it reads as far away
                 float lum = dot(col.rgb, float3(0.2126, 0.7152, 0.0722));
                 strength *= 1 - smoothstep(_GlowKeep, _GlowKeep * 1.6, lum);
                 if (strength <= 0.001) return col;
