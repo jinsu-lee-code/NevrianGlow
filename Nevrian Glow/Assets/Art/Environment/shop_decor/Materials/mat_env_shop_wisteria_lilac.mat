@@ -92,7 +92,7 @@ Material:
     - _WaveWidth: 0.18
     - _ZWrite: 1
     m_Colors:
-    - _CoreColor: {r: 0.5, g: 0.375, b: 0.7, a: 1}
+    - _CoreColor: {r: 0.9000, g: 0.6750, b: 1.2600, a: 1}
     - _CutColor: {r: 0.6553064, g: 0.39442712, b: 1, a: 2}
     - _EdgeColor: {r: 0.3, g: 1.2, b: 1.1, a: 1}
     - _GradientRange: {r: 0.1, g: 0.8, b: 0, a: 0}

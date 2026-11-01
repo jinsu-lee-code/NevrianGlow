@@ -25,6 +25,9 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
+    - _ShopShadowEnd: 0.14
+    - _ShopPivot: 0.08
+    - _ShopContrast: 0.1
     - _CloudRayBoost: 2
     - _DetailKeep: 0.8
     - _FarAirAmount: 0.62
@@ -59,11 +62,11 @@ Material:
     - _NearDeepen: 0.45
     - _NearEnd: 22
     - _NearSaturate: 0.45
-    - _RayAmount: 0.3
-    - _RayDecay: 0.965
-    - _RayFalloff: 2.2
-    - _RayLength: 0.75
-    - _RayOnSky: 0.35
+    - _RayAmount: 0.6
+    - _RayDecay: 0.975
+    - _RayFalloff: 1.6
+    - _RayLength: 0.95
+    - _RayOnSky: 0.85
     - _RimAmount: 1
     - _RimFadeEnd: 150
     - _RimFadeStart: 90
@@ -71,6 +74,8 @@ Material:
     - _RimSpread: 1.5
     - _RimStart: 22
     - _RimWidth: 5
+    - _ShopLift: 0.34
+    - _ShopSaturation: 0.2
     - _SkyFrom: 420
     - _SkyFull: 560
     - _VividFadeEnd: 260
@@ -78,6 +83,7 @@ Material:
     - _VividLift: 0.22
     - _VividSaturation: 0.28
     m_Colors:
+    - _ShopShadowTint: {r: 0.84, g: 0.88, b: 1.02, a: 1}
     - _CloudRayColor: {r: 1, g: 0.78, b: 0.9, a: 1}
     - _FarAirColor: {r: 0.52, g: 0.45999992, b: 0.72, a: 1}
     - _FarAirIceColor: {r: 0.37999994, g: 0.5, b: 0.78, a: 1}

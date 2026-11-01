@@ -48,6 +48,12 @@ Shader "Hidden/DSEWA/AerialPerspective"
         [Header(Valley Mist)]
         _VividSaturation ("Awake Colours: Extra Saturation (grey stays grey)", Range(0, 1)) = 0.28
         _VividLift ("Awake Colours: Midtone Lift", Range(0, 1)) = 0.22
+        _ShopSaturation ("Shop: Extra Saturation", Range(0, 1)) = 0.2
+        _ShopLift ("Shop: Midtone Lift", Range(0, 1)) = 0.34
+        _ShopContrast ("Shop: Contrast", Range(0, 1)) = 0.1
+        _ShopPivot ("Shop: Contrast Pivot", Range(0, 1)) = 0.08
+        _ShopShadowTint ("Shop: Shadow Tint", Color) = (0.84, 0.88, 1.02, 1)
+        _ShopShadowEnd ("Shop: Shadows End At (brightness)", Range(0.01, 1)) = 0.14
         _VividFadeStart ("Awake Colours Fade From (m)", Float) = 120
         _VividFadeEnd ("Awake Colours Gone At (m)", Float) = 260
         _FarAirAmount ("Far Hills Air (terrain rim, fixed to the world)", Range(0, 1)) = 0.62
@@ -104,7 +110,8 @@ Shader "Hidden/DSEWA/AerialPerspective"
             float _MistAmount, _MistStart, _MistFade, _MistBase, _MistHeight;
             float _MistPatchSize, _MistPatchDrift, _MistPatchEdge, _MistScatter, _MistScatterTight, _MistGlowBleed, _MistGlowRadius;
             float _FarAirAmount, _FarAirFrom, _FarAirTo, _RimFadeStart, _RimFadeEnd;
-            float _VividSaturation, _VividLift, _VividFadeStart, _VividFadeEnd;
+            float _VividSaturation, _VividLift, _VividFadeStart, _VividFadeEnd, _ShopSaturation, _ShopLift, _ShopContrast, _ShopPivot, _ShopShadowEnd;
+            float4 _ShopShadowTint;
             float4 _FarAirColor, _FarAirSunColor, _FarAirIceColor;
 
             // world-fixed mist patches: soft value noise, two octaves, drifting slowly (they stay where they are as you walk)
@@ -252,11 +259,27 @@ Shader "Hidden/DSEWA/AerialPerspective"
                 return _DSEWA_InteriorBoxMax.x > _DSEWA_InteriorBoxMin.x && all(c >= _DSEWA_InteriorBoxMin.xyz) && all(c <= _DSEWA_InteriorBoxMax.xyz);
             }
 
+            // the shop has no haze, but it takes the same "awake colours" step as outdoors so the two feel like one world
+            half4 ShopGrade(half4 col)
+            {
+                float lum = dot(col.rgb, float3(0.2126, 0.7152, 0.0722));
+                float keep = 1 - smoothstep(_GlowKeep, _GlowKeep * 1.6, lum);
+                // lift the brightness alone: a curve on each channel would wash the colours out
+                float lifted = pow(max(lum, 1e-4), 1 / (1 + _ShopLift * keep));
+                lifted = max(_ShopPivot + (lifted - _ShopPivot) * (1 + _ShopContrast * keep), 1e-4);   // on brightness too: per channel it turns dark walls blue
+                col.rgb *= lifted / max(lum, 1e-4);
+                // only the dark tones turn navy: lit faces keep their colour, so the room's tone does not stain the props
+                float dark = 1 - smoothstep(0, _ShopShadowEnd, lifted);
+                col.rgb *= lerp(float3(1, 1, 1), _ShopShadowTint.rgb, dark * keep);
+                col.rgb = max(lerp(lifted.xxx, col.rgb, 1 + _ShopSaturation * keep), 0);
+                return col;
+            }
+
             half4 Frag(Varyings input) : SV_Target
             {
                 float2 uv = input.texcoord;
                 half4 col = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
-                if (CameraInShop()) return col;
+                if (CameraInShop()) return ShopGrade(col);
                 float raw = SampleSceneDepth(uv);
                 _CloudGap = 0;
                 half rays = _RayAmount > 0 ? SunRays(uv) * _RayAmount * (1 - saturate(_DSEWA_HazeCut)) : 0;

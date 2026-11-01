@@ -7,7 +7,7 @@ using UnityEngine;
 /// rebuilds == Terrain ==/HorizonMountains in the open background scene as three painted layers of the faceted
 /// env_horizon_mountain_* meshes: dark low ridges by the terrain edge, rock mountains behind them, pale far ranges at the
 /// back (few facets, no contrast). Each layer has its own DSEWA/ToonMountain material; an existing material is left as it
-/// is, so tuned values survive a rebuild. Switches the old HorizonSilhouettes off. Safe to run again (same seed, same
+/// is, so tuned values survive a rebuild. Safe to run again (same seed, same
 /// mountains). Numbers are mine.
 /// </summary>
 public static class HorizonMountainSetup
@@ -96,8 +96,6 @@ public static class HorizonMountainSetup
         floorRenderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
         floorRenderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
 
-        var ring = terrain.transform.Find("HorizonSilhouettes");
-        if (ring != null) ring.gameObject.SetActive(false);
         EditorSceneManager.MarkSceneDirty(terrain.scene);
         Debug.Log($"[HorizonMountainSetup] {made} mountains in {Layers.Length} layers");
     }

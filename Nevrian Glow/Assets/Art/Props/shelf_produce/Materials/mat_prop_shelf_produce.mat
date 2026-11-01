@@ -77,7 +77,7 @@ Material:
     - _TermStrength: 0.45
     - _TermWidth: 0.06
     - _TexGlowSoftness: 0.2
-    - _TexGlowStrength: 0.7
+    - _TexGlowStrength: 1.6
     - _TexGlowThreshold: 0.3
     - _ViewGloss: 0
     - _Wrap: 0.15
