@@ -9,6 +9,8 @@
 |---|---|---|
 | 쓰레기 아이콘 연결 (개발 전달 3장) | `_Project/Data/Items/item_trash.asset`의 `icon` | `Art/UI/Icons/icon_trash.png` |
 | 씨앗 가루 교체 (개발 전달 1-3) | `_Project/Data/Effects/VfxLibrary.asset`의 `vfx_seed_dust` 프리팹 | `Art/Environment/FX/seed_dust/pf_vfx_seed_dust.prefab` (scale 1, lifetime 0.8 그대로). 개발 임시본 `_Project/Prefabs/Effects/vfx_seed_dust.prefab`은 연결 뒤 지워도 됨 |
+| 비료 성장 연출 교체 (개발 전달 1-5) | `FarmCellView.GrowBurst`의 `VfxCues.Sparkle` 자리 | 새 VFX id로 `Art/Environment/FX/fertilizer_grow/pf_vfx_fertilizer_grow.prefab`을 흙 윗면에서 1회 재생 (lifetime 1.2). 작물 크기 코드(0.55 → 1.1 → 1)는 그대로 두면 0.42초 터짐이 맞음 |
+| 농장 문 포털 (개발 전달 1-5) | `ZoneDoor`의 포털 0.6초 | 문 열림을 0.6초로 맞췄으니 값 그대로. 끝나는 시점만 확인 |
 | 씨앗 주머니 아이콘 쓰는 곳 결정 | HANDOFF의 남은 아이콘 3개 | `icon_tool_seedbag.png` 그림만 교체, 파일 · GUID 그대로 |
 | 상점 씬 정리 | `_Project/Scenes/Shop.unity` | 아래 **`Shop.unity` 미포함 (11/01)** 줄 참고 |
 
@@ -79,6 +81,8 @@
 | `UI/Icons/icon_trash.png` | 11/01. 쓰레기 공용 아이콘(개발 전달 3장). 요청서 밖. 사용자가 준 그림으로 교체(병 · 종이 · 잎 · 포자 더미). 다른 아이콘과 같은 128 · 알파 · Sprite. **개발 연결:** `_Project/Data/Items/item_trash.asset`의 `icon` 칸에 넣기 |
 | `UI/Icons/icon_tool_seedbag.png` | 11/01. 사용자가 준 청록 씨앗 주머니로 그림만 교체. 파일 · GUID는 그대로라 연결 변경 없음 |
 | `Environment/FX/seed_dust/pf_vfx_seed_dust.prefab` · `Editor/SeedDustSetup.cs`(메뉴 Glow Art/Seed Dust VFX) | 11/01. 씨앗 가루 아트판(개발 전달 1-3). 시안 · 금빛 빛가루 22개가 튀었다 가라앉고, 별 반짝임 6개와 바닥 번짐 1개가 함께 나옴. 0.42초 안에 끝남. 재질은 `mat_vfx_light_puff` · `mat_vfx_sparkle` 재사용. **개발 연결:** `_Project/Data/Effects/VfxLibrary.asset`의 `vfx_seed_dust` 프리팹을 이것으로 교체 (scale 1, lifetime 0.8 그대로) |
+| `Environment/FX/fertilizer_grow/pf_vfx_fertilizer_grow.prefab` · `Editor/FertilizerGrowSetup.cs`(메뉴 Glow Art/Fertilizer Grow VFX) | 11/01. 비료 즉시 성장 아트판(개발 전달 1-5). 0 ~ 0.4초 바닥 고리와 나선 빛가루, 0.42초에 작물 높이에서 빛 터짐과 별 반짝임 10개, 0.8초쯤 끝남. 재질은 `mat_vfx_ring_gold` · `mat_vfx_light_puff` · `mat_vfx_sparkle` 재사용. 작물 크기는 모델마다 달라 코드 연출 유지 |
+| `Environment/farm_door/Animations/ac_env_farm_door.controller` | 11/01. `Open` 상태 속도 1.5로 문 열림 0.9 → 0.6초(개발 전달 1-5, 기획서 포털 0.6초). 클립 `anim_env_farm_door_open`은 그대로 |
 | `Characters/Customer/Scripts/CustomerFace.cs` | 10/22. 손님 표정 스크립트(피피 · 오르 프리팹의 `Model`에 붙어 있음). `SetHappy(true)` = 얼굴 텍스처를 벌린 웃음(`_mouth_happy`)으로 바꾸고 더듬이 발광을 조금(×1.15) 밝게, `SetHappy(false)` = 원래 미소. MaterialPropertyBlock만 써서 공용 재질은 안 바뀜. `CustomerAI`의 Happy 상태에서 부르면 됨 |
 | `Environment/FX/<id>/pf_vfx_<id>.prefab` 7개 (+ 재질 `mat_vfx_<id>`) — water_drop · sparkle · bubble_foam · light_puff · ring_gold · glow_pulse · merge_burst | 10/22. 요청서 H는 텍스처만(파티클은 개발이 조립)인데 바로 쓸 수 있게 파티클 프리팹까지 만듦. 셰이더 URP Particles/Unlit 가산(포탈과 같음), 색은 흰 기준이라 시작 색을 바꾸면 됨. **1회**: sparkle(수확 · 진열, 14개 퍼짐) · light_puff(쓰레기, 빛 + 작은 알갱이) · ring_gold(레벨업, 바닥에 금빛 고리 두 겹이 퍼지고 반짝이가 올라감) · merge_burst(거대 작물, 돌아가는 별 + 큰 빛 + 반짝이, 높이 1 m 기준). **반복**(켜고 끄면 됨): water_drop(물뿌리개 물줄기 — 프리팹 루트의 +Z를 주둥이 방향에 맞추면 끊기지 않는 물줄기(리본 2겹, `tex_vfx_water_stream`)만 앞쪽 아래로 휘어 쏟아짐. 바닥 · 물체에 닿으면 거기서 끝남(월드 충돌)), bubble_foam(닦는 동안 거품 — 한 번에 한 덩어리만, 바닥 표면에 앉아 시트 4프레임을 0.72초에 순서대로 = 커졌다 그 자리에서 터짐, 0.85초마다 다음 것. 알파 블렌드), glow_pulse(성숙 작물 위 0.35 m에서 숨쉬는 빛). 크기 · 시간은 내가 정한 값 |
 | `Showcase/Showcase_1022.unity` | 10/22. 확인용 씬 — 피피 · 오르 + VFX 7종을 한 줄로 세움(1회짜리는 이 씬에서만 2초마다 반복). Play로 보기만, 게임 빌드에는 안 넣어도 됨 |
