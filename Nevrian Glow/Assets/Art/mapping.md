@@ -11,12 +11,27 @@
 | 씨앗 가루 교체 (개발 전달 1-3) | `_Project/Data/Effects/VfxLibrary.asset`의 `vfx_seed_dust` 프리팹 | `Art/Environment/FX/seed_dust/pf_vfx_seed_dust.prefab` (scale 1, lifetime 0.8 그대로). 개발 임시본 `_Project/Prefabs/Effects/vfx_seed_dust.prefab`은 연결 뒤 지워도 됨 |
 | 비료 성장 연출 교체 (개발 전달 1-5) | `FarmCellView.GrowBurst`의 `VfxCues.Sparkle` 자리 | 새 VFX id로 `Art/Environment/FX/fertilizer_grow/pf_vfx_fertilizer_grow.prefab`을 흙 윗면에서 1회 재생 (lifetime 1.2). 작물 크기 코드(0.55 → 1.1 → 1)는 그대로 두면 0.42초 터짐이 맞음 |
 | 농장 문 포털 (개발 전달 1-5) | `ZoneDoor`의 포털 0.6초 | 문 열림을 0.6초로 맞췄으니 값 그대로. 끝나는 시점만 확인 |
-| 2번 밭 위치 조정 (개발 전달 1-9) | `Farm.unity`의 `FarmFieldSite` 남서쪽 밭 (-16.8, -28) | 남동쪽 모서리 울타리가 호수에 걸림. 북서쪽으로 옮겨 호수에서 떼기 (`PlayAreaBounds` 안 유지). 옮긴 뒤 Build Farm Field Sites 다시 실행 |
+| 2번 밭 위치 조정 (개발 전달 1-9) | `Farm.unity`의 `FarmFieldSite` 남서쪽 밭 (-16.8, -28) | 남동쪽 모서리 울타리가 호수에 걸림. 북서쪽으로 옮겨 호수에서 떼기 (`PlayAreaBounds` 안 유지). 옮긴 뒤 Build Farm Field Sites 다시 실행. 호수 쪽 지형이 -0.6 m까지 파여 있어 새 자리에도 남으면 아트에 알려 주기 (`Glow Art/Flatten Field Sites`) |
 | 씨앗 주머니 아이콘 쓰는 곳 결정 | HANDOFF의 남은 아이콘 3개 | `icon_tool_seedbag.png` 그림만 교체, 파일 · GUID 그대로 |
 | 상점 씬 정리 | `_Project/Scenes/Shop.unity` | 아래 **`Shop.unity` 미포함 (11/01)** 줄 참고 |
 
 - E 꾹 수확 고리 `ui_hold_ring.png`는 아트판이 없어 개발 임시본을 그대로 씁니다.
 - `Art/Environment/Sky/Textures/`의 `tex_env_sky_brushalpha` · `tex_env_sky_noise_11`은 구름용이 아니라 안개 재질이 씁니다. 지우지 마세요.
+
+## 개발 전달 11/01 회신 (아트)
+
+| 항목 | 회신 |
+|---|---|
+| 1-1 | 완료. `ViewLayers` 거리 값을 아트 원본에 옮김 (`9415afe`) |
+| 1-2 | 완료. 절벽 · 볼더에 LOD Group, 약 80 m 전환 (`229c334`) |
+| 1-3 | 씨앗 가루는 아트판으로 교체 부탁: `pf_vfx_seed_dust`. E 꾹 수확 고리는 개발 임시본 유지 |
+| 1-4 | 추천 꼬리표 · 편지 강조 글자는 유지. 오늘의 목표 칸은 플레이 후 회신 |
+| 1-5 | 문 열림을 0.6초로 맞춤. 비료는 `pf_vfx_fertilizer_grow`를 `GrowBurst`의 Sparkle 자리에 연결 부탁 (크기 코드 유지). 다 자란 작물 빛은 그대로 |
+| 1-6 | 개발 배율 유지(손에 든 도구 0.35, 농장 문 0.45). 원본 재질은 바꾸지 않음 |
+| 1-7 | 편지 뒤 점등 대기를 300초로 늘림, 5일차 이어하기에서 편지가 먼저 뜨는 것까지 확인 (닫은 뒤 점등은 미확인). 7일차 이후 등대는 개발 처리 유지. ShotTower 구도 수정함 (`43b9edb`) |
+| 1-8 | 램프 값 · 화분 위치 확인. 그대로 유지 |
+| 1-9 | 2번 밭은 울타리가 호수에 걸려 이동 부탁. 4 · 5번은 지형이 흙을 덮어 아트에서 평탄화 (`9cbc613`). 1 · 3번은 그대로. 5곳 풀 정리 확인 |
+| 3장 | 쓰레기 공용 아이콘 납품: `icon_trash.png` |
 
 ## 개발에 부탁할 것 (10/30)
 
