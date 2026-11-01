@@ -29,6 +29,8 @@ namespace NevrianGlowFarm.Data
         [Header("상호작용")]
         [Tooltip("화면 중앙 Raycast 최대 거리 (m)")]
         [SerializeField, Range(1f, 8f)] private float interactMaxDistance = 1f;
+        [Tooltip("E를 꾹 눌러야 하는 대상(수확)의 누르는 시간 — 화면 가운데 고리가 차오른다 (초, 기획서 v2.0: 0.5)")]
+        [SerializeField, Range(0f, 2f)] private float handHoldSeconds = 0.5f;
 
         public float MoveSpeed => moveSpeed;
         public float SprintMultiplier => sprintMultiplier;
@@ -39,5 +41,6 @@ namespace NevrianGlowFarm.Data
         public float HeadBobFrequency => headBobFrequency;
         public float FieldOfView => fieldOfView;
         public float InteractMaxDistance => interactMaxDistance;
+        public float HandHoldSeconds => handHoldSeconds;
     }
 }

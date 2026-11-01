@@ -199,7 +199,7 @@ namespace NevrianGlowFarm.UI
                 }
                 return;
             }
-            if (openForDayStart && Current == null)
+            if (openForDayStart && Current == null && !Systems.Tutorial.DailyGoalSystem.LetterPending)
             {
                 openForDayStart = false;
                 Open();
@@ -288,6 +288,9 @@ namespace NevrianGlowFarm.UI
                 view.SetIcon(product.IconFor(offer.Tier));
                 // 탭이 있으면 분류는 탭이 보여 준다
                 string head = useTabs || string.IsNullOrEmpty(product.Category) ? string.Empty : $"[{product.Category}] ";
+                // 3 ~ 6일차 '추천' 꼬리표 (튜토리얼 v3 5절 — 오늘의 목표에 쓰는 상품, 강제 아님)
+                if (offer.Status != OfferStatus.MaxedOut && Systems.Tutorial.DailyGoalSystem.IsRecommended(product.Id))
+                    head = $"<color=#FFD27A>추천</color> {head}";
                 view.SetContent(0, head + product.TierLabel(offer.Tier));
                 view.SetDetail(UiText.Join(UiText.Offer(offer.Status, offer.StockLeft, LockReason(product, offer), StockFromTomorrow(product)), UiText.Owned(OwnedCount(product))));
                 view.SetValue(offer.Status == OfferStatus.MaxedOut ? string.Empty : $"{offer.Price:N0}", priceIcon);

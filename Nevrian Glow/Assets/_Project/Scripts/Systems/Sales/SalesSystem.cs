@@ -49,6 +49,9 @@ namespace NevrianGlowFarm.Systems.Sales
     /// 장사 단계에 들어서면 손님 수(청결도 확정값)를 정하고 생성 시각마다 입구에 손님을 만든다. 규칙은 Logic SalesRules · SalesSession.
     /// 매출은 계산 때 달러에 더한다. 모든 손님이 나가면(또는 Space 건너뛰기 · 시간 초과) 경험치를 더하고 정산 단계로 넘긴다.
     /// 건너뛰기 = 가게 안 손님은 지금 사고 내고, 아직 안 온 손님은 같은 함수로 즉시 처리.
+    /// 즉시 정산 (최종 기획서 v2.0, 설정 instantSettlement): 장사 시작 → 페이드 → 건너뛰기와 같은 계산 → 정산 화면.
+    /// 손님은 정산 창 뒤 배경에서 3~6초 간격으로 들어와 오늘 산 만큼 담고 계산하고 나간다 (돈 · 진열 · 손님 모델과 무관, 정산 단계 동안만).
+    /// 손님 수 = 모델 × 매장 홍보 → 하루 상한, 손님마다 사려는 개수 = 고정 개수 + 더 큰 장바구니 (상점 10/30).
     /// </summary>
     public class SalesSystem : MonoBehaviour, Tutorial.ITutorialHighlightSource
     {
@@ -81,6 +84,10 @@ namespace NevrianGlowFarm.Systems.Sales
         [SerializeField] private StatData adRateStat;
         [Tooltip("손님마다 1개 더 살 확률 능력치 — 단골의 장바구니 (Data/Stats/stat_extra_buy_chance, 비우면 0)")]
         [SerializeField] private StatData extraBuyStat;
+        [Tooltip("손님 구매 개수 능력치 — 상점 '더 큰 장바구니'가 더함 (Data/Stats/stat_customer_basket, 비우면 기본 개수)")]
+        [SerializeField] private StatData basketStat;
+        [Tooltip("손님 수 배율 능력치 — 상점 '매장 홍보'가 곱함, 하루 상한 안에서 (Data/Stats/stat_customer_promo, 비우면 1배)")]
+        [SerializeField] private StatData promoStat;
 
         [Header("조정값")]
         [Tooltip("진열대 앞에서 손님이 흩어 서는 폭 (m)")]
@@ -125,6 +132,12 @@ namespace NevrianGlowFarm.Systems.Sales
         private int day;
         private int spawnedNumber;
         private SalesResult? lastResult;
+        // 즉시 정산 (최종 기획서 v2.0): 결과는 장사 시작 때 계산, 손님은 정산 창 뒤 배경으로만 (돈 · 진열 · 손님 모델과 무관)
+        private bool background;
+        private int backgroundLeft;
+        private float backgroundTimer;
+        private readonly Queue<List<string>> backgroundBaskets = new Queue<List<string>>();
+        private UI.ScreenFader fader;
 
         public static SalesSystem Instance => instance;
         public bool IsRunning => running;
@@ -217,6 +230,7 @@ namespace NevrianGlowFarm.Systems.Sales
 
         private void Begin(int today)
         {
+            StopBackground();
             ClearCustomers();
             day = today;
             var spec = settings.ToSpec();
@@ -230,6 +244,10 @@ namespace NevrianGlowFarm.Systems.Sales
             var countRandom = new SeededRandom(SeededRandom.SeedFor(seed, CountPurpose, today));
             double unit = tutorial && settings.TutorialRandomOff ? 0.5 : countRandom.NextDouble();
             int count = model.TodayCount(today, clean, settings.FurnitureSpots, unit, customerSpec);
+            // 매장 홍보(+20%씩) → 하루 상한 30명 (최종 기획서 v2.0 · 상점 10/30)
+            count = Mathf.RoundToInt((float)StatSystem.Apply(promoStat, (double)count));
+            if (settings.DailyCustomerCap > 0)
+                count = Mathf.Min(count, settings.DailyCustomerCap);
             if (tutorial && today > 1 && settings.TutorialCustomers > 0)
                 count = settings.TutorialCustomers;
             double extra = StatSystem.Apply(extraBuyStat, 0.0); // 단골의 장바구니
@@ -239,7 +257,9 @@ namespace NevrianGlowFarm.Systems.Sales
             // 1일차는 '모두 구매'를 쓰지 않는다 — 손님마다 고정 개수 (피피 · 미루 3개씩, 수정사항 10/28)
             bool buyAll = (tutorial && settings.TutorialBuyAll && today > 1) || Systems.Tutorial.TutorialSystem.RequiredToday(Logic.Tutorial.TutorialEvents.LeveledUp) > 0f;
             // 1일차는 손님마다 고정 개수 (수정사항 10/28: 피피 · 미루가 3개씩 → 할머니의 월광 6개 완판)
-            int everyWanted = buyAll ? Mathf.Max(1, DisplayedCount()) : today <= 1 ? settings.Day1FirstBuy : 0;
+            // 그 뒤는 손님마다 고정 개수 + 더 큰 장바구니 (최종 기획서 v2.0 "구매 3개 고정") — 설정이 0이면 예전 무작위
+            int everyWanted = buyAll ? Mathf.Max(1, DisplayedCount()) : today <= 1 ? settings.Day1FirstBuy
+                : settings.BuyCount > 0 ? Mathf.Max(1, StatSystem.Apply(basketStat, settings.BuyCount)) : 0;
             session = new SalesSession(count, spec, 0, extra, settings.PurchaseExtraMax, everyWanted);
             purchaseRandom = new SeededRandom(SeededRandom.SeedFor(seed, PurchasePurpose, today));
             customerRandom = new SeededRandom(SeededRandom.SeedFor(seed, CustomerPurpose, today));
@@ -252,11 +272,98 @@ namespace NevrianGlowFarm.Systems.Sales
             PlayerInputGate.BlockWorld(this); // 장사 중 이동 · 시점만 (P-7, 결정 2026-10-21) — 화면(B · Tab · K)은 열 수 있음
             Debug.Log($"[SalesSystem] {today}일차 장사 시작: 손님 {count}명 (기대 {model.Expected(today, customerSpec):0.0} · 청결도 {clean:P0} · 단골 {model.Regulars:0.0}) · 진열 {DisplayedCount()}개");
             UpdateDebugView();
+            if (settings.InstantSettlement)
+                StartCoroutine(SettleInstantly());
+        }
+
+        // ── 즉시 정산 (최종 기획서 v2.0: 장사 시작 → 페이드 → 정산 화면, 손님은 정산 창 뒤 배경에서) ──
+
+        private UI.ScreenFader Fader => fader != null ? fader : fader = FindFirstObjectByType<UI.ScreenFader>();
+
+        private System.Collections.IEnumerator SettleInstantly()
+        {
+            var fade = Fader;
+            if (fade != null && settings.InstantFade > 0f)
+                yield return fade.Fade(1f, settings.InstantFade);
+            if (!running)
+                yield break; // 페이드 중에 불러오기 등으로 멈춤
+            // 결과를 지금 계산 — 아직 안 온 손님을 건너뛰기와 같은 함수로 (진열대에서 빠지고 매출은 달러에)
+            int before = session.Revenue;
+            session.SkipRemaining(shelfStates, purchaseRandom, PriceOf, TakeForSaleId);
+            int revenue = session.Revenue - before;
+            if (revenue > 0 && GameManager.Instance != null)
+                GameManager.Instance.TryChangeMoney(revenue);
+            PrepareBackground();
+            Complete(skipped: false, advancePhase: true); // → 정산 단계 → 정산 화면
+            if (fade != null && settings.InstantFade > 0f)
+                yield return fade.Fade(0f, settings.InstantFade);
+        }
+
+        // 배경 손님 장바구니: 오늘 팔린 작물을 손님 수만큼 나눠 담는다 (구매자 수 · 판매 수와 같게, 빈손 손님은 빈 바구니)
+        private void PrepareBackground()
+        {
+            backgroundBaskets.Clear();
+            var pool = new List<string>();
+            foreach (var pair in session.Sold)
+                for (int i = 0; i < pair.Value; i++)
+                    pool.Add(pair.Key);
+            for (int i = pool.Count - 1; i > 0; i--)
+            {
+                int j = customerRandom.NextInt(0, i + 1);
+                (pool[i], pool[j]) = (pool[j], pool[i]);
+            }
+            int buyers = Mathf.Max(1, session.Buyers);
+            for (int c = 0; c < session.Total; c++)
+            {
+                var basketIds = new List<string>();
+                if (c < buyers)
+                {
+                    int share = pool.Count / Mathf.Max(1, buyers - c);
+                    for (int k = 0; k < share && pool.Count > 0; k++)
+                    {
+                        basketIds.Add(pool[pool.Count - 1]);
+                        pool.RemoveAt(pool.Count - 1);
+                    }
+                }
+                backgroundBaskets.Enqueue(basketIds);
+            }
+            backgroundLeft = backgroundBaskets.Count;
+            background = backgroundLeft > 0;
+            backgroundTimer = 0.5f;
+        }
+
+        private void UpdateBackground()
+        {
+            var game = GameManager.Instance;
+            if (game == null || game.Phase != DayPhase.Settlement)
+            {
+                StopBackground();
+                return;
+            }
+            backgroundTimer -= Time.unscaledDeltaTime;
+            if (backgroundTimer > 0f || backgroundLeft <= 0)
+                return;
+            var range = settings.BackgroundInterval;
+            backgroundTimer = Mathf.Lerp(range.x, range.y, (float)customerRandom.NextDouble());
+            backgroundLeft--;
+            Spawn();
+        }
+
+        private void StopBackground()
+        {
+            if (!background)
+                return;
+            background = false;
+            backgroundLeft = 0;
+            backgroundBaskets.Clear();
+            ClearCustomers();
         }
 
         private void Update()
         {
-            if (!running)
+            if (background)
+                UpdateBackground();
+            if (!running || settings.InstantSettlement)
                 return;
             elapsed += Time.deltaTime;
 
@@ -333,6 +440,8 @@ namespace NevrianGlowFarm.Systems.Sales
             if (typeIndex >= 0)
                 typesToday.Add(typeIndex);
             var type = typeIndex >= 0 ? types[typeIndex] : null;
+            if (background && (type == null || type.Prefab == null))
+                return; // 배경 손님은 모습이 없으면 건너뜀 (결과는 이미 계산됨)
             if (type == null || type.Prefab == null)
             {
                 // 손님 모습이 없어도 장사 결과는 같게 — 그 손님은 바로 사고 낸다
@@ -349,7 +458,8 @@ namespace NevrianGlowFarm.Systems.Sales
             {
                 Debug.LogError($"[SalesSystem] 손님 '{type.Id}' 프리팹에 CustomerAI가 없음", go);
                 Destroy(go);
-                session.Leave();
+                if (!background)
+                    session.Leave();
                 return;
             }
             spawnedNumber++;
@@ -403,6 +513,8 @@ namespace NevrianGlowFarm.Systems.Sales
         /// <summary>불러오기 (6-1): 진행 중인 장사를 계산 없이 멈추고 손님을 지운다 (불러온 상태에 매출이 더해지지 않게).</summary>
         public void CancelForLoad()
         {
+            StopAllCoroutines();
+            StopBackground();
             running = false;
             PlayerInputGate.ReleaseWorld(this);
             ClearCustomers();
@@ -502,6 +614,15 @@ namespace NevrianGlowFarm.Systems.Sales
         /// <summary>진열대에서 장바구니를 채운다 (재고 비례 무작위 · 1~3개 · 마지막에 놓은 것부터).</summary>
         public List<CropData> FillBasket()
         {
+            // 배경 손님(즉시 정산 뒤): 미리 나눈 장바구니 — 진열대는 이미 계산 때 빠졌다
+            if (background)
+            {
+                var pre = backgroundBaskets.Count > 0 ? backgroundBaskets.Dequeue() : new List<string>();
+                var shown = new List<CropData>(pre.Count);
+                foreach (var id in pre)
+                    shown.Add(database.Get<CropData>(id));
+                return shown;
+            }
             var ids = SalesRules.FillBasket(shelfStates, purchaseRandom, session.NextWanted(purchaseRandom), TakeForSaleId, session.Spec.DisorderBuyMultiplier);
             var crops = new List<CropData>(ids.Count);
             foreach (var id in ids)
@@ -512,6 +633,13 @@ namespace NevrianGlowFarm.Systems.Sales
         /// <summary>계산 — 매출을 바로 달러에 더한다 (빈 장바구니면 빈손 퇴장으로 센다).</summary>
         public void Pay(IReadOnlyList<CropData> basket)
         {
+            if (background)
+            {
+                // 배경 손님: 매출은 이미 정산에 — 계산 소리만
+                if (basket.Count > 0)
+                    AudioManager.Play(SoundCues.CheckoutCoin, CounterPosition);
+                return;
+            }
             if (session == null)
                 return;
             var ids = new List<string>(basket.Count);
@@ -528,7 +656,7 @@ namespace NevrianGlowFarm.Systems.Sales
         public void Despawn(CustomerAI customer)
         {
             line.Leave(customer.Number);
-            if (customers.Remove(customer))
+            if (customers.Remove(customer) && !background)
                 session?.Leave();
             AudioManager.Play(SoundCues.CustomerExit, customer.transform.position);
             Destroy(customer.gameObject);

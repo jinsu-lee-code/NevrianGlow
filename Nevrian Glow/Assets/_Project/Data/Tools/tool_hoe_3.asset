@@ -20,4 +20,5 @@ MonoBehaviour:
   worldModels: []
   icon: {fileID: 21300000, guid: 2dfb1e838f9872f44becd781a9d53247, type: 3}
   useDelay: 0
+  useCooldown: 0.3
   workPerUse: 3

@@ -59,6 +59,10 @@ namespace NevrianGlowFarm.Systems.Player
         [SerializeField, Range(0f, 0.5f)] private float scrubHandDrop = 0.3f;
         [Tooltip("들고 있는 자세 ↔ 바닥 대걸레질 자세 전환 시간 (초)")]
         [SerializeField, Min(0.01f)] private float scrubBlendTime = 0.12f;
+        [Tooltip("손에 든 발광 도구의 빛 세기 — 아트 재질 값에 곱한다. 화면 바로 앞이라 그대로면 눈부심 (버그 리포트 10/30 3번) (배)")]
+        [SerializeField, Range(0f, 1f)] private float heldGlowScale = 0.35f;
+        [Tooltip("손 모델이 따로 없는 아이템(수확물 등)을 놓인 모습 모델로 들 때 맞추는 크기 — 가장 긴 변 (m)")]
+        [SerializeField, Min(0.01f)] private float worldModelHeldSize = 0.16f;
 
         [Header("디버그")]
         [Tooltip("지금 동작 (읽기 전용)")]
@@ -350,7 +354,18 @@ namespace NevrianGlowFarm.Systems.Player
                 return;
 
             motion = item is HoeData ? Motion.Swing : item is WateringCanData ? Motion.Tilt : item is MopData ? Motion.Push : Motion.Toss;
-            model = item.HeldPrefab != null ? Instantiate(item.HeldPrefab, pivot, false) : BuildGreybox(item);
+            // 손 모델 → 없으면 놓인 모습 모델(수확물 — 임시 구체가 보이던 것, 버그 리포트 10/30 8번) → 없으면 그레이박스
+            var worldModel = item.HeldPrefab == null ? item.WorldModelFor(0) : null;
+            if (item.HeldPrefab != null)
+                model = Instantiate(item.HeldPrefab, pivot, false);
+            else if (worldModel != null)
+            {
+                model = Instantiate(worldModel, pivot, false);
+                model.transform.localScale = Vector3.one * (worldModelHeldSize / Items.ItemModelView.LongestSide(worldModel));
+            }
+            else
+                model = BuildGreybox(item);
+            Rendering.GlowDimmer.Apply(model, heldGlowScale); // 손에 든 발광 도구는 화면 바로 앞이라 눈부심 (버그 리포트 10/30 3번)
             contact = null;
             grip = null;
             scrubBlend = 0f;

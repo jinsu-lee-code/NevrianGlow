@@ -23,6 +23,8 @@ namespace NevrianGlowFarm.Data
         [SerializeField, Min(0f)] private float stainPerCustomer = 0.3f;
         [Tooltip("튜토리얼 진행 중 2일차부터 얼룩 · 발자국 최소 — 대걸레를 배우는 날 (개, tutorial_day2_stains)")]
         [SerializeField, Min(0)] private int tutorialStains = 2;
+        [Tooltip("얼룩 닦는 시간 배율 — 클수록 오래 닦는다, 대걸레 속도를 이 값으로 나눔 (배, stain_wipe_time_mult · 최종 기획서 v2.0 ×1.4)")]
+        [SerializeField, Min(0.1f)] private float stainWipeTimeMult = 1f;
 
         [Header("흩어진 상품 · 흐트러진 진열")]
         [Tooltip("흩어진 상품 = 안 팔린 진열 × 이 값 + … (scatter_unsold_ratio)")]
@@ -53,6 +55,7 @@ namespace NevrianGlowFarm.Data
         public float MinSpacing => minSpacing;
         public int PlacementAttempts => placementAttempts;
         public int TutorialStains => tutorialStains;
+        public float StainWipeTimeMult => stainWipeTimeMult;
         public ItemData TrashItem => trashItem;
 
         /// <summary>Logic 가게 정리 값 (TidyRules).</summary>

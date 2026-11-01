@@ -15,7 +15,7 @@ MonoBehaviour:
   id: shop_watering_upgrade
   displayName: "\uBB3C\uBFCC\uB9AC\uAC1C \uC5C5\uADF8\uB808\uC774\uB4DC"
   description: "\uD55C \uBC88\uC5D0 1 \u2192 4 \u2192 8\uCE78"
-  sortOrder: 80
+  sortOrder: 60
   category: "\uB3C4\uAD6C"
   hidden: 0
   icon: {fileID: 0}
@@ -26,15 +26,18 @@ MonoBehaviour:
     - kind: 4
       targetId: 
       value: 3
-  - price: 1500
+  - price: 1000
     requirements:
     - kind: 4
       targetId: 
       value: 3
+  priceGrowthAfterTiers: 0
   dailyStock: 
   stockFromNextDay: 0
   bonusStock: 0
   bonusStockLevel: 0
+  stockPerLevel: 0
+  stockMax: 0
   baseTool: {fileID: 11400000, guid: dd02b4c4e6393a145b0d53047c05e233, type: 2}
   tierTools:
   - {fileID: 11400000, guid: b7db6aa2704bd5d4289a5405cf37a67f, type: 2}

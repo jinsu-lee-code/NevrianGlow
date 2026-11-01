@@ -7,6 +7,7 @@ using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 
 namespace NevrianGlowFarm.Editor
@@ -15,10 +16,15 @@ namespace NevrianGlowFarm.Editor
     /// 최적화 (2026-10-30) 준비 메뉴 — 여러 번 실행해도 결과가 같다 (있으면 연결만 다시).
     /// · Create Render Budget: 그래픽 품질 데이터(없을 때만 기본 3단계) + Core 씬 RenderBudget + 설정 패널(타이틀 · 일시정지)의 '그래픽 품질' 줄.
     /// · Create Loading Screen: Core UICanvas 로딩 화면 + 타이틀 연결.
+    /// · Create View Layers: 근경 · 중경 · 원경 데이터(없을 때만) + RenderBudget 오브젝트에 ViewLayers (아트 효과 재질 · 렌더러 연결).
     /// </summary>
     public static class RenderBudgetSetup
     {
         internal const string QualityPath = "Assets/_Project/Data/Stats/GraphicsQuality.asset";
+        private const string ViewLayersPath = "Assets/_Project/Data/Stats/ViewLayers.asset";
+        private const string RendererPath = "Assets/Settings/PC_Renderer.asset";
+        private const string PaintBrushPath = "Assets/Art/Environment/Materials_PP/mat_pp_paint_brush.mat";
+        private const string AerialPath = "Assets/Art/Environment/Materials_PP/mat_pp_aerial_perspective.mat";
         private const string FontPath = "Assets/_Project/Art/Fonts/font_maplestory_bold_sdf.asset";
         private const string LogoPath = "Assets/_Project/Art/UI/ui_logo.png";
         private const string GlowPath = "Assets/_Project/Art/UI/ui_glow_soft.png";
@@ -64,6 +70,44 @@ namespace NevrianGlowFarm.Editor
             Debug.Log($"[Setup] 그리기 예산: 품질 데이터 {(created ? "생성" : "유지")} ({quality.Tiers.Count}단계) · RenderBudget 연결 · 설정 패널 품질 줄 새로 {rows}개");
         }
 
+        // ── 근경 · 중경 · 원경 (2026-10-31) ──
+
+        [MenuItem("Glow Farm/Setup/Create View Layers")]
+        private static void CreateViewLayersMenu()
+        {
+            var budget = Object.FindFirstObjectByType<RenderBudget>(FindObjectsInactive.Include);
+            if (budget == null)
+            {
+                Debug.LogError("[Setup] Core 씬에 RenderBudget이 없음 - Core 씬을 열고 Create Render Budget을 먼저 실행");
+                return;
+            }
+            var data = AssetDatabase.LoadAssetAtPath<ViewLayersData>(ViewLayersPath);
+            bool created = data == null;
+            if (created)
+            {
+                data = ScriptableObject.CreateInstance<ViewLayersData>();
+                AssetDatabase.CreateAsset(data, ViewLayersPath);
+                AssetDatabase.SaveAssets();
+            }
+            var renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(RendererPath);
+            var brush = AssetDatabase.LoadAssetAtPath<Material>(PaintBrushPath);
+            var aerial = AssetDatabase.LoadAssetAtPath<Material>(AerialPath);
+            if (renderer == null || brush == null || aerial == null)
+                Debug.LogWarning($"[Setup] 근경 · 중경 · 원경: 렌더러 {(renderer != null ? "있음" : "없음")} · 붓 터치 재질 {(brush != null ? "있음" : "없음")} · 거리 안개 재질 {(aerial != null ? "있음" : "없음")} - 없는 효과는 건너뜀");
+
+            var go = budget.gameObject;
+            if (!go.TryGetComponent<ViewLayers>(out var layers))
+                layers = Undo.AddComponent<ViewLayers>(go);
+            var so = new SerializedObject(layers);
+            so.FindProperty("layers").objectReferenceValue = data;
+            so.FindProperty("rendererData").objectReferenceValue = renderer;
+            so.FindProperty("paintBrushMaterial").objectReferenceValue = brush;
+            so.FindProperty("aerialMaterial").objectReferenceValue = aerial;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorSceneManager.MarkSceneDirty(go.scene);
+            Debug.Log($"[Setup] 근경 · 중경 · 원경: 데이터 {(created ? "생성" : "유지")} · {go.name}에 ViewLayers 연결");
+        }
+
         private static Camera FindViewCamera()
         {
             foreach (var cam in Object.FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None))
@@ -84,9 +128,9 @@ namespace NevrianGlowFarm.Editor
             var so = new SerializedObject(data);
             var tiers = so.FindProperty("tiers");
             tiers.arraySize = 3;
-            SetTier(tiers.GetArrayElementAtIndex(0), "낮음", 50f, 2048, 2, 0.4f, 0.5f, false, 0.3f, false, 0.8f);
-            SetTier(tiers.GetArrayElementAtIndex(1), "보통", 80f, 2048, 3, 0.6f, 0.75f, true, 0.4f, false, 1f);
-            SetTier(tiers.GetArrayElementAtIndex(2), "높음", 120f, 4096, 4, 1f, 1f, true, 0.5f, true, 1f);
+            SetTier(tiers.GetArrayElementAtIndex(0), "낮음", 50f, 2048, 2, 0.4f, 0.5f, false, 0.3f, false, 0.8f, false);
+            SetTier(tiers.GetArrayElementAtIndex(1), "보통", 100f, 2048, 4, 0.7f, 0.75f, true, 0.4f, false, 1f, true);
+            SetTier(tiers.GetArrayElementAtIndex(2), "높음", 120f, 4096, 4, 1f, 1f, true, 0.5f, true, 1f, true);
             so.FindProperty("defaultTier").intValue = 1;
             so.ApplyModifiedPropertiesWithoutUndo();
             AssetDatabase.SaveAssets();
@@ -94,7 +138,7 @@ namespace NevrianGlowFarm.Editor
         }
 
         private static void SetTier(SerializedProperty t, string name, float shadowDistance, int shadowResolution, int cascades,
-            float grassDistance, float grassDensity, bool lake, float windowScale, bool windowShadows, float renderScale)
+            float grassDistance, float grassDensity, bool lake, float windowScale, bool windowShadows, float renderScale, bool smaa)
         {
             t.FindPropertyRelative("displayName").stringValue = name;
             t.FindPropertyRelative("shadowDistance").floatValue = shadowDistance;
@@ -106,6 +150,7 @@ namespace NevrianGlowFarm.Editor
             t.FindPropertyRelative("windowViewScale").floatValue = windowScale;
             t.FindPropertyRelative("windowViewShadows").boolValue = windowShadows;
             t.FindPropertyRelative("renderScale").floatValue = renderScale;
+            t.FindPropertyRelative("smaa").boolValue = smaa;
         }
 
         /// <summary>

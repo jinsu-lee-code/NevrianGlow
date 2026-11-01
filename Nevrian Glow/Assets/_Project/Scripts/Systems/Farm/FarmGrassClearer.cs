@@ -24,6 +24,10 @@ namespace NevrianGlowFarm.Systems.Farm
         [SerializeField, Min(0f)] private float waitTimeout = 10f;
         [Tooltip("열린 확장 밭(울타리 안)에서 숨기는 배경 소품(꽃 · 버섯 · 덤불)의 최대 크기 — 이보다 크거나 콜라이더가 있는 것은 그대로 (m)")]
         [SerializeField, Min(0f)] private float propMaxSize = 4f;
+        [Tooltip("확장 밭 자리(열리기 전 포함) 울타리 안에서 숨기는 배경 나무 · 바위의 최대 크기 — 길 끝 자리가 숲에 걸쳐 있어 빈터로 (m, 10/31)")]
+        [SerializeField, Min(0f)] private float siteClearMaxSize = 7f;
+        [Tooltip("확장 밭 자리 빈터의 울타리 바깥 여유 (m)")]
+        [SerializeField, Min(0f)] private float siteClearMargin = 1f;
 
         [Header("디버그")]
         [Tooltip("지운 풀 수 (읽기 전용)")]
@@ -33,6 +37,7 @@ namespace NevrianGlowFarm.Systems.Farm
 
         private Terrain terrain;
         private bool cloned;
+        private bool sitesCleared;
 
         private void Reset() => grid = GetComponent<FarmGrid>();
 
@@ -88,6 +93,11 @@ namespace NevrianGlowFarm.Systems.Farm
             if (rects.Count == 0)
                 return;
             hiddenProps += HideProps(terrain.gameObject.scene, sites, propMaxSize);
+            if (!sitesCleared)
+            {
+                hiddenProps += ClearSites(terrain.gameObject.scene, grid.AllSiteGroundRects(siteClearMargin), siteClearMaxSize);
+                sitesCleared = true;
+            }
 
             // 원본 에셋을 건드리지 않게 처음 한 번 사본으로 바꾼다 (지형 · 충돌 둘 다)
             if (!cloned)
@@ -171,6 +181,40 @@ namespace NevrianGlowFarm.Systems.Farm
                         if (rect.Contains(p))
                         {
                             r.enabled = false;
+                            hidden++;
+                            break;
+                        }
+                }
+            return hidden;
+        }
+
+        /// <summary>
+        /// 확장 밭 자리 빈터 (길 끝 자리 10/31): 배경 씬에서 사각형 안에 중심이 있는 나무 · 바위 · 소품(maxSize 이하 — 등대 · 절벽 같은 큰 것은 그대로)의
+        /// 렌더러와 그 오브젝트의 콜라이더를 끈다. 숨긴 렌더러 수. 아트 씬 · 에셋은 그대로, 실행 중에만.
+        /// </summary>
+        internal static int ClearSites(UnityEngine.SceneManagement.Scene scene, List<Rect> rects, float maxSize)
+        {
+            if (rects.Count == 0 || !scene.IsValid())
+                return 0;
+            int hidden = 0;
+            foreach (var root in scene.GetRootGameObjects())
+                foreach (var r in root.GetComponentsInChildren<Renderer>())
+                {
+                    if (!r.enabled || r is ParticleSystemRenderer)
+                        continue;
+                    var b = r.bounds;
+                    if (b.size.x > maxSize || b.size.z > maxSize)
+                        continue;
+                    var p = new Vector2(b.center.x, b.center.z);
+                    foreach (var rect in rects)
+                        if (rect.Contains(p))
+                        {
+                            r.enabled = false;
+                            foreach (var c in r.GetComponents<Collider>())
+                                c.enabled = false;
+                            if (r.transform.parent != null)
+                                foreach (var c in r.transform.parent.GetComponents<Collider>())
+                                    c.enabled = false;
                             hidden++;
                             break;
                         }

@@ -4,9 +4,9 @@ item_seed_mushroomflower,버섯꽃 씨앗,seed,0,10,,false,,,,,,,icon_seed_mushr
 item_seed_lanternfruit,등불 열매 씨앗,seed,0,10,,false,,,,,,,icon_seed_lanternfruit,판매 불가,P0
 item_seed_spiralbloom,나선층꽃 씨앗,seed,0,10,,false,,,,,,,icon_seed_spiralbloom,판매 불가,phase2
 item_seed_pearlcore,진주핵꽃 씨앗,seed,0,10,,false,,,,,,,icon_seed_pearlcore,판매 불가,phase2
-crop_moonroot,월광 뿌리,crop,55,10,30,true,,,,,,,icon_item_moonroot,,P0
-crop_mushroomflower,버섯꽃,crop,150,10,30,false,,,,,,,icon_item_mushroomflower,1개 = 1묶음,P0
-crop_lanternfruit,등불 열매,crop,180,10,30,true,,,,,,,icon_item_lanternfruit,,P0
+crop_moonroot,월광 뿌리,crop,75,10,30,true,,,,,,,icon_item_moonroot,판매가 10/30 crops.csv,P0
+crop_mushroomflower,버섯꽃,crop,100,10,30,false,,,,,,,icon_item_mushroomflower,1개 = 1묶음 · 판매가 10/30 crops.csv,P0
+crop_lanternfruit,등불 열매,crop,95,10,30,true,,,,,,,icon_item_lanternfruit,판매가 10/30 crops.csv,P0
 item_spiral_petal,나선층 꽃잎,crop,90,10,30,true,,,,,,,icon_item_spiral_petal,1개 = 1묶음,phase2
 item_pearlcore,진주핵,crop,450,10,30,false,,,,,,,icon_item_pearlcore,진주핵꽃 수확물,phase2
 item_dried_mushroom,말린 버섯꽃,processed,65,10,30,false,bundle,,,,,,icon_item_dried_mushroom,작은 가공품 30개,phase2

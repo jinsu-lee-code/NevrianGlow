@@ -120,7 +120,7 @@ namespace NevrianGlowFarm.UI
                 case MopData mop:
                     return $"가게 바닥 얼룩을 닦는다 (반경 {mop.Radius.ToString("0.#", CultureInfo.InvariantCulture)} m)";
                 case FertilizerData fertilizer:
-                    return $"심은 작물의 남은 성장일을 {fertilizer.GrowDaysReduction}일 줄인다 (작물당 1회)";
+                    return $"심은 작물이 주는 즉시 {fertilizer.GrowDaysReduction}일 자란다 (작물당 1회)";
                 default:
                     return null;
             }

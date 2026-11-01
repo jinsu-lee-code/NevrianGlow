@@ -87,6 +87,7 @@ namespace NevrianGlowFarm.Systems.Shop
             GameEvents.SkillLevelChanged += OnSkillChanged;
             GameEvents.CropFirstHarvested += OnFirstHarvest;
             GameEvents.LeveledUp += OnLeveledUp;
+            StatSystem.CollectingModifiers += CollectModifiers;
         }
 
         private void OnDisable()
@@ -96,6 +97,15 @@ namespace NevrianGlowFarm.Systems.Shop
             GameEvents.SkillLevelChanged -= OnSkillChanged;
             GameEvents.CropFirstHarvested -= OnFirstHarvest;
             GameEvents.LeveledUp -= OnLeveledUp;
+            StatSystem.CollectingModifiers -= CollectModifiers;
+        }
+
+        // 산 능력치 상품(장바구니 · 홍보 · 품질, 10/30) → 능력치 변경
+        private void CollectModifiers(List<StatModifier> into)
+        {
+            foreach (var p in products)
+                if (p is StatUpgradeProductData upgrade && upgrade.TryModifier(state.TiersBought(upgrade.Id), out var modifier))
+                    into.Add(modifier);
         }
 
         // 밭 · 진열대는 다른 씬(Farm · Shop)에 있어 씬 사이 참조를 걸 수 없다 → 처음 쓸 때 한 번 찾는다.
@@ -166,6 +176,8 @@ namespace NevrianGlowFarm.Systems.Shop
         public void LoadFrom(Logic.Save.SaveSnapshot from)
         {
             Logic.Save.SaveState.ApplyShop(state, from);
+            if (StatSystem.Instance != null)
+                StatSystem.Instance.Rebuild(); // 산 능력치 상품 단계가 바뀌었을 수 있다
             NotifyChanged();
         }
 
@@ -311,6 +323,11 @@ namespace NevrianGlowFarm.Systems.Shop
                         return true;
                     reason = "진열대가 없음";
                     return false;
+                case StatUpgradeProductData upgrade:
+                    if (upgrade.Stat != null)
+                        return true;
+                    reason = "상품 데이터에 능력치가 없음";
+                    return false;
                 default:
                     reason = "알 수 없는 상품 종류";
                     return false;
@@ -346,6 +363,10 @@ namespace NevrianGlowFarm.Systems.Shop
                     var display = Shelves[0];
                     display.SetSlotCount(display.State.SlotCount + shelf.Slots);
                     return $"진열 칸 +{shelf.Slots} (지금 {display.State.SlotCount}칸)";
+                case StatUpgradeProductData upgrade:
+                    if (StatSystem.Instance != null)
+                        StatSystem.Instance.Rebuild(); // 산 단계는 이미 ShopState에 — 능력치를 다시 모은다
+                    return $"{upgrade.DisplayName} {tier + 1}단계";
                 default:
                     return product.DisplayName;
             }

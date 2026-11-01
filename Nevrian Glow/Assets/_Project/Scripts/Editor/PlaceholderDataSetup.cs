@@ -85,6 +85,7 @@ namespace NevrianGlowFarm.Editor
         };
 
         private const float WateringUseDelay = 0.3f; // BALANCE 2-11: 기울이기 0.3초 뒤 물 (괭이 · 대걸레는 0)
+        private const float HoeUseCooldown = 0.3f;   // BALANCE 2-11: 괭이 연타 간격 (버그 리포트 10/30)
 
         private static readonly (string Id, string Name, int CellCount)[] WateringCans =
         {
@@ -186,6 +187,7 @@ namespace NevrianGlowFarm.Editor
                 {
                     SetIdentity(so, hoe.Id, hoe.Name);
                     so.FindProperty("workPerUse").floatValue = hoe.WorkPerUse;
+                    so.FindProperty("useCooldown").floatValue = HoeUseCooldown;
                 }));
             }
             foreach (var can in WateringCans)

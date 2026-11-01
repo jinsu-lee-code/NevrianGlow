@@ -28,12 +28,13 @@ MonoBehaviour:
   - {fileID: 9114481416940882190, guid: c78d482c2dad077489effebc1d6fa957, type: 3}
   modelScale: 1.3
   harvestFromModel: 0
+  harvestTargetFrom: 0.45
   seedPrice: 15
-  sellPrice: 150
+  sellPrice: 100
   growDays: 2
   needsWater: 0
   wetDays: 1
-  harvestYield: 2
+  harvestYield: 3
   regrowDays: 0
   maxHarvests: 1
   giantChance: 0.02

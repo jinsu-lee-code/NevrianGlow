@@ -45,7 +45,7 @@ namespace NevrianGlowFarm.Systems.Shop
         [SerializeField, Min(0.05f)] private float itemSize = 0.24f;
         [Tooltip("줄마다 (놓는 면 높이, 앞뒤 위치 z) — 0번 = 앞줄(손님 쪽). 층 · 경사 진열대(아트 2026-10-22)용, 비우면 topHeight 한 면에 stackSpacing 간격 (m)")]
         [SerializeField] private List<Vector2> rowLayout = new List<Vector2>();
-        [Tooltip("진열 가능 영역(파인 쟁반 · 바구니) — 채우는 순서대로. 있으면 이 영역 안에만 stackSpacing 격자로 놓고 면 기울기를 따른다, 칸당 개수가 안 들어가면 간격 · 크기를 줄인다 (2026-10-25)")]
+        [Tooltip("진열 가능 영역(파인 쟁반 · 바구니) — 채우는 순서대로. 있으면 이 영역 안에만 격자로 놓고 면 기울기를 따른다. 격자 간격은 칸당 개수가 꼭 들어가는 가장 넓은 값(작물 크기 ~ 절반) — 가득 차면 모든 쟁반이 찬다 (2026-10-31)")]
         [SerializeField] private List<Tray> trays = new List<Tray>();
 
         /// <summary>진열 가능 영역 하나 (칸 중심 기준 로컬). z 범위를 0으로 주면 한 줄.</summary>
@@ -135,24 +135,48 @@ namespace NevrianGlowFarm.Systems.Shop
         // 진열된 작물 한 개의 크기 (m)
         private float PlacedSize => itemSize;
 
-        // 쟁반 영역을 stackSpacing 격자로 나눈 자리 (2026-10-25 사용자: 파인 쟁반 안에만, 한 줄, 기울인 면을 따라).
+        // 쟁반 영역을 격자로 나눈 자리 (2026-10-25 사용자: 파인 쟁반 안에만, 한 줄, 기울인 면을 따라).
         // 한 영역에 들어가는 수 = 너비 ÷ 간격 (작물은 간격보다 조금 커서 이웃과 살짝 겹친다 — 수북한 느낌, 영역 밖 턱 · 기둥으로는 안 나감).
-        // 쟁반 순서대로 · 쟁반 안은 앞줄(+Z)부터 채운다
+        // 간격은 칸당 개수가 꼭 들어가는 가장 넓은 값 — 자리가 남으면 가득 채워도 뒤쪽 쟁반이 비어 보이고(판매대 가운데),
+        // 모자라면 30개가 안 들어간다(경사 진열대 24자리) (버그 리포트 10/30 4번). 쟁반 순서대로 · 쟁반 안은 앞줄(+Z)부터 채운다
         private void BuildTrayGrid()
         {
             trayGrid.Clear();
             trayPoints.Clear();
+            if (trays.Count == 0)
+                return;
+            float spacing = FitTraySpacing(ItemsPerSlot);
             for (int ti = 0; ti < trays.Count; ti++)
             {
                 var t = trays[ti];
-                float width = Mathf.Abs(t.X.y - t.X.x), depth = Mathf.Abs(t.Z.y - t.Z.x);
-                int cols = Mathf.Max(1, Mathf.FloorToInt(width / stackSpacing + 0.001f));
-                int rows = Mathf.Max(1, Mathf.FloorToInt(depth / stackSpacing + 0.001f));
+                var (cols, rows) = TrayCells(t, spacing);
                 float cx = (t.X.x + t.X.y) * 0.5f, cz = (t.Z.x + t.Z.y) * 0.5f;
                 for (int r = 0; r < rows; r++)
                     for (int c = 0; c < cols; c++)
-                        trayGrid.Add((new Vector2(cx + (c - (cols - 1) * 0.5f) * stackSpacing, cz + ((rows - 1) * 0.5f - r) * stackSpacing), ti));
+                        trayGrid.Add((new Vector2(cx + (c - (cols - 1) * 0.5f) * spacing, cz + ((rows - 1) * 0.5f - r) * spacing), ti));
             }
+        }
+
+        private static (int Cols, int Rows) TrayCells(Tray t, float spacing) =>
+            (Mathf.Max(1, Mathf.FloorToInt(Mathf.Abs(t.X.y - t.X.x) / spacing + 0.001f)),
+             Mathf.Max(1, Mathf.FloorToInt(Mathf.Abs(t.Z.y - t.Z.x) / spacing + 0.001f)));
+
+        // 작물 크기(이웃과 닿는 간격)부터 절반까지 좁혀 가며 wanted 자리가 처음 나오는 간격 — 없으면 가장 좁은 간격 (그만큼만 놓임)
+        private float FitTraySpacing(int wanted)
+        {
+            float widest = Mathf.Max(itemSize, 0.05f), narrowest = widest * 0.5f;
+            for (float s = widest; s >= narrowest; s -= 0.002f)
+            {
+                int count = 0;
+                foreach (var t in trays)
+                {
+                    var (cols, rows) = TrayCells(t, s);
+                    count += cols * rows;
+                }
+                if (count >= wanted)
+                    return s;
+            }
+            return narrowest;
         }
 
         // 쟁반 자리 하나: 격자 x · z 위에서 아래로 쏜 레이가 처음 닿는 모델 면에 작물 바닥을 대고, 면의 기울기만큼 눕힌다. 한 번 재면 기억한다

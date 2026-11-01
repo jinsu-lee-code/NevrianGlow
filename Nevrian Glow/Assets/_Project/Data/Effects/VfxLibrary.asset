@@ -41,3 +41,7 @@ MonoBehaviour:
     prefab: {fileID: 4659286823927715355, guid: 47be1773b7001bc4c90e8fe4c7e7d9f4, type: 3}
     lifetime: 0
     scale: 1
+  - id: vfx_seed_dust
+    prefab: {fileID: 1836281601770754753, guid: 27f743cc141b8cf4f882d6a567f86761, type: 3}
+    lifetime: 0.8
+    scale: 1

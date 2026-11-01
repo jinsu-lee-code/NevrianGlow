@@ -1,0 +1,99 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5eb9d6ec610e0d849a229d4b0cb8805d, type: 3}
+  m_Name: DailyGoals
+  m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.DailyGoalsData
+  days:
+  - day: 3
+    letterId: letter_3
+    goals:
+    - id: d3_iron_hoe
+      text: "\uCCA0 \uAD2D\uC774\uB85C \uBC14\uAFB8\uAE30"
+      condition: bought:shop_hoe_upgrade:1
+      core: 1
+    - id: d3_full_field
+      text: "\uBC2D 32\uCE78\uC744 \uBAA8\uB450 \uC2EC\uAE30"
+      condition: planted_total:32
+      core: 1
+    - id: d3_mushroom
+      text: "\uBC84\uC12F\uAF43 \uC2EC\uAE30"
+      condition: planted:crop_mushroomflower
+      core: 0
+    recommended:
+    - shop_hoe_upgrade
+    - shop_seed_mushroomflower
+  - day: 4
+    letterId: letter_4
+    goals:
+    - id: d4_plot_expand
+      text: "\uBC2D \uB113\uD788\uAE30 (\uBC2D \uD655\uC7A5\uAD8C)"
+      condition: bought:shop_plot_expand:1
+      core: 1
+    - id: d4_promo_basket
+      text: "\uB9E4\uC7A5 \uD64D\uBCF4 \uB610\uB294 \uB354 \uD070 \uC7A5\uBC14\uAD6C\uB2C8"
+      condition: bought_any:shop_store_promo,shop_big_basket:1
+      core: 0
+    - id: d4_fertilize
+      text: "\uB4F1\uBD88 \uC5F4\uB9E4\uC5D0 \uBE44\uB8CC \uC8FC\uAE30"
+      condition: fertilized:crop_lanternfruit
+      core: 1
+    - id: d4_site_planted
+      text: "\uC0C8 \uBC2D\uC5D0 \uC2EC\uAE30"
+      condition: site_planted
+      core: 0
+    recommended:
+    - shop_plot_expand
+    - shop_store_promo
+    - shop_big_basket
+    - shop_fertilizer
+  - day: 5
+    letterId: letter_5
+    goals:
+    - id: d5_mop_watering
+      text: "\uB300\uAC78\uB808 \xB7 \uBB3C\uBFCC\uB9AC\uAC1C \uBC14\uAFB8\uAE30"
+      condition: bought:shop_mop_upgrade,shop_watering_upgrade:1
+      core: 1
+    - id: d5_bag_hotbar
+      text: "\uAC00\uBC29 \xB7 \uD56B\uBC14 \uB113\uD788\uAE30"
+      condition: bought:shop_bag_expand,shop_hotbar_expand:1
+      core: 1
+    - id: d5_full_field
+      text: "\uBC2D 64\uCE78\uC744 \uBAA8\uB450 \uC2EC\uAE30"
+      condition: planted_total:64
+      core: 1
+    recommended:
+    - shop_mop_upgrade
+    - shop_watering_upgrade
+    - shop_bag_expand
+    - shop_hotbar_expand
+  - day: 6
+    letterId: letter_6
+    goals:
+    - id: d6_lantern_harvest
+      text: "\uB4F1\uBD88 \uC5F4\uB9E4 \uCCAB \uC218\uD655"
+      condition: harvested:crop_lanternfruit
+      core: 1
+    - id: d6_tier2
+      text: "2\uB2E8\uACC4 \uC5C5\uADF8\uB808\uC774\uB4DC \uD558\uB098 \uC774\uC0C1
+        \uB610\uB294 \uBC2D \uD655\uC7A5 2"
+      condition: bought_any:shop_hoe_upgrade,shop_mop_upgrade,shop_watering_upgrade:2
+        || bought:shop_plot_expand:2
+      core: 0
+    - id: d6_lighthouse
+      text: "\uC7A5\uC0AC\uB97C \uB9C8\uCE58\uACE0 \uB4F1\uB300\uB97C \uBCF4\uAE30"
+      condition: sales_done
+      core: 0
+    recommended:
+    - shop_hoe_upgrade
+    - shop_mop_upgrade
+    - shop_watering_upgrade
+    - shop_plot_expand

@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Data.ToolUpgradeProductData
   id: shop_mop_upgrade
   displayName: "\uB300\uAC78\uB808 \uC5C5\uADF8\uB808\uC774\uB4DC"
-  description: "\uB2E6\uB294 \uC18D\uB3C4\uC640 \uBC18\uACBD \uC99D\uAC00"
-  sortOrder: 70
+  description: "\uB2E6\uB294 \uC18D\uB3C4 +30% \xB7 \uBC18\uACBD +0.2 m\uC529 (\uB0A1\uC740
+    \u2192 \uC88B\uC740 \u2192 \uBC1C\uAD11)"
+  sortOrder: 50
   category: "\uB3C4\uAD6C"
   hidden: 0
   icon: {fileID: 0}
@@ -26,15 +27,18 @@ MonoBehaviour:
     - kind: 4
       targetId: 
       value: 3
-  - price: 800
+  - price: 500
     requirements:
     - kind: 4
       targetId: 
       value: 3
+  priceGrowthAfterTiers: 0
   dailyStock: 
   stockFromNextDay: 0
   bonusStock: 0
   bonusStockLevel: 0
+  stockPerLevel: 0
+  stockMax: 0
   baseTool: {fileID: 11400000, guid: e59d00e08fdcfa743a80da95306d1217, type: 2}
   tierTools:
   - {fileID: 11400000, guid: dfa7fc53796a24041a027e8dacc816b2, type: 2}

@@ -17,8 +17,14 @@ namespace NevrianGlowFarm.Systems.Zones
         [SerializeField] private ZoneProfileData destination;
         [Tooltip("문 모델의 Animator (아트 pf_env_farm_door — Bool 'IsOpen') — 비우면 열리는 연출 없음")]
         [SerializeField] private Animator doorAnimator;
+        [Tooltip("문을 쓸 때 빨리 도는 포털 빛 (아트 pf_vfx_portal — 커지는 것은 아트 문 열림 애니메이션이 맡음) — 비우면 없음")]
+        [SerializeField] private Transform portal;
 
         [Header("조정값")]
+        [Tooltip("포털 연출 시간 — 페이드와 겹쳐 보인다 (초, 기획서 v2.0: 0.6)")]
+        [SerializeField, Min(0f)] private float portalTime = 0.6f;
+        [Tooltip("포털 연출 동안 입자 재생 속도 배율 (배)")]
+        [SerializeField, Range(1f, 5f)] private float portalSpeed = 2.5f;
         [Tooltip("이 단계에서만 문을 쓸 수 있다")]
         [SerializeField] private DayPhase usablePhase = DayPhase.Farming;
         [Tooltip("문을 쓰면 다음 단계로 넘긴다 (농사 끝내기)")]
@@ -61,8 +67,32 @@ namespace NevrianGlowFarm.Systems.Zones
                 SetOpen(false);
             });
             if (started)
+            {
                 SetOpen(true);
+                if (portal != null && portalTime > 0f && isActiveAndEnabled)
+                    StartCoroutine(PortalPulse());
+            }
             return started;
+        }
+
+        // 포털: 0.6초 동안 입자가 빨리 돈다 (화면이 어두워지는 동안 보임). 크기는 아트 문 열림 애니메이션(Portal 크기)이 키운다 — 겹쳐 쓰지 않음
+        private System.Collections.IEnumerator PortalPulse()
+        {
+            var systems = portal.GetComponentsInChildren<ParticleSystem>(true);
+            var speeds = new float[systems.Length];
+            for (int i = 0; i < systems.Length; i++)
+            {
+                var main = systems[i].main;
+                speeds[i] = main.simulationSpeed;
+                main.simulationSpeed = speeds[i] * portalSpeed;
+            }
+            yield return new WaitForSecondsRealtime(portalTime);
+            for (int i = 0; i < systems.Length; i++)
+                if (systems[i] != null)
+                {
+                    var main = systems[i].main;
+                    main.simulationSpeed = speeds[i];
+                }
         }
 
         private void SetOpen(bool open)

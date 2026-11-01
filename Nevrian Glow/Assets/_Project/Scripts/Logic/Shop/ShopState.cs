@@ -87,6 +87,10 @@ namespace NevrianGlowFarm.Logic.Shop
     /// 하루 입고량: 일차별 표(1일차부터, 마지막 값이 이후 계속 — BALANCE 3-8 "일차별 입고량"), 비우면 무제한.
     /// StockFromNextDay = 처음 열린 날은 입고 없음, 다음 날부터 (BALANCE 3-8 "해금 다음 날부터 입고").
     /// 레벨 보너스 입고: 레벨이 BonusStockLevel 이상이면 하루 입고량 = BonusStock (수정사항 10/28 "레벨 6에서 씨앗 입고량 두 배"). 0이면 없음.
+    /// 레벨마다 입고 (기획 shop.csv 10/30 "하루 입고 12개, 레벨마다 +2 (최대 40)"): StockPerLevel이 있으면 해금 레벨(없으면 1)에서 입고량,
+    /// 레벨이 오를 때마다 StockPerLevel씩 늘고 StockMax(0 = 끝없음)를 넘지 않는다 — 레벨 보너스 입고 대신.
+    /// 끝없는 단계 (10/30 새 상품 "6단계부터는 직전 가격 × 4"): ExtraTierGrowth가 있으면 단계를 다 산 뒤에도 마지막 단계 조건으로 계속,
+    /// 가격은 직전 가격 × ExtraTierGrowth.
     /// </summary>
     public readonly struct ProductSpec
     {
@@ -97,9 +101,12 @@ namespace NevrianGlowFarm.Logic.Shop
         public bool StockFromNextDay { get; }
         public int BonusStock { get; }
         public int BonusStockLevel { get; }
+        public int StockPerLevel { get; }
+        public int StockMax { get; }
+        public double ExtraTierGrowth { get; }
 
         public ProductSpec(string id, IReadOnlyList<TierSpec> tiers, bool repeatable, IReadOnlyList<int> dailyStock = null, bool stockFromNextDay = false,
-            int bonusStock = 0, int bonusStockLevel = 0)
+            int bonusStock = 0, int bonusStockLevel = 0, int stockPerLevel = 0, int stockMax = 0, double extraTierGrowth = 0.0)
         {
             Id = id;
             Tiers = tiers ?? Array.Empty<TierSpec>();
@@ -108,6 +115,44 @@ namespace NevrianGlowFarm.Logic.Shop
             StockFromNextDay = stockFromNextDay;
             BonusStock = Math.Max(0, bonusStock);
             BonusStockLevel = Math.Max(0, bonusStockLevel);
+            StockPerLevel = Math.Max(0, stockPerLevel);
+            StockMax = Math.Max(0, stockMax);
+            ExtraTierGrowth = Math.Max(0.0, extraTierGrowth);
+        }
+
+        /// <summary>첫 단계의 레벨 조건 (없으면 1) — 레벨마다 입고가 이 레벨에서 시작한다.</summary>
+        public int UnlockLevel
+        {
+            get
+            {
+                int level = 1;
+                if (Tiers.Count > 0)
+                    foreach (var r in Tiers[0].Requirements)
+                        if (r.Kind == UnlockKind.LevelAtLeast)
+                            level = Math.Max(level, r.Value);
+                return level;
+            }
+        }
+
+        /// <summary>
+        /// 단계 tier(0부터)의 가격 · 조건. 정해진 단계 밖은 끝없는 단계면 마지막 단계 조건 + 직전 가격 × ExtraTierGrowth, 아니면 false.
+        /// </summary>
+        public bool TryTier(int tier, out TierSpec spec)
+        {
+            spec = default;
+            if (tier < 0 || Tiers.Count == 0)
+                return false;
+            if (tier < Tiers.Count)
+            {
+                spec = Tiers[tier];
+                return true;
+            }
+            if (ExtraTierGrowth <= 0.0)
+                return false;
+            var last = Tiers[Tiers.Count - 1];
+            double price = last.Price * Math.Pow(ExtraTierGrowth, tier - (Tiers.Count - 1));
+            spec = new TierSpec(price >= int.MaxValue ? int.MaxValue : (int)Math.Round(price, MidpointRounding.AwayFromZero), last.Requirements);
+            return true;
         }
     }
 
@@ -192,10 +237,16 @@ namespace NevrianGlowFarm.Logic.Shop
                 if (open == 0 || open >= day)
                     return 0;
             }
+            int index = Math.Min(Math.Max(0, day - 1), product.DailyStock.Count - 1);
+            int stock = Math.Max(0, product.DailyStock[index]);
+            if (product.StockPerLevel > 0)
+            {
+                int grown = stock + product.StockPerLevel * Math.Max(0, level - product.UnlockLevel);
+                return product.StockMax > 0 ? Math.Min(grown, product.StockMax) : grown;
+            }
             if (product.BonusStockLevel > 0 && product.BonusStock > 0 && level >= product.BonusStockLevel)
                 return product.BonusStock;
-            int index = Math.Min(Math.Max(0, day - 1), product.DailyStock.Count - 1);
-            return Math.Max(0, product.DailyStock[index]);
+            return stock;
         }
 
         public ProductOffer Offer(ProductSpec product, IUnlockContext context, int money)
@@ -204,10 +255,9 @@ namespace NevrianGlowFarm.Logic.Shop
                 return new ProductOffer(false, OfferStatus.Locked, 0, 0, 0);
             int bought = TiersBought(product.Id);
             int tier = product.Repeatable ? 0 : bought;
-            if (!product.Repeatable && tier >= product.Tiers.Count)
+            if (!product.TryTier(tier, out var spec))
                 return new ProductOffer(true, OfferStatus.MaxedOut, tier, 0, 0);
 
-            var spec = product.Tiers[tier];
             int stock = StockToday(product, context.Day, context.Level);
             int left = stock < 0 ? -1 : Math.Max(0, stock - BoughtToday(product.Id));
             if (!UnlockRules.AllMet(spec.Requirements, context))
