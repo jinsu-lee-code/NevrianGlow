@@ -11,6 +11,7 @@
 | 씨앗 가루 교체 (개발 전달 1-3) | `_Project/Data/Effects/VfxLibrary.asset`의 `vfx_seed_dust` 프리팹 | `Art/Environment/FX/seed_dust/pf_vfx_seed_dust.prefab` (scale 1, lifetime 0.8 그대로). 개발 임시본 `_Project/Prefabs/Effects/vfx_seed_dust.prefab`은 연결 뒤 지워도 됨 |
 | 비료 성장 연출 교체 (개발 전달 1-5) | `FarmCellView.GrowBurst`의 `VfxCues.Sparkle` 자리 | 새 VFX id로 `Art/Environment/FX/fertilizer_grow/pf_vfx_fertilizer_grow.prefab`을 흙 윗면에서 1회 재생 (lifetime 1.2). 작물 크기 코드(0.55 → 1.1 → 1)는 그대로 두면 0.42초 터짐이 맞음 |
 | 농장 문 포털 (개발 전달 1-5) | `ZoneDoor`의 포털 0.6초 | 문 열림을 0.6초로 맞췄으니 값 그대로. 끝나는 시점만 확인 |
+| 2번 밭 위치 조정 (개발 전달 1-9) | `Farm.unity`의 `FarmFieldSite` 남서쪽 밭 (-16.8, -28) | 남동쪽 모서리 울타리가 호수에 걸림. 북서쪽으로 옮겨 호수에서 떼기 (`PlayAreaBounds` 안 유지). 옮긴 뒤 Build Farm Field Sites 다시 실행 |
 | 씨앗 주머니 아이콘 쓰는 곳 결정 | HANDOFF의 남은 아이콘 3개 | `icon_tool_seedbag.png` 그림만 교체, 파일 · GUID 그대로 |
 | 상점 씬 정리 | `_Project/Scenes/Shop.unity` | 아래 **`Shop.unity` 미포함 (11/01)** 줄 참고 |
 
