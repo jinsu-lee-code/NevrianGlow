@@ -52,6 +52,13 @@ Shader "Hidden/DSEWA/AerialPerspective"
         _MistFade ("Mist Fade In Over (m)", Float) = 40
         _MistBase ("Mist Floor Height (world y)", Float) = -1
         _MistHeight ("Mist Depth (m above the floor)", Float) = 5
+        _MistPatchSize ("Mist Patch Size (m, fixed to the world; 0 = even sheet)", Float) = 38
+        _MistPatchDrift ("Mist Patch Drift (m per second)", Float) = 0.35
+        _MistPatchEdge ("Mist Patch Softness", Range(0.05, 1)) = 0.55
+        _MistScatter ("Mist Sun Scatter (glow looking towards the sun)", Range(0, 3)) = 1.1
+        _MistScatterTight ("Mist Scatter Tightness (0 = wide, 0.95 = only near the sun)", Range(0, 0.95)) = 0.62
+        _MistGlowBleed ("Mist Glow Bleed (bright things light the mist round them)", Range(0, 2)) = 0.8
+        _MistGlowRadius ("Mist Glow Radius (of screen height)", Range(0.005, 0.12)) = 0.045
         [Header(Sunset Rim On Far Silhouettes)]
         _RimAmount ("Rim Amount", Range(0, 1)) = 0
         [HDR] _RimColor ("Rim Colour (sun side)", Color) = (1.0, 0.62, 0.38, 1)
@@ -83,6 +90,42 @@ Shader "Hidden/DSEWA/AerialPerspective"
             float _LayerMode, _LayerSoft, _LayerDesat;
             float4 _LayerEdges, _LayerHaze;
             float _MistAmount, _MistStart, _MistFade, _MistBase, _MistHeight;
+            float _MistPatchSize, _MistPatchDrift, _MistPatchEdge, _MistScatter, _MistScatterTight, _MistGlowBleed, _MistGlowRadius;
+
+            // world-fixed mist patches: soft value noise, two octaves, drifting slowly (they stay where they are as you walk)
+            float MistHash(float2 p) { return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); }
+            float MistNoise(float2 p)
+            {
+                float2 i = floor(p), f = frac(p);
+                f = f * f * (3 - 2 * f);
+                return lerp(lerp(MistHash(i), MistHash(i + float2(1, 0)), f.x), lerp(MistHash(i + float2(0, 1)), MistHash(i + float2(1, 1)), f.x), f.y);
+            }
+            // forward scattering (Henyey-Greenstein, scaled to 1 looking straight at the light)
+            float MistPhase(float3 viewDir)
+            {
+                float g = _MistScatterTight, c = dot(viewDir, normalize(_MainLightPosition.xyz));
+                return pow((1 - g) * (1 - g) / max(1 + g * g - 2 * g * c, 1e-4), 1.5);
+            }
+            // light of bright pixels round this one, picked up by the mist (two rings of taps, only where there is mist)
+            half3 MistGlowAround(float2 uv)
+            {
+                static const float2 dirs[8] = { float2(1, 0), float2(0.707, 0.707), float2(0, 1), float2(-0.707, 0.707), float2(-1, 0), float2(-0.707, -0.707), float2(0, -1), float2(0.707, -0.707) };
+                float2 r = _MistGlowRadius * float2(_ScreenParams.y / _ScreenParams.x, 1);
+                half3 sum = 0;
+                for (int i = 0; i < 8; i++)
+                {
+                    sum += max(SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv + dirs[i] * r).rgb - _GlowKeep, 0);
+                    sum += max(SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv + dirs[(i + 3) % 8] * r * 0.5).rgb - _GlowKeep, 0);
+                }
+                return sum / 16;
+            }
+            float MistPatch(float2 xz)
+            {
+                if (_MistPatchSize <= 0.001) return 1;
+                float2 p = (xz + float2(_Time.y, _Time.y * 0.6) * _MistPatchDrift) / _MistPatchSize;
+                float n = MistNoise(p) * 0.65 + MistNoise(p * 2.3 + 7.1) * 0.35;
+                return smoothstep(0.5 - _MistPatchEdge * 0.5, 0.5 + _MistPatchEdge * 0.5, n);
+            }
             float _LayerColAmount;
             float4 _LayerColMid, _LayerColFar, _LayerColHorizon;
             float _RayAmount, _RayLength, _RayDecay, _RayFalloff, _RayOnSky, _CloudRayBoost;
@@ -244,15 +287,24 @@ Shader "Hidden/DSEWA/AerialPerspective"
                     col.rgb = lerp(col.rgb, lg.xxx, saturate(LayerIndex(d) * _LayerDesat) * (1 - glow) * skyKeep);
                 }
 
-                // valley mist: a low pale sheet from the mid/far boundary on, lying in the low ground, so the foot of each
-                // far layer (the cliff base, the far forest floor) goes pale and the layer above stands off it
+                // valley mist: low pale patches lying in the low ground, fixed to the world (2026-11-01, user: a clear ring that
+                // follows the camera reads wrong in a dreamy background) - only the first metres stay open so it never fogs the lens
                 if (_MistAmount > 0)
                 {
                     float3 wpm = ComputeWorldSpacePosition(uv, raw, UNITY_MATRIX_I_VP);
                     float low = 1 - smoothstep(_MistBase, _MistBase + max(_MistHeight, 0.1), wpm.y);
-                    float m = smoothstep(_MistStart, _MistStart + max(_MistFade, 1), d) * low * low * _MistAmount * (1 - glow) * wake * skyKeep;
+                    float m = smoothstep(_MistStart, _MistStart + max(_MistFade, 1), d) * low * low * MistPatch(wpm.xz) * _MistAmount * (1 - glow) * wake * skyKeep;
                     half3 mc = lerp(_MistColor.rgb, hazeCol * 1.6, 0.35);
-                    col.rgb = lerp(col.rgb, mc, m);
+                    half3 lit = 0;
+                    if (m > 0.002)
+                    {
+                        // the mist catches the light: warm towards the sun, and round anything glowing
+                        float3 view = normalize(wpm - _WorldSpaceCameraPos);
+                        half3 sunCol = lerp(_MainLightColor.rgb, _HazeSunColor.rgb, 0.5);
+                        lit = sunCol * MistPhase(view) * _MistScatter;
+                        if (_MistGlowBleed > 0) lit += MistGlowAround(uv) * _MistGlowBleed;
+                    }
+                    col.rgb = lerp(col.rgb, mc, m) + lit * m;
                 }
 
                 // sunset rim: far silhouettes that have open sky just above them get a thin bright edge, warm towards

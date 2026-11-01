@@ -21,6 +21,8 @@ public class CloudSunLight : MonoBehaviour
 {
     [Tooltip("Defaults to the first directional light")]
     public Light sun;
+    [Tooltip("Off = only publish the colours as globals and leave the children alone (brush clouds read the globals)")]
+    public bool driveRenderers = true;
 
     [Header("Shade colours by side of the sky (gradient map)")]
     [Tooltip("Lit part of clouds towards the sun")]
@@ -88,7 +90,7 @@ public class CloudSunLight : MonoBehaviour
         EditorApplication.update -= EditorTick;
 #endif
         Shader.SetGlobalVector(GParamsId, Vector4.zero);   // mesh clouds fall back to their material colours
-        if (renderers == null) return;
+        if (renderers == null || !driveRenderers) return;
         foreach (var r in renderers) if (r != null) { r.SetPropertyBlock(null); r.enabled = true; }
     }
 
@@ -133,6 +135,7 @@ public class CloudSunLight : MonoBehaviour
             Shader.SetGlobalVector(GHazeId, new Vector4(h.r, h.g, h.b, 1f));
         }
 
+        if (!driveRenderers) return;
         foreach (var r in renderers)
         {
             if (r == null) continue;

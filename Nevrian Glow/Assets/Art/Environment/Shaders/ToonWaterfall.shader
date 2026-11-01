@@ -159,6 +159,7 @@ Shader "DSEWA/ToonWaterfall"
                 float3 V = normalize(GetWorldSpaceViewDir(i.positionWS));
                 col += _FoamColor.rgb * min(pow(1 - saturate(dot(N, V)), 3) * _FresnelAmount, _FresnelMax);
                 col *= 1 + lerp(_Glow, _LipGlow, k);
+                col = ApplyWorldWakeBand(col, i.positionWS, 0.35h);
                 col = ApplyGroundFog(col, i.positionWS);
                 return half4(col, 1);
             }

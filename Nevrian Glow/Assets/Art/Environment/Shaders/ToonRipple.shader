@@ -68,6 +68,7 @@ Shader "DSEWA/ToonRipple"
                 half a = smoothstep(_Cut - w, _Cut + w, m);
                 half inner = smoothstep(_Cut + _EdgeWidth - w, _Cut + _EdgeWidth + w, m);
                 half3 col = lerp(_EdgeColor.rgb, _FoamColor.rgb, inner) * (1 + _Glow);
+                col = ApplyWorldWakeBand(col, i.positionWS, 0.35h);
                 col = ApplyGroundFog(col, i.positionWS);
                 return half4(col, a);
             }

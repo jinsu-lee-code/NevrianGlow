@@ -39,11 +39,20 @@ Material:
     - _LayerDesat: 0.2
     - _LayerMode: 0
     - _LayerSoft: 0.22
-    - _MistAmount: 0.75
+    - _MistAmount: 0
+    - _MistBandEdge: 0.15
+    - _MistBands: 3
     - _MistBase: -1
-    - _MistFade: 25
+    - _MistFade: 6
+    - _MistGlowBleed: 0.8
+    - _MistGlowRadius: 0.045
     - _MistHeight: 6
-    - _MistStart: 25
+    - _MistPatchDrift: 0.35
+    - _MistPatchEdge: 0.55
+    - _MistPatchSize: 38
+    - _MistScatter: 1.1
+    - _MistScatterTight: 0.62
+    - _MistStart: 2
     - _NearDeepen: 0.18
     - _NearEnd: 12
     - _NearSaturate: 0.18
