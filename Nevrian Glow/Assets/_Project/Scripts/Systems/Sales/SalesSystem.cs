@@ -486,8 +486,9 @@ namespace NevrianGlowFarm.Systems.Sales
         private void CollectShelves()
         {
             shelfStates.Clear();
+            // 꺼진 진열대(아직 안 산 자리)는 빈 진열 — 한 번도 켜진 적 없으면 State도 없다. 순서(번호)는 shelves와 같게 둔다
             foreach (var s in shelves)
-                shelfStates.Add(s != null ? s.State : new ShelfState(0, 1));
+                shelfStates.Add(Usable(s) ? s.State : new ShelfState(0, 1));
         }
 
         // ── 저장 (6-1) ──
@@ -701,7 +702,7 @@ namespace NevrianGlowFarm.Systems.Sales
         {
             int n = 0;
             foreach (var s in shelves)
-                if (s != null)
+                if (Usable(s))
                     n += s.State.TotalCount;
             return n;
         }
