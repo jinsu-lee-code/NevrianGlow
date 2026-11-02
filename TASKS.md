@@ -1164,6 +1164,13 @@
   - 테스트 5개 추가(빈 칸 · 맞바꿈 · 이미 있음 · 도구 안 바꿈 · 같은 종류) — 전체 281 통과
   - 확인(자동, 플레이): 새 게임 → 씨앗 10개 → 옆 밭 수확 6(가방으로) → 8칸 일구기 · 심기(핫바에 씨앗 2) → 괭이를 든 채 문 → 가게 도착 때 핫바 4번 월광 6 · 가방 씨앗 2 → D1-13 진입 때 4번 자동 선택 → 진열 6 → D1-14. 농사 단계로 → 핫바 4번 월광 씨앗 → 다 쓰면 등불 → 버섯꽃 순으로 내려옴. 편지 ① 글자 19.6(다른 편지 25 안팎) · 넘침 없음, 편지 ⑥ 23.5 · 넘침 없음(캡처). 저장 파일 되돌림. 물 주기 · 걷기 · 쓰레기는 키 입력이 필요해 건너뜀(디버그)
   - 미확인 · 한계: 직접 키로 하는 1 ~ 2일차 전체 흐름. 편지 ①은 길어져 글자가 작다 — 읽기 힘들면 종이를 키우거나 문구 줄이기. D2-02는 등불 씨앗 1개만 사도 넘어가 D2-04(12칸)에서 씨앗이 모자랄 수 있음(농사 중 B로 살 수 있으나 안내 없음) · D2-11 "레벨 3!"인데 계산상 레벨 4(경험치 누적 900) · D2-12에 '오늘의 목표' 언급 없음 → 기획 확인 대기. 콘솔 '스크립트 없음' 경고 2건은 켜진 씬 안에서 찾지 못함(프리팹 쪽 추정, 11/02 Art 병합 뒤 처음 봄)
+- [~] **8-2 티저 · 플레이 영상 촬영 도구** (2026-11-03) — 사용자 영상 확인 대기
+  - 도구: `Scripts/Capture/` (`#if UNITY_EDITOR`, 빌드에 안 들어감) — `CaptureRecorder`(프레임 · 소리 녹화), `HumanPlayer`(가상 키보드 · 마우스로 사람처럼 조작), `CineCamera` · `TeaserShots`(티저 장면), `CaptureTweaks`(촬영 때만 화면 정리)
+  - 티저 1분 4초: 풀숲 낮은 앵글에서 나비가 오름(지도 나비 VFX 복제) → 전경 → 폭포 → 숲 → 작물 자람 → 등대 → 빛기둥 + 로고. 음악 `bgm_title_loop` + 엔딩 소리
+  - 플레이 영상 3분 22초: 타이틀 → 인트로 → 1일차 전체(수확 · 개간 · 심기 · 물 · 청소 · 진열 · 정산) → 3일차 편지 · 상점 · 등대 → 6일차 등불 열매 수확 · 장사 → 엔딩 → 데모 종료 창. 게임 소리 그대로. 건너뛴 구간은 교차 페이드(`DebugCleanAll`로 나머지 청소, `AdvanceToNextDay`로 날짜 이동, 6일차 밭은 저장 형식으로 채움)
+  - 촬영 때만 바꾼 값 (사용자 11/03): 다 자란 작물 위 빛기둥 숨김, 별빛 빛줄기 길이 0 + 블룸 올림(줄기 없이 광량 유지 — 야외만, 가게 안은 게임 블룸만), 눈 피로 연출 끔. 아트 재질은 끝나면 되돌림 · 게임 빌드 화면은 그대로
+  - 확인: 실제 입력으로 수확 6 · 진열 6 · 장사 · 정산 · 엔딩까지 진행, 버린 프레임 0. E 꾹 수확 · 대걸레 · 문 · 팻말이 키 입력으로 동작하는 것도 이 촬영으로 확인. 영상 · 소리 길이 일치
+  - 미확인 · 한계: 영상을 끝까지 보며 소리까지 들은 것은 아님(소리는 파일 레벨 · 길이만 확인) — 사용자 확인 대기. mp4는 저장소 밖 규칙에 따라 `Presentation/2026-11-03/`(추적 안 함)
 
 ## 트러블슈팅
 | 문제 | 원인 | 해결 |
@@ -1172,7 +1179,8 @@
 | Unity MCP `RunCommand`에서 `AssetDatabase.DeleteAsset` · `NewScene` · `File.Delete` 호출 시 "User interactions are not supported" | 사용자 확인이 필요한 API로 분류됨 (`File.Delete`는 2026-10-30 확인 — 결과 파일은 지우지 말고 덮어쓰기) | 삭제는 `Unity_ManageAsset(Delete)`, 씬 생성은 `Unity_ManageScene(Create)` 사용 |
 | MCP로 플레이 중 상태를 확인하면 프레임이 2에서 멈춤 | 에디터 창이 포커스를 잃으면 플레이 모드 프레임이 진행되지 않음 | 플레이 진입 직후 `RunCommand`로 `Application.runInBackground = true` (실행 중에만, 설정 파일 안 바뀜 — 2026-11-03 확인). 또는 `EditorApplication.isPaused = true` + `Step()`으로 프레임을 넘겨 확인, 끝나면 `isPaused = false`로 복구 |
 | git 풀 뒤 `ContentDatabase.asset`에서 새 상품(`shop_fruit_shelf`)이 빠져 변경으로 뜸 | 새 스크립트 클래스와 그 에셋이 같이 들어올 때, 컴파일 전에 자동 갱신(`OnPostprocessAllAssets`)이 돌아 클래스를 모르는 에셋을 뺀 것으로 추정 (2026-11-03) | 받은 뒤 `Glow Farm/Data/Refresh Content Database` 실행. 내용이 원격과 같아지면 정상 — 빠진 채 커밋하지 않는다 |
-| MCP에서 `InputSystem.QueueStateEvent`로 키를 넣어도 플레이어가 움직이지 않음 (`wKey=False`) | 에디터 밖(MCP 호출 문맥)에서 큐에 넣은 이벤트가 플레이 프레임의 입력 업데이트로 처리되지 않음. Game view 포커스 설정을 바꿔도 동일 | 조작 확인은 사용자 플레이로. 자동 검증은 Logic 단위 테스트 + 정지 상태(위치 · 접지) 확인까지 |
+| MCP에서 `InputSystem.QueueStateEvent`로 키를 넣어도 플레이어가 움직이지 않음 (`wKey=False`) | 에디터 밖(MCP 호출 문맥)에서 큐에 넣은 이벤트가 플레이 프레임의 입력 업데이트로 처리되지 않음. Game view 포커스 설정을 바꿔도 동일 | 플레이 중에 도는 컴포넌트의 `LateUpdate`에서 가상 장치(`AddDevice<Keyboard>`)로 넣고 `InputSettings`를 `AllDeviceInputAlwaysGoesToGameView` + `IgnoreFocus`로 — `Capture/HumanPlayer` (2026-11-03 동작 확인, 실제 키 · UI 클릭 · E 꾹 모두 됨) |
+| 촬영 중 가게 안 조명이 하얗게 터짐 | `ShopInteriorVolume` 블룸 세기가 59로 아주 강해서, 빛나는 지점을 조금만 밝혀도 화면이 덮임 | 빛을 더하는 조정은 야외에서만 (`CaptureTweaks`가 카메라 x로 가게를 구분) |
 | MCP `RunCommand`에서 `using System.Reflection` 시 "unauthorized namespaces" | MCP가 리플렉션 네임스페이스를 막음 | private 필드 확인은 결과물(로그 파일 · 공개 프로퍼티)로 대신 확인 |
 | MCP `RunCommand`로 테스트 실행이 한 번 시간 초과 | 씬 저장 · 컴파일 직후 에디터가 바빴던 것으로 추정 | `ManageEditor(GetState)`로 컴파일 · 업데이트가 끝났는지 본 뒤 다시 실행 → 정상 |
 | MCP `Unity_Camera_Capture`가 "No GameObject found with Instance ID" | 카메라 컴포넌트의 id를 넘김 — 도구는 게임오브젝트 id를 받음 | `Camera.main.gameObject.GetInstanceID()`를 넘긴다 (플레이 중에도 캡처됨) |
