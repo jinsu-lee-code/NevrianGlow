@@ -668,11 +668,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 129250891}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 1316361089}
+  m_Script: {fileID: 11500000, guid: 92f2435e9e3c54c41b4e32598a7ab563, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Systems.Tutorial.TutorialHighlightTarget
-  targetName: 
-  height: 1.2
+  targetName: fruit_shelf_1
+  height: 1.9
 --- !u!1001 &132197718
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4642,21 +4642,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1903633347}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!115 &1316361089
-MonoScript:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  serializedVersion: 7
-  m_DefaultReferences: {}
-  m_Icon: {fileID: 0}
-  m_Type: 0
-  m_ExecutionOrder: 0
-  m_ClassName: TutorialHighlightTarget
-  m_Namespace: NevrianGlowFarm.Systems.Tutorial
-  m_AssemblyName: Assembly-CSharp
 --- !u!1001 &1335366440
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4860,7 +4845,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1359165624}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 1316361089}
+  m_Script: {fileID: 11500000, guid: 92f2435e9e3c54c41b4e32598a7ab563, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Systems.Tutorial.TutorialHighlightTarget
   targetName: fruit_shelf_3
@@ -7232,7 +7217,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1945892056}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 1316361089}
+  m_Script: {fileID: 11500000, guid: 92f2435e9e3c54c41b4e32598a7ab563, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Systems.Tutorial.TutorialHighlightTarget
   targetName: signboard
@@ -7612,7 +7597,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2081728891}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 1316361089}
+  m_Script: {fileID: 11500000, guid: 92f2435e9e3c54c41b4e32598a7ab563, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Systems.Tutorial.TutorialHighlightTarget
   targetName: trash_bin
@@ -7707,7 +7692,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2124707867}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 1316361089}
+  m_Script: {fileID: 11500000, guid: 92f2435e9e3c54c41b4e32598a7ab563, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Systems.Tutorial.TutorialHighlightTarget
   targetName: fruit_shelf_2

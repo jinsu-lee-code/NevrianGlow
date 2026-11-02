@@ -257,7 +257,7 @@
 - [ ] **8-1. 촬영용 세이브 파일 준비** — 1 · 3 · 5 · 6일차 대표 상태 저장 (영상 · 발표 시연용)
 - [ ] **8-2. 플레이 영상 촬영 · 편집** (백경민과) — 3~4분, 1920×1080, HUD 여부 결정
 - [ ] **8-3. 발표자료** (김봉준과) — 기획 · 결정 이유 · 구현 구조 · 트러블슈팅 표 · 회고
-- [ ] **8-4. 최종 빌드 · 제출 (11/3)** — 버전 표기 일치(메뉴 · 빌드 설정 · 문서), `git status` 정리
+- [~] **8-4. 최종 빌드 · 제출 (11/3)** — 버전 표기 일치(메뉴 · 빌드 설정 · 문서), `git status` 정리
 
 ## 매주 반복 (팀장 업무)
 - 금요일: 빌드 → 백경민 QA 전달 → 로그 파일 수집
@@ -1171,6 +1171,13 @@
   - 촬영 때만 바꾼 값 (사용자 11/03): 다 자란 작물 위 빛기둥 숨김, 별빛 빛줄기 길이 0 + 블룸 올림(줄기 없이 광량 유지 — 야외만, 가게 안은 게임 블룸만), 눈 피로 연출 끔. 아트 재질은 끝나면 되돌림 · 게임 빌드 화면은 그대로
   - 확인: 실제 입력으로 수확 6 · 진열 6 · 장사 · 정산 · 엔딩까지 진행, 버린 프레임 0. E 꾹 수확 · 대걸레 · 문 · 팻말이 키 입력으로 동작하는 것도 이 촬영으로 확인. 영상 · 소리 길이 일치
   - 미확인 · 한계: 영상을 끝까지 보며 소리까지 들은 것은 아님(소리는 파일 레벨 · 길이만 확인) — 사용자 확인 대기. mp4는 저장소 밖 규칙에 따라 `Presentation/2026-11-03/`(추적 안 함)
+- [~] **8-4 최종 빌드 크래시 수정** (2026-11-03) — 사용자 플레이 확인 대기
+  - 증상: 빌드가 타이틀 전에 꺼짐 (`level1 is corrupted! [Position out of bounds!]`). 에디터에서는 재현 안 됨
+  - 원인: `TutorialHighlightTarget`이 `TutorialHighlight.cs` 안에 있어 파일 이름과 달랐다 → 스크립트 에셋이 없어 `AddComponent`가 씬(Farm · Shop)에 MonoScript 사본을 넣음 → 빌드가 첫 컴포넌트를 필드 없이 쓰고 플레이어는 필드를 읽으려다 파일 끝을 넘김. 10/30 기록의 '스크립트 없음' 경고 2건(`StorageAccessPoint_Farm` · `FruitShelf_1`)이 이것
+  - 수정: 클래스를 `TutorialHighlightTarget.cs`로 분리, 두 씬의 참조를 스크립트 에셋으로 교체하고 사본 삭제. 이름이 비어 있던 두 컴포넌트에 Setup 값 입력(`storage_farm` 1.6 m, `fruit_shelf_1` 1.9 m) → 튜토리얼 창고 · 진열대 화살표도 복구
+  - 함께 고침: `StatData`가 부모 `ContentData`와 같은 `description`을 또 선언 → 빌드 오류 4건 → 부모 것만 사용(값 유지, 겹친 줄이 있던 에셋 2개 정리). 진열대 모델이 메시 읽기 불가라 빌드에서 표면 콜라이더가 안 만들어짐(작물이 파묻힘) → `ShelfMeshReadablePostprocessor`가 가져올 때만 읽기를 켬(아트 폴더 meta는 안 바꿈)
+  - 확인: 빌드 오류 0, 전체 281 통과. 개발 빌드에 임시 자동 점검(커밋 안 함)을 넣어 타이틀 → 새 게임 → 편지 → 상점 → 농장 작물 → 가게 진열 → 손님 2명 장사 → 정산 → 저장 → 엔딩을 돌려 화면을 캡처로 확인, 정상 종료. 릴리스 빌드(384 MB)는 타이틀까지 실행 · 로그 오류 없음
+  - 미확인 · 한계: 빌드에서 키보드 · 마우스로 직접 플레이는 안 함 — 사용자 확인 대기. 단계를 강제로 건너뛸 때만 `GetRemainingDistance` 오류 1건(손님이 걷는 중 정산으로 건너뜀, 자동 점검의 조작 때문으로 판단, 일반 진행으로는 미확인). `SoilFX`의 Simple Lit 셰이더가 빌드에 없어 흙덩이는 `Sprites/Default`로 대체됨(분홍 아님, 흙덩이 화면은 미확인). 빌드하면 파트 폴더 재질 · 진열대 meta · URP 설정 · ProjectSettings가 다시 저장되므로 `git checkout --`로 되돌린다
 
 ## 트러블슈팅
 | 문제 | 원인 | 해결 |
@@ -1178,6 +1185,8 @@
 | 확장 밭(먼 서쪽 밭)에 걸어 들어갈 수 없음 | 아트 `PlayAreaBounds`(BackGroundScene)가 다각형 꼭짓점 따라 보이지 않는 벽을 실행 중에 세움 — 자리 고르기에서 '사각형 안 콜라이더'만 봐서 다각형 밖 자리를 놓침 | 밭 자리를 고르거나 옮길 때 울타리 네 귀퉁이가 `PlayAreaBounds.corners` 다각형 안(벽에서 1 m 이상)인지 먼저 본다 (2026-10-30) |
 | Unity MCP `RunCommand`에서 `AssetDatabase.DeleteAsset` · `NewScene` · `File.Delete` 호출 시 "User interactions are not supported" | 사용자 확인이 필요한 API로 분류됨 (`File.Delete`는 2026-10-30 확인 — 결과 파일은 지우지 말고 덮어쓰기) | 삭제는 `Unity_ManageAsset(Delete)`, 씬 생성은 `Unity_ManageScene(Create)` 사용 |
 | MCP로 플레이 중 상태를 확인하면 프레임이 2에서 멈춤 | 에디터 창이 포커스를 잃으면 플레이 모드 프레임이 진행되지 않음 | 플레이 진입 직후 `RunCommand`로 `Application.runInBackground = true` (실행 중에만, 설정 파일 안 바뀜 — 2026-11-03 확인). 또는 `EditorApplication.isPaused = true` + `Step()`으로 프레임을 넘겨 확인, 끝나면 `isPaused = false`로 복구 |
+| 빌드만 `levelN is corrupted! [Position out of bounds!]`로 꺼지고 에디터는 멀쩡함 | MonoBehaviour 클래스 이름이 파일 이름과 달라 스크립트 에셋이 없음 → `AddComponent`가 씬에 MonoScript 사본(`--- !u!115`)을 넣고, 빌드 때 '스크립트 없음' 경고가 뜸 (2026-11-03) | 클래스를 같은 이름의 파일로 분리하고 씬의 `m_Script`를 스크립트 guid로 교체, `--- !u!115` 블록 삭제. 찾기: 씬 · 프리팹에서 `^--- !u!115` 또는 guid 없는 `m_Script: {fileID: 숫자}` 검색. 스택은 Editor `Data/PlaybackEngines/windowsstandalonesupport/Variations/win64_player_development_mono/`의 UnityPlayer pdb를 개발 빌드 옆에 두면 함수 이름으로 나옴 |
+| 빌드에서만 `CollisionMeshData couldn't be created ... non-accessible` | 실행 중 붙인 MeshCollider가 읽기 불가 메시를 받음. 에디터는 통과한다 (2026-11-03) | 그 모델을 Read/Write로 가져온다. 파트 폴더면 `_Project/Scripts/Editor`의 AssetPostprocessor `OnPreprocessModel`에서 켠다 |
 | git 풀 뒤 `ContentDatabase.asset`에서 새 상품(`shop_fruit_shelf`)이 빠져 변경으로 뜸 | 새 스크립트 클래스와 그 에셋이 같이 들어올 때, 컴파일 전에 자동 갱신(`OnPostprocessAllAssets`)이 돌아 클래스를 모르는 에셋을 뺀 것으로 추정 (2026-11-03) | 받은 뒤 `Glow Farm/Data/Refresh Content Database` 실행. 내용이 원격과 같아지면 정상 — 빠진 채 커밋하지 않는다 |
 | MCP에서 `InputSystem.QueueStateEvent`로 키를 넣어도 플레이어가 움직이지 않음 (`wKey=False`) | 에디터 밖(MCP 호출 문맥)에서 큐에 넣은 이벤트가 플레이 프레임의 입력 업데이트로 처리되지 않음. Game view 포커스 설정을 바꿔도 동일 | 플레이 중에 도는 컴포넌트의 `LateUpdate`에서 가상 장치(`AddDevice<Keyboard>`)로 넣고 `InputSettings`를 `AllDeviceInputAlwaysGoesToGameView` + `IgnoreFocus`로 — `Capture/HumanPlayer` (2026-11-03 동작 확인, 실제 키 · UI 클릭 · E 꾹 모두 됨) |
 | 촬영 중 가게 안 조명이 하얗게 터짐 | `ShopInteriorVolume` 블룸 세기가 59로 아주 강해서, 빛나는 지점을 조금만 밝혀도 화면이 덮임 | 빛을 더하는 조정은 야외에서만 (`CaptureTweaks`가 카메라 x로 가게를 구분) |

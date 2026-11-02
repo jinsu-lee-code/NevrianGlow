@@ -10,10 +10,5 @@ namespace NevrianGlowFarm.Data
     [CreateAssetMenu(menuName = "Glow Farm/Data/Stat", fileName = "stat_new")]
     public class StatData : ContentData
     {
-        [Header("설명")]
-        [Tooltip("이 능력치가 무엇을 바꾸는지 (스킬 화면 · 인스펙터 안내)")]
-        [SerializeField, TextArea] private string description;
-
-        public string Description => description;
     }
 }
