@@ -92,6 +92,7 @@ Shader "DSEWA/ToonCrystal"
         _OpacityFacing ("Opacity Face-on", Range(0, 1)) = 0.6
         _OpacityGrazing ("Opacity At Edges", Range(0, 1)) = 0.95
         _BackFaceOpacity ("Back Faces (inside of the gem)", Range(0, 1)) = 1
+        _TipFade ("Opacity Left At The Tip (follows the gradient, 1 = off)", Range(0, 1)) = 1
         // render state, set by script for the opaque cel look (queue 2000, ZWrite On, Blend One Zero, back-face pass off)
         [HideInInspector] _SrcBlend ("Src Blend", Float) = 5
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 10
@@ -147,7 +148,7 @@ Shader "DSEWA/ToonCrystal"
             float _PulseCell;
             half _RadialMix, _RadialPower, _WaveStrength, _WaveWidth, _WaveSpan;
             half _GlossRoughness, _GlossFacing, _GlossGrazing, _GlossTint, _SpecStrength;
-            half _OpacityFacing, _OpacityGrazing, _BackFaceOpacity;
+            half _OpacityFacing, _OpacityGrazing, _BackFaceOpacity, _TipFade;
             half4 _RimColor;
             half _RimStrength, _RimMin, _RimMax, _LightColorAmount;
             half4 _OutlineColor;

@@ -95,6 +95,9 @@
 
 | 파일 | 내용 |
 |---|---|
+| `Environment/Shaders/ToonCrystal.shader` · `ToonCrystalForward.hlsl`, `mat_env_shop_crystal_*` | 11/02. 크리스탈 뿌리는 진한 색, 위로 갈수록 연하고 투명하게. 불투명도 값 `_TipFade` 추가(기본 1이라 다른 크리스탈은 그대로) |
+| `pf_env_shop_decor`의 `CrystalVolume_01` · `_02`, `shop_decor/Materials/mat_env_shop_crystal_volume.mat`, `Scripts/LightVolume.cs` | 11/02. 크리스탈 주위 공기의 빛 볼륨. 실제 라이트 없이 `LightVolume`의 `glow` 색으로 빛남 |
+| `pf_env_shop_decor`의 `GlowPool_Steady_01` · `_02`, `shop_decor/Materials/mat_env_shop_crystal_pool_{aqua,sky}.mat` | 11/02. 크리스탈 아래 맥동 `GlowPool`을 빼고 고정 빛으로 교체. 상점 전용 복사본이고 `DayNightBlend`에 등록 안 함 |
 | `Environment/shop_decor/Materials/mat_env_shop_crystal_{aqua,babypink,cyan,lilac,periwinkle}.mat` (새로), `mat_env_shop_wisteria_*`, `shop_wall/Materials/mat_env_shop_awning_crystal.mat` | 11/02. 상점 크리스탈 반투명 + 맥동을 줄여 은은하게 유지(8초 주기, 변화 폭 작게). 배경과 공유하던 `mat_env_crystal_*`는 상점 전용 복사본으로 나눠 `pf_env_shop_decor`에서 교체. 값은 내가 정함 |
 | `Environment/Scripts/RoomDust.cs`, `Sky/Shaders/RoomDust.shader`, `FX/air/mat_vfx_air_crystaldust.mat` (새로), `pf_env_shop_decor`의 `CrystalDust_01` · `_02` | 11/02. 크리스탈 주위 먼지. 크리스탈마다 입자 130개, 가까운 입자가 크리스탈 `Core Color`를 받아 은은하게 산란. 시작할 때 `Crystal_Cluster` 위치를 한 번만 읽음 |
 | `Environment/flower_bg/Materials/mat_env_flower_bg_*` (발광 · 꽃잎 · 해파리꽃 9종) | 11/02. 발광 1.4배, 발광부 밝기 상한 3.2 → 4.5. 값은 내가 정함 |
