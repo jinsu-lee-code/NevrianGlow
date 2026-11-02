@@ -6,8 +6,8 @@ namespace NevrianGlowFarm.Systems.Shop
 {
     /// <summary>
     /// 가구 자리 (TASKS P-4, 레벨배치 설정안 2절): 진열 가구는 정해진 자리에만 놓인다(자유 배치 아님). 자리 종류 = 가구 종류.
-    /// 기본 매장 8자리 = 과일 진열대 자리 4(가운데) + 일반 진열대 자리 4(벽 쪽, 2차). 위치 · 크기는 Glow Farm/Setup/Build Shop Layout이 정한다.
-    /// 지금 놓인 가구 = 이 오브젝트의 자식 ShelfDisplay. 추가 구매 · 옮기기(E 길게)는 P1.
+    /// 11/02 기획 배치도(shop_layout.json): 과일 진열대 자리 7 (시작 3 + 추가 구매 4). 위치 · 크기 · 열리는 단계는 Glow Farm/Setup/Build Shop Layout이 정한다.
+    /// 지금 놓인 가구 = 이 오브젝트의 자식 ShelfDisplay — 추가 구매 전 자리는 꺼져 있다(FruitShelfSpots). 옮기기(E 길게)는 P1.
     /// </summary>
     public class FurnitureSpot : MonoBehaviour
     {
@@ -16,7 +16,7 @@ namespace NevrianGlowFarm.Systems.Shop
         [SerializeField] private FurnitureKind kind = FurnitureKind.FruitShelf;
         [Tooltip("자리 크기 x · z (m) — 쓰레기 · 얼룩 금지 구역과 기즈모")]
         [SerializeField] private Vector2 size = new Vector2(6.5f, 4.4f);
-        [Tooltip("열리는 매장 확장 단계 (0 = 기본 매장, 확장은 2차)")]
+        [Tooltip("열리는 단계 — 과일 진열대 추가를 이만큼 사면 켜짐 (0 = 시작 진열대)")]
         [SerializeField, Min(0)] private int unlockStage;
 
         [Header("기즈모")]

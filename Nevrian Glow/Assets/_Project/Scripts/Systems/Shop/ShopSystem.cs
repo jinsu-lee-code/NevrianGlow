@@ -125,7 +125,28 @@ namespace NevrianGlowFarm.Systems.Shop
         {
             state.StartDay();
             NoteOpenAll();
+            SyncFruitShelves();
             NotifyChanged();
+        }
+
+        /// <summary>과일 진열대 추가(shop_fruit_shelf)로 늘어난 진열대 수 — 산 단계에서 (저장은 구매 단계로).</summary>
+        public int FruitShelvesBought
+        {
+            get
+            {
+                int n = 0;
+                foreach (var p in products)
+                    if (p is FruitShelfProductData shelf)
+                        n += shelf.ShelvesUpTo(state.TiersBought(shelf.Id));
+                return n;
+            }
+        }
+
+        // 가게 씬의 진열대 자리를 산 수에 맞춘다 (구매 · 불러오기 · 새 날)
+        private void SyncFruitShelves()
+        {
+            if (FruitShelfSpots.Instance != null)
+                FruitShelfSpots.Instance.SetOpened(FruitShelvesBought);
         }
 
         private void OnMoneyChanged(int money) => NotifyChanged();
@@ -172,10 +193,11 @@ namespace NevrianGlowFarm.Systems.Shop
 
         public void CaptureTo(Logic.Save.SaveSnapshot into) => Logic.Save.SaveState.CaptureShop(state, into);
 
-        /// <summary>구매 단계 · 오늘 산 개수 · 처음 열린 날 · 오늘 지출을 바꾼다. 효과(칸 수 등)는 각 시스템의 저장 값으로 따로 돌아온다.</summary>
+        /// <summary>구매 단계 · 오늘 산 개수 · 처음 열린 날 · 오늘 지출을 바꾼다. 효과(칸 수 등)는 각 시스템의 저장 값으로 따로 돌아온다 — 과일 진열대 수만 구매 단계에서.</summary>
         public void LoadFrom(Logic.Save.SaveSnapshot from)
         {
             Logic.Save.SaveState.ApplyShop(state, from);
+            SyncFruitShelves(); // 진열 내용을 불러오기 전에 진열대부터 (SaveSystem이 이 순서로 부른다)
             if (StatSystem.Instance != null)
                 StatSystem.Instance.Rebuild(); // 산 능력치 상품 단계가 바뀌었을 수 있다
             NotifyChanged();
@@ -328,6 +350,11 @@ namespace NevrianGlowFarm.Systems.Shop
                         return true;
                     reason = "상품 데이터에 능력치가 없음";
                     return false;
+                case FruitShelfProductData fruitShelf:
+                    if (FruitShelfSpots.Instance != null && FruitShelvesBought + fruitShelf.ShelvesAt(tier) <= FruitShelfSpots.Instance.Capacity)
+                        return true;
+                    reason = "진열대를 놓을 자리가 없음";
+                    return false;
                 default:
                     reason = "알 수 없는 상품 종류";
                     return false;
@@ -367,6 +394,9 @@ namespace NevrianGlowFarm.Systems.Shop
                     if (StatSystem.Instance != null)
                         StatSystem.Instance.Rebuild(); // 산 단계는 이미 ShopState에 — 능력치를 다시 모은다
                     return $"{upgrade.DisplayName} {tier + 1}단계";
+                case FruitShelfProductData _:
+                    SyncFruitShelves(); // 산 단계는 이미 ShopState에 — 다음 자리의 진열대를 켠다
+                    return $"과일 진열대 +1 (가게에 {FruitShelfSpots.Instance.ActiveCount}대)";
                 default:
                     return product.DisplayName;
             }

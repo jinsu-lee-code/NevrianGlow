@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System.IO;
+using System.Linq;
 using Unity.AI.Navigation;
 using UnityEditor;
 using UnityEditor.Animations;
@@ -43,7 +44,12 @@ namespace NevrianGlowFarm.Editor
                 Debug.LogError("[Setup] NavMeshSurface가 없음 - Shop 씬을 열고 ShopRoot에 NavMeshSurface를 둔다");
                 return;
             }
+            // 아직 안 산 과일 진열대 자리(꺼짐)도 막힌 곳으로 굽는다 — 사면 켜지는데 NavMesh는 실행 중에 다시 굽지 않음 (11/02)
+            var hiddenShelves = surface.GetComponentsInChildren<Systems.Shop.ShelfDisplay>(true)
+                .Where(s => !s.gameObject.activeSelf).Select(s => s.gameObject).ToList();
+            hiddenShelves.ForEach(g => g.SetActive(true));
             surface.BuildNavMesh();
+            hiddenShelves.ForEach(g => g.SetActive(false));
             var data = surface.navMeshData;
             EnsureFolder(Path.GetDirectoryName(NavMeshPath).Replace('\\', '/'));
             var existing = AssetDatabase.LoadAssetAtPath<NavMeshData>(NavMeshPath);
