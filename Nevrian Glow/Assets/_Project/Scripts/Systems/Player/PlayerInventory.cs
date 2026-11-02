@@ -93,8 +93,44 @@ namespace NevrianGlowFarm.Systems.Player
                 instance = null;
         }
 
-        private void OnEnable() => Core.GameEvents.StatsChanged += OnStatsChanged;
-        private void OnDisable() => Core.GameEvents.StatsChanged -= OnStatsChanged;
+        private void OnEnable()
+        {
+            Core.GameEvents.StatsChanged += OnStatsChanged;
+            Core.GameEvents.PhaseChanged += OnPhaseChanged;
+        }
+
+        private void OnDisable()
+        {
+            Core.GameEvents.StatsChanged -= OnStatsChanged;
+            Core.GameEvents.PhaseChanged -= OnPhaseChanged;
+        }
+
+        // 단계에 맞는 물건을 핫바로 — 농사는 씨앗, 진열은 작물. 핫바가 도구로 차 있어 가방에 들어간 것을 가방을 열지 않아도 쓰게 (기획 CSV 11/02: 심기 전에 수확)
+        private void OnPhaseChanged(Logic.Game.PhaseChange change)
+        {
+            if (change.Phase == change.PreviousPhase && !change.DayChanged)
+                return;
+            if (change.Phase == Logic.Game.DayPhase.CleanDisplay)
+                BringDownCrops();
+            else if (change.Phase == Logic.Game.DayPhase.Farming)
+                BringDown(item => item is SeedData);
+        }
+
+        /// <summary>진열할 작물이 핫바에 오게 한다 (튜토리얼 진열 단계도 부른다). 핫바 칸 번호 — 작물이 없거나 자리가 없으면 -1.</summary>
+        public int BringDownCrops() => BringDown(item => item is CropData);
+
+        // 도구는 맞바꾸지 않는다 — 씨앗 · 작물 · 쓰레기 칸만 가방으로
+        private int BringDown(Func<ItemData, bool> wanted)
+        {
+            if (hotbar == null)
+                return -1;
+            int slot = InventoryRules.BringDown(hotbar, bag,
+                id => database.TryGet(id, out ItemData item) && wanted(item),
+                id => database.TryGet(id, out ItemData item) && !(item is ToolData) && !wanted(item));
+            if (slot >= 0)
+                NotifyChanged();
+            return slot;
+        }
 
         // 핫바 확장 스킬 (4-3): 처음 칸 수 + 능력치. 늘어날 때만 — 줄어드는 스킬은 없다(칸의 아이템을 지우지 않게).
         private void OnStatsChanged()
@@ -138,8 +174,8 @@ namespace NevrianGlowFarm.Systems.Player
         }
 
         /// <summary>
-        /// 핫바 칸 하나에서 count개를 쓴다. 그 칸이 비면 가방에 있는 같은 아이템 한 묶음이 그 칸으로 내려온다
-        /// (씨앗 · 비료 · 진열 — 2026-10-30 사용자 요청). 모자라면 false.
+        /// 핫바 칸 하나에서 count개를 쓴다. 그 칸이 비면 가방에 있는 같은 아이템 한 묶음, 없으면 같은 종류(씨앗 → 다른 씨앗, 작물 → 다른 작물)의
+        /// 첫 묶음이 그 칸으로 내려온다 (씨앗 · 비료 · 진열 — 2026-10-30 사용자 요청, 종류는 11/03: 2일차 씨앗 3종 심기). 모자라면 false.
         /// </summary>
         public bool TryUseFromHotbar(int index, int count)
         {
@@ -148,7 +184,8 @@ namespace NevrianGlowFarm.Systems.Player
             string itemId = hotbar[index].ItemId;
             if (!hotbar.TryRemoveAt(index, count))
                 return false;
-            InventoryRules.RefillFrom(hotbar, index, itemId, bagOnly);
+            if (InventoryRules.RefillFrom(hotbar, index, itemId, bagOnly) == 0 && database.TryGet(itemId, out ItemData used))
+                InventoryRules.RefillFrom(hotbar, index, id => database.TryGet(id, out ItemData other) && other.GetType() == used.GetType(), bagOnly);
             NotifyChanged();
             return true;
         }

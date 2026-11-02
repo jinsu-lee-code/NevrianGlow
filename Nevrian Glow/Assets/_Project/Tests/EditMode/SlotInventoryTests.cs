@@ -131,6 +131,93 @@ namespace NevrianGlowFarm.Tests
         }
 
         [Test]
+        public void Refill_ByKind_NextSeedComesDown()
+        {
+            var hotbar = Make(1);
+            var bag = Make(3);
+            bag.TryPlace(0, "crop_moonroot", 5);
+            bag.TryPlace(1, "item_seed_mushroomflower", 6);
+            bag.TryPlace(2, "item_seed_moonroot", 2);
+
+            int moved = InventoryRules.RefillFrom(hotbar, 0, id => id.StartsWith("item_seed_"), new[] { bag });
+
+            Assert.AreEqual(6, moved);
+            Assert.AreEqual("item_seed_mushroomflower", hotbar[0].ItemId, "가방에서 처음 만나는 같은 종류");
+            Assert.AreEqual("crop_moonroot", bag[0].ItemId, "다른 종류는 내려오지 않음");
+            Assert.IsTrue(bag[1].IsEmpty);
+            Assert.AreEqual(2, bag[2].Count);
+        }
+
+        // 기획 튜토리얼 11/02 1일차: 씨앗을 산 뒤 수확 → 핫바가 도구 3 + 씨앗으로 차 있어 작물은 가방에
+        private static SlotInventory HotbarWithTools(string fourthItem, int count)
+        {
+            var hotbar = Make(4);
+            hotbar.TryPlace(0, "tool_hoe_1", 1);
+            hotbar.TryPlace(1, "tool_can_1", 1);
+            hotbar.TryPlace(2, "tool_mop_1", 1);
+            if (fourthItem != null)
+                hotbar.TryPlace(3, fourthItem, count);
+            return hotbar;
+        }
+
+        private static bool IsCrop(string id) => id.StartsWith("crop_");
+        private static bool NotToolOrCrop(string id) => !id.StartsWith("tool_") && !IsCrop(id);
+
+        [Test]
+        public void BringDown_EmptySlotFirst()
+        {
+            var hotbar = HotbarWithTools(null, 0);
+            var bag = Make(4);
+            bag.TryPlace(1, "crop_moonroot", 6);
+
+            Assert.AreEqual(3, InventoryRules.BringDown(hotbar, bag, IsCrop, NotToolOrCrop));
+            Assert.AreEqual("crop_moonroot", hotbar[3].ItemId);
+            Assert.AreEqual(6, hotbar[3].Count);
+            Assert.IsTrue(bag[1].IsEmpty, "빈 칸과 맞바꿈 = 가방 칸이 빔");
+        }
+
+        [Test]
+        public void BringDown_SwapsWithLeftoverSeeds_WhenNoEmptySlot()
+        {
+            // 씨앗 10개를 사서 8칸만 심음 → 2개가 핫바에 남아 있다
+            var hotbar = HotbarWithTools("item_seed_moonroot", 2);
+            var bag = Make(4);
+            bag.TryPlace(0, "crop_moonroot", 6);
+
+            Assert.AreEqual(3, InventoryRules.BringDown(hotbar, bag, IsCrop, NotToolOrCrop));
+            Assert.AreEqual("crop_moonroot", hotbar[3].ItemId);
+            Assert.AreEqual("item_seed_moonroot", bag[0].ItemId, "씨앗은 작물이 있던 가방 칸으로");
+            Assert.AreEqual(2, bag[0].Count);
+        }
+
+        [Test]
+        public void BringDown_AlreadyInHotbar_ChangesNothing()
+        {
+            var hotbar = HotbarWithTools("crop_moonroot", 3);
+            var bag = Make(1);
+            bag.TryPlace(0, "crop_lanternfruit", 5);
+
+            Assert.AreEqual(3, InventoryRules.BringDown(hotbar, bag, IsCrop, NotToolOrCrop));
+            Assert.AreEqual("crop_moonroot", hotbar[3].ItemId);
+            Assert.AreEqual("crop_lanternfruit", bag[0].ItemId);
+        }
+
+        [Test]
+        public void BringDown_NeverReplacesTools()
+        {
+            var hotbar = Make(2);
+            hotbar.TryPlace(0, "tool_hoe_1", 1);
+            hotbar.TryPlace(1, "tool_can_1", 1);
+            var bag = Make(1);
+            bag.TryPlace(0, "crop_moonroot", 6);
+
+            Assert.AreEqual(-1, InventoryRules.BringDown(hotbar, bag, IsCrop, NotToolOrCrop), "자리가 없으면 그대로");
+            Assert.AreEqual("tool_hoe_1", hotbar[0].ItemId);
+            Assert.AreEqual(6, bag[0].Count);
+            Assert.AreEqual(-1, InventoryRules.BringDown(hotbar, Make(1), IsCrop, NotToolOrCrop), "작물이 없으면 -1");
+        }
+
+        [Test]
         public void Resize_GrowKeepsContents_ShrinkDropsTail()
         {
             var inv = Make(2);

@@ -40,6 +40,7 @@ namespace NevrianGlowFarm.Systems.Tutorial
         private static TutorialSystem instance;
         private TutorialProgress progress;
         private PlayerInventory inventory;
+        private Hotbar hotbar;
         private Transform player;
         private Vector3 lastPlayerPosition;
         private bool hasLastPosition;
@@ -174,6 +175,7 @@ namespace NevrianGlowFarm.Systems.Tutorial
                 inventory.Changed += OnInventoryChanged;
             var controller = FindFirstObjectByType<PlayerController>();
             player = controller != null ? controller.transform : null;
+            hotbar = FindFirstObjectByType<Hotbar>();
             highlightView = FindFirstObjectByType<UI.TutorialHighlightView>(FindObjectsInactive.Include); // Core UICanvas — 없으면 강조 없음
         }
 
@@ -253,6 +255,13 @@ namespace NevrianGlowFarm.Systems.Tutorial
                         break;
                 }
                 pushing = false;
+            }
+            // 진열 단계: 작물을 손에 들려 준다 — 안내에 칸 번호가 없고, 들지 않으면 진열대 프롬프트도 안 떠 막힌 것처럼 보인다 (완료 이벤트 종류로 정한다)
+            if (step != null && progress.Current == step && step.Condition.Kind == TutorialEvents.Displayed && inventory != null && hotbar != null)
+            {
+                int slot = inventory.BringDownCrops();
+                if (slot >= 0)
+                    hotbar.Select(slot);
             }
             TryOpenPending();
         }

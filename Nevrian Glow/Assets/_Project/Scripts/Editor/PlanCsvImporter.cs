@@ -26,6 +26,7 @@ namespace NevrianGlowFarm.Editor
         private const string TutorialFolder = DataRoot + "/Tutorial";
         internal const string TutorialAssetPath = TutorialFolder + "/TutorialSteps.asset";
         private const string TutorialCsv = "data_csv/tutorial_steps.csv";
+        private const string LettersCsv = "data_csv/letters.csv";
         private const int BedCells = 4; // GDD 1페이지: 밭 1개 = 2×2칸
 
         private static string RepoRoot => Path.GetFullPath(Path.Combine(Application.dataPath, "..", ".."));
@@ -77,6 +78,10 @@ namespace NevrianGlowFarm.Editor
             ImportSkills(t, map, byId, report);
             ImportSettings(t, map, byId, plotsAdded, report);
             ImportTutorial(t, report);
+            if (t.Letters != null)
+                ImportLetters(t.Letters, report);
+            else
+                report.Skipped.Add($"편지 — {LettersCsv} 없음");
 
             AssetDatabase.SaveAssets();
             ContentDatabaseBuilder.Refresh();
@@ -91,6 +96,8 @@ namespace NevrianGlowFarm.Editor
             public CsvTable Items, Crops, Shop, Skills, Effects, Tabs, Settings;
             /// <summary>튜토리얼 단계 (5-7) — 예전 기획 묶음에는 없을 수 있어 null 허용.</summary>
             public CsvTable Tutorial;
+            /// <summary>편지 (기획 11/03) — 없으면 null, 에셋의 편지를 그대로 둔다.</summary>
+            public CsvTable Letters;
         }
 
         private static bool TryLoad(out Tables t, out IdMap map, out string error)
@@ -108,6 +115,7 @@ namespace NevrianGlowFarm.Editor
                 t.Effects = Read("skill_csv/skill_effects.csv");
                 t.Tabs = Read("skill_csv/skill_tabs.csv");
                 t.Tutorial = File.Exists(Path.Combine(PlanRoot, TutorialCsv)) ? Read(TutorialCsv) : null;
+                t.Letters = File.Exists(Path.Combine(PlanRoot, LettersCsv)) ? Read(LettersCsv) : null;
                 map = IdMap.Parse(File.ReadAllText(IdMapPath, Encoding.UTF8));
                 return true;
             }
@@ -922,6 +930,49 @@ namespace NevrianGlowFarm.Editor
             if (!File.Exists(path))
                 return -1;
             int count = ImportTutorialSteps(CsvTable.Parse(File.ReadAllText(path, Encoding.UTF8)), new Report());
+            AssetDatabase.SaveAssets();
+            return count;
+        }
+
+        // ── 편지 (letters.csv → Data/Tutorial/TutorialSteps의 편지, 기획 11/03) ──
+
+        /// <summary>같은 id는 제목 · 본문을 덮어쓰고, 없으면 끝에 더한다. 본문의 색 태그는 그대로, "—"는 글꼴용으로 바꾼다. 넣은 통 수.</summary>
+        internal static int ImportLetters(CsvTable table, Report report)
+        {
+            var asset = LoadOrCreateTutorialAsset();
+            var so = new SerializedObject(asset);
+            var list = so.FindProperty("letters");
+            int count = 0;
+            for (int r = 0; r < table.RowCount; r++)
+            {
+                string id = table.Get(r, "letter_id");
+                if (string.IsNullOrEmpty(id))
+                    continue;
+                SerializedProperty e = null;
+                for (int i = 0; i < list.arraySize && e == null; i++)
+                    if (list.GetArrayElementAtIndex(i).FindPropertyRelative("id").stringValue == id)
+                        e = list.GetArrayElementAtIndex(i);
+                if (e == null)
+                {
+                    list.InsertArrayElementAtIndex(list.arraySize);
+                    e = list.GetArrayElementAtIndex(list.arraySize - 1);
+                    e.FindPropertyRelative("id").stringValue = id;
+                }
+                e.FindPropertyRelative("title").stringValue = UiText.ForScreenFont(table.Get(r, "title"));
+                e.FindPropertyRelative("body").stringValue = UiText.ForScreenFont(table.Get(r, "body"));
+                count++;
+            }
+            Apply(so, asset, $"편지 {count}통 ({asset.name})", report ?? new Report());
+            return count;
+        }
+
+        /// <summary>저장소 CSV에서 편지만 다시 읽는다 (Setup 메뉴). 파일이 없으면 -1.</summary>
+        internal static int ImportLettersFromRepo()
+        {
+            string path = Path.Combine(PlanRoot, LettersCsv);
+            if (!File.Exists(path))
+                return -1;
+            int count = ImportLetters(CsvTable.Parse(File.ReadAllText(path, Encoding.UTF8)), new Report());
             AssetDatabase.SaveAssets();
             return count;
         }

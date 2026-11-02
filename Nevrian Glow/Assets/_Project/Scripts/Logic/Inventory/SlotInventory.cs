@@ -174,20 +174,59 @@ namespace NevrianGlowFarm.Logic.Inventory
         /// </summary>
         public static int RefillFrom(SlotInventory target, int index, string itemId, IReadOnlyList<SlotInventory> sources)
         {
-            if (target == null || itemId == null || index < 0 || index >= target.SlotCount || !target[index].IsEmpty)
+            return itemId == null ? 0 : RefillFrom(target, index, id => id == itemId, sources);
+        }
+
+        /// <summary>
+        /// 빈 칸 하나를 다른 묶음들에서 조건에 맞는 첫 묶음으로 채운다 (쓰던 씨앗을 다 쓰면 같은 종류의 다음 씨앗이 내려옴).
+        /// 옮긴 개수 — 칸이 차 있거나 맞는 것이 없으면 0.
+        /// </summary>
+        public static int RefillFrom(SlotInventory target, int index, Func<string, bool> match, IReadOnlyList<SlotInventory> sources)
+        {
+            if (target == null || match == null || index < 0 || index >= target.SlotCount || !target[index].IsEmpty)
                 return 0;
             foreach (var inv in sources)
                 for (int i = 0; i < inv.SlotCount; i++)
                 {
                     var s = inv[i];
-                    if (s.IsEmpty || s.ItemId != itemId)
+                    if (s.IsEmpty || !match(s.ItemId))
                         continue;
-                    int move = Math.Min(s.Count, target.MaxStackOf(itemId));
-                    target.Set(index, new ItemStack(itemId, move));
-                    inv.Set(i, new ItemStack(itemId, s.Count - move));
+                    int move = Math.Min(s.Count, target.MaxStackOf(s.ItemId));
+                    target.Set(index, new ItemStack(s.ItemId, move));
+                    inv.Set(i, new ItemStack(s.ItemId, s.Count - move));
                     return move;
                 }
             return 0;
+        }
+
+        /// <summary>
+        /// 쓸 물건이 핫바에 오게 한다 (가방을 열지 않아도 심기 · 진열이 되게). 이미 핫바에 있으면 그 칸.
+        /// 없으면 가방의 첫 묶음을 빈 칸으로, 빈 칸이 없으면 바꿔도 되는 칸과 맞바꾼다. 핫바 칸 번호 — 물건이 없거나 자리가 없으면 -1.
+        /// </summary>
+        public static int BringDown(SlotInventory hotbar, SlotInventory bag, Func<string, bool> wanted, Func<string, bool> replaceable)
+        {
+            for (int i = 0; i < hotbar.SlotCount; i++)
+                if (!hotbar[i].IsEmpty && wanted(hotbar[i].ItemId))
+                    return i;
+            int from = -1;
+            for (int i = 0; i < bag.SlotCount && from < 0; i++)
+                if (!bag[i].IsEmpty && wanted(bag[i].ItemId))
+                    from = i;
+            if (from < 0)
+                return -1;
+            int to = -1;
+            for (int i = 0; i < hotbar.SlotCount && to < 0; i++)
+                if (hotbar[i].IsEmpty)
+                    to = i;
+            for (int i = 0; i < hotbar.SlotCount && to < 0; i++)
+                if (replaceable(hotbar[i].ItemId))
+                    to = i;
+            if (to < 0)
+                return -1;
+            var moved = bag[from];
+            bag.Set(from, hotbar[to]);
+            hotbar.Set(to, moved);
+            return to;
         }
 
         /// <summary>모든 묶음에 있는 그 아이템 개수.</summary>
