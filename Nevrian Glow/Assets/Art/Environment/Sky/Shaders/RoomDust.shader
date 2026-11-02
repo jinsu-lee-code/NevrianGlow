@@ -1,7 +1,7 @@
 // Dust hanging in a room. Like DSEWA/AirMotes all the motion is in the vertex shader, but the specks stay in a fixed box
 // and take their light from the room's lamps (RoomDust.cs publishes them). Each speck scatters every lamp by the angle
 // between the lamp, the speck and the eye: looking towards a lamp the dust round it lights up, with the lamp behind you it
-// nearly vanishes.
+// nearly vanishes. Crystals are soft sources of their own: dust near one takes its colour and swells a little.
 Shader "DSEWA/RoomDust"
 {
     Properties
@@ -16,6 +16,11 @@ Shader "DSEWA/RoomDust"
         _Drift ("Drift (m per s)", Float) = 0.05
         _Wobble ("Wobble (m)", Float) = 0.18
         _Twinkle ("Twinkle", Range(0, 1)) = 0.6
+
+        [Header(Round Crystals)]
+        _CrystalGlow ("Glow Near A Crystal", Range(0, 4)) = 1
+        _CrystalScatter ("Scattering Towards The Eye Near A Crystal", Range(0, 1)) = 0.25
+        _CrystalGrow ("Speck Size x Near A Crystal", Range(1, 6)) = 2
     }
 
     SubShader
@@ -38,13 +43,16 @@ Shader "DSEWA/RoomDust"
                 half4 _Color;
                 float4 _RoomSize, _Size;
                 float _Drift, _Wobble;
-                half _Intensity, _Ambient, _ScatterG, _Twinkle, _LampColour;
+                half _Intensity, _Ambient, _ScatterG, _Twinkle, _LampColour, _CrystalGlow, _CrystalScatter, _CrystalGrow;
             CBUFFER_END
 
             // from RoomDust.cs
             float _DSEWA_RoomLightCount;
             float4 _DSEWA_RoomLightPos[6];     // xyz, w = range
             float4 _DSEWA_RoomLightColor[6];   // rgb x intensity
+            float _DSEWA_RoomCrystalCount;
+            float4 _DSEWA_RoomCrystalPos[4];   // xyz, w = reach
+            float4 _DSEWA_RoomCrystalColor[4];
 
             struct Attributes
             {
@@ -96,9 +104,22 @@ Shader "DSEWA/RoomDust"
 
                 light = lerp(dot(light, float3(0.3, 0.6, 0.1)), light, _LampColour);   // dust keeps its own pale colour, not the lamp's
                 float twinkle = lerp(1, sin(t * (0.6 + seed.x * 1.4) + phase) * 0.5 + 0.5, _Twinkle);
-                o.color = _Color.rgb * light * _Intensity * fade * twinkle;
+                float3 dust = _Color.rgb * light * _Intensity;
+
+                // crystals: not through the lamps' pale colour, and the speck breathes slowly instead of twinkling
+                float near = 0;
+                for (int c = 0; c < (int)_DSEWA_RoomCrystalCount; c++)
+                {
+                    float3 toCrystal = _DSEWA_RoomCrystalPos[c].xyz - world;
+                    float d = length(toCrystal);
+                    float reach = saturate(1 - d * d / max(_DSEWA_RoomCrystalPos[c].w * _DSEWA_RoomCrystalPos[c].w, 1e-3));
+                    reach *= reach;
+                    near = max(near, reach);
+                    dust += _DSEWA_RoomCrystalColor[c].rgb * reach * _CrystalGlow * (_CrystalScatter * Phase(dot(dir, toCrystal / max(d, 1e-3))) + 1 - _CrystalScatter) * 0.2;
+                }
+                o.color = dust * fade * lerp(twinkle, 1, near);
                 float3 view = TransformWorldToView(world);
-                view.xy += (input.uv * 2 - 1) * lerp(_Size.x, _Size.y, seed.z);
+                view.xy += (input.uv * 2 - 1) * lerp(_Size.x, _Size.y, seed.z) * lerp(1, _CrystalGrow, near);
                 o.positionCS = TransformWViewToHClip(view);
                 o.uv = input.uv * 2 - 1;
                 return o;

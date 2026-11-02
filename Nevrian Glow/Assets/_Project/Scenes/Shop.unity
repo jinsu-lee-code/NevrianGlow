@@ -975,8 +975,6 @@ MonoBehaviour:
   m_Script: {fileID: 1316361089}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NevrianGlowFarm.Systems.Tutorial.TutorialHighlightTarget
-  targetName: 
-  height: 1.2
 --- !u!1001 &137990264
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1391,6 +1389,14 @@ PrefabInstance:
       propertyPath: m_LocalPosition.z
       value: 0.22
       objectReference: {fileID: 0}
+    - target: {fileID: 4379479946422082545, guid: 3c534ac32b5c02947897b54bbfa7ffb7, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.179
+      objectReference: {fileID: 0}
+    - target: {fileID: 5317984523157089217, guid: 3c534ac32b5c02947897b54bbfa7ffb7, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.127
+      objectReference: {fileID: 0}
     - target: {fileID: 6329325246110588477, guid: 3c534ac32b5c02947897b54bbfa7ffb7, type: 3}
       propertyPath: m_LocalPosition.x
       value: -3.18
@@ -1466,6 +1472,8 @@ PrefabInstance:
     - {fileID: 6553211434734565638, guid: 3c534ac32b5c02947897b54bbfa7ffb7, type: 3}
     - {fileID: 7146364860237808116, guid: 3c534ac32b5c02947897b54bbfa7ffb7, type: 3}
     - {fileID: 796831347028497138, guid: 3c534ac32b5c02947897b54bbfa7ffb7, type: 3}
+    - {fileID: 3894195269090021833, guid: 3c534ac32b5c02947897b54bbfa7ffb7, type: 3}
+    - {fileID: 1230271344991040345, guid: 3c534ac32b5c02947897b54bbfa7ffb7, type: 3}
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 846372597875623825, guid: 3c534ac32b5c02947897b54bbfa7ffb7, type: 3}
       insertIndex: 1

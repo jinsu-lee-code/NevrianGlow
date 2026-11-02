@@ -95,6 +95,8 @@
 
 | 파일 | 내용 |
 |---|---|
+| `Environment/shop_decor/Materials/mat_env_shop_crystal_{aqua,babypink,cyan,lilac,periwinkle}.mat` (새로), `mat_env_shop_wisteria_*`, `shop_wall/Materials/mat_env_shop_awning_crystal.mat` | 11/02. 상점 크리스탈 반투명 + 맥동을 줄여 은은하게 유지(8초 주기, 변화 폭 작게). 배경과 공유하던 `mat_env_crystal_*`는 상점 전용 복사본으로 나눠 `pf_env_shop_decor`에서 교체. 값은 내가 정함 |
+| `Environment/Scripts/RoomDust.cs`, `Sky/Shaders/RoomDust.shader`, `FX/air/mat_vfx_air_crystaldust.mat` (새로), `pf_env_shop_decor`의 `CrystalDust_01` · `_02` | 11/02. 크리스탈 주위 먼지. 크리스탈마다 입자 130개, 가까운 입자가 크리스탈 `Core Color`를 받아 은은하게 산란. 시작할 때 `Crystal_Cluster` 위치를 한 번만 읽음 |
 | `Environment/flower_bg/Materials/mat_env_flower_bg_*` (발광 · 꽃잎 · 해파리꽃 9종) | 11/02. 발광 1.4배, 발광부 밝기 상한 3.2 → 4.5. 값은 내가 정함 |
 | `Environment/mushroom_bg/Materials/mat_env_mushroom_bg_{a,b,c}.mat` | 11/02. 배경 버섯 발광 강화. 포스터 단계를 꺼서 거뭇한 얼룩 제거(`_PosterizeSteps` 0, 경계 부드럽게). 깨어나기 전 구역에서 어두워지는 동작(`_AwakeResponse` 1)은 그대로 |
 | `Crops/mushroomflower/Materials/mat_crop_mushroomflower_{small,mature,giant}.mat` | 11/02. 작물 머시룸플라워 `_EmissionColor` 1.4배 |
