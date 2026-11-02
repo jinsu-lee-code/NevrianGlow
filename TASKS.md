@@ -1175,7 +1175,7 @@
   - 증상: 빌드가 타이틀 전에 꺼짐 (`level1 is corrupted! [Position out of bounds!]`). 에디터에서는 재현 안 됨
   - 원인: `TutorialHighlightTarget`이 `TutorialHighlight.cs` 안에 있어 파일 이름과 달랐다 → 스크립트 에셋이 없어 `AddComponent`가 씬(Farm · Shop)에 MonoScript 사본을 넣음 → 빌드가 첫 컴포넌트를 필드 없이 쓰고 플레이어는 필드를 읽으려다 파일 끝을 넘김. 10/30 기록의 '스크립트 없음' 경고 2건(`StorageAccessPoint_Farm` · `FruitShelf_1`)이 이것
   - 수정: 클래스를 `TutorialHighlightTarget.cs`로 분리, 두 씬의 참조를 스크립트 에셋으로 교체하고 사본 삭제. 이름이 비어 있던 두 컴포넌트에 Setup 값 입력(`storage_farm` 1.6 m, `fruit_shelf_1` 1.9 m) → 튜토리얼 창고 · 진열대 화살표도 복구
-  - 함께 고침: `StatData`가 부모 `ContentData`와 같은 `description`을 또 선언 → 빌드 오류 4건 → 부모 것만 사용(값 유지, 겹친 줄이 있던 에셋 2개 정리). 진열대 모델이 메시 읽기 불가라 빌드에서 표면 콜라이더가 안 만들어짐(작물이 파묻힘) → `ShelfMeshReadablePostprocessor`가 가져올 때마다 읽기를 켬(Unity가 이 값을 FBX meta에도 적어 파트 폴더의 meta 2개가 변경으로 뜸 — 커밋 여부 사용자 확인 대기)
+  - 함께 고침: `StatData`가 부모 `ContentData`와 같은 `description`을 또 선언 → 빌드 오류 4건 → 부모 것만 사용(값 유지, 겹친 줄이 있던 에셋 2개 정리). 진열대 모델이 메시 읽기 불가라 빌드에서 표면 콜라이더가 안 만들어짐(작물이 파묻힘) → `ShelfMeshReadablePostprocessor`가 가져올 때마다 읽기를 켬(Unity가 이 값을 FBX meta에도 적으므로 파트 폴더의 meta 2개도 `isReadable: 1`로 커밋 — 사용자 결정 2026-11-03, 울타리 모델과 같은 방식)
   - 확인: 빌드 오류 0, 전체 281 통과. 개발 빌드에 임시 자동 점검(커밋 안 함)을 넣어 타이틀 → 새 게임 → 편지 → 상점 → 농장 작물 → 가게 진열 → 손님 2명 장사 → 정산 → 저장 → 엔딩을 돌려 화면을 캡처로 확인, 정상 종료. 릴리스 빌드(384 MB)는 타이틀까지 실행 · 로그 오류 없음
   - 미확인 · 한계: 빌드에서 키보드 · 마우스로 직접 플레이는 안 함 — 사용자 확인 대기. 단계를 강제로 건너뛸 때만 `GetRemainingDistance` 오류 1건(손님이 걷는 중 정산으로 건너뜀, 자동 점검의 조작 때문으로 판단, 일반 진행으로는 미확인). `SoilFX`의 Simple Lit 셰이더가 빌드에 없어 흙덩이는 `Sprites/Default`로 대체됨(분홍 아님, 흙덩이 화면은 미확인). 빌드하면 파트 폴더 재질 · URP 설정 · ProjectSettings가 다시 저장되므로 `git checkout --`로 되돌린다. 자동 점검의 정산창은 새로 열린 항목이 두 줄로 넘어갈 때 '보유' 줄이 경험치 줄과 겹침(레벨을 강제로 2단계 올린 경우, 실제 1일차 정산은 겹치지 않음)
 
