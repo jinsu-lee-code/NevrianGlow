@@ -9,7 +9,7 @@ namespace NevrianGlowFarm.Editor
 {
     /// <summary>
     /// 아트 '개발에 부탁할 것 (11/01)' 연결 (mapping.md · BRANCH_ART 11/01 ~ 11/02). 아트 원본은 그대로, `_Project` 데이터 · 씬만. 여러 번 실행해도 같다.
-    /// 쓰레기 아이콘 · 씨앗 가루 아트판 · 비료 성장 아트판(VFX 목록) · 가게 씬 옛 램프 2개 삭제 · 가게 환경광 색.
+    /// 쓰레기 아이콘 · 씨앗 가루 아트판 · 비료 성장 아트판(VFX 목록) · 가게 씬 옛 램프 2개 삭제 · 가게 환경광 색 · 재수확 작물 '다 자람' 빛 탐침(버그 10/30).
     /// </summary>
     public static class ArtHookup1102Setup
     {
@@ -29,6 +29,7 @@ namespace NevrianGlowFarm.Editor
                 Vfx(Core.VfxCues.FertilizerGrow, "Assets/Art/Environment/FX/fertilizer_grow/pf_vfx_fertilizer_grow.prefab", 1.2f),
                 ShopAmbientColor(),
                 ShopLamps(),
+                ReadyGlowProbes(),
             };
             AssetDatabase.SaveAssets();
             Debug.Log("[Setup] 아트 11/02 요청: " + string.Join(" · ", notes));
@@ -81,6 +82,51 @@ namespace NevrianGlowFarm.Editor
             so.FindProperty("ambientColor").colorValue = ShopAmbient;
             so.ApplyModifiedPropertiesWithoutUndo();
             return "가게 환경광 라벤더 그레이";
+        }
+
+        // 버그 리포트 10/30 (김봉준): 등불 열매를 거둔 뒤 열매가 없는데도 노란 '다 자람' 빛이 남음.
+        // 아트 CropReadyGlow는 fruitProbe의 자기 크기로 열매를 보는데, 거둠 · 봉오리 애니메이션은 그 부모(Stalk_Fruit_NN)의 크기를 줄인다 → 늘 '열매 있음'.
+        // `_Project` 작물 프리팹(아트 Variant)에서 탐침을 애니메이션이 크기를 바꾸는 가장 가까운 부모로 옮긴다 (아트 원본은 그대로 — 아트에 알림)
+        private static string ReadyGlowProbes()
+        {
+            var fixedNames = new List<string>();
+            foreach (var guid in AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/_Project/Prefabs/Farm/Crops" }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                var root = PrefabUtility.LoadPrefabContents(path);
+                var glow = root.GetComponent<CropReadyGlow>();
+                var animator = root.GetComponentInChildren<Animator>();
+                bool changed = false;
+                if (glow != null && glow.fruitProbe != null && animator != null && animator.runtimeAnimatorController != null)
+                {
+                    var scaled = ScaledPaths(animator.runtimeAnimatorController);
+                    var probe = glow.fruitProbe;
+                    if (!scaled.Contains(AnimationUtility.CalculateTransformPath(probe, animator.transform)))
+                        for (var p = probe.parent; p != null && p != animator.transform; p = p.parent)
+                            if (scaled.Contains(AnimationUtility.CalculateTransformPath(p, animator.transform)))
+                            {
+                                glow.fruitProbe = p;
+                                changed = true;
+                                fixedNames.Add($"{root.name}: {probe.name} → {p.name}");
+                                break;
+                            }
+                }
+                if (changed)
+                    PrefabUtility.SaveAsPrefabAsset(root, path);
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+            return fixedNames.Count > 0 ? "다 자람 빛 탐침 " + string.Join(", ", fixedNames) : "다 자람 빛 탐침 그대로";
+        }
+
+        // 컨트롤러의 클립들이 크기(m_LocalScale)를 바꾸는 오브젝트 경로
+        private static HashSet<string> ScaledPaths(RuntimeAnimatorController controller)
+        {
+            var paths = new HashSet<string>();
+            foreach (var clip in controller.animationClips)
+                foreach (var b in AnimationUtility.GetCurveBindings(clip))
+                    if (b.type == typeof(Transform) && b.propertyName.StartsWith("m_LocalScale"))
+                        paths.Add(b.path);
+            return paths;
         }
 
         // 아트가 샹들리에로 바꾸며 지운 옛 전구 중 개발 씬에 남은 2개 (그 전까지 아트 HideSceneLamps가 숨김)

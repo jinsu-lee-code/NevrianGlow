@@ -53,6 +53,10 @@ PrefabInstance:
       value: crop_lanternfruit_mature
       objectReference: {fileID: 0}
     - target: {fileID: 6531217410924844050, guid: 2bf892d638ed84444b01774edbaccf74, type: 3}
+      propertyPath: fruitProbe
+      value: 
+      objectReference: {fileID: 8629409779212413013}
+    - target: {fileID: 6531217410924844050, guid: 2bf892d638ed84444b01774edbaccf74, type: 3}
       propertyPath: readyLight
       value: 
       objectReference: {fileID: 0}
@@ -61,3 +65,8 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2bf892d638ed84444b01774edbaccf74, type: 3}
+--- !u!4 &8629409779212413013 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2543798206147297283, guid: 2bf892d638ed84444b01774edbaccf74, type: 3}
+  m_PrefabInstance: {fileID: 6092438479433853014}
+  m_PrefabAsset: {fileID: 0}
