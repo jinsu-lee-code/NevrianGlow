@@ -26,41 +26,68 @@ Material:
     m_Ints: []
     m_Floats:
     - _CloudRayBoost: 2
-    - _DetailKeep: 0.5
+    - _DetailKeep: 0.8
+    - _FarAirAmount: 0.62
+    - _FarAirFrom: 150
+    - _FarAirTo: 235
     - _GlowKeep: 1.1
     - _HazeAmount: 0.4
     - _HazeCurve: 1.2
-    - _HazeEnd: 220
+    - _HazeEnd: 320
     - _HazeIceAmount: 1
     - _HazeSideSpread: 2
-    - _HazeStart: 30
+    - _HazeStart: 55
     - _HazeSunAmount: 1
     - _LayerColAmount: 0.7
     - _LayerDesat: 0.2
     - _LayerMode: 0
     - _LayerSoft: 0.22
-    - _MistAmount: 0.75
+    - _MistAmount: 0
+    - _MistBandEdge: 0.15
+    - _MistBands: 3
     - _MistBase: -1
-    - _MistFade: 25
+    - _MistFade: 6
+    - _MistGlowBleed: 0.8
+    - _MistGlowRadius: 0.045
     - _MistHeight: 6
-    - _MistStart: 25
-    - _NearDeepen: 0.18
-    - _NearEnd: 12
-    - _NearSaturate: 0.18
-    - _RayAmount: 0.3
-    - _RayDecay: 0.965
-    - _RayFalloff: 2.2
-    - _RayLength: 0.75
-    - _RayOnSky: 0.35
+    - _MistPatchDrift: 0.35
+    - _MistPatchEdge: 0.55
+    - _MistPatchSize: 38
+    - _MistScatter: 1.1
+    - _MistScatterTight: 0.62
+    - _MistStart: 2
+    - _MoonRayAmount: 0
+    - _NearDeepen: 0.45
+    - _NearEnd: 22
+    - _NearSaturate: 0.45
+    - _RayAmount: 0.6
+    - _RayDecay: 0.975
+    - _RayFalloff: 1.6
+    - _RayLength: 0.95
+    - _RayOnSky: 0.85
     - _RimAmount: 1
+    - _RimFadeEnd: 150
+    - _RimFadeStart: 90
     - _RimNight: 0.25
     - _RimSpread: 1.5
     - _RimStart: 22
     - _RimWidth: 5
+    - _ShopContrast: 0.1
+    - _ShopLift: 0.34
+    - _ShopPivot: 0.08
+    - _ShopSaturation: 0.2
+    - _ShopShadowEnd: 0.14
     - _SkyFrom: 420
     - _SkyFull: 560
+    - _VividFadeEnd: 260
+    - _VividFadeStart: 120
+    - _VividLift: 0.22
+    - _VividSaturation: 0.28
     m_Colors:
     - _CloudRayColor: {r: 1, g: 0.78, b: 0.9, a: 1}
+    - _FarAirColor: {r: 0.52, g: 0.45999992, b: 0.72, a: 1}
+    - _FarAirIceColor: {r: 0.37999994, g: 0.5, b: 0.78, a: 1}
+    - _FarAirSunColor: {r: 0.8399999, g: 0.56, b: 0.5, a: 1}
     - _HazeColor: {r: 0.36, g: 0.32, b: 0.58, a: 1}
     - _HazeIceColor: {r: 0.18, g: 0.38, b: 0.7, a: 1}
     - _HazeSunColor: {r: 0.85, g: 0.5, b: 0.32, a: 1}
@@ -70,8 +97,10 @@ Material:
     - _LayerEdges: {r: 10, g: 32, b: 90, a: 0}
     - _LayerHaze: {r: 0.12, g: 0.45, b: 0.5, a: 0}
     - _MistColor: {r: 0.62, g: 0.58, b: 0.85, a: 1}
+    - _MoonRayColor: {r: 0.62, g: 0.72, b: 1, a: 1}
     - _RayColor: {r: 1, g: 0.66, b: 0.42, a: 1}
     - _RimColor: {r: 1, g: 0.62, b: 0.38, a: 1}
     - _RimNightColor: {r: 0.45, g: 0.6, b: 1, a: 1}
+    - _ShopShadowTint: {r: 0.84, g: 0.88, b: 1.02, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

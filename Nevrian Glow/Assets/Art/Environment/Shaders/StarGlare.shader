@@ -7,7 +7,8 @@ Shader "Hidden/DSEWA/StarGlare"
     Properties
     {
         _Threshold ("Brightness Threshold (HDR)", Float) = 1.6
-        _Intensity ("Ray Intensity", Range(0, 4)) = 1
+        _Intensity ("Ray Intensity", Range(0, 10)) = 1
+        _PaleKeep ("Rays From Pale Surfaces (0 = coloured lights only)", Range(0, 1)) = 0.1
         _Length ("Ray Length (fraction of screen height)", Range(0.01, 0.3)) = 0.08
         _Rays ("Ray Directions (each gives two opposite rays)", Range(1, 6)) = 3
         _Rotation ("Rotation (degrees)", Range(0, 180)) = 15
@@ -30,7 +31,7 @@ Shader "Hidden/DSEWA/StarGlare"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
 
-            float _Threshold, _Intensity, _Length, _Rays, _Rotation, _Spin, _Saturation, _NearNoRays, _NearFullRays;
+            float _Threshold, _Intensity, _Length, _Rays, _Rotation, _Spin, _Saturation, _NearNoRays, _NearFullRays, _PaleKeep;
             float _DSEWA_GlareDim;   // set by GlareFatigue: 0 = full rays, 1 = gone (2026-10-27)
 
             half3 Bright(float2 uv)
@@ -46,7 +47,9 @@ Shader "Hidden/DSEWA/StarGlare"
                 // 2026-10-30 (user: "far bright lights should sparkle, but near ones sparkle too and it hurts the eyes"):
                 // lights close to the camera throw no rays, fading in with distance
                 float near = smoothstep(_NearNoRays, max(_NearFullRays, _NearNoRays + 0.01), LinearEyeDepth(raw, _ZBufferParams));
-                return c * saturate((m - _Threshold) / max(m, 1e-3)) * near;   // keeps the hue of the light
+                // 2026-11-01 (user: stronger rays): pale surfaces (waterfall, mist) only fog the view, the coloured lights make the stars
+                half sat = (m - min(c.r, min(c.g, c.b))) / max(m, 1e-3);
+                return c * saturate((m - _Threshold) / max(m, 1e-3)) * near * lerp(_PaleKeep, 1, smoothstep(0.55, 0.85, sat));   // keeps the hue of the light
             }
 
             half4 Frag(Varyings input) : SV_Target

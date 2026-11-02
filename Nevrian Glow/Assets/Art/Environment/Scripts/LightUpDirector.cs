@@ -31,7 +31,7 @@ public class LightUpDirector : GameScreen
     [Tooltip("Ground fog and aerial haze during the top view (1 = as in play, 0 = none)")] [Range(0f, 1f)] public float topViewFog = 0.7f;
     public float fadeSeconds = 0.45f;
     public float holdAfterWave = 1.2f;
-    [Tooltip("Give up waiting for other screens after this long (the floor then lights without the cutscene)")] public float maxWaitForScreens = 20f;
+    [Tooltip("Give up waiting for other screens after this long (the floor then lights without the cutscene)")] public float maxWaitForScreens = 300f;
     public bool hideHud = true;
 
     public static bool IsPlaying { get; private set; }

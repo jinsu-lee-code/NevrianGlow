@@ -25,9 +25,9 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _FadeEnd: 90
+    - _FadeEnd: 35
     - _FadeStart: 8
-    - _FarStrength: 0.2
+    - _FarStrength: 0
     - _GlowKeep: 1.1
     - _NearStrength: 0.5
     - _Radius: 2.5

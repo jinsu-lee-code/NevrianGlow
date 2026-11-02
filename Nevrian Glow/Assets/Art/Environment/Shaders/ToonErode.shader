@@ -66,6 +66,7 @@ Shader "DSEWA/ToonErode"
                 half a = smoothstep(0.08 - w, 0.08 + w, v);
                 half core = smoothstep(0.08 + _EdgeWidth - w, 0.08 + _EdgeWidth + w, v);
                 half3 col = lerp(_EdgeColor.rgb, i.color.rgb, core) * (1 + _Glow);
+                col = ApplyWorldWakeBand(col, i.positionWS, 0.35h);
                 col = ApplyGroundFog(col, i.positionWS);
                 return half4(col, a);
             }

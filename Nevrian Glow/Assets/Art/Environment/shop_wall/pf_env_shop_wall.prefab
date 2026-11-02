@@ -334,10 +334,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 251a93342a12d8847a9d6b8cb29186e5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteriorFill
-  ceilingBounce: {r: 0.55, g: 0.52, b: 0.85, a: 1}
-  floorBounce: {r: 0.72, g: 0.5, b: 0.36, a: 1}
+  ceilingBounce: {r: 0.58, g: 0.52, b: 0.6, a: 1}
+  floorBounce: {r: 0.64, g: 0.52, b: 0.46, a: 1}
   amount: 0.7
-  keyPoint: {fileID: 556883706064880962}
+  keyPoint: {fileID: 0}
   keyColor: {r: 0.82, g: 0.8, b: 1, a: 1}
   keyAmount: 0.6
   edgeFade: 0.15
@@ -725,11 +725,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 54d9e9421e16fd04cb864efd514ac9df, type: 3}
---- !u!4 &556883706064880962 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 2236941803370100209, guid: 54d9e9421e16fd04cb864efd514ac9df, type: 3}
-  m_PrefabInstance: {fileID: 1779278577161466035}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &2274251045146313591 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 522003276848837572, guid: 54d9e9421e16fd04cb864efd514ac9df, type: 3}

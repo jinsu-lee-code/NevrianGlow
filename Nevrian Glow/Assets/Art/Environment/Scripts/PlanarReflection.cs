@@ -62,11 +62,23 @@ public class PlanarReflection : MonoBehaviour
         finally { rendering = false; }
     }
 
+    // "Screen position out of view frustum" (2026-11-02, reproduced by bisecting the camera pitch): the oblique matrix
+    // tilts the depth planes, and at one exact pitch a screen corner on the depth the engine unprojects at (0.95) falls
+    // at infinity (w = 0). The engine unprojects the corners while rendering and logs this. Bottom corners only in the
+    // test; all four are checked. The band is a tiny slice of a degree, so a skipped frame is rare and lasts one frame.
+    static bool ObliqueCornerBroken(Matrix4x4 viewProjection)
+    {
+        Matrix4x4 clipToWorld = viewProjection.inverse;
+        for (int x = -1; x <= 1; x += 2)
+            for (int y = -1; y <= 1; y += 2)
+                if (Mathf.Abs((clipToWorld * new Vector4(x, y, 0.95f, 1f)).w) < 1e-6f) return true;   // the engine failed up to 1.8e-7
+        return false;
+    }
+
     void Render(ScriptableRenderContext ctx, Camera cam)
     {
-        // guards (2026-10-27, "Screen position out of view frustum"): a camera at / under the water, orthographic, or
-        // with a tiny view gives a degenerate oblique projection; skip the reflection then (the shader falls back to
-        // the reflection probe)
+        // guards: a camera at / under the water, orthographic, or with a tiny view gives a degenerate oblique
+        // projection; skip the reflection then (the shader falls back to the reflection probe)
         if (cam.orthographic || cam.pixelWidth < 32 || cam.pixelHeight < 32 || cam.transform.position.y <= waterLevel + clipPlaneOffset + 0.05f)
         {
             Shader.SetGlobalFloat(OnId, 0);
@@ -118,6 +130,8 @@ public class PlanarReflection : MonoBehaviour
         for (int k = 0; k < 16; k++)
             if (float.IsNaN(proj[k]) || float.IsInfinity(proj[k])) { Shader.SetGlobalFloat(OnId, 0); return; }
         reflCam.projectionMatrix = proj;
+        // keeps the last frame's image: this pose lasts a frame at most, and the shader must not jump to the probe
+        if (ObliqueCornerBroken(reflCam.projectionMatrix * reflCam.worldToCameraMatrix)) return;
 
         bool oldInvert = GL.invertCulling;
         GL.invertCulling = true;

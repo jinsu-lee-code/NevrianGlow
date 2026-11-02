@@ -201,7 +201,7 @@ half4 CrystalFrag(Varyings i, bool frontFace : SV_IsFrontFace) : SV_Target
     // the scene's ground fog (Unity fog is off here): far crystals melt into the horizon like the terrain and grass
     color = ApplyGroundFog(color, i.positionWS);
     color = MixFog(color, i.fogFactor);
-    half alpha = lerp(_OpacityFacing, _OpacityGrazing, fres);
+    half alpha = lerp(_OpacityFacing, _OpacityGrazing, fres) * lerp(1.0h, _TipFade, h01);
 #ifdef TOON_CRYSTAL_BACKFACE
     alpha *= _BackFaceOpacity;
 #endif

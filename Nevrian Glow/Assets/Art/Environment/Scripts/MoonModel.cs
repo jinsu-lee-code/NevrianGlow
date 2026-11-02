@@ -94,11 +94,10 @@ public class MoonModel : MonoBehaviour
     void OnEnable() => RenderPipelineManager.beginCameraRendering += OnBeginCamera;
     void OnDisable() => RenderPipelineManager.beginCameraRendering -= OnBeginCamera;
 
-    void OnBeginCamera(ScriptableRenderContext ctx, Camera cam)
+    /// <summary>From the camera to the moon. MoonLensFlare follows this too.</summary>
+    public Vector3 SkyDirection()
     {
-        if (mesh == null || material == null || moonLight == null || cam.cameraType == CameraType.Preview) return;
-        if (nightVolume != null && nightVolume.weight < visibleFrom) return;
-
+        if (moonLight == null) return Vector3.up;
         Vector3 d = -moonLight.transform.forward;
         if (oppositeSun)
         {
@@ -108,6 +107,15 @@ public class MoonModel : MonoBehaviour
             float e = oppositeElevation * Mathf.Deg2Rad;
             d = flat.normalized * Mathf.Cos(e) + Vector3.up * Mathf.Sin(e);
         }
+        return d;
+    }
+
+    void OnBeginCamera(ScriptableRenderContext ctx, Camera cam)
+    {
+        if (mesh == null || material == null || moonLight == null || cam.cameraType == CameraType.Preview) return;
+        if (nightVolume != null && nightVolume.weight < visibleFrom) return;
+
+        Vector3 d = SkyDirection();
         Vector3 eye = cam.transform.position;
         float size = 2f * distance * Mathf.Tan(angularDiameter * 0.5f * Mathf.Deg2Rad) / Mathf.Max(modelDiameter, 1e-4f);
         float time = Application.isPlaying ? Time.time : (animateInEditor ? EditorTime() : 0f);
@@ -159,7 +167,9 @@ public class MoonModel : MonoBehaviour
         }
         mpb.SetTexture(CloudLowId, sky.GetTexture(CloudLowId));
         mpb.SetTexture(CloudHighId, sky.GetTexture(CloudHighId) != null ? sky.GetTexture(CloudHighId) : Texture2D.blackTexture);
-        mpb.SetVector(CloudParamsId, new Vector4(sky.GetFloat("_PanoAmount"), sky.GetFloat("_PanoHorizon"), sky.GetFloat("_PanoRotation"),
+        // the sky can switch its painted clouds off while keeping the rest of the panorama: the moon follows it
+        float cloudAmount = sky.HasProperty("_PanoCloudAmount") ? sky.GetFloat("_PanoCloudAmount") : 1f;
+        mpb.SetVector(CloudParamsId, new Vector4(sky.GetFloat("_PanoAmount") * cloudAmount, sky.GetFloat("_PanoHorizon"), sky.GetFloat("_PanoRotation"),
                                                  (sky.HasProperty("_PanoCloudFront") ? sky.GetFloat("_PanoCloudFront") : 1f) * cloudCover));
         mpb.SetVector(CloudSpeedId, sky.GetVector("_PanoCloudSpeed"));
         Color tint = sky.GetColor("_PanoTint");

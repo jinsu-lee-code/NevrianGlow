@@ -139,6 +139,7 @@ Shader "DSEWA/ToonLakeWater"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareOpaqueTexture.hlsl"
+            #include "Assets/Art/Environment/Shaders/GroundFog.hlsl"   // ApplyWorldWakeBand
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _SkyColor, _PathColor;
@@ -436,7 +437,8 @@ Shader "DSEWA/ToonLakeWater"
                 float2 rUV = suv + (float2(Noise3(float3(i.positionWS.xz * 1.3, t * 0.4)), Noise3(float3(i.positionWS.xz * 1.3 + 9.1, t * 0.4))) - 0.5)
                              * _Refraction * saturate(depthV * 3) + wDirSlope * _Refraction * 0.6;
                 half3 behindCol = SampleSceneColor(rUV) * lerp(half3(1, 1, 1), _ShoreColor.rgb * 1.6, 0.4);
-                col = lerp(behindCol, col, alpha);
+                // greys with the sleeping world (behindCol already did), the wave band stays faint like on the ground
+                col = lerp(behindCol, ApplyWorldWakeBand(col, i.positionWS, 0.35h), alpha);
                 return half4(MixFog(col, i.fogFactor), 1);
             }
             ENDHLSL

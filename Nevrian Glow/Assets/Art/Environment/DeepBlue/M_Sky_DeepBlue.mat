@@ -85,13 +85,13 @@ Material:
     - _BodyHazeLow: 0.55
     - _BodyLimb: 0.6
     - _BodyMid: 1
-    - _CloudClean: 0
+    - _CloudClean: 1
     - _CloudCleanRadius: 3
-    - _CloudCoreShadow: 0.25
+    - _CloudCoreShadow: 0.1
     - _CloudCoverage: 0.63
     - _CloudCurve: 0.3
     - _CloudEdge: 0.001
-    - _CloudEdgeCrisp: 0
+    - _CloudEdgeCrisp: 1
     - _CloudEmit: 0
     - _CloudEmitBody: 0.25
     - _CloudEmitEdge: 0.4
@@ -104,10 +104,10 @@ Material:
     - _CloudOpacity: 0
     - _CloudScale: 1.2
     - _CloudShade: 1
-    - _CloudShadeSoft: 0.05
-    - _CloudShadeSteps: 2
+    - _CloudShadeSoft: 0.26
+    - _CloudShadeSteps: 0
     - _CloudShadeThreshold: 0.42
-    - _CloudShadowDepth: 0.5
+    - _CloudShadowDepth: 0.3
     - _CloudSpeed: 1
     - _DayEdgeAmount: 0.6
     - _DaySide: 1
@@ -256,7 +256,7 @@ Material:
     - _OpenSkyTint: {r: 1, g: 1, b: 1, a: 1}
     - _OverallColor: {r: 1, g: 1, b: 1, a: 1}
     - _PanoCloudMask: {r: 0.25, g: 0.45, b: 0, a: 0}
-    - _PanoCloudSpeed: {r: 0.15, g: 0.35, b: 0, a: 0}
+    - _PanoCloudSpeed: {r: -0.3, g: -0.46, b: 0, a: 0}
     - _PanoStarTwinkle: {r: 1.5, g: 0.8, b: 1, a: 0}
     - _PanoTint: {r: 0.8, g: 0.76, b: 1, a: 1}
     - _PlanetBand: {r: 0.47843128, g: 0.40784135, b: 0.8156863, a: 1}

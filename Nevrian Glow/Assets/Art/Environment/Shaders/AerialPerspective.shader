@@ -45,13 +45,40 @@ Shader "Hidden/DSEWA/AerialPerspective"
         _RayOnSky ("Rays Over Open Sky (x)", Range(0, 1)) = 0.35
         _CloudRayBoost ("Cloud Gap Boost (rays through 3D cloud gaps)", Range(0, 4)) = 1.5
         [HDR] _CloudRayColor ("Cloud Gap Ray Colour", Color) = (1.0, 0.78, 0.9, 1)
+        _MoonRayAmount ("Moon Ray Amount (0 = off, MoonLensFlare gives the direction)", Range(0, 2)) = 0
+        [HDR] _MoonRayColor ("Moon Ray Colour", Color) = (0.62, 0.72, 1.0, 1)
         [Header(Valley Mist)]
+        _VividSaturation ("Awake Colours: Extra Saturation (grey stays grey)", Range(0, 1)) = 0.28
+        _VividLift ("Awake Colours: Midtone Lift", Range(0, 1)) = 0.22
+        _ShopSaturation ("Shop: Extra Saturation", Range(0, 1)) = 0.2
+        _ShopLift ("Shop: Midtone Lift", Range(0, 1)) = 0.34
+        _ShopContrast ("Shop: Contrast", Range(0, 1)) = 0.1
+        _ShopPivot ("Shop: Contrast Pivot", Range(0, 1)) = 0.08
+        _ShopShadowTint ("Shop: Shadow Tint", Color) = (0.84, 0.88, 1.02, 1)
+        _ShopShadowEnd ("Shop: Shadows End At (brightness)", Range(0.01, 1)) = 0.14
+        _VividFadeStart ("Awake Colours Fade From (m)", Float) = 120
+        _VividFadeEnd ("Awake Colours Gone At (m)", Float) = 260
+        _FarAirAmount ("Far Hills Air (terrain rim, fixed to the world)", Range(0, 1)) = 0.62
+        _FarAirFrom ("Far Hills Air From (m from the map centre)", Float) = 150
+        _FarAirTo ("Far Hills Air Full At (m from the map centre)", Float) = 235
+        _FarAirColor ("Far Hills Air Colour", Color) = (0.52, 0.46, 0.72, 1)
+        _FarAirSunColor ("Far Hills Air Towards The Sun", Color) = (0.84, 0.56, 0.5, 1)
+        _FarAirIceColor ("Far Hills Air Away From The Sun", Color) = (0.38, 0.5, 0.78, 1)
+        _RimFadeStart ("Rim Fades From (m)", Float) = 90
+        _RimFadeEnd ("Rim Gone At (m)", Float) = 150
         _MistAmount ("Mist Amount", Range(0, 1)) = 0
         [HDR] _MistColor ("Mist Colour (linear)", Color) = (0.62, 0.58, 0.85, 1)
         _MistStart ("Mist From (m)", Float) = 55
         _MistFade ("Mist Fade In Over (m)", Float) = 40
         _MistBase ("Mist Floor Height (world y)", Float) = -1
         _MistHeight ("Mist Depth (m above the floor)", Float) = 5
+        _MistPatchSize ("Mist Patch Size (m, fixed to the world; 0 = even sheet)", Float) = 38
+        _MistPatchDrift ("Mist Patch Drift (m per second)", Float) = 0.35
+        _MistPatchEdge ("Mist Patch Softness", Range(0.05, 1)) = 0.55
+        _MistScatter ("Mist Sun Scatter (glow looking towards the sun)", Range(0, 3)) = 1.1
+        _MistScatterTight ("Mist Scatter Tightness (0 = wide, 0.95 = only near the sun)", Range(0, 0.95)) = 0.62
+        _MistGlowBleed ("Mist Glow Bleed (bright things light the mist round them)", Range(0, 2)) = 0.8
+        _MistGlowRadius ("Mist Glow Radius (of screen height)", Range(0.005, 0.12)) = 0.045
         [Header(Sunset Rim On Far Silhouettes)]
         _RimAmount ("Rim Amount", Range(0, 1)) = 0
         [HDR] _RimColor ("Rim Colour (sun side)", Color) = (1.0, 0.62, 0.38, 1)
@@ -83,10 +110,53 @@ Shader "Hidden/DSEWA/AerialPerspective"
             float _LayerMode, _LayerSoft, _LayerDesat;
             float4 _LayerEdges, _LayerHaze;
             float _MistAmount, _MistStart, _MistFade, _MistBase, _MistHeight;
+            float _MistPatchSize, _MistPatchDrift, _MistPatchEdge, _MistScatter, _MistScatterTight, _MistGlowBleed, _MistGlowRadius;
+            float _FarAirAmount, _FarAirFrom, _FarAirTo, _RimFadeStart, _RimFadeEnd;
+            float _VividSaturation, _VividLift, _VividFadeStart, _VividFadeEnd, _ShopSaturation, _ShopLift, _ShopContrast, _ShopPivot, _ShopShadowEnd;
+            float4 _ShopShadowTint;
+            float4 _FarAirColor, _FarAirSunColor, _FarAirIceColor;
+
+            // world-fixed mist patches: soft value noise, two octaves, drifting slowly (they stay where they are as you walk)
+            float MistHash(float2 p) { return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); }
+            float MistNoise(float2 p)
+            {
+                float2 i = floor(p), f = frac(p);
+                f = f * f * (3 - 2 * f);
+                return lerp(lerp(MistHash(i), MistHash(i + float2(1, 0)), f.x), lerp(MistHash(i + float2(0, 1)), MistHash(i + float2(1, 1)), f.x), f.y);
+            }
+            // forward scattering (Henyey-Greenstein, scaled to 1 looking straight at the light)
+            float MistPhase(float3 viewDir)
+            {
+                float g = _MistScatterTight, c = dot(viewDir, normalize(_MainLightPosition.xyz));
+                return pow((1 - g) * (1 - g) / max(1 + g * g - 2 * g * c, 1e-4), 1.5);
+            }
+            // light of bright pixels round this one, picked up by the mist (two rings of taps, only where there is mist)
+            half3 MistGlowAround(float2 uv)
+            {
+                static const float2 dirs[8] = { float2(1, 0), float2(0.707, 0.707), float2(0, 1), float2(-0.707, 0.707), float2(-1, 0), float2(-0.707, -0.707), float2(0, -1), float2(0.707, -0.707) };
+                float2 r = _MistGlowRadius * float2(_ScreenParams.y / _ScreenParams.x, 1);
+                half3 sum = 0;
+                for (int i = 0; i < 8; i++)
+                {
+                    sum += max(SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv + dirs[i] * r).rgb - _GlowKeep, 0);
+                    sum += max(SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv + dirs[(i + 3) % 8] * r * 0.5).rgb - _GlowKeep, 0);
+                }
+                return sum / 16;
+            }
+            float MistPatch(float2 xz)
+            {
+                if (_MistPatchSize <= 0.001) return 1;
+                float2 p = (xz + float2(_Time.y, _Time.y * 0.6) * _MistPatchDrift) / _MistPatchSize;
+                float n = MistNoise(p) * 0.65 + MistNoise(p * 2.3 + 7.1) * 0.35;
+                return smoothstep(0.5 - _MistPatchEdge * 0.5, 0.5 + _MistPatchEdge * 0.5, n);
+            }
             float _LayerColAmount;
             float4 _LayerColMid, _LayerColFar, _LayerColHorizon;
             float _RayAmount, _RayLength, _RayDecay, _RayFalloff, _RayOnSky, _CloudRayBoost;
             float4 _CloudRayColor;
+            float _MoonRayAmount;
+            float4 _MoonRayColor;
+            float4 _DSEWA_MoonDir;   // xyz towards the moon, w = 1 while it shows (MoonLensFlare)
             static float _CloudGap;   // per pixel: share of the blockers along the ray that were 3D clouds (set by SunRays)
             float4 _RayColor;
             float4 _MistColor;
@@ -141,9 +211,8 @@ Shader "Hidden/DSEWA/AerialPerspective"
                 return false;
             }
 
-            half SunRays(float2 uv)
+            half SunRays(float2 uv, float3 L)
             {
-                float3 L = normalize(_MainLightPosition.xyz);
                 float4 sc = mul(UNITY_MATRIX_VP, float4(_WorldSpaceCameraPos + L * 1000.0, 1));
                 if (sc.w <= 0) return 0;
                 float2 sunUV = sc.xy / sc.w;
@@ -151,6 +220,9 @@ Shader "Hidden/DSEWA/AerialPerspective"
                 sunUV.y = -sunUV.y;
             #endif
                 sunUV = sunUV * 0.5 + 0.5;
+                // the sun may sit a little off screen and still throw rays in
+                float onScreen = 1 - smoothstep(0.15, 0.6, max(max(-sunUV.x, sunUV.x - 1), max(-sunUV.y, sunUV.y - 1)));
+                if (onScreen <= 0) return 0;
                 float2 aspect = float2(_ScreenParams.x / _ScreenParams.y, 1);
                 float2 delta = (sunUV - uv) * _RayLength / 24.0;
                 float2 p = uv;
@@ -180,8 +252,6 @@ Shader "Hidden/DSEWA/AerialPerspective"
                 lit *= 1 + _CloudRayBoost * _CloudGap * 4 * lit * (1 - lit);
                 float distToSun = length((uv - sunUV) * aspect);
                 float near = exp(-distToSun * _RayFalloff);
-                // the sun may sit a little off screen and still throw rays in
-                float onScreen = 1 - smoothstep(0.15, 0.6, max(max(-sunUV.x, sunUV.x - 1), max(-sunUV.y, sunUV.y - 1)));
                 return lit * near * onScreen;
             }
 
@@ -194,23 +264,41 @@ Shader "Hidden/DSEWA/AerialPerspective"
                 return _DSEWA_InteriorBoxMax.x > _DSEWA_InteriorBoxMin.x && all(c >= _DSEWA_InteriorBoxMin.xyz) && all(c <= _DSEWA_InteriorBoxMax.xyz);
             }
 
+            // the shop has no haze, but it takes the same "awake colours" step as outdoors so the two feel like one world
+            half4 ShopGrade(half4 col)
+            {
+                float lum = dot(col.rgb, float3(0.2126, 0.7152, 0.0722));
+                float keep = 1 - smoothstep(_GlowKeep, _GlowKeep * 1.6, lum);
+                // lift the brightness alone: a curve on each channel would wash the colours out
+                float lifted = pow(max(lum, 1e-4), 1 / (1 + _ShopLift * keep));
+                lifted = max(_ShopPivot + (lifted - _ShopPivot) * (1 + _ShopContrast * keep), 1e-4);   // on brightness too: per channel it turns dark walls blue
+                col.rgb *= lifted / max(lum, 1e-4);
+                // only the dark tones turn navy: lit faces keep their colour, so the room's tone does not stain the props
+                float dark = 1 - smoothstep(0, _ShopShadowEnd, lifted);
+                col.rgb *= lerp(float3(1, 1, 1), _ShopShadowTint.rgb, dark * keep);
+                col.rgb = max(lerp(lifted.xxx, col.rgb, 1 + _ShopSaturation * keep), 0);
+                return col;
+            }
+
             half4 Frag(Varyings input) : SV_Target
             {
                 float2 uv = input.texcoord;
                 half4 col = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
-                if (CameraInShop()) return col;
+                if (CameraInShop()) return ShopGrade(col);
                 float raw = SampleSceneDepth(uv);
                 _CloudGap = 0;
-                half rays = _RayAmount > 0 ? SunRays(uv) * _RayAmount * (1 - saturate(_DSEWA_HazeCut)) : 0;
-                half3 rayCol = lerp(_RayColor.rgb, _CloudRayColor.rgb, saturate(_CloudGap * 1.5));
+                half rays = _RayAmount > 0 ? SunRays(uv, normalize(_MainLightPosition.xyz)) * _RayAmount * (1 - saturate(_DSEWA_HazeCut)) : 0;
+                half3 rayLight = lerp(_RayColor.rgb, _CloudRayColor.rgb, saturate(_CloudGap * 1.5)) * rays;
+                if (_MoonRayAmount > 0 && _DSEWA_MoonDir.w > 0.5)
+                    rayLight += _MoonRayColor.rgb * SunRays(uv, _DSEWA_MoonDir.xyz) * _MoonRayAmount * (1 - saturate(_DSEWA_HazeCut));
             #if UNITY_REVERSED_Z
-                if (raw <= 0.0000001) { col.rgb += rayCol * rays * _RayOnSky; return col; }          // sky
+                if (raw <= 0.0000001) { col.rgb += rayLight * _RayOnSky; return col; }          // sky
             #else
-                if (raw >= 0.9999999) { col.rgb += rayCol * rays * _RayOnSky; return col; }
+                if (raw >= 0.9999999) { col.rgb += rayLight * _RayOnSky; return col; }
             #endif
                 float d = LinearEyeDepth(raw, _ZBufferParams);
                 if (_DSEWA_CloudCount > 0 && InCloud(ComputeWorldSpacePosition(uv, raw, UNITY_MATRIX_I_VP)))
-                { col.rgb += rayCol * rays * _RayOnSky; return col; }   // a cloud: sky treatment (rays only)
+                { col.rgb += rayLight * _RayOnSky; return col; }   // a cloud: sky treatment (rays only)
                 float lum = dot(col.rgb, float3(0.2126, 0.7152, 0.0722));
                 float glow = smoothstep(_GlowKeep, _GlowKeep * 1.6, lum);
 
@@ -236,6 +324,20 @@ Shader "Hidden/DSEWA/AerialPerspective"
                 float hazeLum = dot(hazeCol, float3(0.2126, 0.7152, 0.0722));
                 half3 hazed = hazeCol * lerp(1.0, lum / max(hazeLum, 1e-3), _DetailKeep * 0.5);
                 col.rgb = lerp(col.rgb, hazed, t);
+                // far hills: the terrain's rim sinks into the same air as the mountains behind it. Fixed to the world round the map
+                // centre, not to the camera, so nothing clears as you walk (2026-11-01, user)
+                if (_FarAirAmount > 0)
+                {
+                    float3 wpa = ComputeWorldSpacePosition(uv, raw, UNITY_MATRIX_I_VP);
+                    float airK = smoothstep(_FarAirFrom, _FarAirTo, length(wpa.xz)) * _FarAirAmount * (1 - glow) * (1 - saturate(_DSEWA_HazeCut)) * (1 - smoothstep(_SkyFrom, _SkyFull, d));
+                    float2 va = normalize(wpa.xz - _WorldSpaceCameraPos.xz + 1e-5);
+                    float azA = saturate(dot(va, normalize(_MainLightPosition.xz + 1e-5)) * 0.5 + 0.5);
+                    half3 airCol = lerp(_FarAirColor.rgb, _FarAirSunColor.rgb, pow(azA, _HazeSideSpread));
+                    airCol = lerp(airCol, _FarAirIceColor.rgb, pow(1 - azA, _HazeSideSpread));
+                    float airLum = dot(airCol, float3(0.299, 0.587, 0.114));
+                    airCol = lerp(airCol, airLum * half3(0.78, 0.82, 0.95) * 0.72, WorldWakeOutside(wpa));   // grey with the sleeping world
+                    col.rgb = lerp(col.rgb, airCol, airK);
+                }
                 float wake = WorldWakeFogScale(ComputeWorldSpacePosition(uv, raw, UNITY_MATRIX_I_VP)) * (1 - saturate(_DSEWA_HazeCut));
                 float skyKeep = 1 - smoothstep(_SkyFrom, _SkyFull, d);
                 if (_LayerMode > 0.5 && _LayerDesat > 0)   // each layer a little greyer
@@ -244,20 +346,29 @@ Shader "Hidden/DSEWA/AerialPerspective"
                     col.rgb = lerp(col.rgb, lg.xxx, saturate(LayerIndex(d) * _LayerDesat) * (1 - glow) * skyKeep);
                 }
 
-                // valley mist: a low pale sheet from the mid/far boundary on, lying in the low ground, so the foot of each
-                // far layer (the cliff base, the far forest floor) goes pale and the layer above stands off it
+                // valley mist: low pale patches lying in the low ground, fixed to the world (2026-11-01, user: a clear ring that
+                // follows the camera reads wrong in a dreamy background) - only the first metres stay open so it never fogs the lens
                 if (_MistAmount > 0)
                 {
                     float3 wpm = ComputeWorldSpacePosition(uv, raw, UNITY_MATRIX_I_VP);
                     float low = 1 - smoothstep(_MistBase, _MistBase + max(_MistHeight, 0.1), wpm.y);
-                    float m = smoothstep(_MistStart, _MistStart + max(_MistFade, 1), d) * low * low * _MistAmount * (1 - glow) * wake * skyKeep;
+                    float m = smoothstep(_MistStart, _MistStart + max(_MistFade, 1), d) * low * low * MistPatch(wpm.xz) * _MistAmount * (1 - glow) * wake * skyKeep;
                     half3 mc = lerp(_MistColor.rgb, hazeCol * 1.6, 0.35);
-                    col.rgb = lerp(col.rgb, mc, m);
+                    half3 lit = 0;
+                    if (m > 0.002)
+                    {
+                        // the mist catches the light: warm towards the sun, and round anything glowing
+                        float3 view = normalize(wpm - _WorldSpaceCameraPos);
+                        half3 sunCol = lerp(_MainLightColor.rgb, _HazeSunColor.rgb, 0.5);
+                        lit = sunCol * MistPhase(view) * _MistScatter;
+                        if (_MistGlowBleed > 0) lit += MistGlowAround(uv) * _MistGlowBleed;
+                    }
+                    col.rgb = lerp(col.rgb, mc, m) + lit * m;
                 }
 
                 // sunset rim: far silhouettes that have open sky just above them get a thin bright edge, warm towards
                 // the sun's azimuth (day side), faint and cool on the far side
-                if (_RimAmount > 0 && d > _RimStart * 0.5)
+                if (_RimAmount > 0 && d > _RimStart * 0.5 && d < _RimFadeEnd)
                 {
                     float px = _RimWidth * (_ScreenParams.y / 1080.0);
                     float2 ofs = float2(0, px / _ScreenParams.y);
@@ -271,19 +382,29 @@ Shader "Hidden/DSEWA/AerialPerspective"
                         float azr = saturate(dot(normalize(vr + 1e-5), normalize(_MainLightPosition.xz + 1e-5)) * 0.5 + 0.5);
                         float sunW = pow(azr, _RimSpread);
                         half3 rc = lerp(_RimNightColor.rgb, _RimColor.rgb, sunW);
-                        float k2 = rim * smoothstep(_RimStart * 0.5, _RimStart, d) * _RimAmount * (1 - glow) * (_RimNight + (1 - _RimNight) * sunW);
+                        float k2 = rim * smoothstep(_RimStart * 0.5, _RimStart, d) * (1 - smoothstep(_RimFadeStart, _RimFadeEnd, d)) * _RimAmount * (1 - glow) * (_RimNight + (1 - _RimNight) * sunW);
                         col.rgb = lerp(col.rgb, rc, saturate(k2));
                     }
                 }
 
                 // sun rays over the scene: stronger in the air far away than on the near ground
-                col.rgb += rayCol * rays * lerp(0.35, 1.0, smoothstep(5, 60, d));
+                col.rgb += rayLight * lerp(0.35, 1.0, smoothstep(5, 60, d));
 
                 // near: a little deeper and richer
                 float n = (1 - smoothstep(0, _NearEnd, d)) * (1 - glow);
                 float l2 = dot(col.rgb, float3(0.2126, 0.7152, 0.0722));
                 col.rgb = lerp(l2.xxx, col.rgb, 1 + _NearSaturate * n);
                 col.rgb *= 1 - _NearDeepen * n;
+
+                // awake colours: brighter and richer where the world is awake, the grey is left alone (2026-11-01, user).
+                // Fades with distance so the far hills and mountains keep their air
+                if (_VividSaturation + _VividLift > 0)
+                {
+                    float vivid = (1 - WorldWakeOutside(ComputeWorldSpacePosition(uv, raw, UNITY_MATRIX_I_VP))) * (1 - glow) * (1 - smoothstep(_VividFadeStart, _VividFadeEnd, d));
+                    float l3 = dot(col.rgb, float3(0.2126, 0.7152, 0.0722));
+                    col.rgb = max(lerp(l3.xxx, col.rgb, 1 + _VividSaturation * vivid), 0);
+                    col.rgb = pow(col.rgb, 1 / (1 + _VividLift * vivid));
+                }
                 return col;
             }
             ENDHLSL

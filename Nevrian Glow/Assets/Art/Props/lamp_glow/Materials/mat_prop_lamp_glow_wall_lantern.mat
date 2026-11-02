@@ -44,7 +44,7 @@ Material:
     - _ShadowSaturation: 1.35
     - _Softness: 0.3
     - _TexGlowSoftness: 0.2
-    - _TexGlowStrength: 1.6
+    - _TexGlowStrength: 0.7
     - _TexGlowThreshold: 0.5
     - _ViewGloss: 0
     - _Wrap: 0.5
