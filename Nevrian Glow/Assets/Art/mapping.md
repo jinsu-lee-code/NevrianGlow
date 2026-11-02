@@ -95,6 +95,8 @@
 
 | 파일 | 내용 |
 |---|---|
+| 배경 씬 `== Vegetation ==/StartFrame/pf_env_tree_bg_qt_twisted_2` | 11/02. 농장에서 등대를 가려서 (-4.5, 0, 14.2) → (10.77, 0, 17.72)로 이동 (개발 요청) |
+| `Crops/lanternfruit/pf_crop_lanternfruit_mature.prefab`의 `CropReadyGlow.fruitProbe` | 11/02. `LanternFruit_Fruit_01` → `Stalk_Fruit_01`. 거둠 애니메이션이 부모 `Stalk_Fruit_01` 크기를 줄여서 거둔 뒤에도 빛이 남던 것. 개발 Variant와 맞춤 |
 | `Environment/Shaders/ToonCrystal.shader` · `ToonCrystalForward.hlsl`, `mat_env_shop_crystal_*` | 11/02. 크리스탈 뿌리는 진한 색, 위로 갈수록 연하고 투명하게. 불투명도 값 `_TipFade` 추가(기본 1이라 다른 크리스탈은 그대로) |
 | `pf_env_shop_decor`의 `CrystalVolume_01` · `_02`, `shop_decor/Materials/mat_env_shop_crystal_volume.mat`, `Scripts/LightVolume.cs` | 11/02. 크리스탈 주위 공기의 빛 볼륨. 실제 라이트 없이 `LightVolume`의 `glow` 색으로 빛남 |
 | `pf_env_shop_decor`의 `GlowPool_Steady_01` · `_02`, `shop_decor/Materials/mat_env_shop_crystal_pool_{aqua,sky}.mat` | 11/02. 크리스탈 아래 맥동 `GlowPool`을 빼고 고정 빛으로 교체. 상점 전용 복사본이고 `DayNightBlend`에 등록 안 함 |

@@ -11602,7 +11602,7 @@ MonoBehaviour:
   effect: {fileID: 147225854646189293}
   readyLight: {fileID: 7731572108855257163}
   lightIntensity: 1.6
-  fruitProbe: {fileID: 338306456449603815}
+  fruitProbe: {fileID: 2543798206147297283}
   harvestWisp: {fileID: 8417276002303677927, guid: 8539dcbf04c91744c8e7d62fe52471ca, type: 3}
   wispHeight: 1.1
 --- !u!1 &5919001184777699199
