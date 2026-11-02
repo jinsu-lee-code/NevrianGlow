@@ -61,11 +61,11 @@ namespace NevrianGlowFarm.Systems.Player
         [Tooltip("들고 있는 자세 ↔ 바닥 대걸레질 자세 전환 시간 (초)")]
         [SerializeField, Min(0.01f)] private float scrubBlendTime = 0.12f;
         [Tooltip("대걸레질 거품 덩어리 수 — 대걸레 머리 둘레에 차례로 생긴다 (개, 2026-11-02 사용자: 한 개만 나옴)")]
-        [SerializeField, Range(1, 8)] private int foamCount = 4;
-        [Tooltip("거품이 생기는 대걸레 머리 둘레 반지름 (m)")]
-        [SerializeField, Range(0f, 0.6f)] private float foamRadius = 0.22f;
+        [SerializeField, Range(1, 12)] private int foamCount = 8;
+        [Tooltip("거품이 생기는 대걸레 머리 둘레 반지름 — 화면에서 머리 크기 기준, 세 겹이 이 값의 0.75 · 1 · 1.25배 (m, 2026-11-02 사용자: 앞쪽만 나옴 → 전방위로 풍성하게)")]
+        [SerializeField, Range(0f, 1f)] private float foamRadius = 0.4f;
         [Tooltip("거품 덩어리끼리 켜지는 시차 — 한꺼번에 터지지 않게 (초)")]
-        [SerializeField, Range(0f, 1f)] private float foamStagger = 0.2f;
+        [SerializeField, Range(0f, 1f)] private float foamStagger = 0.1f;
         [Tooltip("거품 자리가 머리 둘레를 도는 빠르기 (°/초)")]
         [SerializeField, Range(0f, 360f)] private float foamSpin = 50f;
         [Tooltip("손에 든 발광 도구의 빛 세기 — 아트 재질 값에 곱한다. 화면 바로 앞이라 그대로면 눈부심 (버그 리포트 10/30 3번) (배)")]
@@ -311,7 +311,8 @@ namespace NevrianGlowFarm.Systems.Player
             if (scrub && !foamOn)
                 foamStart = Time.time;
             foamOn = scrub;
-            Vector3 center = scrub ? FoamCenter() : Vector3.zero;
+            float spread = 1f;
+            Vector3 center = scrub ? FoamCenter(out spread) : Vector3.zero;
             for (int i = 0; i < foams.Count; i++)
             {
                 if (foams[i] == null)
@@ -320,7 +321,7 @@ namespace NevrianGlowFarm.Systems.Player
                 if (on)
                 {
                     float angle = (i * 360f / foamCount + (Time.time - foamStart) * foamSpin) * Mathf.Deg2Rad;
-                    float radius = foamRadius * (i % 2 == 0 ? 0.5f : 1f); // 안쪽 · 바깥쪽 번갈아
+                    float radius = foamRadius * spread * (0.75f + 0.25f * (i % 3)); // 머리 가장자리 안팎 세 겹 번갈아
                     foams[i].transform.position = center + new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * radius;
                 }
                 if (on != foamPlaying[i])
@@ -331,13 +332,24 @@ namespace NevrianGlowFarm.Systems.Player
             }
         }
 
-        // 거품 가운데: 대걸레 머리(Contact)가 바닥에 닿은 자리 — 대걸레질 자세가 다 잡히기 전이나 표시점이 없으면 닦는 지점
-        private Vector3 FoamCenter()
+        // 거품 가운데: 화면에서 대걸레 머리(Contact)가 겹쳐 보이는 바닥 — 카메라 → 머리 시선이 바닥에 닿는 곳.
+        // 머리는 시선 위에서 바닥보다 앞에 떠 있어 바로 아래로 내리면 화면에서 어긋났음 (2026-11-02 사용자: 앞쪽만 거품)
+        // 대걸레질 자세가 다 잡히기 전이나 표시점이 없으면 닦는 지점
+        // spread = 화면에서 머리 크기만큼 보이게 반지름에 곱할 값 (바닥 거리 / 머리 거리) — 머리가 가리는 안쪽에만 생기지 않게
+        private Vector3 FoamCenter(out float spread)
         {
+            spread = 1f;
             Vector3 point = mopTool.Point;
             if (contact == null || scrubBlend < 0.5f)
                 return point;
-            return new Vector3(contact.position.x, point.y, contact.position.z);
+            Vector3 eye = transform.position;
+            Vector3 head = contact.position;
+            float drop = head.y - eye.y;
+            if (drop > -0.01f || head.y < point.y)
+                return new Vector3(head.x, point.y, head.z);
+            float t = (point.y - eye.y) / drop;
+            spread = Mathf.Min(t, 4f); // 머리가 눈앞에 바짝 붙어도 거품이 너무 멀리 흩어지지 않게
+            return eye + (head - eye) * t;
         }
 
         private void StopFoam()
