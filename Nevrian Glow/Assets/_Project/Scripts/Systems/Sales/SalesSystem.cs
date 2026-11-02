@@ -76,6 +76,8 @@ namespace NevrianGlowFarm.Systems.Sales
         [SerializeField] private Transform counter;
         [Tooltip("줄 첫 칸 — 앞(+Z 로컬)으로 줄 간격씩 뒤 칸 (BALANCE 9-1: 4, 0, 0.5)")]
         [SerializeField] private Transform queueStart;
+        [Tooltip("줄 칸 자리 (1칸 = 계산대 앞, 기획 shop_layout.json 11/02 — 꺾인 줄). 비우면 줄 첫 칸에서 곧게. 칸보다 손님이 많으면 마지막 두 칸 방향으로 이어 선다")]
+        [SerializeField] private List<Transform> queueSlots = new List<Transform>();
         [Tooltip("장사 건너뛰기 (Player/SkipSales, Space)")]
         [SerializeField] private InputActionReference skipAction;
         [Tooltip("판매가 능력치 — 작물 판매가에 곱함 (Data/Stats/stat_sell_price, 비우면 그대로)")]
@@ -484,8 +486,9 @@ namespace NevrianGlowFarm.Systems.Sales
         private void CollectShelves()
         {
             shelfStates.Clear();
+            // 꺼진 진열대(아직 안 산 자리)는 빈 진열 — 한 번도 켜진 적 없으면 State도 없다. 순서(번호)는 shelves와 같게 둔다
             foreach (var s in shelves)
-                shelfStates.Add(s != null ? s.State : new ShelfState(0, 1));
+                shelfStates.Add(Usable(s) ? s.State : new ShelfState(0, 1));
         }
 
         // ── 저장 (6-1) ──
@@ -562,7 +565,7 @@ namespace NevrianGlowFarm.Systems.Sales
             float best = float.MaxValue;
             foreach (var s in shelves)
             {
-                if (s == null)
+                if (!Usable(s))
                     continue;
                 float d = (s.transform.position - from).sqrMagnitude;
                 if (d < best)
@@ -578,7 +581,7 @@ namespace NevrianGlowFarm.Systems.Sales
         {
             int total = 0, count = 0;
             foreach (var s in shelves)
-                if (s != null)
+                if (Usable(s))
                 {
                     total += s.State.TotalCount;
                     count++;
@@ -589,13 +592,13 @@ namespace NevrianGlowFarm.Systems.Sales
             {
                 int k = customerRandom.NextInt(0, count);
                 foreach (var s in shelves)
-                    if (s != null && k-- == 0)
+                    if (Usable(s) && k-- == 0)
                         return s;
             }
             int pick = customerRandom.NextInt(0, total);
             foreach (var s in shelves)
             {
-                if (s == null)
+                if (!Usable(s))
                     continue;
                 if (pick < s.State.TotalCount)
                     return s;
@@ -604,7 +607,27 @@ namespace NevrianGlowFarm.Systems.Sales
             return null;
         }
 
-        public Vector3 QueueSlotPosition(int slot) => queueStart.position + queueStart.forward * (settings.QueueSpacing * Mathf.Max(0, slot));
+        public Vector3 QueueSlotPosition(int slot) => QueueSlotPosition(slot, settings.QueueSpacing);
+
+        private Vector3 QueueSlotPosition(int slot, float spacing)
+        {
+            slot = Mathf.Max(0, slot);
+            int count = queueSlots.Count;
+            if (count == 0 || queueSlots[0] == null)
+                return queueStart.position + queueStart.forward * (spacing * slot);
+            if (slot < count && queueSlots[slot] != null)
+                return queueSlots[slot].position;
+            // 칸이 모자라면 마지막 칸에서 (마지막 − 그 앞) 방향으로 줄 간격씩
+            Vector3 last = queueSlots[count - 1] != null ? queueSlots[count - 1].position : queueSlots[0].position;
+            Vector3 before = count > 1 && queueSlots[count - 2] != null ? queueSlots[count - 2].position : queueStart.position - queueStart.forward;
+            Vector3 dir = last - before;
+            dir.y = 0f;
+            dir = dir.sqrMagnitude > 0.0001f ? dir.normalized : queueStart.forward;
+            return last + dir * (spacing * (slot - count + 1));
+        }
+
+        // 손님이 쓰는 진열대 = 켜진 것만 (과일 진열대 추가 전 자리는 꺼져 있다, 11/02)
+        private static bool Usable(ShelfDisplay s) => s != null && s.isActiveAndEnabled;
 
         public int JoinLine(int number) => line.Join(number);
         public int LinePosition(int number) => line.PositionOf(number);
@@ -679,7 +702,7 @@ namespace NevrianGlowFarm.Systems.Sales
         {
             int n = 0;
             foreach (var s in shelves)
-                if (s != null)
+                if (Usable(s))
                     n += s.State.TotalCount;
             return n;
         }
@@ -716,12 +739,14 @@ namespace NevrianGlowFarm.Systems.Sales
 
             // 동선: 입구 → 바구니 → 진열대 앞 → 줄 끝 … 계산대 → 입구 (마젠타)
             Vector3 lift = Vector3.up * 0.05f;
-            Vector3 lastSlot = queueStart.position + queueStart.forward * spacing * (gizmoQueueSlots - 1);
+            int slots = Mathf.Max(gizmoQueueSlots, queueSlots.Count);
+            Vector3 lastSlot = QueueSlotPosition(slots - 1, spacing);
             GizmoKit.Arrow(entrance.position + lift, basketStand.position + lift, GizmoKit.CustomerPath);
             GizmoKit.Arrow(basketStand.position + lift, shelfFront.position + lift, GizmoKit.CustomerPath);
             GizmoKit.Arrow(shelfFront.position + lift, lastSlot + lift, GizmoKit.CustomerPath);
-            GizmoKit.Arrow(lastSlot + lift, queueStart.position + lift, GizmoKit.CustomerPath);
-            GizmoKit.Arrow(queueStart.position + lift, entrance.position + lift, GizmoKit.CustomerPath);
+            for (int i = slots - 1; i > 0; i--)
+                GizmoKit.Line(QueueSlotPosition(i, spacing) + lift, QueueSlotPosition(i - 1, spacing) + lift, GizmoKit.CustomerPath);
+            GizmoKit.Arrow(QueueSlotPosition(0, spacing) + lift, entrance.position + lift, GizmoKit.CustomerPath);
             GizmoKit.Line(shelfFront.TransformPoint(new Vector3(-browseSpread * 0.5f, 0f, 0f)) + lift, shelfFront.TransformPoint(new Vector3(browseSpread * 0.5f, 0f, 0f)) + lift, GizmoKit.CustomerPath);
 
             // 경유 지점 정지 거리 원
@@ -731,9 +756,9 @@ namespace NevrianGlowFarm.Systems.Sales
             GizmoKit.WireBox(counter.position + Vector3.up * 0.5f, new Vector3(1.6f, 1f, 0.6f), GizmoKit.CustomerPath);
 
             // 줄 칸: 번호 붙은 작은 사각형
-            for (int i = 0; i < gizmoQueueSlots; i++)
+            for (int i = 0; i < slots; i++)
             {
-                Vector3 p = queueStart.position + queueStart.forward * spacing * i;
+                Vector3 p = QueueSlotPosition(i, spacing);
                 GizmoKit.FlatBox(p + lift, new Vector3(0.4f, 0f, 0.4f), GizmoKit.CustomerPath, 0.15f);
                 GizmoKit.Label(p + Vector3.up * 0.3f, (i + 1).ToString(), GizmoKit.CustomerPath);
             }

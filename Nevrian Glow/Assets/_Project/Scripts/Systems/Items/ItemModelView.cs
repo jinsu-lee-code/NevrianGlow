@@ -21,7 +21,10 @@ namespace NevrianGlowFarm.Systems.Items
             if (greybox == null)
                 return false;
             var old = greybox.transform.Find(ChildName);
+            // 놓인 모습 모델 → 없으면 손 모델(도구 — Q로 버리면 상자가 보이던 것, 버그 리포트 10/30 김승희)
             var prefab = item != null ? item.WorldModelFor(seed) : null;
+            if (prefab == null && item != null)
+                prefab = item.HeldPrefab;
             if (old != null)
                 Object.Destroy(old.gameObject);
             greybox.enabled = prefab == null;

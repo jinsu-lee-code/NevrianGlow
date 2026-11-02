@@ -29,7 +29,7 @@ namespace NevrianGlowFarm.Editor
         private const int BedCells = 4; // GDD 1페이지: 밭 1개 = 2×2칸
 
         private static string RepoRoot => Path.GetFullPath(Path.Combine(Application.dataPath, "..", ".."));
-        private static string PlanRoot => Path.Combine(RepoRoot, "CSV", "plan");
+        internal static string PlanRoot =>Path.Combine(RepoRoot, "CSV", "plan");
         private static string IdMapPath => Path.Combine(RepoRoot, "ID_MAP.md");
         private static string ReportPath => Path.Combine(PlanRoot, "가져오기_결과.md");
 
@@ -304,7 +304,7 @@ namespace NevrianGlowFarm.Editor
                 if (endless && !TryNumberAfter(table.Get(r, "price_growth"), description, PriceGrowthPattern, out growth))
                     report.Problems.Add($"상품 {planId}: 마지막 단계 뒤 가격 배율(price_growth 열 · 설명 '직전 가격 × N')이 없음 — {prices.Count}단계에서 끝");
                 else if (endless)
-                    report.Notes.Add($"상품 {planId}: {prices.Count}단계 뒤 가격 × {growth} (설명 글에서)");
+                    report.Notes.Add($"상품 {planId}: {prices.Count}단계 뒤 가격 × {growth}");
 
                 var so = new SerializedObject(product);
                 so.FindProperty("priceGrowthAfterTiers").floatValue = growth;
@@ -432,6 +432,16 @@ namespace NevrianGlowFarm.Editor
                         if (grants.Distinct().Count() > 1)
                             report.Problems.Add($"상품 {planId}: 단계마다 다른 핫바 칸 수는 아직 못 넣음 — 첫 값만");
                         so.FindProperty("slots").intValue = grants.Count > 0 ? Mathf.Max(1, grants[0]) : 1;
+                        break;
+                    case FruitShelfProductData _:
+                        // 단계마다 놓는 진열대 수 (1;1;1;1). 어떤 진열대인지(grant_target 계단형 · 판매대)는 가게 자리 순서가 정한다 — Build Shop Layout
+                        var shelvesPerTier = so.FindProperty("shelvesPerTier");
+                        shelvesPerTier.ClearArray();
+                        for (int i = 0; i < grants.Count; i++)
+                        {
+                            shelvesPerTier.InsertArrayElementAtIndex(i);
+                            shelvesPerTier.GetArrayElementAtIndex(i).intValue = Mathf.Max(1, grants[i]);
+                        }
                         break;
                     case StatUpgradeProductData upgrade:
                         // 단계마다 바뀌는 값(장바구니 +1 · 손님 +20% · 판매가 +10%)은 에셋에 — CSV grant_value는 단계 수(1)라 쓰지 않음
@@ -1013,7 +1023,7 @@ namespace NevrianGlowFarm.Editor
             Section("숨김 (값은 넣음)", report.Hidden);
             Section("건너뜀 (개발 에셋 없음)", report.Skipped);
             Section("시스템 대기 설정 (game_settings.csv)", report.Waiting);
-            Section("설명 글에서 읽은 값 (기획 확인 대기 — 열로 받으면 그 값)", report.Notes);
+            Section("입고 · 가격 배율 (열 우선, 없으면 설명 글에서)", report.Notes);
             Section("생성", report.Created);
             Section("갱신 (값이 바뀐 에셋)", report.Updated);
             File.WriteAllText(ReportPath, sb.ToString(), new UTF8Encoding(false));

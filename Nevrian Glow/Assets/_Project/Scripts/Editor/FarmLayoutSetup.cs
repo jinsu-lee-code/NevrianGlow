@@ -206,7 +206,7 @@ namespace NevrianGlowFarm.Editor
         private static readonly (string Name, string Label, Vector3 Position, float Yaw)[] DefaultSites =
         {
             ("FieldSite_1", "북서쪽 밭", new Vector3(-18.2f, 0f, 10f), 270f),     // 북쪽 고리 길 서쪽
-            ("FieldSite_2", "남서쪽 밭", new Vector3(-16.8f, 0f, -28f), 90f),     // 서쪽 대각선 길
+            ("FieldSite_2", "남서쪽 밭", new Vector3(-14.8f, 0f, -21f), 90f),     // 서쪽 대각선 길 — (-16.8, -28)은 울타리가 호수에 걸려 북쪽 평지로 (아트 요청 11/01)
             ("FieldSite_3", "동쪽 밭", new Vector3(31.8f, 0f, -2f), 270f),        // 동쪽 둘레 길 끝
             ("FieldSite_4", "남동쪽 밭", new Vector3(26f, 0f, -32.8f), 0f),       // 동쪽 둘레 길 · 호수 길이 만나는 끝
             ("FieldSite_5", "남서쪽 끝 밭", new Vector3(-32.8f, 0f, -40f), 90f), // 서쪽 대각선 길 끝 (플레이 구역 벽)

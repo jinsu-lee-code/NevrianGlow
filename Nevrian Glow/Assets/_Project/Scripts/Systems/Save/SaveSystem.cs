@@ -258,12 +258,13 @@ namespace NevrianGlowFarm.Systems.Save
                 PlayerInventory.Instance.LoadFrom(s);
             if (StorageSystem.Instance != null)
                 StorageSystem.Instance.LoadFrom(s);
+            // 상점 먼저 — 산 과일 진열대(구매 단계)가 켜진 뒤에 진열 내용을 넣는다 (켜진 진열대만 저장되므로)
+            if (ShopSystem.Instance != null)
+                ShopSystem.Instance.LoadFrom(s);
             var shelves = OrderedShelves();
             for (int i = 0; i < shelves.Count; i++)
                 if (i < s.Shelves.Count)
                     shelves[i].LoadSlots(s.Shelves[i]);
-            if (ShopSystem.Instance != null)
-                ShopSystem.Instance.LoadFrom(s);
             if (SalesSystem.Instance != null)
                 SalesSystem.Instance.LoadFrom(s);
             foreach (var w in s.WorldItems)

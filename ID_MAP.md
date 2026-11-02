@@ -48,7 +48,7 @@
 | 종류 | 기획 id | 개발 id | 상태 | 변환 | 메모 |
 |---|---|---|---|---|---|
 | 상품 | shop_plot_expand | shop_plot_expand | 연결 | | 흩어진 밭 (2026-10-30): 단계마다 확장 밭 자리(FarmFieldSite) 하나 — 시작 밭과 같은 32칸. 자리 수만큼 단계 (10/30 shop.csv 5단계 → 길 끝마다 5곳, 2026-11-01) |
-| 상품 | shop_fruit_shelf | - | 없음 | | 과일 진열대 추가 구매 (P1) — 빈 자리에 설치하는 구매 효과 대기 |
+| 상품 | shop_fruit_shelf | shop_fruit_shelf | 연결 | | 과일 진열대 추가 구매 — 가게의 정해진 빈 자리(shop_layout.json) 순서대로 1대씩 (11/02) |
 | 상품 | shop_device_sprinkler | - | 없음 | | 스프링클러 시스템 대기 |
 | 상품 | - | shop_shelf_expand | 개발만 | | 진열 칸 확장 → 기획은 과일 진열대 추가 구매로 바뀜 |
 

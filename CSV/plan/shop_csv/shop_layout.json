@@ -1,0 +1,30 @@
+{
+  "unit": "m",
+  "origin": "가게 왼쪽 위 모서리, x 오른쪽, z 아래쪽",
+  "store": { "width": 16.8, "depth": 14, "scale_from_12x10": 1.4 },
+  "items": [
+    { "id": "aisle_1", "type": "aisle", "label": "위 통로", "x": 0, "z": 2.1, "w": 16.8, "d": 1.96, "rot": 0, "center_x": 8.4, "center_z": 3.08 },
+    { "id": "aisle_2", "type": "aisle", "label": "아래 통로", "x": 0, "z": 7, "w": 16.8, "d": 1.96, "rot": 0, "center_x": 8.4, "center_z": 7.98 },
+    { "id": "fruit_7", "type": "fruit", "label": "fruit_shelf_counter (기본 제공)", "x": 2.38, "z": 4.06, "w": 2.8, "d": 1.96, "rot": 0, "center_x": 3.78, "center_z": 5.04 },
+    { "id": "fruit_8", "type": "fruit", "label": "fruit_shelf_counter (확장2)", "x": 7, "z": 4.06, "w": 2.8, "d": 1.96, "rot": 0, "center_x": 8.4, "center_z": 5.04 },
+    { "id": "door_10", "type": "door", "label": "농장 문", "x": 0, "z": 9.1, "w": 0.28, "d": 1.96, "rot": 0, "center_x": 0.14, "center_z": 10.08 },
+    { "id": "spawn_11", "type": "spawn", "label": "출발 지점", "x": 0.38, "z": 9.97, "w": 0.5, "d": 0.5, "rot": 0, "center_x": 0.63, "center_z": 10.22 },
+    { "id": "storage_12", "type": "storage", "label": "창고 구역", "x": 0.42, "z": 11.48, "w": 2.8, "d": 2.1, "rot": 0, "center_x": 1.82, "center_z": 12.53 },
+    { "id": "trash_13", "type": "trash", "label": "쓰레기통", "x": 3.71, "z": 12.39, "w": 0.84, "d": 0.84, "rot": 0, "center_x": 4.13, "center_z": 12.81 },
+    { "id": "entry_14", "type": "entry", "label": "손님 입구", "x": 7.28, "z": 13.72, "w": 2.24, "d": 0.28, "rot": 0, "center_x": 8.4, "center_z": 13.86 },
+    { "id": "counter_15", "type": "counter", "label": "계산대", "x": 13.16, "z": 9.52, "w": 3, "d": 4, "rot": 0, "center_x": 14.66, "center_z": 11.52 },
+    { "id": "queue_16", "type": "queue", "label": "계산 줄 1", "x": 12.04, "z": 12.46, "w": 0.63, "d": 0.63, "rot": 0, "center_x": 12.35, "center_z": 12.78 },
+    { "id": "queue_17", "type": "queue", "label": "계산 줄 2", "x": 12.04, "z": 11.06, "w": 0.63, "d": 0.63, "rot": 0, "center_x": 12.35, "center_z": 11.38 },
+    { "id": "queue_18", "type": "queue", "label": "계산 줄 3", "x": 12.04, "z": 9.66, "w": 0.63, "d": 0.63, "rot": 0, "center_x": 12.35, "center_z": 9.97 },
+    { "id": "fruit_19", "type": "fruit", "label": "fruit_shelf_tiered(기본제공)", "x": 1.12, "z": 0.14, "w": 2.8, "d": 1.96, "rot": 0, "center_x": 2.52, "center_z": 1.12 },
+    { "id": "fruit_21", "type": "fruit", "label": "fruit_shelf_tiered (확장3)", "x": 13.16, "z": 0.14, "w": 2.8, "d": 1.96, "rot": 0, "center_x": 14.56, "center_z": 1.12 },
+    { "id": "fruit_22", "type": "fruit", "label": "fruit_shelf_tiered (확장1)", "x": 9.24, "z": 0.14, "w": 2.8, "d": 1.96, "rot": 0, "center_x": 10.64, "center_z": 1.12 },
+    { "id": "fruit_23", "type": "fruit", "label": "fruit_shelf_tiered (기본제공)", "x": 5.18, "z": 0.14, "w": 2.8, "d": 1.96, "rot": 0, "center_x": 6.58, "center_z": 1.12 },
+    { "id": "fruit_25", "type": "fruit", "label": "fruit_shelf_counter (확장4)", "x": 11.62, "z": 4.06, "w": 2.8, "d": 1.96, "rot": 0, "center_x": 13.02, "center_z": 5.04 },
+    { "id": "queue_26", "type": "queue", "label": "계산 줄 4", "x": 10.78, "z": 9.66, "w": 0.63, "d": 0.63, "rot": 0, "center_x": 11.09, "center_z": 9.97 },
+    { "id": "queue_27", "type": "queue", "label": "계산 줄 5", "x": 10.78, "z": 11.06, "w": 0.63, "d": 0.63, "rot": 0, "center_x": 11.09, "center_z": 11.38 },
+    { "id": "queue_28", "type": "queue", "label": "계산 줄 6", "x": 10.78, "z": 12.46, "w": 0.63, "d": 0.63, "rot": 0, "center_x": 11.09, "center_z": 12.78 },
+    { "id": "queue_29", "type": "queue", "label": "계산 줄 7", "x": 9.66, "z": 12.46, "w": 0.63, "d": 0.63, "rot": 0, "center_x": 9.97, "center_z": 12.78 }
+  ],
+  "customer_path": [[8.4, 14], [8.4, 7.98], [1.12, 7.98], [1.12, 3.08], [15.68, 3.08], [15.68, 7.98], [9.94, 7.98], [9.94, 12.74], [11.06, 12.74], [11.06, 9.94], [12.32, 9.94], [12.32, 12.74]]
+}

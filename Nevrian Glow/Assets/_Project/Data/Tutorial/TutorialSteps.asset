@@ -24,10 +24,10 @@ MonoBehaviour:
   - id: D1-02
     day: 1
     phase: shop
-    text: "\uC0C1\uC810\uC5D0\uC11C \uC6D4\uAD11 \uBFCC\uB9AC \uC528\uC557\uC744
-      4\uBC88 \uB20C\uB7EC 4\uAC1C \uC0AC \uBCF4\uC138\uC694"
+    text: "\uAC00\uC9C4 \uB3C8\uC73C\uB85C \uC6D4\uAD11 \uBFCC\uB9AC \uC528\uC557\uC744
+      \uC0AC \uBCF4\uC138\uC694 (8\uAC1C \uC774\uC0C1, \uCD5C\uB300 10\uAC1C)"
     highlight: shop_tab_seed;shop_row:item_seed_moonroot
-    completeEvent: owned:item_seed_moonroot:4
+    completeEvent: owned:item_seed_moonroot:8
     locks: buy_other;close_shop
   - id: D1-03
     day: 1
@@ -40,11 +40,20 @@ MonoBehaviour:
   - id: D1-04
     day: 1
     phase: farming
+    text: "\uC606 \uBC2D\uC5D0 \uD560\uBA38\uB2C8\uAC00 \uD0A4\uC6CC \uB454 \uC6D4\uAD11
+      \uBFCC\uB9AC\uAC00 \uB2E4 \uC790\uB790\uC5B4\uC694. \uC870\uC900\uD558\uACE0
+      E\uB97C \uAFB9 \uB20C\uB7EC 6\uAC1C\uB97C \uBAA8\uB450 \uC218\uD655\uD574\uC694"
+    highlight: bed_next
+    completeEvent: harvested:6
+    locks: end_farming
+  - id: D1-05
+    day: 1
+    phase: farming
     text: "1\uBC88\uC744 \uB20C\uB7EC \uAD2D\uC774\uB97C \uB4E4\uC5B4\uC694"
     highlight: hotbar:1
     completeEvent: selected:tool_hoe_1
     locks: end_farming
-  - id: D1-05
+  - id: D1-06
     day: 1
     phase: farming
     text: "\uBC2D \uD55C \uCE78\uC744 \uC88C\uD074\uB9AD\uC73C\uB85C \uC138 \uBC88
@@ -52,37 +61,29 @@ MonoBehaviour:
     highlight: bed_tutorial:cell_0
     completeEvent: tilled:1
     locks: end_farming
-  - id: D1-06
-    day: 1
-    phase: farming
-    text: "\uAC19\uC740 \uBC2D\uC758 \uB098\uBA38\uC9C0 3\uCE78\uB3C4 \uC77C\uAD88\uC694"
-    highlight: bed_tutorial
-    completeEvent: tilled:4
-    locks: end_farming
   - id: D1-07
     day: 1
     phase: farming
-    text: "4\uBC88 \uC528\uC557\uC744 \uB4E4\uACE0 \uC77C\uAD70 \uCE78\uC5D0 \uC88C\uD074\uB9AD\uC73C\uB85C
-      \uC2EC\uC5B4\uC694"
-    highlight: hotbar:4;bed_tutorial
-    completeEvent: planted:4
+    text: "\uC774 \uBC2D\uACFC \uBC29\uAE08 \uC218\uD655\uD55C \uC606 \uBC2D\uAE4C\uC9C0,
+      \uC0B0 \uC528\uC557\uB9CC\uD07C \uCE78\uC744 \uC77C\uAD88\uC694 (8\uCE78 \uC774\uC0C1)"
+    highlight: bed_tutorial;bed_next
+    completeEvent: tilled:8
     locks: end_farming
   - id: D1-08
     day: 1
     phase: farming
-    text: "2\uBC88 \uBB3C\uBFCC\uB9AC\uAC1C\uB85C \uC2EC\uC740 \uCE78\uC5D0 \uBB3C\uC744
-      \uC918\uC694"
-    highlight: hotbar:2;bed_tutorial
-    completeEvent: watered:4
+    text: "4\uBC88 \uC528\uC557\uC744 \uB4E4\uACE0 \uC77C\uAD70 \uCE78\uC5D0 \uC88C\uD074\uB9AD\uC73C\uB85C
+      \uC2EC\uC5B4\uC694"
+    highlight: hotbar:4;bed_tutorial;bed_next
+    completeEvent: planted:8
     locks: end_farming
   - id: D1-09
     day: 1
     phase: farming
-    text: "\uC606 \uBC2D\uC5D0 \uD560\uBA38\uB2C8\uAC00 \uD0A4\uC6CC \uB454 \uC6D4\uAD11
-      \uBFCC\uB9AC\uAC00 \uB2E4 \uC790\uB790\uC5B4\uC694. E\uB85C 6\uAC1C\uB97C \uBAA8\uB450
-      \uC218\uD655\uD574\uC694"
-    highlight: bed_next
-    completeEvent: harvested:6
+    text: "2\uBC88 \uBB3C\uBFCC\uB9AC\uAC1C\uB85C \uC2EC\uC740 \uCE78\uC5D0 \uBB3C\uC744
+      \uC918\uC694"
+    highlight: hotbar:2;planted_cells
+    completeEvent: watered:8
     locks: end_farming
   - id: D1-10
     day: 1
@@ -97,7 +98,7 @@ MonoBehaviour:
     phase: tidy
     text: "\uC624\uB7AB\uB3D9\uC548 \uB2EB\uD600 \uC788\uB358 \uAC00\uAC8C\uC608\uC694.
       \uC4F0\uB808\uAE30 3\uAC1C\uB97C E\uB85C \uC8FC\uC6CC \uC4F0\uB808\uAE30\uD1B5(E)\uC5D0
-      \uBC84\uB824\uC694"
+      \uBC84\uB824\uC694 (\uD55C \uCE78\uC5D0 1\uAC1C\uC529)"
     highlight: trash_nearest:3;trash_bin
     completeEvent: trashed:3
     locks: open_sales
@@ -113,8 +114,8 @@ MonoBehaviour:
   - id: D1-13
     day: 1
     phase: tidy
-    text: "\uC6D4\uAD11 \uBFCC\uB9AC\uB97C \uB4E4\uACE0 \uACFC\uC77C \uC9C4\uC5F4\uB300\uC5D0
-      \uC88C\uD074\uB9AD\uC73C\uB85C \uC9C4\uC5F4\uD574\uC694 (6\uAC1C)"
+    text: "\uC218\uD655\uD55C \uC6D4\uAD11 \uBFCC\uB9AC 6\uAC1C\uB97C \uACFC\uC77C
+      \uC9C4\uC5F4\uB300\uC5D0 \uC88C\uD074\uB9AD\uC73C\uB85C \uC9C4\uC5F4\uD574\uC694"
     highlight: fruit_shelf_1
     completeEvent: displayed:6
     locks: open_sales
@@ -129,9 +130,10 @@ MonoBehaviour:
   - id: D1-15
     day: 1
     phase: sales
-    text: "(\uD53C\uD53C\uC640 \uBBF8\uB8E8 \uB4F1\uC7A5) \uC7A5\uC0AC\uB294 \uC190\uB2D8\uC774
-      \uC54C\uC544\uC11C \uC0AC \uAC00\uC694"
-    highlight: customer_pipi
+    text: "(\uC7A5\uC0AC \uC2DC\uC791 \u2192 \uD398\uC774\uB4DC \u2192 \uC815\uC0B0.
+      \uC815\uC0B0 \uCC3D \uB4A4\uC5D0\uC11C \uC190\uB2D8\uB4E4\uC774 \uC7A5\uC744
+      \uBD04, \uB300\uC0AC \uC5C6\uC74C)"
+    highlight: 
     completeEvent: sales_done
     locks: 
   - id: D1-16
@@ -140,46 +142,49 @@ MonoBehaviour:
     text: "\uB808\uBCA8 2! \uB0B4\uC77C \uC544\uCE68\uBD80\uD130 \uC0C1\uC810\uC5D0\uC11C
       \uBC84\uC12F\uAF43 \xB7 \uB4F1\uBD88 \uC5F4\uB9E4 \uC528\uC557\uC744 \uC0B4
       \uC218 \uC788\uC5B4\uC694"
-    highlight: levelup_banner;unlock_notice
+    highlight: settle_xp;levelup_banner
     completeEvent: next_day
     locks: 
   - id: D2-01
     day: 2
     phase: shop
-    text: "(\uD3B8\uC9C0 \u2461)"
+    text: "(\uC544\uCE68 \uD3B8\uC9C0: \uC606\uC9D1 \uD53C\uD53C)"
     highlight: letter_ui
     completeEvent: letter_closed:letter_2
     locks: move
   - id: D2-02
     day: 2
     phase: shop
-    text: "\uC624\uB298\uC740 \uC6D4\uAD11 \uBFCC\uB9AC \uC528\uC557\uC744 \uB109\uB109\uD788
-      \uC0AC\uC694 (\uCD94\uCC9C 10\uAC1C)"
-    highlight: shop_row:item_seed_moonroot
-    completeEvent: owned:item_seed_moonroot:4
+    text: "\uC0C8\uB85C \uB4E4\uC5B4\uC628 \uB4F1\uBD88 \uC5F4\uB9E4 \xB7 \uBC84\uC12F\uAF43
+      \uC528\uC557\uACFC \uC6D4\uAD11 \uBFCC\uB9AC \uC528\uC557\uC744 \uC0AC\uC694"
+    highlight: shop_row:item_seed_lanternfruit;shop_row:item_seed_mushroomflower;shop_row:item_seed_moonroot
+    completeEvent: owned:item_seed_lanternfruit:1
     locks: close_shop
   - id: D2-03
     day: 2
     phase: farming
-    text: "\uBE5B\uB098\uB294 \uC6D4\uAD11 \uBFCC\uB9AC\uB97C E\uB85C \uC218\uD655\uD574\uC694"
-    highlight: bed_tutorial
-    completeEvent: harvested:4
+    text: "\uBE5B\uB098\uB294 \uC6D4\uAD11 \uBFCC\uB9AC\uB97C \uC870\uC900\uD558\uACE0
+      E\uB97C \uAFB9 \uB20C\uB7EC \uC218\uD655\uD574\uC694"
+    highlight: bed_tutorial;bed_next
+    completeEvent: harvested:8
     locks: end_farming
   - id: D2-04
     day: 2
     phase: farming
     text: "\uC218\uD655\uD55C \uCE78\uC740 \uD759\uC774 \uB2E4\uC2DC \uAD73\uC5C8\uC5B4\uC694.
-      \uB2E4\uC2DC \uC77C\uAD6C\uACE0 \uC2EC\uC5B4\uC694 (\uC606 \uBC2D\uC5D0\uB3C4
-      \uC2EC\uC5B4\uB3C4 \uC88B\uC544\uC694)"
+      \uB2E4\uC2DC \uC77C\uAD6C\uACE0 \uB4F1\uBD88 \uC5F4\uB9E4 \xB7 \uBC84\uC12F\uAF43
+      \xB7 \uC6D4\uAD11 \uBFCC\uB9AC\uB97C \uC2EC\uC5B4\uC694 (\uBE48 \uBC2D\uC5D0
+      \uB354 \uC2EC\uC5B4\uB3C4 \uC88B\uC544\uC694)"
     highlight: bed_tutorial;bed_next
-    completeEvent: planted:4
+    completeEvent: planted:12
     locks: end_farming
   - id: D2-05
     day: 2
     phase: farming
-    text: "\uC2EC\uC740 \uCE78\uC5D0 \uBB3C\uC744 \uC918\uC694"
+    text: "\uC2EC\uC740 \uCE78\uC5D0 \uBB3C\uC744 \uC918\uC694 (\uBC84\uC12F\uAF43\uC740
+      \uBB3C\uC774 \uD544\uC694 \uC5C6\uC5B4\uC694)"
     highlight: planted_cells
-    completeEvent: watered:4
+    completeEvent: watered:6
     locks: end_farming
   - id: D2-06
     day: 2
@@ -201,10 +206,10 @@ MonoBehaviour:
   - id: D2-08
     day: 2
     phase: tidy
-    text: "\uC624\uB298 \uC218\uD655\uD55C \uC6D4\uAD11 \uBFCC\uB9AC 4\uAC1C\uB97C
-      \uACFC\uC77C \uC9C4\uC5F4\uB300\uC5D0 \uC9C4\uC5F4\uD574\uC694"
+    text: "\uC5B4\uC81C \uC2EC\uC5B4 \uC218\uD655\uD55C \uC6D4\uAD11 \uBFCC\uB9AC\uB97C
+      \uBAA8\uB450 \uACFC\uC77C \uC9C4\uC5F4\uB300\uC5D0 \uC9C4\uC5F4\uD574\uC694"
     highlight: fruit_shelf_1
-    completeEvent: displayed:4
+    completeEvent: displayed:6
     locks: open_sales
   - id: D2-09
     day: 2
@@ -217,23 +222,27 @@ MonoBehaviour:
   - id: D2-10
     day: 2
     phase: sales
-    text: "(\uC190\uB2D8 3\uBA85, \uD53C\uD53C \uD3EC\uD568)"
-    highlight: customers
+    text: "(\uC7A5\uC0AC \uC2DC\uC791 \u2192 \uD398\uC774\uB4DC \u2192 \uC815\uC0B0.
+      \uC815\uC0B0 \uCC3D \uB4A4\uC5D0\uC11C \uC190\uB2D8\uB4E4\uC774 \uC7A5\uC744
+      \uBD04)"
+    highlight: 
     completeEvent: sales_done
     locks: 
   - id: D2-11
     day: 2
     phase: settlement
-    text: "\uB808\uBCA8 3! \uB3C4\uAD6C \uC5C5\uADF8\uB808\uC774\uB4DC\uB97C \uC0C1\uC810\uC5D0\uC11C
-      \uC0B4 \uC218 \uC788\uC5B4\uC694"
+    text: "\uB808\uBCA8 3! \uAD2D\uC774 \xB7 \uB300\uAC78\uB808 \xB7 \uBB3C\uBFCC\uB9AC\uAC1C
+      \uC5C5\uADF8\uB808\uC774\uB4DC\uB97C \uC0C1\uC810\uC5D0\uC11C \uC0B4 \uC218
+      \uC788\uC5B4\uC694"
     highlight: settle_xp;levelup_banner
     completeEvent: leveled_up
     locks: 
-  - id: D2-14
+  - id: D2-12
     day: 2
     phase: settlement
-    text: "\uB808\uBCA8\uC774 \uC624\uB97C \uB54C\uB9C8\uB2E4 \uC0C1\uC810\uC5D0
-      \uC0C8 \uBB3C\uAC74\uC774 \uC5F4\uB824\uC694. \uB2E4\uC74C \uB0A0\uC744 \uB20C\uB7EC\uC694"
+    text: "\uC774\uC81C\uBD80\uD130\uB294 \uC544\uCE68 \uD3B8\uC9C0\uB97C \uCC38\uACE0\uD574
+      \uB9C8\uC74C\uB300\uB85C \uAC00\uAFD4 \uBCF4\uC138\uC694. \uB2E4\uC74C \uB0A0\uC744
+      \uB20C\uB7EC\uC694"
     highlight: btn_next_day
     completeEvent: next_day
     locks: 
