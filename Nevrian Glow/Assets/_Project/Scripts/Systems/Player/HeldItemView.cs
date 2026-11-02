@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NevrianGlowFarm.Core;
 using NevrianGlowFarm.Data;
 using NevrianGlowFarm.Systems.Cleaning;
@@ -59,6 +60,14 @@ namespace NevrianGlowFarm.Systems.Player
         [SerializeField, Range(0f, 0.5f)] private float scrubHandDrop = 0.3f;
         [Tooltip("들고 있는 자세 ↔ 바닥 대걸레질 자세 전환 시간 (초)")]
         [SerializeField, Min(0.01f)] private float scrubBlendTime = 0.12f;
+        [Tooltip("대걸레질 거품 덩어리 수 — 대걸레 머리 둘레에 차례로 생긴다 (개, 2026-11-02 사용자: 한 개만 나옴)")]
+        [SerializeField, Range(1, 8)] private int foamCount = 4;
+        [Tooltip("거품이 생기는 대걸레 머리 둘레 반지름 (m)")]
+        [SerializeField, Range(0f, 0.6f)] private float foamRadius = 0.22f;
+        [Tooltip("거품 덩어리끼리 켜지는 시차 — 한꺼번에 터지지 않게 (초)")]
+        [SerializeField, Range(0f, 1f)] private float foamStagger = 0.2f;
+        [Tooltip("거품 자리가 머리 둘레를 도는 빠르기 (°/초)")]
+        [SerializeField, Range(0f, 360f)] private float foamSpin = 50f;
         [Tooltip("손에 든 발광 도구의 빛 세기 — 아트 재질 값에 곱한다. 화면 바로 앞이라 그대로면 눈부심 (버그 리포트 10/30 3번) (배)")]
         [SerializeField, Range(0f, 1f)] private float heldGlowScale = 0.35f;
         [Tooltip("손 모델이 따로 없는 아이템(수확물 등)을 놓인 모습 모델로 들 때 맞추는 크기 — 가장 긴 변 (m)")]
@@ -270,7 +279,9 @@ namespace NevrianGlowFarm.Systems.Player
         // ── VFX (5-8): 물뿌리개 물줄기 · 대걸레 거품 ──
 
         private GameObject stream;   // 물뿌리개 주둥이 아래 (모델이 바뀌면 함께 지워짐)
-        private GameObject foam;     // 월드 — 닦는 바닥 지점
+        private readonly List<GameObject> foams = new List<GameObject>();   // 월드 — 대걸레 머리 둘레 바닥 (아트 bubble_foam은 한 번에 한 덩어리라 여러 개)
+        private readonly List<bool> foamPlaying = new List<bool>();
+        private float foamStart;
         private bool streamOn, foamOn;
 
         private void UpdateVfx()
@@ -288,20 +299,56 @@ namespace NevrianGlowFarm.Systems.Player
                 VfxManager.SetPlaying(stream, pour);
             }
 
-            // 거품: 대걸레질 중 닦는 지점에 (한 덩어리씩 — 아트 bubble_foam)
+            // 거품: 대걸레질 중 머리 둘레 바닥에 여러 덩어리 — 시차를 두고 켜고, 자리는 머리를 따라가며 둘레를 돈다.
+            // 아트 거품은 월드 공간 입자라 생긴 자리에 남는다 → 머리가 훔치고 지나간 자리에 거품이 흩어진다
             bool scrub = motion == Motion.Push && mopTool != null && mopTool.IsMopping && mopTool.HasPoint;
-            if (scrub && foam == null)
-                foam = VfxManager.Attach(VfxCues.BubbleFoam, null);
-            if (foam != null)
-            {
-                if (scrub)
-                    foam.transform.position = mopTool.Point;
-                if (scrub != foamOn)
+            if (scrub)
+                while (foams.Count < foamCount)
                 {
-                    foamOn = scrub;
-                    VfxManager.SetPlaying(foam, scrub);
+                    foams.Add(VfxManager.Attach(VfxCues.BubbleFoam, null));
+                    foamPlaying.Add(false);
+                }
+            if (scrub && !foamOn)
+                foamStart = Time.time;
+            foamOn = scrub;
+            Vector3 center = scrub ? FoamCenter() : Vector3.zero;
+            for (int i = 0; i < foams.Count; i++)
+            {
+                if (foams[i] == null)
+                    continue;
+                bool on = scrub && i < foamCount && Time.time >= foamStart + i * foamStagger;
+                if (on)
+                {
+                    float angle = (i * 360f / foamCount + (Time.time - foamStart) * foamSpin) * Mathf.Deg2Rad;
+                    float radius = foamRadius * (i % 2 == 0 ? 0.5f : 1f); // 안쪽 · 바깥쪽 번갈아
+                    foams[i].transform.position = center + new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * radius;
+                }
+                if (on != foamPlaying[i])
+                {
+                    foamPlaying[i] = on;
+                    VfxManager.SetPlaying(foams[i], on);
                 }
             }
+        }
+
+        // 거품 가운데: 대걸레 머리(Contact)가 바닥에 닿은 자리 — 대걸레질 자세가 다 잡히기 전이나 표시점이 없으면 닦는 지점
+        private Vector3 FoamCenter()
+        {
+            Vector3 point = mopTool.Point;
+            if (contact == null || scrubBlend < 0.5f)
+                return point;
+            return new Vector3(contact.position.x, point.y, contact.position.z);
+        }
+
+        private void StopFoam()
+        {
+            foamOn = false;
+            for (int i = 0; i < foams.Count; i++)
+                if (foams[i] != null && foamPlaying[i])
+                {
+                    foamPlaying[i] = false;
+                    VfxManager.SetPlaying(foams[i], false);
+                }
         }
 
         // 물뿌리개 모델 앞쪽 위(주둥이)에 물줄기 — 루트 +Z가 주둥이 방향 (모델 +Z = 앞)
@@ -330,8 +377,9 @@ namespace NevrianGlowFarm.Systems.Player
 
         private void OnDestroy()
         {
-            if (foam != null)
-                Destroy(foam);
+            foreach (var f in foams)
+                if (f != null)
+                    Destroy(f);
         }
 
         // ── 모델 ───────────────────────────────────────────
@@ -341,11 +389,7 @@ namespace NevrianGlowFarm.Systems.Player
             if (item == shown && model != null)
                 return;
             shown = item;
-            if (foamOn)
-            {
-                foamOn = false;
-                VfxManager.SetPlaying(foam, false);
-            }
+            StopFoam();
             if (model != null)
                 Destroy(model);
             model = null;
