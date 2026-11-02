@@ -26,12 +26,16 @@ Material:
     m_Ints: []
     m_Floats:
     - _AsleepAmount: 0
-    - _BoxHeight: 9
-    - _BoxWidth: 46
+    - _BoxHeight: 6.5
+    - _BoxWidth: 32
     - _DayAmount: 0.3
-    - _FloorOffset: -2
+    - _FloorOffset: -1.5
+    - _GlowAmount: 0.3
+    - _GlowSize: 4
+    - _GlowSoft: 3
     - _Intensity: 1.6
     - _LightFollow: 0
+    - _MaxBright: 1
     - _NightAmount: 1
     - _Rise: 0.3
     - _SunFocus: 8

@@ -78,7 +78,7 @@ Material:
     - _WindStrength: 0.035
     m_Colors:
     - _AOColor: {r: 0.34999996, g: 0.29999998, b: 0.24999997, a: 1}
-    - _EmissionColor: {r: 1.3041599, g: 1.1336, b: 2.08, a: 2.08}
+    - _EmissionColor: {r: 1.8258238, g: 1.58704, b: 2.912, a: 2.08}
     - _IriColorA: {r: 0.35, g: 0.95, b: 1, a: 1}
     - _IriColorB: {r: 1, g: 0.45, b: 0.95, a: 1}
     - _LitColor: {r: 1, g: 1, b: 1, a: 1}

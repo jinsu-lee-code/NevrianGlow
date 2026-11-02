@@ -31,6 +31,18 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _PearlBase:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _PearlNormal:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _PearlRough:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _AmbientShade: 0.1
@@ -41,16 +53,17 @@ Material:
     - _CapSpeed: 0.9
     - _CapStart: 0.2
     - _CapWaves: 2
+    - _DeadInGrey: 0
     - _Delight: 1
     - _DelightLevel: 0.75
-    - _DistGlowBoost: 1
+    - _DistGlowBoost: 1.4
     - _DstBlend: 0
     - _FootBlend: 0.25
     - _FruitSway: 0
     - _FruitSwaySpeed: 1.4
     - _GlowMaskDotBreath: 3
     - _GlowMaskStrength: 0
-    - _GlowMax: 0
+    - _GlowMax: 1.9
     - _GlowPalette: 0
     - _GlowRandomHue: 0
     - _GlowRandomSat: 0.75
@@ -58,11 +71,29 @@ Material:
     - _OpacityEdge: 0
     - _OutlineWidth: 0.006
     - _PaletteMix: 0.7
+    - _PearlAmount: 0
+    - _PearlAround: 4
+    - _PearlBandSize: 4
+    - _PearlBlur: 0
+    - _PearlCore: 0.35
+    - _PearlDepth: 0.12
+    - _PearlFacing: 1.5
+    - _PearlGrainAngle: 0
+    - _PearlHueSpread: 0.37
+    - _PearlInner: 0.6
+    - _PearlNormalStrength: 1
+    - _PearlOrient: 0.6
+    - _PearlPastel: 0.55
+    - _PearlRefRadius: 4
+    - _PearlShadowSide: 0.4
+    - _PearlSheen: 0.4
+    - _PearlTintGain: 3
+    - _PearlViewShift: 1.2
     - _PlantNod: 0
     - _PlantNodSpeed: 2.4
     - _PlantSway: 0
     - _PlantSwaySpeed: 1.1
-    - _PosterizeSteps: 3
+    - _PosterizeSteps: 0
     - _PulsePeriod: 4.5
     - _ReceiveShadows: 1
     - _RevealFlash: 0
@@ -77,14 +108,14 @@ Material:
     - _ShadowBlur: 1.5
     - _Softness: 0.04
     - _SrcBlend: 1
-    - _TexGlowSoftness: 0.14
-    - _TexGlowStrength: 1.8000001
-    - _TexGlowThreshold: 0.7
+    - _TexGlowSoftness: 0.5
+    - _TexGlowStrength: 2.4
+    - _TexGlowThreshold: 0.12
     - _Threshold: 0.35
     - _WakeExempt: 0
     - _ZWrite: 1
     m_Colors:
-    - _DistGlowRange: {r: 10, g: 60, b: 0, a: 0}
+    - _DistGlowRange: {r: 8, g: 40, b: 0, a: 0}
     - _FruitWindDir: {r: 1, g: 0, b: 0.3, a: 0}
     - _GlowColor1: {r: 0.1, g: 1, b: 0.8, a: 1}
     - _GlowColor2: {r: 0.25, g: 0.6, b: 1, a: 1}
@@ -99,10 +130,11 @@ Material:
     - _PaletteDark: {r: 0.11999995, g: 0.13999996, b: 0.33999997, a: 1}
     - _PaletteLight: {r: 0.76, g: 0.86, b: 1, a: 1}
     - _PaletteMid: {r: 0.45, g: 0.45, b: 0.86, a: 1}
+    - _PearlSilver: {r: 0.93, g: 0.92, b: 0.97999996, a: 1}
     - _RevealDark: {r: 0.11999995, g: 0.11999995, b: 0.19999996, a: 1}
     - _RimColor: {r: 0.75, g: 0.8, b: 1, a: 1}
     - _ShadowColor: {r: 0.41999996, g: 0.42999998, b: 0.72, a: 1}
-    - _TexGlowPulse: {r: 0.35, g: 1.2, b: 0, a: 0}
+    - _TexGlowPulse: {r: 0.7, g: 1.2, b: 0, a: 0}
     - _TexGlowTint: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

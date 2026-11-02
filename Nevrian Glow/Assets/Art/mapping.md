@@ -93,6 +93,17 @@
 
 | 파일 | 내용 |
 |---|---|
+| `Environment/flower_bg/Materials/mat_env_flower_bg_*` (발광 · 꽃잎 · 해파리꽃 9종) | 11/02. 발광 1.4배, 발광부 밝기 상한 3.2 → 4.5. 값은 내가 정함 |
+| `Environment/mushroom_bg/Materials/mat_env_mushroom_bg_{a,b,c}.mat` | 11/02. 배경 버섯 발광 강화. 포스터 단계를 꺼서 거뭇한 얼룩 제거(`_PosterizeSteps` 0, 경계 부드럽게). 깨어나기 전 구역에서 어두워지는 동작(`_AwakeResponse` 1)은 그대로 |
+| `Crops/mushroomflower/Materials/mat_crop_mushroomflower_{small,mature,giant}.mat` | 11/02. 작물 머시룸플라워 `_EmissionColor` 1.4배 |
+| `Environment/Sky/Shaders/AirMotes.shader`, `FX/air/mat_vfx_air_{dust,spore}.mat` | 11/02. 입자별 둥근 글로우 값 추가(`Round Glow`), 밝기 상한으로 십자 글레어 방지. 먼지는 해 쪽 산란을 넓힘. 범위 축소(먼지 28 × 10 m, 포자 32 × 6.5 m), 씬 `AirDust` 150개 · `AirSpores` 120개 |
+| `Environment/Sky/Shaders/MoonHalo.shader`, `Scripts/MoonHalo.cs`, `Sky/Materials/mat_env_sky_moon_halo.mat` | 11/02. 달 뒤의 둥근 산란광. 태양 쪽이 조금 더 밝고 따뜻함. 씬 `== Sky ==/MoonModel`에 붙음 |
+| `Environment/Scripts/MoonLensFlare.cs`, `Sky/LF_MoonToon.asset` | 11/02. 달 전용 렌즈플레어. 지금은 `intensity` 0으로 꺼 둠(산란광만 사용) |
+| `Environment/Scripts/MoonBeam.cs`, `Shaders/MoonBeam.shader`, `Sky/Materials/mat_env_sky_moon_beam.mat` | 11/02. 달빛 기둥 시안. 산만해서 씬 `== Sky ==/MoonBeams`를 비활성화해 둠 |
+| `Environment/Shaders/AerialPerspective.shader`, `Materials_PP/mat_pp_aerial_perspective.mat` | 11/02. 달 방향 화면 빛줄기 값 추가(`Moon Ray Amount`, 지금 0으로 꺼짐). 해가 화면 밖이면 빛줄기 계산을 건너뜀 |
+| `Environment/Scripts/MoonModel.cs` | 11/02. 하늘 그림 구름(`_PanoCloudAmount`)을 끄면 달 앞에도 안 그려지게 수정(달이 붉게 보이던 원인). 달 방향 계산을 `SkyDirection()`으로 분리 |
+| `Environment/Scripts/PlanarReflection.cs` | 11/02. 콘솔 오류 "Screen position out of view frustum" 수정. 경사 투영에서 화면 모서리가 무한대로 가는 각도를 검사해 그 프레임만 반사를 건너뜀 |
+| `Scenes/BackGroundScene.unity` | 11/02. 구름띠 `env_sky_cloudband_*` 4개 삭제(원본 fbx는 남김) |
 | `UI/Icons/icon_tool_hoe.png` | 10/22. 괭이 아이콘 — 요청서 G의 아이콘 15종 밖(괭이는 10/21 개발 추가 요청). 다른 아이콘과 같은 128 · 알파 |
 | `UI/Icons/icon_trash.png` | 11/01. 쓰레기 공용 아이콘(개발 전달 3장). 요청서 밖. 사용자가 준 그림으로 교체(병 · 종이 · 잎 · 포자 더미). 다른 아이콘과 같은 128 · 알파 · Sprite. **개발 연결:** `_Project/Data/Items/item_trash.asset`의 `icon` 칸에 넣기 |
 | `UI/Icons/icon_tool_seedbag.png` | 11/01. 사용자가 준 청록 씨앗 주머니로 그림만 교체. 파일 · GUID는 그대로라 연결 변경 없음 |

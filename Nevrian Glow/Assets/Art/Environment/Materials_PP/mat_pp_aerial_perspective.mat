@@ -25,9 +25,6 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _ShopShadowEnd: 0.14
-    - _ShopPivot: 0.08
-    - _ShopContrast: 0.1
     - _CloudRayBoost: 2
     - _DetailKeep: 0.8
     - _FarAirAmount: 0.62
@@ -59,6 +56,7 @@ Material:
     - _MistScatter: 1.1
     - _MistScatterTight: 0.62
     - _MistStart: 2
+    - _MoonRayAmount: 0
     - _NearDeepen: 0.45
     - _NearEnd: 22
     - _NearSaturate: 0.45
@@ -74,8 +72,11 @@ Material:
     - _RimSpread: 1.5
     - _RimStart: 22
     - _RimWidth: 5
+    - _ShopContrast: 0.1
     - _ShopLift: 0.34
+    - _ShopPivot: 0.08
     - _ShopSaturation: 0.2
+    - _ShopShadowEnd: 0.14
     - _SkyFrom: 420
     - _SkyFull: 560
     - _VividFadeEnd: 260
@@ -83,7 +84,6 @@ Material:
     - _VividLift: 0.22
     - _VividSaturation: 0.28
     m_Colors:
-    - _ShopShadowTint: {r: 0.84, g: 0.88, b: 1.02, a: 1}
     - _CloudRayColor: {r: 1, g: 0.78, b: 0.9, a: 1}
     - _FarAirColor: {r: 0.52, g: 0.45999992, b: 0.72, a: 1}
     - _FarAirIceColor: {r: 0.37999994, g: 0.5, b: 0.78, a: 1}
@@ -97,8 +97,10 @@ Material:
     - _LayerEdges: {r: 10, g: 32, b: 90, a: 0}
     - _LayerHaze: {r: 0.12, g: 0.45, b: 0.5, a: 0}
     - _MistColor: {r: 0.62, g: 0.58, b: 0.85, a: 1}
+    - _MoonRayColor: {r: 0.62, g: 0.72, b: 1, a: 1}
     - _RayColor: {r: 1, g: 0.66, b: 0.42, a: 1}
     - _RimColor: {r: 1, g: 0.62, b: 0.38, a: 1}
     - _RimNightColor: {r: 0.45, g: 0.6, b: 1, a: 1}
+    - _ShopShadowTint: {r: 0.84, g: 0.88, b: 1.02, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

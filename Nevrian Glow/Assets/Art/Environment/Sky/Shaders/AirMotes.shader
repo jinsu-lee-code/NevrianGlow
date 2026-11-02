@@ -16,6 +16,12 @@ Shader "DSEWA/AirMotes"
         _FloorOffset ("Box Floor Below The Camera (m)", Float) = -6
         _Size ("Speck Size (min, max, m)", Vector) = (0.025, 0.06, 0, 0)
 
+        [Header(Round Glow)]
+        _GlowSize ("Round Glow Size x Speck", Range(1, 12)) = 1
+        _GlowAmount ("Round Glow Amount", Range(0, 1)) = 0
+        _GlowSoft ("Round Glow Softness", Range(1, 8)) = 3
+        _MaxBright ("Brightest Channel Cap, Keeps Star Glare Off (0 = off)", Range(0, 4)) = 0
+
         [Header(Motion)]
         _Wind ("Wind (m per s, same way as the clouds on the sun side)", Float) = 0.35
         _Rise ("Rise (m per s)", Float) = 0.02
@@ -55,6 +61,7 @@ Shader "DSEWA/AirMotes"
                 float4 _Size, _SideRange;
                 float _BoxWidth, _BoxHeight, _FloorOffset, _Wind, _Rise, _Wobble;
                 half _Intensity, _LightFollow, _Twinkle, _SunGlow, _SunFocus, _DayAmount, _NightAmount, _Wake, _AsleepAmount;
+                half _GlowSize, _GlowAmount, _GlowSoft, _MaxBright;
             CBUFFER_END
 
             struct Attributes
@@ -110,7 +117,7 @@ Shader "DSEWA/AirMotes"
                 amount *= lerp(1, _AsleepAmount, outside);
 
                 o.color = tint * _Intensity * (1 + lobe) * amount * fade * twinkle * light * awake;
-                float size = lerp(_Size.x, _Size.y, seed.z) * awake;
+                float size = lerp(_Size.x, _Size.y, seed.z) * awake * _GlowSize;   // the quad holds the halo, the core stays speck-sized
                 float3 view = TransformWorldToView(world);
                 view.xy += (input.uv * 2 - 1) * size;
                 o.positionCS = TransformWViewToHClip(view);
@@ -120,8 +127,12 @@ Shader "DSEWA/AirMotes"
 
             half4 frag(Varyings i) : SV_Target
             {
-                float soft = saturate(1 - dot(i.uv, i.uv));
-                return half4(i.color * soft * soft, 0);
+                float r2 = dot(i.uv, i.uv);
+                float core = saturate(1 - r2 * _GlowSize * _GlowSize);
+                float halo = pow(saturate(1 - r2), _GlowSoft);
+                half3 color = i.color * (core * core + halo * _GlowAmount);
+                if (_MaxBright > 0) color *= min(1.0h, _MaxBright / max(max(color.r, max(color.g, color.b)), 1e-3h));
+                return half4(color, 0);
             }
             ENDHLSL
         }

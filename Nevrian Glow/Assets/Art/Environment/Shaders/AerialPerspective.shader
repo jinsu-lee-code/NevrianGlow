@@ -45,6 +45,8 @@ Shader "Hidden/DSEWA/AerialPerspective"
         _RayOnSky ("Rays Over Open Sky (x)", Range(0, 1)) = 0.35
         _CloudRayBoost ("Cloud Gap Boost (rays through 3D cloud gaps)", Range(0, 4)) = 1.5
         [HDR] _CloudRayColor ("Cloud Gap Ray Colour", Color) = (1.0, 0.78, 0.9, 1)
+        _MoonRayAmount ("Moon Ray Amount (0 = off, MoonLensFlare gives the direction)", Range(0, 2)) = 0
+        [HDR] _MoonRayColor ("Moon Ray Colour", Color) = (0.62, 0.72, 1.0, 1)
         [Header(Valley Mist)]
         _VividSaturation ("Awake Colours: Extra Saturation (grey stays grey)", Range(0, 1)) = 0.28
         _VividLift ("Awake Colours: Midtone Lift", Range(0, 1)) = 0.22
@@ -152,6 +154,9 @@ Shader "Hidden/DSEWA/AerialPerspective"
             float4 _LayerColMid, _LayerColFar, _LayerColHorizon;
             float _RayAmount, _RayLength, _RayDecay, _RayFalloff, _RayOnSky, _CloudRayBoost;
             float4 _CloudRayColor;
+            float _MoonRayAmount;
+            float4 _MoonRayColor;
+            float4 _DSEWA_MoonDir;   // xyz towards the moon, w = 1 while it shows (MoonLensFlare)
             static float _CloudGap;   // per pixel: share of the blockers along the ray that were 3D clouds (set by SunRays)
             float4 _RayColor;
             float4 _MistColor;
@@ -206,9 +211,8 @@ Shader "Hidden/DSEWA/AerialPerspective"
                 return false;
             }
 
-            half SunRays(float2 uv)
+            half SunRays(float2 uv, float3 L)
             {
-                float3 L = normalize(_MainLightPosition.xyz);
                 float4 sc = mul(UNITY_MATRIX_VP, float4(_WorldSpaceCameraPos + L * 1000.0, 1));
                 if (sc.w <= 0) return 0;
                 float2 sunUV = sc.xy / sc.w;
@@ -216,6 +220,9 @@ Shader "Hidden/DSEWA/AerialPerspective"
                 sunUV.y = -sunUV.y;
             #endif
                 sunUV = sunUV * 0.5 + 0.5;
+                // the sun may sit a little off screen and still throw rays in
+                float onScreen = 1 - smoothstep(0.15, 0.6, max(max(-sunUV.x, sunUV.x - 1), max(-sunUV.y, sunUV.y - 1)));
+                if (onScreen <= 0) return 0;
                 float2 aspect = float2(_ScreenParams.x / _ScreenParams.y, 1);
                 float2 delta = (sunUV - uv) * _RayLength / 24.0;
                 float2 p = uv;
@@ -245,8 +252,6 @@ Shader "Hidden/DSEWA/AerialPerspective"
                 lit *= 1 + _CloudRayBoost * _CloudGap * 4 * lit * (1 - lit);
                 float distToSun = length((uv - sunUV) * aspect);
                 float near = exp(-distToSun * _RayFalloff);
-                // the sun may sit a little off screen and still throw rays in
-                float onScreen = 1 - smoothstep(0.15, 0.6, max(max(-sunUV.x, sunUV.x - 1), max(-sunUV.y, sunUV.y - 1)));
                 return lit * near * onScreen;
             }
 
@@ -282,16 +287,18 @@ Shader "Hidden/DSEWA/AerialPerspective"
                 if (CameraInShop()) return ShopGrade(col);
                 float raw = SampleSceneDepth(uv);
                 _CloudGap = 0;
-                half rays = _RayAmount > 0 ? SunRays(uv) * _RayAmount * (1 - saturate(_DSEWA_HazeCut)) : 0;
-                half3 rayCol = lerp(_RayColor.rgb, _CloudRayColor.rgb, saturate(_CloudGap * 1.5));
+                half rays = _RayAmount > 0 ? SunRays(uv, normalize(_MainLightPosition.xyz)) * _RayAmount * (1 - saturate(_DSEWA_HazeCut)) : 0;
+                half3 rayLight = lerp(_RayColor.rgb, _CloudRayColor.rgb, saturate(_CloudGap * 1.5)) * rays;
+                if (_MoonRayAmount > 0 && _DSEWA_MoonDir.w > 0.5)
+                    rayLight += _MoonRayColor.rgb * SunRays(uv, _DSEWA_MoonDir.xyz) * _MoonRayAmount * (1 - saturate(_DSEWA_HazeCut));
             #if UNITY_REVERSED_Z
-                if (raw <= 0.0000001) { col.rgb += rayCol * rays * _RayOnSky; return col; }          // sky
+                if (raw <= 0.0000001) { col.rgb += rayLight * _RayOnSky; return col; }          // sky
             #else
-                if (raw >= 0.9999999) { col.rgb += rayCol * rays * _RayOnSky; return col; }
+                if (raw >= 0.9999999) { col.rgb += rayLight * _RayOnSky; return col; }
             #endif
                 float d = LinearEyeDepth(raw, _ZBufferParams);
                 if (_DSEWA_CloudCount > 0 && InCloud(ComputeWorldSpacePosition(uv, raw, UNITY_MATRIX_I_VP)))
-                { col.rgb += rayCol * rays * _RayOnSky; return col; }   // a cloud: sky treatment (rays only)
+                { col.rgb += rayLight * _RayOnSky; return col; }   // a cloud: sky treatment (rays only)
                 float lum = dot(col.rgb, float3(0.2126, 0.7152, 0.0722));
                 float glow = smoothstep(_GlowKeep, _GlowKeep * 1.6, lum);
 
@@ -381,7 +388,7 @@ Shader "Hidden/DSEWA/AerialPerspective"
                 }
 
                 // sun rays over the scene: stronger in the air far away than on the near ground
-                col.rgb += rayCol * rays * lerp(0.35, 1.0, smoothstep(5, 60, d));
+                col.rgb += rayLight * lerp(0.35, 1.0, smoothstep(5, 60, d));
 
                 // near: a little deeper and richer
                 float n = (1 - smoothstep(0, _NearEnd, d)) * (1 - glow);
