@@ -681,6 +681,8 @@ namespace NevrianGlowFarm.Editor
                 (Core.VfxCues.WaterStream, "water_drop", 0f),
                 (Core.VfxCues.BubbleFoam, "bubble_foam", 0f),
                 (Core.VfxCues.GlowPulse, "glow_pulse", 0f),
+                (Core.VfxCues.SeedDust, "seed_dust", 0.8f),             // 아트판 11/01 (개발 임시본 대신)
+                (Core.VfxCues.FertilizerGrow, "fertilizer_grow", 1.2f), // 아트판 11/01
             };
             var so = new SerializedObject(library);
             var list = so.FindProperty("entries");

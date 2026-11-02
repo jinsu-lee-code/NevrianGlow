@@ -129,7 +129,8 @@ namespace NevrianGlowFarm.Systems.Farm
             if (growing != null)
                 StopCoroutine(growing);
             growing = StartCoroutine(GrowRoutine(target, target.localScale));
-            VfxManager.Play(VfxCues.Sparkle, (modelAnchor != null ? modelAnchor.position : transform.position) + Vector3.up * 0.2f);
+            // 아트 비료 성장 연출(바닥 고리 → 0.42초 빛 터짐)을 흙 윗면에서 — 작물 크기 연출은 위 코드 그대로 (아트 mapping 11/01)
+            VfxManager.Play(VfxCues.FertilizerGrow, soilRenderer.bounds.center + Vector3.up * soilRenderer.bounds.extents.y);
         }
 
         private Coroutine growing;

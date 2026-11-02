@@ -11,7 +11,8 @@ namespace NevrianGlowFarm.Core
         public const string LightPuff = "vfx_light_puff";   // 쓰레기를 쓰레기통에
         public const string RingGold = "vfx_ring_gold";     // 레벨업
         public const string MergeBurst = "vfx_merge_burst"; // 거대 작물 (4-4, P1)
-        public const string SeedDust = "vfx_seed_dust";     // 씨앗 뿌리기 가루 0.4초 (기획서 v2.0 — 개발 임시 입자, 아트 교체 대기)
+        public const string SeedDust = "vfx_seed_dust";     // 씨앗 뿌리기 가루 0.4초 (기획서 v2.0 — 아트판 pf_vfx_seed_dust, 11/02)
+        public const string FertilizerGrow = "vfx_fertilizer_grow"; // 비료 즉시 성장 — 흙 윗면 고리 · 나선 빛가루 → 0.42초 빛 터짐 (아트 11/01)
 
         // 반복 (켜고 끈다)
         public const string WaterStream = "vfx_water_drop"; // 물뿌리개 물줄기 — 루트 +Z = 주둥이 방향
