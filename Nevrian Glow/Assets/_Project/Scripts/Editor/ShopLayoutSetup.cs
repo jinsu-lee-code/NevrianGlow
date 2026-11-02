@@ -50,6 +50,9 @@ namespace NevrianGlowFarm.Editor
         private const float BrowseSpread = 1.6f;                                        // 예전 둘러보기 폭 — × 배율
         private const float CounterLampRange = 3f;                                      // 계산대 램프 점광 범위 — 청록이 방 전체를 덮지 않게 (BRANCH_ART 10.27)
         private const float DecorClearance = 0.2f;                                      // 진열대 자리와 겹치는 바닥 장식을 끄는 여유 (m)
+        // 정산 시점 (김봉준 11/02 "가게 위쪽 모서리에서 가게 전체"): 앞 왼쪽 모서리 안쪽 · 벽(3.6 m) 아래 높이 → 가게 가운데 조금 뒤
+        private const float SettlementViewInset = 0.9f, SettlementViewHeight = 3.1f;
+        private static readonly Vector3 SettlementViewTarget = new Vector3(0f, 0.3f, 1f);
 
         // 아트 가게 껍데기 (BRANCH_ART 10.21): 벽 · 천장 피벗 = 바닥 중앙(ShopRoot), 입구 피벗 = 통로 바닥 중앙. 콜라이더 없음
         private const string ShopWallArt = "Assets/Art/Environment/shop_wall/pf_env_shop_wall.prefab";
@@ -296,6 +299,13 @@ namespace NevrianGlowFarm.Editor
                 so.ApplyModifiedPropertiesWithoutUndo();
                 notes.Add($"계산 줄 {queue.Count}칸");
             }
+
+            // 정산 시점 카메라 자리
+            var view = Child(root, "SettlementView");
+            view.localPosition = new Vector3(-width * 0.5f + SettlementViewInset, SettlementViewHeight, -depth * 0.5f + SettlementViewInset);
+            view.localRotation = Quaternion.LookRotation(SettlementViewTarget - view.localPosition, Vector3.up);
+            if (!view.TryGetComponent<UI.SettlementCameraView>(out _))
+                view.gameObject.AddComponent<UI.SettlementCameraView>();
 
             // 금지 구역 (쓰레기 · 얼룩 · 흩어진 상품을 놓지 않는 곳)
             Zone(root, "ForbiddenZone_Counter", Local(layout, counterArea), new Vector2(counterArea.w, counterArea.d));
