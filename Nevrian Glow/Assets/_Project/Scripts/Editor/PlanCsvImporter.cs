@@ -304,7 +304,7 @@ namespace NevrianGlowFarm.Editor
                 if (endless && !TryNumberAfter(table.Get(r, "price_growth"), description, PriceGrowthPattern, out growth))
                     report.Problems.Add($"상품 {planId}: 마지막 단계 뒤 가격 배율(price_growth 열 · 설명 '직전 가격 × N')이 없음 — {prices.Count}단계에서 끝");
                 else if (endless)
-                    report.Notes.Add($"상품 {planId}: {prices.Count}단계 뒤 가격 × {growth} (설명 글에서)");
+                    report.Notes.Add($"상품 {planId}: {prices.Count}단계 뒤 가격 × {growth}");
 
                 var so = new SerializedObject(product);
                 so.FindProperty("priceGrowthAfterTiers").floatValue = growth;
@@ -1013,7 +1013,7 @@ namespace NevrianGlowFarm.Editor
             Section("숨김 (값은 넣음)", report.Hidden);
             Section("건너뜀 (개발 에셋 없음)", report.Skipped);
             Section("시스템 대기 설정 (game_settings.csv)", report.Waiting);
-            Section("설명 글에서 읽은 값 (기획 확인 대기 — 열로 받으면 그 값)", report.Notes);
+            Section("입고 · 가격 배율 (열 우선, 없으면 설명 글에서)", report.Notes);
             Section("생성", report.Created);
             Section("갱신 (값이 바뀐 에셋)", report.Updated);
             File.WriteAllText(ReportPath, sb.ToString(), new UTF8Encoding(false));
